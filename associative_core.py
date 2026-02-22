@@ -72,6 +72,9 @@ class ContinuousCAM(nn.Module):
         # Shape: (value_dim, key_dim) — value_dim doubles as num_classes
         self.register_buffer("class_means", torch.zeros(value_dim, key_dim))
         self.register_buffer("class_vars", torch.ones(value_dim, key_dim))
+        # Per-prototype local neighborhood density for CSLS hubness correction
+        self.register_buffer("prototype_density", torch.zeros(max_entries))
+        self.csls_weight: float = 1.0
 
     @property
     def _mem_dtype(self):
@@ -102,19 +105,31 @@ class ContinuousCAM(nn.Module):
     # Batched core — single matmul for all queries
     # ------------------------------------------------------------------
     def _get_nearest_batch(self, queries: torch.Tensor):
-        """Returns (best_slots, best_sims) tensors of shape (B,).
-        Slots are -1 where table is empty."""
+        """Returns (best_slots, best_sims, query_density) tensors of shape (B,).
+
+        query_density is the mean cosine similarity to the top-100 neighbors —
+        used as an online proxy for local neighborhood density (CSLS).
+        Slots are -1 where table is empty.
+        """
         B = queries.size(0)
         if not self.occupied.any():
+            zeros = torch.zeros(B, device=queries.device)
             return (torch.full((B,), -1, dtype=torch.long, device=queries.device),
-                    torch.full((B,), -1.0, device=queries.device))
+                    torch.full((B,), -1.0, device=queries.device),
+                    zeros)
 
         valid_idx = self.occupied.nonzero(as_tuple=True)[0]
         q_norm = F.normalize(self._cast(queries), dim=-1)
-        sim_matrix = q_norm @ self._keys_norm[valid_idx].T
+        sim_matrix = q_norm @ self._keys_norm[valid_idx].T        # (B, N_occ)
         best_sims, best_locs = sim_matrix.max(dim=1)
         best_slots = valid_idx[best_locs]
-        return best_slots, best_sims.float()
+
+        # Density proxy: mean similarity to the top-100 nearest prototypes
+        k_density = min(100, sim_matrix.size(1))
+        topk_sims, _ = sim_matrix.topk(k_density, dim=1)          # (B, k_density)
+        query_density = topk_sims.mean(dim=1).float()              # (B,)
+
+        return best_slots, best_sims.float(), query_density
 
     def _alloc_slots_batch(self, n: int):
         """Allocate n slots: free first, then LFU-LRU hybrid eviction.
@@ -198,9 +213,19 @@ class ContinuousCAM(nn.Module):
 
         reranked_sims = F.cosine_similarity(scaled_Q, scaled_K, dim=-1)      # (B, broad_k)
 
-        # --- Step 3: Top-final_k and softmax vote ---
-        topk_sims, topk_locs = reranked_sims.topk(final_k, dim=1)            # (B, final_k)
+        # --- Step 3: CSLS hubness correction ---
+        # Penalise hub prototypes by subtracting their stored local density.
+        # The query-side density term is omitted: softmax is shift-invariant so
+        # a per-query constant cancels out and need not be computed.
+        candidate_density = self.prototype_density[broad_slots]               # (B, broad_k)
+        csls_sims = 2.0 * reranked_sims - self.csls_weight * candidate_density
+
+        # --- Step 4: Top-final_k and softmax vote ---
+        # CSLS governs *which* candidates are selected; the original Mahalanobis
+        # similarities drive the softmax weights (CSLS scaling would distort τ).
+        _, topk_locs = csls_sims.topk(final_k, dim=1)                         # (B, final_k)
         topk_slots = broad_slots.gather(1, topk_locs)                         # (B, final_k)
+        topk_sims = reranked_sims.gather(1, topk_locs)                        # (B, final_k)
 
         # Optional similarity floor
         if self.inference_sim_floor > 0.0:
@@ -239,7 +264,7 @@ class ContinuousCAM(nn.Module):
             self.class_vars[c] = ((1.0 - self.var_ema_alpha) * self.class_vars[c]
                                   + self.var_ema_alpha * batch_var)
 
-        best_slots, best_sims = self._get_nearest_batch(queries)
+        best_slots, best_sims, query_density = self._get_nearest_batch(queries)
 
         # Flat vigilance check (no per-engram thresholds)
         hits = (best_slots >= 0) & (best_sims >= self.vigilance)
@@ -297,6 +322,16 @@ class ContinuousCAM(nn.Module):
                                            adaptive_key_alpha.unsqueeze(1) * (slot_query_mean - current_keys))
                 self._update_key_norm(unique_slots)
 
+            # CSLS density EMA: scatter-mean query densities to unique hit slots
+            hit_densities = query_density[hits]                    # (n_hits,)
+            slot_density_sum = torch.zeros(len(unique_slots), device=queries.device)
+            slot_density_sum.scatter_add_(0, inverse, hit_densities)
+            slot_density_mean = slot_density_sum / slot_counts.float()
+            self.prototype_density[unique_slots] = (
+                (1.0 - self.var_ema_alpha) * self.prototype_density[unique_slots]
+                + self.var_ema_alpha * slot_density_mean
+            )
+
             self.last_seen[hit_slots] = now
             self.usage[unique_slots] += 1
 
@@ -314,6 +349,7 @@ class ContinuousCAM(nn.Module):
             self.last_seen[new_slots] = now
             self.usage[new_slots] = 1
             self.hit_counts[new_slots] = 1
+            self.prototype_density[new_slots] = query_density[misses][:n_alloc]
             self._update_key_norm(new_slots)
 
 
@@ -331,6 +367,10 @@ class ContinuousCAM(nn.Module):
         else:
             stats["avg_hit_count"] = 0.0
         stats["avg_class_var"] = self.class_vars.mean().item()
+        if n_occ > 0:
+            stats["avg_prototype_density"] = self.prototype_density[self.occupied].mean().item()
+        else:
+            stats["avg_prototype_density"] = 0.0
         return stats
 
 

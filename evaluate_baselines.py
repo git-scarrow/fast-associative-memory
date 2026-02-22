@@ -135,7 +135,9 @@ def main():
     acc_fam, n_protos, fam_stats = eval_fast_assoc(train_e, train_l, test_e, test_l, device)
     t1 = time.time()
     print(f"  {acc_fam:.2f}%  ({t1 - t0:.1f}s, {n_protos} prototypes)")
-    print(f"  avg_hit_count={fam_stats['avg_hit_count']:.2f}  avg_class_var={fam_stats['avg_class_var']:.4f}")
+    print(f"  avg_hit_count={fam_stats['avg_hit_count']:.2f}  "
+          f"avg_class_var={fam_stats['avg_class_var']:.4f}  "
+          f"avg_proto_density={fam_stats['avg_prototype_density']:.4f}")
 
     print(f"\n{'=' * 60}")
     print(f"  CIFAR-100 — ViT-L/14 Feature Baselines (full 50K train)")

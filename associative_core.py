@@ -352,6 +352,96 @@ class ContinuousCAM(nn.Module):
             self.prototype_density[new_slots] = query_density[misses][:n_alloc]
             self._update_key_norm(new_slots)
 
+    def sleep(self, anti_lr=0.3, max_epochs=10, collision_threshold=0.5,
+              chunk_size=1024, verbose=False) -> dict:
+        """NREM sleep consolidation: anti-Hebbian repulsion of cross-class engrams.
+
+        Replays stored keys offline and pushes collision-prone engrams from
+        different classes apart in key-space, fixing retrieval theft without
+        touching the write path.
+        """
+        occ_idx = self.occupied.nonzero(as_tuple=True)[0]
+        n_occ = len(occ_idx)
+        if n_occ < 2:
+            return {"epochs": 0, "collisions_initial": 0,
+                    "collisions_final": 0, "keys_modified": 0}
+
+        class_labels = self.values[occ_idx].argmax(dim=-1)   # (N_occ,)
+        all_keys_norm = self._keys_norm[occ_idx]              # (N_occ, D)
+
+        collisions_initial = None
+        collisions_final = 0
+        keys_modified_total = 0
+
+        for epoch in range(max_epochs):
+            delta = torch.zeros_like(self.keys[occ_idx])       # (N_occ, D)
+            counts = torch.zeros(n_occ, device=self.keys.device)
+            epoch_collisions = 0
+
+            for c_start in range(0, n_occ, chunk_size):
+                c_end = min(c_start + chunk_size, n_occ)
+                chunk_keys = all_keys_norm[c_start:c_end]       # (C, D)
+                chunk_labels = class_labels[c_start:c_end]       # (C,)
+
+                sim_matrix = chunk_keys @ all_keys_norm.T        # (C, N_occ)
+
+                # Mask out self-similarity
+                self_idx = torch.arange(c_end - c_start, device=sim_matrix.device)
+                sim_matrix[self_idx, self_idx + c_start] = -float("inf")
+
+                best_sims, best_locs = sim_matrix.max(dim=1)    # (C,)
+
+                different_class = chunk_labels != class_labels[best_locs]
+                above_thresh = best_sims > collision_threshold
+                collisions = different_class & above_thresh
+
+                n_col = collisions.sum().item()
+                epoch_collisions += n_col
+
+                if n_col == 0:
+                    continue
+
+                col_idx = collisions.nonzero(as_tuple=True)[0]
+                a_global = col_idx + c_start
+                b_global = best_locs[col_idx]
+
+                key_a = self.keys[occ_idx[a_global]]
+                key_b = self.keys[occ_idx[b_global]]
+                repulsion = anti_lr * (key_a - key_b)
+
+                delta[a_global] += repulsion
+                counts[a_global] += 1
+                delta[b_global] -= repulsion
+                counts[b_global] += 1
+
+            if collisions_initial is None:
+                collisions_initial = epoch_collisions
+
+            if verbose:
+                print(f"    sleep epoch {epoch}: {epoch_collisions} collisions")
+
+            if epoch_collisions == 0:
+                collisions_final = 0
+                break
+
+            collisions_final = epoch_collisions
+
+            # Apply averaged deltas (skip if keys are frozen)
+            active = counts > 0
+            if active.any() and not self.immutable_keys:
+                avg_delta = delta[active] / counts[active].unsqueeze(1)
+                active_slots = occ_idx[active]
+                self.keys[active_slots] += avg_delta
+                self._update_key_norm(active_slots)
+                all_keys_norm = self._keys_norm[occ_idx]
+                keys_modified_total += active.sum().item()
+
+        return {
+            "epochs": epoch + 1 if n_occ >= 2 else 0,
+            "collisions_initial": collisions_initial or 0,
+            "collisions_final": collisions_final,
+            "keys_modified": keys_modified_total,
+        }
 
     def get_stats(self) -> dict:
         """Return telemetry about the current memory state."""

@@ -107,7 +107,8 @@ def eval_fast_assoc(train_embeds, train_labels, test_embeds, test_labels, device
         correct += (logits.argmax(dim=1) == y_test[i:i + 512]).sum().item()
 
     acc = 100.0 * correct / len(test_labels)
-    return acc, n_occupied
+    stats = mem.core_cam.get_stats()
+    return acc, n_occupied, stats
 
 
 def main():
@@ -129,11 +130,14 @@ def main():
     t1 = time.time()
     print(f"  {acc_wknn:.2f}%  ({t1 - t0:.1f}s)")
 
-    print("\n[3/3] FastAssociativeMemory (online, 50K slots)...")
+    print("\n[3/3] FastAssociativeMemory (online, 50K slots, adaptive EMA)...")
     t0 = time.time()
-    acc_fam, n_protos = eval_fast_assoc(train_e, train_l, test_e, test_l, device)
+    acc_fam, n_protos, fam_stats = eval_fast_assoc(train_e, train_l, test_e, test_l, device)
     t1 = time.time()
     print(f"  {acc_fam:.2f}%  ({t1 - t0:.1f}s, {n_protos} prototypes)")
+    print(f"  avg_hit_count={fam_stats['avg_hit_count']:.2f}  "
+          f"avg_class_var={fam_stats['avg_class_var']:.4f}  "
+          f"avg_proto_density={fam_stats['avg_prototype_density']:.4f}")
 
     print(f"\n{'=' * 60}")
     print(f"  CIFAR-100 — ViT-L/14 Feature Baselines (full 50K train)")
@@ -142,7 +146,7 @@ def main():
     print(f"  {'-' * 50}")
     print(f"  {'1-NN (K=1, cosine)':<40} {acc_1nn:>7.2f}%")
     print(f"  {'Weighted k-NN (K=25, tau=0.05)':<40} {acc_wknn:>7.2f}%")
-    print(f"  {'FastAssociativeMemory (online, 50K)':<40} {acc_fam:>7.2f}%")
+    print(f"  {'FastAssociativeMemory (adaptive EMA, 50K)':<40} {acc_fam:>7.2f}%")
     print(f"{'=' * 60}")
 
 

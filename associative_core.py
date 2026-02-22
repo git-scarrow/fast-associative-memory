@@ -32,7 +32,8 @@ class ContinuousCAM(nn.Module):
                  aging_time: float = 1e9, flood_scale: float = 0.15,
                  immutable_keys: bool = False, use_lfu: bool = False,
                  use_bfloat16: bool = False, key_lr: float = 0.05,
-                 inference_k: int = 20, inference_temp: float = 0.05):
+                 inference_k: int = 20, inference_temp: float = 0.05,
+                 ema_beta: float = 0.05):
         super().__init__()
         self.key_dim = key_dim
         self.value_dim = value_dim
@@ -47,6 +48,8 @@ class ContinuousCAM(nn.Module):
         self.inference_k = inference_k
         self.inference_temp = inference_temp
         self.use_bfloat16 = use_bfloat16
+        self.ema_beta = ema_beta
+        self.var_ema_alpha: float = 0.01
         # Similarity floor for inference: top-K entries below this threshold are
         # masked to -inf before softmax, forcing hard winner-take-all when set high.
         # 0.0 = disabled (legacy behaviour).
@@ -63,6 +66,12 @@ class ContinuousCAM(nn.Module):
         self.register_buffer("_keys_norm", torch.zeros(max_entries, key_dim, dtype=mem_dtype))
         # Per-slot usage count for LFU eviction
         self.register_buffer("usage", torch.zeros(max_entries, dtype=torch.float32))
+        # Per-slot hit count for adaptive EMA alpha decay
+        self.register_buffer("hit_counts", torch.zeros(max_entries, dtype=torch.int32))
+        # Per-class running statistics for diagonal Mahalanobis re-ranking
+        # Shape: (value_dim, key_dim) — value_dim doubles as num_classes
+        self.register_buffer("class_means", torch.zeros(value_dim, key_dim))
+        self.register_buffer("class_vars", torch.ones(value_dim, key_dim))
 
     @property
     def _mem_dtype(self):
@@ -151,11 +160,12 @@ class ContinuousCAM(nn.Module):
     # Forward / Learn — fully batched
     # ------------------------------------------------------------------
     def forward(self, queries: torch.Tensor) -> torch.Tensor:
-        """Temperature-scaled soft-kNN retrieval.
+        """Broad cosine search → diagonal Mahalanobis re-ranking → soft-kNN vote.
 
-        Retrieves the top-K closest prototypes, weights their stored values by
-        softmax-normalized cosine similarity, and sums to produce a prediction.
-        Falls back to random noise when the table is empty.
+        1. Broad search: top-100 candidates by cosine similarity (single matmul).
+        2. Re-rank: scale query and candidate keys by per-class inverse-std, then
+           recompute cosine similarity in the whitened feature space.
+        3. Vote: softmax-weighted sum over the top-inference_k re-ranked slots.
         """
         now = time.time()
         if not self.occupied.any():
@@ -163,27 +173,45 @@ class ContinuousCAM(nn.Module):
                                device=queries.device) * self.flood_scale
 
         valid_idx = self.occupied.nonzero(as_tuple=True)[0]
-        k = min(self.inference_k, len(valid_idx))
+        n_valid = len(valid_idx)
+        final_k = min(self.inference_k, n_valid)
+        broad_k = min(100, n_valid)
 
+        # --- Step 1: Broad cosine search ---
         q_norm = F.normalize(self._cast(queries), dim=-1)
-        sims = q_norm @ self._keys_norm[valid_idx].T          # (B, N_occ)
-        topk_sims, topk_locs = sims.topk(k, dim=1)            # (B, K)
-        topk_slots = valid_idx[topk_locs]                      # (B, K) global slot ids
+        sims = q_norm @ self._keys_norm[valid_idx].T           # (B, N_occ)
+        _, broad_locs = sims.topk(broad_k, dim=1)              # (B, broad_k)
+        broad_slots = valid_idx[broad_locs]                    # (B, broad_k)
 
-        # Optional similarity floor: mask entries below threshold to -inf so
-        # softmax assigns them near-zero weight (hard switching mode).
+        # --- Step 2: Diagonal Mahalanobis re-ranking ---
+        # Determine per-candidate class from stored one-hot values
+        candidate_classes = self.values[broad_slots].float().argmax(dim=-1)  # (B, broad_k)
+
+        # Gather per-class running variance; clamp to prevent div-by-zero
+        local_vars = self.class_vars[candidate_classes].clamp(min=1e-4)      # (B, broad_k, key_dim)
+        inv_std = local_vars.rsqrt()                                          # (B, broad_k, key_dim)
+
+        # Scale both query and candidate keys by the per-class inverse std
+        candidate_keys = self.keys[broad_slots].float()                       # (B, broad_k, key_dim)
+        scaled_Q = queries.float().unsqueeze(1) * inv_std                     # (B, broad_k, key_dim)
+        scaled_K = candidate_keys * inv_std                                   # (B, broad_k, key_dim)
+
+        reranked_sims = F.cosine_similarity(scaled_Q, scaled_K, dim=-1)      # (B, broad_k)
+
+        # --- Step 3: Top-final_k and softmax vote ---
+        topk_sims, topk_locs = reranked_sims.topk(final_k, dim=1)            # (B, final_k)
+        topk_slots = broad_slots.gather(1, topk_locs)                         # (B, final_k)
+
+        # Optional similarity floor
         if self.inference_sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(topk_sims < self.inference_sim_floor,
                                               -float("inf"))
 
-        # Softmax weights over temperature-scaled similarities
-        weights = F.softmax(topk_sims / self.inference_temp, dim=-1)  # (B, K)
+        weights = F.softmax(topk_sims / self.inference_temp, dim=-1)          # (B, final_k)
+        retrieved = self.values[topk_slots].float()                           # (B, final_k, V)
+        outputs = (weights.unsqueeze(-1) * retrieved).sum(dim=1)              # (B, V)
 
-        # Weighted sum of retrieved values
-        retrieved = self.values[topk_slots].float()           # (B, K, V)
-        outputs = (weights.unsqueeze(-1) * retrieved).sum(dim=1)  # (B, V)
-
-        # Touch only the Top-1 winner for LRU bookkeeping
+        # Touch only Top-1 winner for LRU bookkeeping
         self.last_seen[topk_slots[:, 0]] = now
 
         return outputs
@@ -197,6 +225,20 @@ class ContinuousCAM(nn.Module):
         now = time.time()
         queries = self._cast(queries)
         targets = self._cast(targets)
+
+        # --- Update per-class EMA mean and variance (all samples, before hit/miss) ---
+        q_float = queries.float()
+        class_labels = targets.float().argmax(dim=-1)  # (B,) — class index per sample
+        for c in class_labels.unique():
+            x_c = q_float[class_labels == c]           # (N_c, key_dim)
+            batch_mean = x_c.mean(0)
+            deviation = x_c - self.class_means[c]
+            batch_var = (deviation ** 2).mean(0)
+            self.class_means[c] = ((1.0 - self.var_ema_alpha) * self.class_means[c]
+                                   + self.var_ema_alpha * batch_mean)
+            self.class_vars[c] = ((1.0 - self.var_ema_alpha) * self.class_vars[c]
+                                  + self.var_ema_alpha * batch_var)
+
         best_slots, best_sims = self._get_nearest_batch(queries)
 
         # Flat vigilance check (no per-engram thresholds)
@@ -230,9 +272,15 @@ class ContinuousCAM(nn.Module):
             slot_counts.scatter_add_(0, inverse, torch.ones_like(inverse, dtype=targets.dtype))
             slot_target_mean = slot_target_sum / slot_counts.unsqueeze(1)
 
-            # Value EMA: lr * (mean_target - current_value)
+            # Adaptive EMA: decay alpha as prototypes mature
+            self.hit_counts[unique_slots] += slot_counts.int()
+            adaptive_alpha = (self.hebb_lr /
+                              (1.0 + self.ema_beta * self.hit_counts[unique_slots].float()))
+
+            # Value EMA: adaptive_alpha * (mean_target - current_value)
             current_vals = self.values[unique_slots]
-            self.values[unique_slots] = current_vals + self.hebb_lr * (slot_target_mean - current_vals)
+            self.values[unique_slots] = (current_vals +
+                                         adaptive_alpha.unsqueeze(1) * (slot_target_mean - current_vals))
 
             # Key centroid drift (skip if keys are frozen)
             if not self.immutable_keys:
@@ -242,8 +290,11 @@ class ContinuousCAM(nn.Module):
                 slot_query_sum.scatter_add_(0, inverse.unsqueeze(1).expand_as(hit_queries),
                                             hit_queries)
                 slot_query_mean = slot_query_sum / slot_counts.unsqueeze(1)
+                adaptive_key_alpha = (self.key_lr /
+                                      (1.0 + self.ema_beta * self.hit_counts[unique_slots].float()))
                 current_keys = self.keys[unique_slots]
-                self.keys[unique_slots] = current_keys + self.key_lr * (slot_query_mean - current_keys)
+                self.keys[unique_slots] = (current_keys +
+                                           adaptive_key_alpha.unsqueeze(1) * (slot_query_mean - current_keys))
                 self._update_key_norm(unique_slots)
 
             self.last_seen[hit_slots] = now
@@ -262,7 +313,25 @@ class ContinuousCAM(nn.Module):
             self.occupied[new_slots] = True
             self.last_seen[new_slots] = now
             self.usage[new_slots] = 1
+            self.hit_counts[new_slots] = 1
             self._update_key_norm(new_slots)
+
+
+    def get_stats(self) -> dict:
+        """Return telemetry about the current memory state."""
+        n_occ = self.occupied.sum().item()
+        stats = {
+            "n_occupied": n_occ,
+            "capacity": self.max_entries,
+            "fill_pct": 100.0 * n_occ / self.max_entries,
+        }
+        if n_occ > 0:
+            occ_mask = self.occupied
+            stats["avg_hit_count"] = self.hit_counts[occ_mask].float().mean().item()
+        else:
+            stats["avg_hit_count"] = 0.0
+        stats["avg_class_var"] = self.class_vars.mean().item()
+        return stats
 
 
 class CAMNet_Continuous(nn.Module):

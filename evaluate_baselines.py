@@ -14,16 +14,16 @@ import torch
 import torch.nn.functional as F
 import time
 
-CACHE_DIR = "./feature_cache_vitl14"
+CACHE_DIR = "./feature_cache_inr_vitl14"
 EMBED_DIM = 1024
-NUM_CLASSES = 100
+NUM_CLASSES = 200
 
 
 def load_features(device):
     """Load pre-cached ViT-L/14 features for CIFAR-100."""
-    train = torch.load(f"{CACHE_DIR}/cifar100_dinov2_train.pt",
+    train = torch.load(f"{CACHE_DIR}/imagenetr_dinov2_train.pt",
                        map_location=device, weights_only=True)
-    test = torch.load(f"{CACHE_DIR}/cifar100_dinov2_test.pt",
+    test = torch.load(f"{CACHE_DIR}/imagenetr_dinov2_test.pt",
                       map_location=device, weights_only=True)
     return (train["embeds"].float(), train["labels"].long(),
             test["embeds"].float(), test["labels"].long())

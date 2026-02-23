@@ -63,11 +63,14 @@ def _matches_patterns(filename: str, patterns: tuple[str, ...]) -> bool:
 def _load_image(path: Path) -> Image.Image:
     """Load an image file, handling ARW via rawpy."""
     suffix = path.suffix.lower()
-    if suffix == ".arw":
+    if suffix in (".arw", ".dng", ".cr2", ".nef"):
         import rawpy
         with rawpy.imread(str(path)) as raw:
             rgb = raw.postprocess(use_camera_wb=True, output_bps=8)
-        return Image.fromarray(rgb)
+        if rgb.ndim == 3 and rgb.shape[2] == 1:
+            rgb = rgb.squeeze(2)
+        img = Image.fromarray(rgb)
+        return img.convert("RGB")
     return Image.open(path).convert("RGB")
 
 
@@ -262,3 +265,95 @@ def watch_and_ingest(
                     save_fn()
                 except Exception:
                     logger.exception("Checkpoint save failed.")
+
+
+def scan_and_ingest(
+    cam,
+    encoder,
+    scan_dir: Path,
+    metadata_conn: sqlite3.Connection,
+    save_fn,
+    batch_size: int = 4,
+    patterns: tuple[str, ...] = DEFAULT_PATTERNS,
+) -> int:
+    """One-shot scan: process all matching files in *scan_dir* and return.
+
+    This is the non-inotify alternative for macOS testing and batch backfills.
+    """
+    scan_dir = Path(scan_dir)
+    files = sorted(
+        p for p in scan_dir.iterdir()
+        if p.is_file() and _matches_patterns(p.name, patterns)
+    )
+    if not files:
+        logger.warning("No matching files in %s", scan_dir)
+        return 0
+
+    logger.info("Found %d files to ingest in %s", len(files), scan_dir)
+    total = 0
+    for i in range(0, len(files), batch_size):
+        batch = files[i : i + batch_size]
+        logger.info("Batch %d–%d of %d …", i + 1, i + len(batch), len(files))
+        n = ingest_batch(cam, encoder, batch, metadata_conn)
+        total += n
+
+    save_fn()
+    logger.info("Scan complete: %d/%d files ingested.", total, len(files))
+    return total
+
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+    import tomllib
+    from functools import partial
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
+
+    parser = argparse.ArgumentParser(description="Shutter-Deck ingestion CLI.")
+    parser.add_argument("--scan-dir", type=Path, required=True,
+                        help="Directory to scan for images (one-shot mode).")
+    parser.add_argument("--config", type=Path, default=Path("config.toml"),
+                        help="Path to config TOML file.")
+    args = parser.parse_args()
+
+    if not args.config.exists():
+        logger.error("Config not found: %s", args.config)
+        sys.exit(1)
+
+    with open(args.config, "rb") as f:
+        cfg = tomllib.load(f)
+
+    from shutter_deck.service import build_cam
+    from shutter_deck.persistence import load_cam_state, save_cam_state
+    from shutter_deck.eviction import install_density_eviction
+    from shutter_deck.encoder import DINOv2Encoder
+
+    cam = build_cam(cfg)
+    install_density_eviction(cam, min_per_class=cfg["eviction"]["min_per_class"])
+    state_path = Path(cfg["paths"]["state_file"])
+    load_cam_state(cam, state_path)
+
+    save_fn = partial(save_cam_state, cam, state_path)
+
+    encoder = DINOv2Encoder(
+        model_name=cfg["encoder"]["model_name"],
+        device=cfg["encoder"]["device"],
+    )
+
+    metadata_conn = init_metadata_db(Path(cfg["paths"]["metadata_db"]))
+
+    n = scan_and_ingest(
+        cam=cam,
+        encoder=encoder,
+        scan_dir=args.scan_dir,
+        metadata_conn=metadata_conn,
+        save_fn=save_fn,
+        batch_size=cfg["ingest"]["batch_size"],
+        patterns=tuple(cfg["ingest"]["file_extensions"]),
+    )
+    print(f"\nIngested {n} images. State saved to {state_path}")
+    metadata_conn.close()

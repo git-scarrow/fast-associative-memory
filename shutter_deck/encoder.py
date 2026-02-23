@@ -78,11 +78,13 @@ class DINOv2Encoder:
         """Single file → (1, 1024) normalized embedding."""
         path = Path(path)
         suffix = path.suffix.lower()
-        if suffix == ".arw":
+        if suffix in (".arw", ".dng", ".cr2", ".nef"):
             import rawpy
             with rawpy.imread(str(path)) as raw:
                 rgb = raw.postprocess(use_camera_wb=True, output_bps=8)
-            image = Image.fromarray(rgb)
+            if rgb.ndim == 3 and rgb.shape[2] == 1:
+                rgb = rgb.squeeze(2)
+            image = Image.fromarray(rgb).convert("RGB")
         else:
             image = Image.open(path)
         return self.embed_images([image])

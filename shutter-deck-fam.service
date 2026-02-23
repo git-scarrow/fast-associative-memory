@@ -1,0 +1,21 @@
+[Unit]
+Description=Shutter-Deck FAM — Real-time image indexing service
+After=local-fs.target
+
+[Service]
+Type=simple
+User=sam
+WorkingDirectory=/mnt/data/dev/projects/fast-associative-memory
+ExecStart=/mnt/data/dev/projects/fast-associative-memory/.venv/bin/python -m shutter_deck.service /mnt/data/dev/projects/fast-associative-memory/config.toml
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Hardening
+ProtectSystem=strict
+ReadWritePaths=/var/lib/shutter-deck /mnt/nvme/incoming
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

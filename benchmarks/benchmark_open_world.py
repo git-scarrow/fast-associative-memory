@@ -167,10 +167,18 @@ def evaluate(model, extractor, loader, device):
 
 
 if __name__ == "__main__":
-    IMAGENET_ROOT = "/path/to/imagenet/train"
+    import argparse
+    parser = argparse.ArgumentParser(description="G9 (OOD) & G10 (Drift) benchmarks.")
+    parser.add_argument(
+        "--root",
+        default=os.environ.get("IMAGENET_ROOT", "data/imagenet-r"),
+        help="Path to ImageNet directory (env: IMAGENET_ROOT)",
+    )
+    args = parser.parse_args()
+    IMAGENET_ROOT = args.root
     if os.path.exists(IMAGENET_ROOT):
         dev = "cuda" if torch.cuda.is_available() else "cpu"
         run_g9_ood(IMAGENET_ROOT, dev)
         run_g10_drift(IMAGENET_ROOT, dev)
     else:
-        print(f"Please set IMAGENET_ROOT (currently: {IMAGENET_ROOT!r}) to run G9/G10.")
+        print(f"Please set --root or IMAGENET_ROOT (currently: {IMAGENET_ROOT!r}).")

@@ -266,8 +266,9 @@ if __name__ == "__main__":
         description="G6 (Granularity) & G7 (Tail Eviction) benchmarks."
     )
     parser.add_argument(
-        "--root", default="/path/to/imagenet/train",
-        help="Path to ImageNet train directory (ImageFolder format)",
+        "--root",
+        default=os.environ.get("IMAGENET_ROOT", "data/imagenet-r"),
+        help="Path to ImageNet directory (env: IMAGENET_ROOT)",
     )
     parser.add_argument(
         "--use-adapter", action="store_true",

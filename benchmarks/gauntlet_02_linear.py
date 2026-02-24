@@ -8,6 +8,7 @@ Implements two streaming linear baselines trained on the same frozen DINOv2
 embeddings used by Gauntlet 1 (evaluate_baselines.py):
 
   2a  Streaming AdamW linear probe with a fixed-capacity ring-buffer replay
+      (circular FIFO replacement)
   2b  Streaming Ridge Regression with Sherman-Morrison rank-1 matrix inverse
       updates (no replay buffer, O(D²) memory)
 
@@ -87,6 +88,17 @@ def load_features(cache_dir: str, device: torch.device):
             "Run extract_imagenet_r_vitl14.py (or extract_dinov2_vitb14.py) first."
         )
 
+    if len(train_files) > 1:
+        import warnings
+        warnings.warn(
+            f"Multiple train .pt files found in '{cache_dir}'; using '{train_files[0].name}'."
+        )
+    if len(test_files) > 1:
+        import warnings
+        warnings.warn(
+            f"Multiple test .pt files found in '{cache_dir}'; using '{test_files[0].name}'."
+        )
+
     train = torch.load(train_files[0], map_location=device, weights_only=True)
     test = torch.load(test_files[0], map_location=device, weights_only=True)
     return (
@@ -112,7 +124,7 @@ class _RingBuffer:
         self._labels = torch.zeros(capacity, dtype=torch.long, device=device)
 
     def add(self, embeds: torch.Tensor, labels: torch.Tensor) -> None:
-        """Insert a mini-batch using random replacement once full."""
+        """Insert a mini-batch with circular (FIFO) replacement once full."""
         for i in range(embeds.size(0)):
             self._embeds[self._ptr] = embeds[i]
             self._labels[self._ptr] = labels[i]
@@ -145,7 +157,7 @@ def train_adamw_probe(
 
     Architecture : ``nn.Linear(embed_dim, num_classes, bias=True)``
     Optimizer    : AdamW, lr=1e-3
-    Replay buffer: ring buffer, capacity=*buffer_size*, random replacement
+    Replay buffer: ring buffer, capacity=*buffer_size*, circular FIFO replacement
     Each step    : gradient step on current mini-batch ∪ replay sample
 
     Returns
@@ -169,11 +181,9 @@ def train_adamw_probe(
 
         buf.add(x_cur, y_cur)
 
-        # Wait until the buffer has at least one full batch before training.
-        if buf.size < batch_size:
-            continue
-
-        x_rep, y_rep = buf.sample(batch_size)
+        # Sample up to a full batch from the buffer (fewer when not yet filled).
+        rep_size = min(buf.size, batch_size)
+        x_rep, y_rep = buf.sample(rep_size)
         x_all = torch.cat([x_cur, x_rep], dim=0)
         y_all = torch.cat([y_cur, y_rep], dim=0)
 
@@ -193,7 +203,12 @@ def train_adamw_probe(
             correct += (logits.argmax(dim=1) == test_labels[i: i + 512]).sum().item()
 
     acc = 100.0 * correct / len(test_labels)
-    mem_mb = _tensor_mb(list(linear.parameters())) + _tensor_mb(buf.tensors())
+    optimizer_state_tensors = [
+        v for state in optimizer.state.values()
+        for v in state.values() if isinstance(v, torch.Tensor)
+    ]
+    mem_mb = (_tensor_mb(list(linear.parameters()) + optimizer_state_tensors)
+              + _tensor_mb(buf.tensors()))
     return acc, mem_mb, train_time
 
 
@@ -238,6 +253,8 @@ def train_ridge_probe(
         Wall-clock training time (seconds).
     """
     set_seed(seed)
+    if lam <= 0:
+        raise ValueError(f"Lambda must be positive for ridge regression, got {lam}.")
     D = embed_dim + 1  # augmented dimension (+1 for implicit bias)
 
     # Initialise: A = λI  ⟹  A⁻¹ = (1/λ) I
@@ -252,7 +269,10 @@ def train_ridge_probe(
         # Sherman-Morrison rank-1 update of A⁻¹
         v = A_inv @ x_aug                                # (D,)
         denom = 1.0 + x_aug @ v                          # scalar tensor
-        A_inv -= torch.outer(v, v) / denom               # avoids CPU–GPU sync
+        # Guard against numerical instability (denom should always be >0 with λ>0,
+        # but floating-point drift can make it very small).
+        if denom.item() > 1e-8:
+            A_inv -= torch.outer(v, v) / denom
 
         # Accumulate right-hand side
         b.addr_(x_aug, y)                                # in-place outer add

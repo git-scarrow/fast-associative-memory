@@ -254,13 +254,62 @@ def _load_single_domain_adapter(
     output_dim: int = 256,
     hidden_dim: int = 512,
 ) -> MetricAdapter | None:
-    """Load a single-domain adapter from disk, or return None if path missing."""
+    """Load a single-domain adapter from disk, or return None if path missing.
+
+    Supports both legacy G27/G28 adapters (typically 1024→256 with hidden=512)
+    and newer G30/G31 sweep-trained adapters with different projection sizes
+    and layer counts by inferring the architecture from the checkpoint shapes.
+    """
     p = Path(path)
     if not p.is_file():
         print(f"  WARNING: adapter not found at '{path}' — skipping.", file=sys.stderr)
         return None
-    adapter = MetricAdapter(input_dim=input_dim, output_dim=output_dim, hidden_dim=hidden_dim)
-    adapter.load_state_dict(torch.load(str(p), map_location=device, weights_only=True))
+    state = torch.load(str(p), map_location=device, weights_only=True)
+
+    if "net.weight" in state:
+        # Single linear projection
+        w = state["net.weight"]
+        inferred_input_dim = int(w.shape[1])
+        inferred_output_dim = int(w.shape[0])
+        inferred_hidden_dim = 0
+        inferred_layers = 1
+    else:
+        # Sequential MLP: collect linear layers in order: net.<idx>.weight
+        linear_keys = [
+            k for k in state.keys()
+            if k.startswith("net.") and k.endswith(".weight")
+        ]
+        linear_keys = sorted(linear_keys, key=lambda k: int(k.split(".")[1]))
+        if not linear_keys:
+            print(
+                f"  WARNING: could not infer adapter architecture for '{path}' — skipping.",
+                file=sys.stderr,
+            )
+            return None
+        first_w = state[linear_keys[0]]
+        last_w = state[linear_keys[-1]]
+        inferred_input_dim = int(first_w.shape[1])
+        inferred_hidden_dim = int(first_w.shape[0])
+        inferred_output_dim = int(last_w.shape[0])
+        inferred_layers = len(linear_keys)
+
+    if inferred_input_dim != input_dim:
+        print(
+            f"  NOTE: adapter '{path}' input_dim inferred as {inferred_input_dim} "
+            f"(eval input_dim={input_dim}).",
+            file=sys.stderr,
+        )
+
+    adapter = MetricAdapter(
+        input_dim=inferred_input_dim,
+        output_dim=inferred_output_dim,
+        hidden_dim=inferred_hidden_dim,
+        nonlinearity="relu",
+        proj_dim=inferred_output_dim,
+        layers=inferred_layers,
+        residual=(inferred_layers >= 2),
+    )
+    adapter.load_state_dict(state)
     adapter.eval()
     return adapter
 

@@ -260,8 +260,9 @@ def main() -> None:
         description="G11: Train MetricAdapter with Online Hard Negative Mining."
     )
     parser.add_argument(
-        "--root", required=True,
-        help="Path to ImageNet train directory (ImageFolder format)",
+        "--root",
+        default=os.environ.get("IMAGENET_ROOT", "data/imagenet-r"),
+        help="Path to ImageNet directory (env: IMAGENET_ROOT)",
     )
     parser.add_argument(
         "--epochs", type=int, default=5,

@@ -6,3 +6,6 @@ test_drop/
 *.db
 *.pt
 *.bin
+data/
+models/
+feature_cache_*/

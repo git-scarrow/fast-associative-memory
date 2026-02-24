@@ -319,24 +319,36 @@ def _parse_args(argv=None):
         help="Exactly 2 domain names from {birds, cars, aircraft, flowers}.",
     )
     # Per-domain cache paths
+    _CACHE_DEFAULTS = {
+        "birds":    "./data/cub200",
+        "cars":     "./data/stanford_cars",
+        "aircraft": "./data/fgvc_aircraft",
+        "flowers":  "./data/flowers102/feature_cache",
+    }
     for d in _ALL_DOMAINS:
         parser.add_argument(
-            f"--cache-{d}", default=f"./data/{d}", metavar="DIR",
+            f"--cache-{d}", default=_CACHE_DEFAULTS[d], metavar="DIR",
             help=f"Feature cache directory for the '{d}' domain.",
         )
     # Cross-domain cache paths
     parser.add_argument(
-        "--cifar-cache", default="./feature_cache_vitb14", metavar="DIR",
+        "--cifar-cache", default="./feature_cache_vitl14", metavar="DIR",
         help="Feature cache directory for CIFAR-100 cross-domain evaluation.",
     )
     parser.add_argument(
-        "--imagenet-r-cache", default="./feature_cache_imagenet_r_vitl14", metavar="DIR",
+        "--imagenet-r-cache", default="./feature_cache_inr_vitl14", metavar="DIR",
         help="Feature cache directory for ImageNet-R cross-domain evaluation.",
     )
     # Per-domain single-domain adapter paths
+    _ADAPTER_DEFAULTS = {
+        "birds":    "adapter_cub200_birds.pt",
+        "cars":     "./data/stanford_cars/adapter_stanford_cars.pt",
+        "aircraft": "adapter_fgvc_aircraft.pt",
+        "flowers":  "./data/flowers102/adapter_flowers102.pt",
+    }
     for d in _ALL_DOMAINS:
         parser.add_argument(
-            f"--adapter-{d}", default=f"adapter_{d}.pt", metavar="FILE",
+            f"--adapter-{d}", default=_ADAPTER_DEFAULTS[d], metavar="FILE",
             help=f"Single-domain adapter weights for '{d}' (used for comparison).",
         )
     # Training hyperparameters

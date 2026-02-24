@@ -49,11 +49,16 @@ class FIFOEvictionCAM(ContinuousCAM):
 
 
 class CoPE_CAM(ContinuousCAM):
-    """G3 Baseline: CoPE-like (EMA Winner-Take-All, no LFU)."""
+    """G3 Baseline: CoPE-like (EMA Winner-Take-All, no LFU).
+
+    _get_nearest_batch returns (best_slots, best_sims, query_density).
+    We discard query_density here since CoPE does not use CSLS correction.
+    """
     def learn_local(self, queries: torch.Tensor, targets: torch.Tensor):
         queries = self._cast(queries)
         targets = self._cast(targets)
-        best_slots, best_sims = self._get_nearest_batch(queries)
+        # Unpack all 3 return values; discard query_density
+        best_slots, best_sims, _ = self._get_nearest_batch(queries)
 
         hits = (best_slots >= 0) & (best_sims >= self.vigilance)
 
@@ -72,6 +77,7 @@ class CoPE_CAM(ContinuousCAM):
             hit_slots = best_slots[hits]
             hit_queries = queries[hits]
             current_keys = self.keys[hit_slots]
+            # Standard EMA move (CoPE: no LFU, no adaptive alpha)
             self.keys[hit_slots] = current_keys + self.hebb_lr * (hit_queries - current_keys)
             self._update_key_norm(hit_slots)
             self.values[hit_slots] = targets[hits]

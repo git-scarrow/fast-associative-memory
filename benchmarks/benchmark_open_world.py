@@ -6,6 +6,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms, datasets
@@ -13,7 +14,20 @@ from sklearn.metrics import roc_auc_score
 import numpy as np
 
 from fast_associative_memory import FastAssociativeMemory
-from extract_dinov2_vitb14 import DinoV2FeatureExtractor
+
+
+class DINOv2Extractor(nn.Module):
+    """Thin wrapper around DINOv2 ViT-L/14 (1024-dim output)."""
+    def __init__(self):
+        super().__init__()
+        self.model = torch.hub.load(
+            "facebookresearch/dinov2", "dinov2_vitl14", verbose=False
+        )
+        self.model.eval()
+
+    @torch.no_grad()
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.model(x)  # (B, 1024)
 
 
 def run_g9_ood(root_dir, device="cuda"):
@@ -32,7 +46,7 @@ def run_g9_ood(root_dir, device="cuda"):
     print(f"  ID Samples:  {len(id_indices)} (Classes 0-499)")
     print(f"  OOD Samples: {len(ood_indices)} (Classes 500+)")
 
-    extractor = DinoV2FeatureExtractor().to(device)
+    extractor = DINOv2Extractor().to(device)
     fam = FastAssociativeMemory(input_dim=1024, value_dim=1000, core_entries=5000).to(device)
 
     train_loader = DataLoader(Subset(ds, id_indices), batch_size=128, shuffle=True, num_workers=4)
@@ -90,7 +104,7 @@ def run_g10_drift(root_dir, device="cuda"):
     subset  = Subset(ds_clean, indices)
     loader  = DataLoader(subset, batch_size=128, shuffle=True)
 
-    extractor = DinoV2FeatureExtractor().to(device)
+    extractor = DINOv2Extractor().to(device)
     fam = FastAssociativeMemory(input_dim=1024, value_dim=10, core_entries=2000).to(device)
 
     # Phase 1: Train Clean

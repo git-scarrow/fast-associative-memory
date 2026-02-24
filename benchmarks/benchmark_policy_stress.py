@@ -6,6 +6,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms, datasets
@@ -13,7 +14,20 @@ import numpy as np
 from collections import Counter
 
 from fast_associative_memory import FastAssociativeMemory
-from extract_dinov2_vitb14 import DinoV2FeatureExtractor
+
+
+class DINOv2Extractor(nn.Module):
+    """Thin wrapper around DINOv2 ViT-L/14 (1024-dim output)."""
+    def __init__(self):
+        super().__init__()
+        self.model = torch.hub.load(
+            "facebookresearch/dinov2", "dinov2_vitl14", verbose=False
+        )
+        self.model.eval()
+
+    @torch.no_grad()
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.model(x)  # (B, 1024)
 
 
 # ==========================================
@@ -68,7 +82,7 @@ def run_g7_tail_eviction(root_dir, device="cuda"):
 
     print(f"  Many (>100): {len(many_shot)} cls | Medium (20-100): {len(medium_shot)} cls | Few (<20): {len(few_shot)} cls")
 
-    extractor = DinoV2FeatureExtractor().to(device)
+    extractor = DINOv2Extractor().to(device)
     capacity = int(len(train_set) * 0.2)
     print(f"  Constraint: {capacity} slots for {len(train_set)} samples.")
 
@@ -145,7 +159,7 @@ def run_g6_granularity(root_dir, device="cuda"):
     subset = Subset(ds, indices)
     print(f"  Fine-Grained Subset: Classes {start_cls}-{end_cls} ({len(indices)} samples)")
 
-    extractor = DinoV2FeatureExtractor().to(device)
+    extractor = DINOv2Extractor().to(device)
     fam = FastAssociativeMemory(input_dim=1024, value_dim=1000,
                                 core_entries=10000, core_vigilance=0.92).to(device)
 
@@ -164,7 +178,7 @@ def run_g6_granularity(root_dir, device="cuda"):
             correct += (preds == lbls.to(device)).sum().item()
             total   += imgs.size(0)
 
-    acc   = 100 * correct / total
+    acc    = 100 * correct / total
     protos = fam.core_cam.occupied.sum().item()
     ratio  = protos / total
 

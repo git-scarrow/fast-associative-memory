@@ -1,32 +1,24 @@
-"""
-benchmarks/benchmark_mechanisms.py — The Mechanism Gauntlets (G3 & G4)
-Tests Plasticity (FAM vs CoPE) and Eviction (LFU vs Random vs FIFO).
-"""
-
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
-import copy
 import time
-import numpy as np
+import copy
 from fast_associative_memory import FastAssociativeMemory
 from associative_core import ContinuousCAM
 
-# --- ABLATION VARIANTS ---
+# --- ABLATION VARIANTS (Monkey-Patching) ---
 
 class RandomEvictionCAM(ContinuousCAM):
-    """G4 Baseline: Random Eviction (The Null Hypothesis)."""
+    """G4 Baseline: Random Eviction."""
     def _alloc_slots_batch(self, n: int):
         n = min(n, self.max_entries)
         free = (~self.occupied).nonzero(as_tuple=True)[0]
         if len(free) >= n:
             return free[:n]
         
-        # If full, pick RANDOM victims
         needed = n - len(free)
         occupied_idx = self.occupied.nonzero(as_tuple=True)[0]
         
-        # Exclude slots we are already claiming as free
         if len(free) > 0:
             mask = ~torch.isin(occupied_idx, free)
             occupied_idx = occupied_idx[mask]
@@ -37,12 +29,11 @@ class RandomEvictionCAM(ContinuousCAM):
             victims = occupied_idx[perm[:needed]]
         else:
             victims = occupied_idx[:0]
-            
         return torch.cat([free, victims]) if len(free) > 0 else victims
 
 
 class FIFOEvictionCAM(ContinuousCAM):
-    """G4 Baseline: FIFO Eviction (Ring Buffer)."""
+    """G4 Baseline: FIFO (Ring Buffer)."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.register_buffer("write_pointer", torch.tensor(0, dtype=torch.long))
@@ -57,14 +48,7 @@ class FIFOEvictionCAM(ContinuousCAM):
 
 
 class CoPE_CAM(ContinuousCAM):
-    """G3 Baseline: CoPE-like (Continual Prototype Evolution).
-    
-    Differences from FAM:
-    1. No LFU usage tracking.
-    2. Updates are P_new = P_old + alpha * (x - P_old).
-    3. Allocation only happens if min_dist > T (Vigilance).
-    4. Simple Momentum update (Standard CoPE).
-    """
+    """G3 Baseline: CoPE-like (Winner-Take-All Update)."""
     def learn_local(self, queries: torch.Tensor, targets: torch.Tensor):
         queries = self._cast(queries)
         targets = self._cast(targets)
@@ -84,7 +68,6 @@ class CoPE_CAM(ContinuousCAM):
 
         misses = ~hits
         
-        # CoPE Update: Move Winner Closer (EMA)
         if hits.any():
             hit_slots = best_slots[hits]
             hit_queries = queries[hits]
@@ -93,116 +76,107 @@ class CoPE_CAM(ContinuousCAM):
             self._update_key_norm(hit_slots)
             self.values[hit_slots] = targets[hits]
             self.last_seen[hit_slots] = time.time()
-            # No LFU update
 
-        # CoPE Allocation: Random Eviction when full
         if misses.any():
-            self.use_lfu = False
             super().learn_local(queries[misses], targets[misses])
 
 
 # --- HARNESS ---
 
-def run_mechanism_gauntlet(feature_dim=1024, n_samples=5000, n_classes=50, capacity=2000):
-    print(f"\n\u2694\ufe0f  MECHANISM GAUNTLET (G3/G4) \u2694\ufe0f")
-    print(f"Stream: {n_samples} samples, {n_classes} classes, Capacity constraint: {capacity} slots")
-    
-    # 1. Synthetic Multimodal Data (2 clusters per class to punish SCM)
-    print("Generating multimodal synthetic stream...")
+def generate_multimodal_data(dim, n_samples, n_classes):
+    """Generates 2 distinct clusters per class (held-out safe: centers re-sampled each call)."""
     X_list, Y_list = [], []
     for c in range(n_classes):
-        center_a = torch.randn(feature_dim)
-        cluster_a = center_a + torch.randn(n_samples // n_classes // 2, feature_dim) * 0.1
-        center_b = torch.randn(feature_dim)
-        cluster_b = center_b + torch.randn(n_samples // n_classes // 2, feature_dim) * 0.1
-        X_list.append(cluster_a)
-        X_list.append(cluster_b)
+        center_a = torch.randn(dim)
+        cluster_a = center_a + torch.randn(n_samples // n_classes // 2, dim) * 0.1
+        center_b = torch.randn(dim)
+        cluster_b = center_b + torch.randn(n_samples // n_classes // 2, dim) * 0.1
+        
+        X_list.extend([cluster_a, cluster_b])
         Y_list.extend([c] * len(cluster_a))
         Y_list.extend([c] * len(cluster_b))
         
     X = torch.cat(X_list)
     Y = torch.tensor(Y_list)
-    perm = torch.randperm(len(X))
-    X, Y = X[perm], Y[perm]
     X = F.normalize(X, dim=-1)
     
-    dataset = TensorDataset(X, Y)
-    loader = DataLoader(dataset, batch_size=256)
+    perm = torch.randperm(len(X))
+    return X[perm], Y[perm]
+
+
+def eval_model(model, loader, device):
+    correct, total = 0, 0
+    for x, y in loader:
+        preds = model(x.to(device)).argmax(dim=1)
+        correct += (preds == y.to(device)).sum().item()
+        total += x.size(0)
+    return 100 * correct / total
+
+
+def run_mechanism_gauntlet():
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    DIM = 512
+    N_CLASSES = 50
+    N_TRAIN = 5000
+    N_TEST = 1000
+    CAPACITY = 2000  # 40% of train size -> forces eviction
     
-    # 2. Setup Contenders
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    
+    print(f"\n\u2694\ufe0f  MECHANISM GAUNTLET (G3/G4) \u2694\ufe0f")
+    print(f"Dataset: {N_CLASSES} classes, Multimodal (2 clusters/class).")
+    print(f"Constraint: {CAPACITY} slots for {N_TRAIN} samples.")
+    print(f"Evaluation: held-out test set ({N_TEST} samples).")
+
+    X_train, Y_train = generate_multimodal_data(DIM, N_TRAIN, N_CLASSES)
+    X_test, Y_test = generate_multimodal_data(DIM, N_TEST, N_CLASSES)
+    train_loader = DataLoader(TensorDataset(X_train, Y_train), batch_size=256)
+    test_loader = DataLoader(TensorDataset(X_test, Y_test), batch_size=256)
+
     models = {
-        "G3_FAM":     FastAssociativeMemory(input_dim=feature_dim, value_dim=n_classes, core_entries=capacity),
-        "G3_CoPE":    FastAssociativeMemory(input_dim=feature_dim, value_dim=n_classes, core_entries=capacity),
-        "G4_FAM_LFU": FastAssociativeMemory(input_dim=feature_dim, value_dim=n_classes, core_entries=capacity),
-        "G4_Random":  FastAssociativeMemory(input_dim=feature_dim, value_dim=n_classes, core_entries=capacity),
-        "G4_FIFO":    FastAssociativeMemory(input_dim=feature_dim, value_dim=n_classes, core_entries=capacity),
+        "G3_FAM":     FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
+        "G3_CoPE":    FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
+        "G4_FAM_LFU": FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
+        "G4_Random":  FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
+        "G4_FIFO":    FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
     }
     
-    models["G3_CoPE"].core_cam = CoPE_CAM(feature_dim, n_classes, max_entries=capacity, vigilance=0.85).to(device)
-    models["G4_Random"].core_cam = RandomEvictionCAM(feature_dim, n_classes, max_entries=capacity, vigilance=0.85).to(device)
-    models["G4_FIFO"].core_cam = FIFOEvictionCAM(feature_dim, n_classes, max_entries=capacity, vigilance=0.85).to(device)
+    models["G3_CoPE"].core_cam = CoPE_CAM(DIM, N_CLASSES, max_entries=CAPACITY, vigilance=0.85).to(DEVICE)
+    models["G4_Random"].core_cam = RandomEvictionCAM(DIM, N_CLASSES, max_entries=CAPACITY, vigilance=0.85).to(DEVICE)
+    models["G4_FIFO"].core_cam = FIFOEvictionCAM(DIM, N_CLASSES, max_entries=CAPACITY, vigilance=0.85).to(DEVICE)
     for name in ["G3_FAM", "G4_FAM_LFU"]:
-        models[name] = models[name].to(device)
+        models[name] = models[name].to(DEVICE)
+        models[name].core_cam.use_lfu = True
 
-    # 3. Run Stream
-    print(f"Streaming on {device}...")
+    results = {}
     for name, model in models.items():
         start = time.time()
-        for x_batch, y_batch in loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-            model.learn_local(x_batch, y_batch)
-        print(f"[{name}] Trained in {time.time() - start:.2f}s")
+        for x, y in train_loader:
+            model.learn_local(x.to(DEVICE), y.to(DEVICE))
+        dur = time.time() - start
         
-    # 4. Evaluate
-    print("\n--- RESULTS (Retention under Constraint) ---")
-    print(f"{'Model':15s} | {'Acc':>8} | {'Protos':>12}")
-    print("-" * 45)
-    for name, model in models.items():
-        correct = 0
-        total = 0
-        occupied = model.core_cam.occupied.sum().item()
-        for x_batch, y_batch in loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-            preds = model(x_batch)
-            correct += (preds.argmax(dim=1) == y_batch).sum().item()
-            total += x_batch.size(0)
-        acc = 100 * correct / total
-        print(f"{name:15s} | {acc:7.2f}% | {occupied:5d}/{capacity}")
+        acc = eval_model(model, test_loader, DEVICE)
+        occ = model.core_cam.occupied.sum().item()
+        results[name] = acc
+        print(f"{name:14s} | Test Acc: {acc:.2f}% | Protos: {occ}/{CAPACITY} | Time: {dur:.2f}s")
 
-    # Kill condition verdicts
     print("\n--- KILL CONDITIONS ---")
-    accs = {}
-    for name, model in models.items():
-        correct = 0
-        total = 0
-        for x_batch, y_batch in loader:
-            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-            preds = model(x_batch)
-            correct += (preds.argmax(dim=1) == y_batch).sum().item()
-            total += x_batch.size(0)
-        accs[name] = 100 * correct / total
+    fam_acc  = results["G3_FAM"]
+    cope_acc = results["G3_CoPE"]
+    lfu_acc  = results["G4_FAM_LFU"]
+    rand_acc = results["G4_Random"]
+    fifo_acc = results["G4_FIFO"]
 
-    fam_acc = accs["G3_FAM"]
-    cope_acc = accs["G3_CoPE"]
-    lfu_acc = accs["G4_FAM_LFU"]
-    rand_acc = accs["G4_Random"]
-    fifo_acc = accs["G4_FIFO"]
-
-    print(f"G3 — FAM {fam_acc:.2f}% vs CoPE {cope_acc:.2f}%")
+    print(f"G3 \u2014 FAM {fam_acc:.2f}% vs CoPE {cope_acc:.2f}%")
     if cope_acc >= fam_acc:
-        print("\u26a0\ufe0f  G3 KILL CONDITION MET: CoPE >= FAM — vigilance+Hebbian adds nothing over EMA.")
+        print("\u26a0\ufe0f  G3 KILL: CoPE \u2265 FAM \u2014 Hebbian update adds nothing over EMA.")
     else:
-        print(f"\u2705  G3 PASS: FAM beats CoPE by +{fam_acc - cope_acc:.2f}%")
+        print(f"\u2705  G3 PASS: FAM beats CoPE by +{fam_acc - cope_acc:.2f}% on held-out test.")
 
-    print(f"G4 — FAM(LFU) {lfu_acc:.2f}% vs Random {rand_acc:.2f}% vs FIFO {fifo_acc:.2f}%")
+    print(f"G4 \u2014 LFU {lfu_acc:.2f}% vs Random {rand_acc:.2f}% vs FIFO {fifo_acc:.2f}%")
     if rand_acc >= lfu_acc or fifo_acc >= lfu_acc:
-        print("\u26a0\ufe0f  G4 KILL CONDITION MET: LFU eviction provides no advantage.")
+        print("\u26a0\ufe0f  G4 KILL: LFU eviction provides no advantage.")
     else:
-        print(f"\u2705  G4 PASS: LFU beats Random by +{lfu_acc - rand_acc:.2f}%, FIFO by +{lfu_acc - fifo_acc:.2f}%")
+        print(f"\u2705  G4 PASS: LFU beats Random by +{lfu_acc - rand_acc:.2f}%, FIFO by +{lfu_acc - fifo_acc:.2f}%.")
 
 
 if __name__ == "__main__":
-    # Capacity is 40% of dataset size -> forces heavy eviction
-    run_mechanism_gauntlet(capacity=2000)
+    run_mechanism_gauntlet()

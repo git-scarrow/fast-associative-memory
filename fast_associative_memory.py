@@ -12,6 +12,7 @@ import torch.nn.functional as F
 
 from associative_core import ContinuousCAM
 from adapter import MetricAdapter
+from nstp import NSTPController
 
 
 class WhiteningLayer(nn.Module):
@@ -68,7 +69,8 @@ class FastAssociativeMemory(nn.Module):
                  inference_k: int = 25, inference_temp: float = 0.05,
                  whitening_dim: int = 0, use_lfu: bool = True,
                  use_bfloat16: bool = False, immutable_keys: bool = False,
-                 adapter: MetricAdapter | None = None):
+                 adapter: MetricAdapter | None = None,
+                 nstp: NSTPController | None = None):
         super().__init__()
         self.input_dim = input_dim
         self.value_dim = value_dim
@@ -98,6 +100,7 @@ class FastAssociativeMemory(nn.Module):
             use_lfu=use_lfu,
             use_bfloat16=use_bfloat16,
             immutable_keys=immutable_keys,
+            nstp=nstp,
         )
 
     def fit_whitening(self, X: torch.Tensor):

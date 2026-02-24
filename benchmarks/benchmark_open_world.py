@@ -14,6 +14,8 @@ from sklearn.metrics import roc_auc_score
 import numpy as np
 
 from fast_associative_memory import FastAssociativeMemory
+from adapter import MetricAdapter
+from nstp import NSTPController
 
 
 class DINOv2Extractor(nn.Module):
@@ -154,6 +156,77 @@ def run_g10_drift(root_dir, device="cuda"):
         print("\u274c FAIL: Catastrophic Forgetting/Interference.")
 
 
+def _eval_embeds(fam, embeds, labels, batch_size=128):
+    """Evaluate FAM accuracy on pre-extracted embeddings, return accuracy (%)."""
+    fam.eval()
+    correct = 0
+    with torch.no_grad():
+        for i in range(0, len(embeds), batch_size):
+            preds = fam(embeds[i:i + batch_size]).argmax(1)
+            correct += (preds == labels[i:i + batch_size]).sum().item()
+    return 100.0 * correct / len(labels)
+
+
+def run_g10_drift_full_stack(root_dir, device="cuda"):
+    """G10 Concept Drift benchmark with Quantized Storage + NSTP + Adapter.
+
+    Confirms that the full-stack combination does not break the non-destructive
+    slot allocation property (Success criterion: BWT > -5%).
+    """
+    print("\n\U0001f32a\ufe0f  G10 FULL STACK: Concept Drift — Quantized + NSTP + Adapter  \U0001f32a")
+
+    tfm_clean = transforms.Compose([
+        transforms.Resize(256), transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    ds_clean = datasets.ImageFolder(root_dir, transform=tfm_clean)
+    indices = [i for i, t in enumerate(ds_clean.targets) if t < 10][:1000]
+    subset  = Subset(ds_clean, indices)
+    loader  = DataLoader(subset, batch_size=128, shuffle=True)
+
+    extractor = DINOv2Extractor().to(device)
+    adapter = MetricAdapter(input_dim=1024, output_dim=512)
+    nstp = NSTPController(sibling_threshold=0.85, depth_epsilon=0.10)
+    fam = FastAssociativeMemory(
+        input_dim=1024, value_dim=10, core_entries=2000,
+        use_bfloat16=True, adapter=adapter, nstp=nstp,
+    ).to(device)
+
+    # Phase 1: Train Clean
+    print("  Phase 1: Learning Clean Domain...")
+    for imgs, lbls in loader:
+        with torch.no_grad():
+            fam.learn_local(extractor(imgs.to(device)), lbls.to(device))
+
+    acc_clean_1 = evaluate(fam, extractor, loader, device)
+    print(f"  Clean Accuracy (T1): {acc_clean_1:.2f}%")
+
+    # Phase 2: Train Drift (heavy Gaussian blur applied in-loop)
+    print("  Phase 2: Learning Drift Domain (Blur)...")
+    blur = transforms.GaussianBlur(kernel_size=11, sigma=5.0)
+    for imgs, lbls in loader:
+        imgs = blur(imgs)
+        with torch.no_grad():
+            fam.learn_local(extractor(imgs.to(device)), lbls.to(device))
+
+    # Backward Transfer: does Clean still work?
+    acc_clean_2 = evaluate(fam, extractor, loader, device)
+    print(f"  Clean Accuracy (T2 - Backward Transfer): {acc_clean_2:.2f}%")
+
+    bwt = acc_clean_2 - acc_clean_1
+    print(f"\n--- G10 Full Stack Results ---")
+    print(f"Backward Transfer: {bwt:+.2f}%")
+
+    if bwt > -5.0:
+        print("\u2705 PASS: Full stack preserves multi-modal concepts (BWT > -5%).")
+    else:
+        print("\u274c FAIL: Catastrophic Forgetting/Interference with full stack.")
+
+    return bwt
+
+
 def evaluate(model, extractor, loader, device):
     correct = 0
     total   = 0
@@ -180,5 +253,6 @@ if __name__ == "__main__":
         dev = "cuda" if torch.cuda.is_available() else "cpu"
         run_g9_ood(IMAGENET_ROOT, dev)
         run_g10_drift(IMAGENET_ROOT, dev)
+        run_g10_drift_full_stack(IMAGENET_ROOT, dev)
     else:
         print(f"Please set --root or IMAGENET_ROOT (currently: {IMAGENET_ROOT!r}).")

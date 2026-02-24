@@ -2,11 +2,16 @@
 associative_core.py — Online prototype memory with EMA updates,
 temperature-scaled soft-kNN retrieval, and LFU-LRU hybrid eviction.
 """
+from __future__ import annotations
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import time
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from nstp import NSTPController
 
 
 def _make_orthogonal_prototypes(num_vectors: int, dim: int) -> torch.Tensor:
@@ -33,7 +38,7 @@ class ContinuousCAM(nn.Module):
                  immutable_keys: bool = False, use_lfu: bool = False,
                  use_bfloat16: bool = False, key_lr: float = 0.05,
                  inference_k: int = 20, inference_temp: float = 0.05,
-                 ema_beta: float = 0.05):
+                 ema_beta: float = 0.05, nstp: NSTPController | None = None):
         super().__init__()
         self.key_dim = key_dim
         self.value_dim = value_dim
@@ -75,6 +80,8 @@ class ContinuousCAM(nn.Module):
         # Per-prototype local neighborhood density for CSLS hubness correction
         self.register_buffer("prototype_density", torch.zeros(max_entries))
         self.csls_weight: float = 1.0
+        # Optional NSTP lateral inhibition controller (applied post-retrieval)
+        self.nstp = nstp
 
     @property
     def _mem_dtype(self):
@@ -227,6 +234,16 @@ class ContinuousCAM(nn.Module):
         topk_slots = broad_slots.gather(1, topk_locs)                         # (B, final_k)
         topk_sims = reranked_sims.gather(1, topk_locs)                        # (B, final_k)
 
+        # Optional NSTP lateral inhibition: suppress cross-class sibling prototypes.
+        # Suppressed entries are zeroed in the similarity vector; at inference_temp=0.05
+        # exp(0/0.05) ≈ 1 vs exp(0.9/0.05) ≈ 6e7, so suppressed weight is negligible.
+        if self.nstp is not None:
+            topk_keys = self.keys[topk_slots].float()   # (B, final_k, key_dim)
+            topk_vals = self.values[topk_slots].float() # (B, final_k, value_dim)
+            _, topk_sims = self.nstp.prune_batch(
+                q_norm.float(), topk_keys, topk_vals, topk_sims
+            )
+
         # Optional similarity floor
         if self.inference_sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(topk_sims < self.inference_sim_floor,
@@ -305,7 +322,8 @@ class ContinuousCAM(nn.Module):
             # Value EMA: adaptive_alpha * (mean_target - current_value)
             current_vals = self.values[unique_slots]
             self.values[unique_slots] = (current_vals +
-                                         adaptive_alpha.unsqueeze(1) * (slot_target_mean - current_vals))
+                                         adaptive_alpha.unsqueeze(1) * (slot_target_mean - current_vals)
+                                         ).to(self._mem_dtype)
 
             # Key centroid drift (skip if keys are frozen)
             if not self.immutable_keys:
@@ -319,7 +337,8 @@ class ContinuousCAM(nn.Module):
                                       (1.0 + self.ema_beta * self.hit_counts[unique_slots].float()))
                 current_keys = self.keys[unique_slots]
                 self.keys[unique_slots] = (current_keys +
-                                           adaptive_key_alpha.unsqueeze(1) * (slot_query_mean - current_keys))
+                                           adaptive_key_alpha.unsqueeze(1) * (slot_query_mean - current_keys)
+                                           ).to(self._mem_dtype)
                 self._update_key_norm(unique_slots)
 
             # CSLS density EMA: scatter-mean query densities to unique hit slots

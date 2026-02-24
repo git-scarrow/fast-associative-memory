@@ -87,19 +87,37 @@ class CoPE_CAM(ContinuousCAM):
             super().learn_local(queries[misses], targets[misses])
 
 
-# --- HARNESS ---
+# --- DATA GENERATION ---
 
 def generate_multimodal_data(dim, n_samples, n_classes):
-    """Generates 2 distinct clusters per class."""
+    """Generates 2 maximally-separated clusters per class using orthogonal centers.
+
+    Fix v3: Use QR-decomposed orthogonal basis vectors as class centers instead
+    of random randn centers. In high-dimensional space, random centers have
+    near-zero expected cosine similarity to each other, making all clusters
+    overlap at the inter-class level. Orthogonal centers guarantee
+    cos(center_a, center_b) = 0 for all a != b, giving maximum separation.
+    Intra-cluster std is reduced to 0.03 (was 0.1) to keep clusters tight.
+    """
+    # Build orthogonal class centers via QR decomposition
+    if n_classes <= dim:
+        Q, _ = torch.linalg.qr(torch.randn(dim, dim))
+        class_centers = Q[:n_classes]                    # (n_classes, dim), orthonormal rows
+    else:
+        # More classes than dims: use normalized randn (best we can do)
+        class_centers = F.normalize(torch.randn(n_classes, dim), dim=-1)
+
+    samples_per_cluster = n_samples // n_classes // 2
     X_list, Y_list = [], []
     for c in range(n_classes):
-        center_a = torch.randn(dim)
-        cluster_a = center_a + torch.randn(n_samples // n_classes // 2, dim) * 0.1
-        center_b = torch.randn(dim)
-        cluster_b = center_b + torch.randn(n_samples // n_classes // 2, dim) * 0.1
+        center_a = class_centers[c]
+        center_b = -class_centers[c]                     # antipodal second cluster
+        cluster_a = center_a + torch.randn(samples_per_cluster, dim) * 0.03
+        cluster_b = center_b + torch.randn(samples_per_cluster, dim) * 0.03
         X_list.extend([cluster_a, cluster_b])
-        Y_list.extend([c] * len(cluster_a))
-        Y_list.extend([c] * len(cluster_b))
+        Y_list.extend([c] * samples_per_cluster)
+        Y_list.extend([c] * samples_per_cluster)
+
     X = torch.cat(X_list)
     Y = torch.tensor(Y_list)
     X = F.normalize(X, dim=-1)
@@ -122,13 +140,19 @@ def run_mechanism_gauntlet():
     N_CLASSES = 50
     N_TRAIN = 5000
     N_TEST = 1000
-    CAPACITY = 2000  # 40% of train size -> forces eviction
 
-    print(f"\n\u2694\ufe0f  MECHANISM GAUNTLET (G3/G4) \u2694\ufe0f")
+    # G3: enough capacity to hold most prototypes (eviction not the focus)
+    G3_CAPACITY = 2000
+    # G4: tight capacity — forces >80% fill so eviction policy is exercised continuously.
+    # Fix v3: was 2000 (only 14% fill, eviction never triggered). Now 200 = 4% of
+    # train size, guaranteeing constant eviction pressure from batch 1.
+    G4_CAPACITY = 200
+
+    print(f"\n\u2694\ufe0f  MECHANISM GAUNTLET (G3/G4) v3 \u2694\ufe0f")
     print(f"Device: {DEVICE}")
-    print(f"Dataset: {N_CLASSES} classes, multimodal (2 clusters/class)")
-    print(f"Constraint: {CAPACITY} slots for {N_TRAIN} train samples")
-    print(f"Evaluation: held-out test set ({N_TEST} samples)")
+    print(f"Dataset: {N_CLASSES} classes, orthogonal centers, antipodal clusters")
+    print(f"G3 capacity: {G3_CAPACITY} slots | G4 capacity: {G4_CAPACITY} slots (forced eviction)")
+    print(f"Train: {N_TRAIN} samples | Test: {N_TEST} samples (held-out)")
 
     X_train, Y_train = generate_multimodal_data(DIM, N_TRAIN, N_CLASSES)
     X_test, Y_test = generate_multimodal_data(DIM, N_TEST, N_CLASSES)
@@ -136,24 +160,31 @@ def run_mechanism_gauntlet():
     test_loader = DataLoader(TensorDataset(X_test, Y_test), batch_size=256)
 
     models = {
-        "G3_FAM":     FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
-        "G3_CoPE":    FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
-        "G4_FAM_LFU": FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
-        "G4_Random":  FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
-        "G4_FIFO":    FastAssociativeMemory(DIM, N_CLASSES, core_entries=CAPACITY),
+        "G3_FAM":     FastAssociativeMemory(DIM, N_CLASSES, core_entries=G3_CAPACITY),
+        "G3_CoPE":    FastAssociativeMemory(DIM, N_CLASSES, core_entries=G3_CAPACITY),
+        "G4_FAM_LFU": FastAssociativeMemory(DIM, N_CLASSES, core_entries=G4_CAPACITY),
+        "G4_Random":  FastAssociativeMemory(DIM, N_CLASSES, core_entries=G4_CAPACITY),
+        "G4_FIFO":    FastAssociativeMemory(DIM, N_CLASSES, core_entries=G4_CAPACITY),
     }
 
-    models["G3_CoPE"].core_cam = CoPE_CAM(DIM, N_CLASSES, max_entries=CAPACITY, vigilance=0.85).to(DEVICE)
-    models["G4_Random"].core_cam = RandomEvictionCAM(DIM, N_CLASSES, max_entries=CAPACITY, vigilance=0.85).to(DEVICE)
-    models["G4_FIFO"].core_cam = FIFOEvictionCAM(DIM, N_CLASSES, max_entries=CAPACITY, vigilance=0.85).to(DEVICE)
+    models["G3_CoPE"].core_cam = CoPE_CAM(
+        DIM, N_CLASSES, max_entries=G3_CAPACITY, vigilance=0.85).to(DEVICE)
+    models["G4_Random"].core_cam = RandomEvictionCAM(
+        DIM, N_CLASSES, max_entries=G4_CAPACITY, vigilance=0.85).to(DEVICE)
+    models["G4_FIFO"].core_cam = FIFOEvictionCAM(
+        DIM, N_CLASSES, max_entries=G4_CAPACITY, vigilance=0.85).to(DEVICE)
     for name in ["G3_FAM", "G4_FAM_LFU"]:
         models[name] = models[name].to(DEVICE)
         models[name].core_cam.use_lfu = True
 
     results = {}
+    caps = {"G3_FAM": G3_CAPACITY, "G3_CoPE": G3_CAPACITY,
+            "G4_FAM_LFU": G4_CAPACITY, "G4_Random": G4_CAPACITY, "G4_FIFO": G4_CAPACITY}
+
     print(f"\n{'Model':14s} | {'Test Acc':>9} | {'Protos':>12} | {'Time':>6}")
     print("-" * 52)
     for name, model in models.items():
+        cap = caps[name]
         start = time.time()
         for x, y in train_loader:
             model.learn_local(x.to(DEVICE), y.to(DEVICE))
@@ -161,7 +192,7 @@ def run_mechanism_gauntlet():
         acc = eval_model(model, test_loader, DEVICE)
         occ = model.core_cam.occupied.sum().item()
         results[name] = acc
-        print(f"{name:14s} | {acc:8.2f}% | {occ:5d}/{CAPACITY} | {dur:.2f}s")
+        print(f"{name:14s} | {acc:8.2f}% | {occ:5d}/{cap} | {dur:.2f}s")
 
     print("\n--- KILL CONDITIONS ---")
     fam_acc  = results["G3_FAM"]

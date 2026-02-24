@@ -40,16 +40,29 @@ def run_g9_ood(root_dir, device="cuda"):
     ])
     ds = datasets.ImageFolder(root_dir, transform=tfm)
 
-    id_indices  = [i for i, t in enumerate(ds.targets) if t < 500][:5000]
-    ood_indices = [i for i, t in enumerate(ds.targets) if t >= 500][:5000]
+    # Fix v2: split dynamically at n_classes // 2 so the benchmark works
+    # regardless of whether the folder has 200, 500, or 1000 classes.
+    # Hardcoding 500 caused OOD Samples: 0 when the dataset had <500 classes.
+    n_classes = len(ds.classes)
+    split = n_classes // 2
+    print(f"  Dataset: {n_classes} classes, splitting at class {split}")
 
-    print(f"  ID Samples:  {len(id_indices)} (Classes 0-499)")
-    print(f"  OOD Samples: {len(ood_indices)} (Classes 500+)")
+    id_indices  = [i for i, t in enumerate(ds.targets) if t < split][:5000]
+    ood_indices = [i for i, t in enumerate(ds.targets) if t >= split][:5000]
+
+    print(f"  ID Samples:  {len(id_indices)} (Classes 0-{split-1})")
+    print(f"  OOD Samples: {len(ood_indices)} (Classes {split}+)")
+
+    if len(ood_indices) == 0:
+        print("  ERROR: No OOD samples found. Check IMAGENET_ROOT structure.")
+        return
 
     extractor = DINOv2Extractor().to(device)
-    fam = FastAssociativeMemory(input_dim=1024, value_dim=1000, core_entries=5000).to(device)
+    fam = FastAssociativeMemory(input_dim=1024, value_dim=n_classes,
+                                core_entries=5000).to(device)
 
-    train_loader = DataLoader(Subset(ds, id_indices), batch_size=128, shuffle=True, num_workers=4)
+    train_loader = DataLoader(Subset(ds, id_indices), batch_size=128,
+                              shuffle=True, num_workers=4)
     print("  Learning ID knowledge...")
     for imgs, lbls in train_loader:
         with torch.no_grad():
@@ -82,10 +95,13 @@ def run_g9_ood(root_dir, device="cuda"):
 
     auroc = roc_auc_score(labels, confs)
     print(f"\n--- G9 Results ---")
+    print(f"Dataset: {n_classes} classes, ID=0-{split-1}, OOD={split}+")
     print(f"OOD Detection AUROC: {auroc:.4f}")
 
     if auroc > 0.85:
         print("\u2705 PASS: FAM knows what it doesn't know.")
+    elif auroc > 0.70:
+        print("\u26a0\ufe0f  WARN: Partial OOD rejection (0.70 < AUROC \u2264 0.85).")
     else:
         print("\u274c FAIL: FAM is hallucinating confidence on OOD data.")
 

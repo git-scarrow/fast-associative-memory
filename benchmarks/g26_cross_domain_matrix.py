@@ -175,13 +175,13 @@ def _parse_args(argv=None):
     )
     parser.add_argument(
         "--cifar-cache",
-        default="./feature_cache_vitb14",
+        default="./feature_cache_vitl14",
         metavar="DIR",
         help="Directory of CIFAR-100 feature cache (*train*.pt / *test*.pt).",
     )
     parser.add_argument(
         "--imagenet-r-cache",
-        default="./feature_cache_imagenet_r_vitl14",
+        default="./feature_cache_inr_vitl14",
         metavar="DIR",
         help="Directory of ImageNet-R feature cache (*train*.pt / *test*.pt).",
     )
@@ -193,7 +193,7 @@ def _parse_args(argv=None):
     )
     parser.add_argument(
         "--adapter-cars",
-        default="adapter_stanford_cars.pt",
+        default="./data/stanford_cars/adapter_stanford_cars.pt",
         metavar="FILE",
         help="Path to Stanford Cars adapter state-dict.",
     )
@@ -205,7 +205,7 @@ def _parse_args(argv=None):
     )
     parser.add_argument(
         "--adapter-flowers",
-        default="adapter_flowers102.pt",
+        default="./data/flowers102/adapter_flowers102.pt",
         metavar="FILE",
         help="Path to Flowers-102 adapter state-dict.",
     )

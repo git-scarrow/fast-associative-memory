@@ -77,7 +77,8 @@ class FastAssociativeMemory(nn.Module):
                  whitening_dim: int = 0, use_lfu: bool = True,
                  use_bfloat16: bool = False, immutable_keys: bool = False,
                  adapter: MetricAdapter | None = None,
-                 nstp: NSTPController | None = None):
+                 nstp: NSTPController | None = None,
+                  dynamic_vigilance=None):
         super().__init__()
         self.input_dim = input_dim
         self.value_dim = value_dim
@@ -97,6 +98,9 @@ class FastAssociativeMemory(nn.Module):
         # Optional NSTP lateral-inhibition controller (inference-only)
         self.nstp = nstp
 
+        # Optional dynamic vigilance scheduler (injected into core CAM)
+        self.dynamic_vigilance = dynamic_vigilance
+
         # Single core memory
         self.core_cam = ContinuousCAM(
             key_dim=cam_key_dim,
@@ -110,6 +114,7 @@ class FastAssociativeMemory(nn.Module):
             use_lfu=use_lfu,
             use_bfloat16=use_bfloat16,
             immutable_keys=immutable_keys,
+            dynamic_vigilance=dynamic_vigilance,
         )
         if nstp is not None:
             self.core_cam.nstp = nstp

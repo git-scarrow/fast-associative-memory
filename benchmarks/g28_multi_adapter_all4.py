@@ -370,30 +370,30 @@ def _parse_args(argv=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     # Fine-grained domain caches
-    parser.add_argument("--cache-birds", required=True, metavar="DIR",
+    parser.add_argument("--cache-birds", default="./data/cub200", metavar="DIR",
                         help="Feature cache directory for CUB-200 Birds.")
-    parser.add_argument("--cache-cars", required=True, metavar="DIR",
+    parser.add_argument("--cache-cars", default="./data/stanford_cars", metavar="DIR",
                         help="Feature cache directory for Stanford Cars.")
-    parser.add_argument("--cache-aircraft", required=True, metavar="DIR",
+    parser.add_argument("--cache-aircraft", default="./data/fgvc_aircraft", metavar="DIR",
                         help="Feature cache directory for FGVC Aircraft.")
-    parser.add_argument("--cache-flowers", required=True, metavar="DIR",
+    parser.add_argument("--cache-flowers", default="./data/flowers102/feature_cache", metavar="DIR",
                         help="Feature cache directory for Oxford Flowers-102.")
     # Cross-domain caches
-    parser.add_argument("--cifar-cache", required=True, metavar="DIR",
+    parser.add_argument("--cifar-cache", default="./feature_cache_vitl14", metavar="DIR",
                         help="Feature cache directory for CIFAR-100.")
-    parser.add_argument("--imagenet-r-cache", required=True, metavar="DIR",
+    parser.add_argument("--imagenet-r-cache", default="./feature_cache_inr_vitl14", metavar="DIR",
                         help="Feature cache directory for ImageNet-R.")
     # Single-domain adapter paths (optional — warning printed if missing)
     parser.add_argument("--adapter-birds", default="adapter_cub200_birds.pt",
                         metavar="FILE", help="Single-domain Birds adapter weights.")
-    parser.add_argument("--adapter-cars", default="adapter_stanford_cars.pt",
+    parser.add_argument("--adapter-cars", default="./data/stanford_cars/adapter_stanford_cars.pt",
                         metavar="FILE", help="Single-domain Cars adapter weights.")
     parser.add_argument("--adapter-aircraft", default="adapter_fgvc_aircraft.pt",
                         metavar="FILE", help="Single-domain Aircraft adapter weights.")
-    parser.add_argument("--adapter-flowers", default="adapter_flowers102.pt",
+    parser.add_argument("--adapter-flowers", default="./data/flowers102/adapter_flowers102.pt",
                         metavar="FILE", help="Single-domain Flowers adapter weights.")
     # Top-2 multi-domain adapter (informational, optional)
-    parser.add_argument("--adapter-top2", default=None, metavar="FILE",
+    parser.add_argument("--adapter-top2", default="adapter_multi_top2.pt", metavar="FILE",
                         help="G27 multi-top2 adapter weights (informational).")
     # Training hyper-parameters
     parser.add_argument("--epochs", type=int, default=5)

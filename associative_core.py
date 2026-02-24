@@ -33,12 +33,15 @@ class ContinuousCAM(nn.Module):
                  immutable_keys: bool = False, use_lfu: bool = False,
                  use_bfloat16: bool = False, key_lr: float = 0.05,
                  inference_k: int = 20, inference_temp: float = 0.05,
-                 ema_beta: float = 0.05):
+                 ema_beta: float = 0.05,
+                 dynamic_vigilance=None):
         super().__init__()
         self.key_dim = key_dim
         self.value_dim = value_dim
         self.max_entries = max_entries
         self.vigilance = vigilance
+        self.dynamic_vigilance = dynamic_vigilance
+        self._dynamic_vigilance_stats = {"sum_v": 0.0, "sum_margin": 0.0, "count": 0}
         self.hebb_lr = hebb_lr
         self.aging_time = aging_time
         self.flood_scale = flood_scale
@@ -286,8 +289,63 @@ class ContinuousCAM(nn.Module):
 
         best_slots, best_sims, query_density = self._get_nearest_batch(queries)
 
-        # Flat vigilance check (no per-engram thresholds)
-        hits = (best_slots >= 0) & (best_sims >= self.vigilance)
+        # Flat or margin-based dynamic vigilance check
+        if self.dynamic_vigilance is not None and self.occupied.any():
+            # We already computed best match via _get_nearest_batch.
+            # To avoid allocating a second full (B, N_occ) sim matrix, compute
+            # the best *other-class* competitor in small query chunks.
+            valid_idx = self.occupied.nonzero(as_tuple=True)[0]
+            keys_occ = self._keys_norm[valid_idx]  # (N_occ, D)
+            proto_labels = self.values[valid_idx].float().argmax(dim=-1)  # (N_occ,)
+
+            B = queries.size(0)
+            best_classes = torch.full((B,), -1, dtype=torch.long, device=queries.device)
+            has_best = best_slots >= 0
+            if has_best.any():
+                best_classes[has_best] = self.values[best_slots[has_best]].float().argmax(dim=-1)
+
+            margins = torch.empty((B,), device=queries.device, dtype=torch.float32)
+            v_eff = torch.empty((B,), device=queries.device, dtype=torch.float32)
+
+            very_low = -1e9
+            chunk_q = 16
+            dv = self.dynamic_vigilance
+
+            for s in range(0, B, chunk_q):
+                e = min(B, s + chunk_q)
+                q = F.normalize(queries[s:e].float(), dim=-1)  # (C, D)
+                sims = q @ keys_occ.T  # (C, N_occ)
+
+                bc = best_classes[s:e]
+                same_class = proto_labels.unsqueeze(0) == bc.unsqueeze(1)
+                sims_other = sims.masked_fill(same_class, very_low)
+                sim_other, _ = sims_other.max(dim=1)
+
+                margin = best_sims[s:e] - sim_other
+                margins[s:e] = margin
+
+                v = dv.v_base - dv.alpha * margin
+                v_eff[s:e] = torch.clamp(v, dv.v_floor, dv.v_ceiling)
+
+            # Track running means for benchmarking/telemetry
+            self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
+            self._dynamic_vigilance_stats["sum_margin"] += float(margins.sum().item())
+            self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
+
+            # Optional per-call logging for external analysis (enabled when
+            # a list attribute `margin_log` / `vigilance_log` is attached).
+            margin_log = getattr(self, "margin_log", None)
+            if isinstance(margin_log, list):
+                margin_log.append(margins.detach().cpu())
+            v_log = getattr(self, "vigilance_log", None)
+            if isinstance(v_log, list):
+                v_log.append(v_eff.detach().cpu())
+
+            vigilance_thresholds = v_eff.to(best_sims.device)
+        else:
+            vigilance_thresholds = torch.full_like(best_sims, self.vigilance)
+
+        hits = (best_slots >= 0) & (best_sims >= vigilance_thresholds)
 
         # Bipartite class check: demote hits where stored class differs
         if hits.any():
@@ -483,6 +541,13 @@ class ContinuousCAM(nn.Module):
             stats["avg_prototype_density"] = self.prototype_density[self.occupied].mean().item()
         else:
             stats["avg_prototype_density"] = 0.0
+        if self._dynamic_vigilance_stats["count"] > 0:
+            count = float(self._dynamic_vigilance_stats["count"])
+            stats["mean_v_effective"] = self._dynamic_vigilance_stats["sum_v"] / count
+            stats["mean_margin"] = self._dynamic_vigilance_stats["sum_margin"] / count
+        else:
+            stats["mean_v_effective"] = float(self.vigilance)
+            stats["mean_margin"] = 0.0
         return stats
 
 

@@ -224,22 +224,29 @@ def train_ridge_probe(
     lam: float,
     device: torch.device,
     seed: int,
+    batch_size: int = 256,
 ):
-    """Baseline 2b — streaming ridge regression via Sherman-Morrison updates.
+    """Baseline 2b — streaming ridge regression via batched Woodbury updates.
 
-    Maintains the Woodbury / Sherman-Morrison incremental inverse of
-    ``A = X_aug^T X_aug + λI``, where ``X_aug`` appends a bias column of 1s
-    to the embedding so that no separate bias term is needed.
+    Maintains the incremental inverse of ``A = X_aug^T X_aug + λI``, where
+    ``X_aug`` appends a bias column of 1s to the embedding so that no separate
+    bias term is needed.
 
     Memory footprint: ``(D+1)² × 4`` bytes for ``A⁻¹`` plus
     ``(D+1) × num_classes × 4`` bytes for ``b = X_aug^T Y``.
 
-    Update rule (rank-1 Sherman-Morrison each new sample)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Let ``v = A⁻¹ x_aug``.  Then::
+    Update rule (rank-K Woodbury / matrix-inversion lemma per mini-batch)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    For a mini-batch ``X`` of shape ``(K, D+1)``::
 
-        A⁻¹  ←  A⁻¹  −  outer(v, v) / (1 + x_aug · v)
-        b    ←  b    +  outer(x_aug, y_onehot)
+        V  = A⁻¹ Xᵀ          (D+1, K)
+        C  = I_K + X V        (K, K)
+        A⁻¹ ← A⁻¹ − V C⁻¹ Vᵀ
+        b   ← b + Xᵀ Y
+
+    This is equivalent to K sequential Sherman-Morrison rank-1 steps but
+    requires only one linear solve per batch, making it far faster for
+    large datasets.
 
     Prediction: ``W = A⁻¹ b``,  ``logits = x_feat @ W[:-1] + W[-1]``
 
@@ -261,21 +268,28 @@ def train_ridge_probe(
     A_inv = torch.eye(D, device=device) / lam
     b = torch.zeros(D, num_classes, device=device)
 
-    t0 = time.time()
-    for i in range(len(train_embeds)):
-        x = train_embeds[i]                              # (embed_dim,)
-        x_aug = torch.cat([x, x.new_ones(1)])            # (D,)
-        y = F.one_hot(train_labels[i], num_classes=num_classes).float()  # (num_classes,)
-        # Sherman-Morrison rank-1 update of A⁻¹
-        v = A_inv @ x_aug                                # (D,)
-        denom = 1.0 + x_aug @ v                          # scalar tensor
-        # Guard against numerical instability (denom should always be >0 with λ>0,
-        # but floating-point drift can make it very small).
-        if denom.item() > 1e-8:
-            A_inv -= torch.outer(v, v) / denom
+    ones = train_embeds.new_ones(batch_size, 1)  # reused bias column
 
-        # Accumulate right-hand side
-        b.addr_(x_aug, y)                                # in-place outer add
+    t0 = time.time()
+    for i in range(0, len(train_embeds), batch_size):
+        x_batch = train_embeds[i: i + batch_size]                 # (K, embed_dim)
+        K = x_batch.size(0)
+        if K < batch_size:
+            ones = x_batch.new_ones(K, 1)
+        x_aug = torch.cat([x_batch, ones], dim=1)                 # (K, D)
+        y_batch = F.one_hot(
+            train_labels[i: i + batch_size], num_classes=num_classes
+        ).float()                                                  # (K, num_classes)
+
+        # Batched Woodbury rank-K inverse update
+        V = A_inv @ x_aug.T                                        # (D, K)
+        C = torch.eye(K, device=device) + x_aug @ V               # (K, K)
+        # Solve C @ Z = Vᵀ  →  Z = C⁻¹ Vᵀ, then subtract V @ Z from A_inv
+        Z = torch.linalg.solve(C, V.T)                            # (K, D)
+        A_inv -= V @ Z                                             # (D, D)
+
+        # Accumulate right-hand side: b += X_aug^T Y
+        b += x_aug.T @ y_batch                                     # (D, num_classes)
 
     train_time = time.time() - t0
 

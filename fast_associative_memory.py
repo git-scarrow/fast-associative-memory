@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from associative_core import ContinuousCAM
+from adapter import MetricAdapter
 
 
 class WhiteningLayer(nn.Module):
@@ -53,6 +54,12 @@ class FastAssociativeMemory(nn.Module):
     Receives raw DINOv2 features (default 1024-d), optionally whitens them,
     then stores/retrieves via a single ContinuousCAM using Top-K
     softmax-weighted voting with class-conditional centroid drift.
+
+    An optional :class:`~adapter.MetricAdapter` can be supplied to apply a
+    learned metric projection before keys are committed to memory.  When
+    provided, the adapter is applied in both :meth:`forward` and
+    :meth:`learn_local` so that retrieval and storage share the same feature
+    space.  FAM remains fully functional when ``adapter=None``.
     """
 
     def __init__(self, input_dim: int = 1024, value_dim: int = 100,
@@ -60,18 +67,23 @@ class FastAssociativeMemory(nn.Module):
                  hebb_lr: float = 0.1, key_lr: float = 0.05,
                  inference_k: int = 25, inference_temp: float = 0.05,
                  whitening_dim: int = 0, use_lfu: bool = True,
-                 use_bfloat16: bool = False, immutable_keys: bool = False):
+                 use_bfloat16: bool = False, immutable_keys: bool = False,
+                 adapter: MetricAdapter | None = None):
         super().__init__()
         self.input_dim = input_dim
         self.value_dim = value_dim
 
+        # Optional metric adapter: applied before whitening (if both are set)
+        self.adapter = adapter
+        pre_dim = adapter.output_dim if adapter is not None else input_dim
+
         # Optional PCA whitening
         if whitening_dim > 0:
-            self.whitening: WhiteningLayer | None = WhiteningLayer(input_dim, whitening_dim)
+            self.whitening: WhiteningLayer | None = WhiteningLayer(pre_dim, whitening_dim)
             cam_key_dim = whitening_dim
         else:
             self.whitening = None
-            cam_key_dim = input_dim
+            cam_key_dim = pre_dim
 
         # Single core memory
         self.core_cam = ContinuousCAM(
@@ -93,17 +105,22 @@ class FastAssociativeMemory(nn.Module):
         if self.whitening is not None:
             self.whitening.fit(X)
 
+    def _project(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply adapter then whitening (each is a no-op when disabled)."""
+        if self.adapter is not None:
+            x = self.adapter(x)
+        if self.whitening is not None:
+            x = self.whitening(x)
+        return x
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Retrieve class predictions via soft-kNN voting."""
         with torch.no_grad():
-            if self.whitening is not None:
-                x = self.whitening(x)
-            return self.core_cam(x)
+            return self.core_cam(self._project(x))
 
     def learn_local(self, x: torch.Tensor, class_ids: torch.Tensor):
-        """Online learning: whiten, form one-hot target, commit to core CAM."""
+        """Online learning: project (adapter + whiten), form one-hot target, commit to core CAM."""
         with torch.no_grad():
-            if self.whitening is not None:
-                x = self.whitening(x)
+            x = self._project(x)
             targets = F.one_hot(class_ids, num_classes=self.value_dim).float()
             self.core_cam.learn_local(x, targets)

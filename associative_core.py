@@ -175,13 +175,21 @@ class ContinuousCAM(nn.Module):
     # ------------------------------------------------------------------
     # Forward / Learn — fully batched
     # ------------------------------------------------------------------
-    def forward(self, queries: torch.Tensor) -> torch.Tensor:
+    def forward(self, queries: torch.Tensor, nstp=None) -> torch.Tensor:
         """Broad cosine search → diagonal Mahalanobis re-ranking → soft-kNN vote.
 
         1. Broad search: top-100 candidates by cosine similarity (single matmul).
         2. Re-rank: scale query and candidate keys by per-class inverse-std, then
            recompute cosine similarity in the whitened feature space.
         3. Vote: softmax-weighted sum over the top-inference_k re-ranked slots.
+
+        Args:
+            queries: Input query tensor, shape ``(B, key_dim)``.
+            nstp:    Optional :class:`~nstp.NSTPController` for post-retrieval
+                     lateral inhibition.  When provided, suppressed candidates
+                     are masked to ``-inf`` before the final softmax vote so
+                     that they contribute zero weight.  ``None`` disables NSTP
+                     (default, preserves existing behaviour exactly).
         """
         now = time.time()
         if not self.occupied.any():
@@ -229,12 +237,15 @@ class ContinuousCAM(nn.Module):
         topk_sims = reranked_sims.gather(1, topk_locs)                        # (B, final_k)
 
         # --- Step 4b: NSTP lateral inhibition (optional) ---
-        if self.nstp is not None:
-            topk_keys = self.keys[topk_slots].float()                         # (B, final_k, D)
-            topk_vals = self.values[topk_slots].float()                       # (B, final_k, V)
-            nstp_masks, topk_sims = self.nstp.prune_batch(
-                queries.float(), topk_keys, topk_vals, topk_sims)
-            topk_sims = topk_sims.masked_fill(~nstp_masks, -float("inf"))
+        # Per-call `nstp` parameter takes priority; falls back to instance self.nstp.
+        _nstp = nstp if nstp is not None else self.nstp
+        if _nstp is not None:
+            topk_keys = self.keys[topk_slots].float()                         # (B, final_k, key_dim)
+            topk_vals = self.values[topk_slots].float()                       # (B, final_k, value_dim)
+            keep_mask, _ = _nstp.prune_batch(
+                q_norm.float(), topk_keys, topk_vals, topk_sims
+            )
+            topk_sims = topk_sims.masked_fill(~keep_mask, -float("inf"))
 
         # Optional similarity floor
         if self.inference_sim_floor > 0.0:
@@ -314,7 +325,8 @@ class ContinuousCAM(nn.Module):
             # Value EMA: adaptive_alpha * (mean_target - current_value)
             current_vals = self.values[unique_slots]
             self.values[unique_slots] = (current_vals +
-                                         adaptive_alpha.unsqueeze(1) * (slot_target_mean - current_vals))
+                                         adaptive_alpha.unsqueeze(1) * (slot_target_mean - current_vals)
+                                         ).to(self._mem_dtype)
 
             # Key centroid drift (skip if keys are frozen)
             if not self.immutable_keys:
@@ -328,7 +340,8 @@ class ContinuousCAM(nn.Module):
                                       (1.0 + self.ema_beta * self.hit_counts[unique_slots].float()))
                 current_keys = self.keys[unique_slots]
                 self.keys[unique_slots] = (current_keys +
-                                           adaptive_key_alpha.unsqueeze(1) * (slot_query_mean - current_keys))
+                                           adaptive_key_alpha.unsqueeze(1) * (slot_query_mean - current_keys)
+                                           ).to(self._mem_dtype)
                 self._update_key_norm(unique_slots)
 
             # CSLS density EMA: scatter-mean query densities to unique hit slots

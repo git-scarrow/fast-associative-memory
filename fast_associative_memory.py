@@ -61,6 +61,13 @@ class FastAssociativeMemory(nn.Module):
     provided, the adapter is applied in both :meth:`forward` and
     :meth:`learn_local` so that retrieval and storage share the same feature
     space.  FAM remains fully functional when ``adapter=None``.
+
+    An optional :class:`~nstp.NSTPController` can be supplied to apply
+    post-retrieval lateral inhibition during inference.  NSTP suppresses
+    sibling candidates that share high inter-prototype similarity but belong
+    to different classes, improving prediction sharpness in fine-grained
+    scenarios.  Learning (``learn_local``) is unaffected by NSTP.
+    FAM remains fully functional when ``nstp=None``.
     """
 
     def __init__(self, input_dim: int = 1024, value_dim: int = 100,
@@ -86,6 +93,9 @@ class FastAssociativeMemory(nn.Module):
         else:
             self.whitening = None
             cam_key_dim = pre_dim
+
+        # Optional NSTP lateral-inhibition controller (inference-only)
+        self.nstp = nstp
 
         # Single core memory
         self.core_cam = ContinuousCAM(
@@ -118,9 +128,14 @@ class FastAssociativeMemory(nn.Module):
         return x
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Retrieve class predictions via soft-kNN voting."""
+        """Retrieve class predictions via soft-kNN voting.
+
+        When an :class:`~nstp.NSTPController` was supplied at construction,
+        NSTP lateral inhibition is applied after the top-K candidate selection
+        and before the final softmax vote.
+        """
         with torch.no_grad():
-            return self.core_cam(self._project(x))
+            return self.core_cam(self._project(x), nstp=self.nstp)
 
     def learn_local(self, x: torch.Tensor, class_ids: torch.Tensor):
         """Online learning: project (adapter + whiten), form one-hot target, commit to core CAM."""

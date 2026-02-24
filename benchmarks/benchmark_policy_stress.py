@@ -34,6 +34,7 @@ from collections import Counter
 
 from fast_associative_memory import FastAssociativeMemory
 from adapter import MetricAdapter
+from nstp import NSTPController
 
 
 class DINOv2Extractor(nn.Module):
@@ -162,12 +163,16 @@ def run_g7_tail_eviction(root_dir, device="cuda"):
 # ==========================================
 # G6: GRANULARITY (Dogs subset of ImageNet)
 # ==========================================
-def run_g6_granularity(root_dir, device="cuda", adapter: MetricAdapter | None = None):
-    print("\n\U0001f985  G6: GRANULARITY TORTURE TEST (Dogs/Birds)  \U0001f985")
-    if adapter is not None:
-        print("  MetricAdapter: ACTIVE (trained metric projection)")
-    else:
-        print("  MetricAdapter: NONE (raw DINOv2 baseline)")
+def extract_g6_features(root_dir, device="cuda", cache_path=None):
+    """Extract DINOv2 features for the G6 fine-grained subset.
+
+    Returns (features, labels) tensors.  When *cache_path* is given the
+    tensors are saved to / loaded from disk so that DINOv2 only runs once.
+    """
+    if cache_path and os.path.exists(cache_path):
+        print(f"  Loading cached features: {cache_path}")
+        data = torch.load(cache_path, weights_only=True)
+        return data["features"], data["labels"]
 
     tfm = transforms.Compose([
         transforms.Resize(256), transforms.CenterCrop(224),
@@ -176,37 +181,102 @@ def run_g6_granularity(root_dir, device="cuda", adapter: MetricAdapter | None = 
     ])
     ds = datasets.ImageFolder(root_dir, transform=tfm)
 
-    # Classes 151-200: 50 dog breeds in ImageNet-1k
     start_cls, end_cls = 151, 200
     indices = [i for i, t in enumerate(ds.targets) if start_cls <= t <= end_cls]
-
     subset = Subset(ds, indices)
     print(f"  Fine-Grained Subset: Classes {start_cls}-{end_cls} ({len(indices)} samples)")
 
     extractor = DINOv2Extractor().to(device)
+    loader = DataLoader(subset, batch_size=128, shuffle=False, num_workers=4)
 
-    # When an adapter is provided, FAM input_dim stays 1024 (backbone output)
-    # and the adapter handles the projection to its output_dim internally.
+    all_feats, all_lbls = [], []
+    print("  Extracting DINOv2 features...")
+    for imgs, lbls in loader:
+        with torch.no_grad():
+            all_feats.append(extractor(imgs.to(device)).cpu())
+            all_lbls.append(lbls)
+
+    features = torch.cat(all_feats, dim=0)
+    labels = torch.cat(all_lbls, dim=0)
+
+    if cache_path:
+        os.makedirs(os.path.dirname(cache_path) or ".", exist_ok=True)
+        torch.save({"features": features, "labels": labels}, cache_path)
+        print(f"  Cached features: {cache_path} ({features.shape[0]} samples)")
+
+    return features, labels
+
+
+def run_g6_granularity(root_dir, device="cuda",
+                       adapter: MetricAdapter | None = None,
+                       nstp: NSTPController | None = None,
+                       vigilance: float = 0.92,
+                       cached_features=None):
+    """Run G6 granularity benchmark.
+
+    When *cached_features* is a ``(features, labels)`` tuple, skip DINOv2
+    extraction entirely — replay the tensors through FAM only.
+    """
+    print("\n\U0001f985  G6: GRANULARITY TORTURE TEST (Dogs/Birds)  \U0001f985")
+    parts = []
+    if adapter is not None:
+        parts.append("adapter")
+    if nstp is not None:
+        parts.append("NSTP")
+    config = " + ".join(parts) if parts else "raw DINOv2 baseline"
+    print(f"  Config: {config}  |  vigilance={vigilance:.2f}")
+
+    if cached_features is not None:
+        features, labels = cached_features
+        print(f"  Using cached features: {features.shape[0]} samples")
+    else:
+        tfm = transforms.Compose([
+            transforms.Resize(256), transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        ])
+        ds = datasets.ImageFolder(root_dir, transform=tfm)
+        start_cls, end_cls = 151, 200
+        indices = [i for i, t in enumerate(ds.targets)
+                   if start_cls <= t <= end_cls]
+        subset = Subset(ds, indices)
+        print(f"  Fine-Grained Subset: Classes {start_cls}-{end_cls} "
+              f"({len(indices)} samples)")
+        extractor = DINOv2Extractor().to(device)
+        loader = DataLoader(subset, batch_size=128, shuffle=True, num_workers=4)
+        all_feats, all_lbls = [], []
+        for imgs, lbls in loader:
+            with torch.no_grad():
+                all_feats.append(extractor(imgs.to(device)).cpu())
+                all_lbls.append(lbls)
+        features = torch.cat(all_feats, dim=0)
+        labels = torch.cat(all_lbls, dim=0)
+
     fam = FastAssociativeMemory(
         input_dim=1024, value_dim=1000,
-        core_entries=10000, core_vigilance=0.92,
-        adapter=adapter,
+        core_entries=10000, core_vigilance=vigilance,
+        adapter=adapter, nstp=nstp,
     ).to(device)
 
-    loader = DataLoader(subset, batch_size=128, shuffle=True, num_workers=4)
-    print("  Ingesting...")
-    for imgs, lbls in loader:
+    # Ingest — shuffle order for realistic online learning
+    perm = torch.randperm(features.size(0))
+    for i in range(0, len(perm), 128):
+        batch_idx = perm[i:i+128]
         with torch.no_grad():
-            fam.learn_local(extractor(imgs.to(device)), lbls.to(device))
+            fam.learn_local(features[batch_idx].to(device),
+                            labels[batch_idx].to(device))
 
+    # Evaluate
     correct = 0
-    total   = 0
+    total = features.size(0)
     fam.eval()
-    for imgs, lbls in loader:
+    for i in range(0, total, 128):
         with torch.no_grad():
-            preds = fam(extractor(imgs.to(device))).argmax(1)
-            correct += (preds == lbls.to(device)).sum().item()
-            total   += imgs.size(0)
+            batch_f = features[i:i+128].to(device)
+            batch_l = labels[i:i+128].to(device)
+            preds = fam(batch_f).argmax(1)
+            correct += (preds == batch_l).sum().item()
 
     acc    = 100 * correct / total
     protos = fam.core_cam.occupied.sum().item()
@@ -231,6 +301,8 @@ def run_g6_granularity(root_dir, device="cuda", adapter: MetricAdapter | None = 
         print("\u274c FAIL: Underfitting. FAM merged distinct breeds.")
     else:
         print("\u26a0\ufe0f  WARN: Moderate accuracy/condensation trade-off.")
+
+    return acc, ratio, protos
 
 
 def _load_adapter(adapter_path: str) -> MetricAdapter:
@@ -283,6 +355,22 @@ if __name__ == "__main__":
         help="Torch device string, e.g. cuda or cpu (default: auto-detect)",
     )
     parser.add_argument(
+        "--use-nstp", action="store_true",
+        help="Enable NSTP lateral inhibition during retrieval",
+    )
+    parser.add_argument(
+        "--vigilance", type=float, default=0.92,
+        help="Core vigilance threshold for FAM (default: 0.92)",
+    )
+    parser.add_argument(
+        "--feature-cache", type=str, default=None,
+        help="Path to cache DINOv2 features (.pt). Extract once, replay many.",
+    )
+    parser.add_argument(
+        "--sweep", type=str, default=None,
+        help="Comma-separated vigilance values for G6 sweep (e.g. 0.80,0.75,0.70)",
+    )
+    parser.add_argument(
         "--g6-only", action="store_true", help="Run G6 only; skip G7"
     )
     parser.add_argument(
@@ -302,7 +390,46 @@ if __name__ == "__main__":
     if adapter is not None:
         adapter = adapter.to(dev)
 
-    if not args.g6_only:
-        run_g7_tail_eviction(args.root, dev)
-    if not args.g7_only:
-        run_g6_granularity(args.root, dev, adapter=adapter)
+    nstp = NSTPController(root_strategy="proximity") if args.use_nstp else None
+
+    # Pre-extract features if caching or sweeping
+    cached = None
+    if args.feature_cache or args.sweep:
+        cache_path = args.feature_cache or "benchmarks/.g6_features.pt"
+        cached = extract_g6_features(args.root, dev, cache_path=cache_path)
+
+    if args.sweep:
+        vigilance_values = [float(v) for v in args.sweep.split(",")]
+        results = []
+        for vig in vigilance_values:
+            acc, ratio, protos = run_g6_granularity(
+                args.root, dev, adapter=adapter, nstp=nstp,
+                vigilance=vig, cached_features=cached)
+            results.append((vig, acc, ratio, protos))
+            if acc < 99.0:
+                print(f"\n  EARLY STOP: Accuracy {acc:.2f}% < 99.0% at vigilance={vig}")
+                break
+
+        # Summary table
+        print(f"\n{'='*65}")
+        parts = []
+        if adapter is not None:
+            parts.append("adapter")
+        if nstp is not None:
+            parts.append("NSTP")
+        tag = " + ".join(parts) if parts else "baseline"
+        print(f"  G6 VIGILANCE SWEEP — {tag}")
+        print(f"{'='*65}")
+        print(f"  {'Vigilance':>9} {'Accuracy':>9} {'Protos':>7} {'Ratio':>7} {'Result':>8}")
+        print(f"  {'-'*9} {'-'*9} {'-'*7} {'-'*7} {'-'*8}")
+        for vig, acc, ratio, protos in results:
+            status = "PASS" if acc > 90.0 and ratio < 0.5 else "FAIL"
+            print(f"  {vig:>9.2f} {acc:>8.2f}% {protos:>7} {ratio:>7.2f} {status:>8}")
+        print(f"{'='*65}")
+    else:
+        if not args.g6_only:
+            run_g7_tail_eviction(args.root, dev)
+        if not args.g7_only:
+            run_g6_granularity(args.root, dev, adapter=adapter,
+                               nstp=nstp, vigilance=args.vigilance,
+                               cached_features=cached)

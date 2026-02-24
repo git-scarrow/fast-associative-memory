@@ -75,6 +75,7 @@ class ContinuousCAM(nn.Module):
         # Per-prototype local neighborhood density for CSLS hubness correction
         self.register_buffer("prototype_density", torch.zeros(max_entries))
         self.csls_weight: float = 1.0
+        self.nstp = None  # Optional NSTPController for lateral inhibition
 
     @property
     def _mem_dtype(self):
@@ -226,6 +227,14 @@ class ContinuousCAM(nn.Module):
         _, topk_locs = csls_sims.topk(final_k, dim=1)                         # (B, final_k)
         topk_slots = broad_slots.gather(1, topk_locs)                         # (B, final_k)
         topk_sims = reranked_sims.gather(1, topk_locs)                        # (B, final_k)
+
+        # --- Step 4b: NSTP lateral inhibition (optional) ---
+        if self.nstp is not None:
+            topk_keys = self.keys[topk_slots].float()                         # (B, final_k, D)
+            topk_vals = self.values[topk_slots].float()                       # (B, final_k, V)
+            nstp_masks, topk_sims = self.nstp.prune_batch(
+                queries.float(), topk_keys, topk_vals, topk_sims)
+            topk_sims = topk_sims.masked_fill(~nstp_masks, -float("inf"))
 
         # Optional similarity floor
         if self.inference_sim_floor > 0.0:

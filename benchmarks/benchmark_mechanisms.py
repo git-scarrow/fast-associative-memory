@@ -52,12 +52,11 @@ class CoPE_CAM(ContinuousCAM):
     """G3 Baseline: CoPE-like (EMA Winner-Take-All, no LFU).
 
     _get_nearest_batch returns (best_slots, best_sims, query_density).
-    We discard query_density here since CoPE does not use CSLS correction.
+    We discard query_density — CoPE does not use CSLS correction.
     """
     def learn_local(self, queries: torch.Tensor, targets: torch.Tensor):
         queries = self._cast(queries)
         targets = self._cast(targets)
-        # Unpack all 3 return values; discard query_density
         best_slots, best_sims, _ = self._get_nearest_batch(queries)
 
         hits = (best_slots >= 0) & (best_sims >= self.vigilance)
@@ -77,7 +76,6 @@ class CoPE_CAM(ContinuousCAM):
             hit_slots = best_slots[hits]
             hit_queries = queries[hits]
             current_keys = self.keys[hit_slots]
-            # Standard EMA move (CoPE: no LFU, no adaptive alpha)
             self.keys[hit_slots] = current_keys + self.hebb_lr * (hit_queries - current_keys)
             self._update_key_norm(hit_slots)
             self.values[hit_slots] = targets[hits]
@@ -89,31 +87,42 @@ class CoPE_CAM(ContinuousCAM):
 
 # --- DATA GENERATION ---
 
-def generate_multimodal_data(dim, n_samples, n_classes):
-    """Generates 2 maximally-separated clusters per class using orthogonal centers.
+def make_class_centers(n_classes: int, dim: int) -> torch.Tensor:
+    """Generate fixed orthonormal class centers via QR decomposition.
 
-    Fix v3: Use QR-decomposed orthogonal basis vectors as class centers instead
-    of random randn centers. In high-dimensional space, random centers have
-    near-zero expected cosine similarity to each other, making all clusters
-    overlap at the inter-class level. Orthogonal centers guarantee
-    cos(center_a, center_b) = 0 for all a != b, giving maximum separation.
-    Intra-cluster std is reduced to 0.03 (was 0.1) to keep clusters tight.
+    Fix v4: Centers are generated ONCE and shared between train and test.
+    Previous versions called this inside generate_multimodal_data(), producing
+    a fresh random basis on every call — train and test were drawn from
+    completely different coordinate systems, making generalization impossible
+    and keeping all models at chance (~2% on 50 classes).
     """
-    # Build orthogonal class centers via QR decomposition
     if n_classes <= dim:
         Q, _ = torch.linalg.qr(torch.randn(dim, dim))
-        class_centers = Q[:n_classes]                    # (n_classes, dim), orthonormal rows
-    else:
-        # More classes than dims: use normalized randn (best we can do)
-        class_centers = F.normalize(torch.randn(n_classes, dim), dim=-1)
+        return Q[:n_classes]   # (n_classes, dim), orthonormal rows
+    # More classes than dims: normalized randn is the best we can do
+    return F.normalize(torch.randn(n_classes, dim), dim=-1)
 
+
+def generate_multimodal_data(
+    dim: int,
+    n_samples: int,
+    n_classes: int,
+    class_centers: torch.Tensor,
+    noise_std: float = 0.03,
+) -> tuple:
+    """Generates 2 antipodal clusters per class around the given fixed centers.
+
+    Both clusters for class c are centred on +class_centers[c] and
+    -class_centers[c], giving maximum intra-class spread (180° apart) while
+    guaranteeing zero cosine similarity between different class centres.
+    """
     samples_per_cluster = n_samples // n_classes // 2
     X_list, Y_list = [], []
     for c in range(n_classes):
-        center_a = class_centers[c]
-        center_b = -class_centers[c]                     # antipodal second cluster
-        cluster_a = center_a + torch.randn(samples_per_cluster, dim) * 0.03
-        cluster_b = center_b + torch.randn(samples_per_cluster, dim) * 0.03
+        center_a =  class_centers[c]
+        center_b = -class_centers[c]
+        cluster_a = center_a + torch.randn(samples_per_cluster, dim) * noise_std
+        cluster_b = center_b + torch.randn(samples_per_cluster, dim) * noise_std
         X_list.extend([cluster_a, cluster_b])
         Y_list.extend([c] * samples_per_cluster)
         Y_list.extend([c] * samples_per_cluster)
@@ -140,24 +149,22 @@ def run_mechanism_gauntlet():
     N_CLASSES = 50
     N_TRAIN = 5000
     N_TEST = 1000
-
-    # G3: enough capacity to hold most prototypes (eviction not the focus)
     G3_CAPACITY = 2000
-    # G4: tight capacity — forces >80% fill so eviction policy is exercised continuously.
-    # Fix v3: was 2000 (only 14% fill, eviction never triggered). Now 200 = 4% of
-    # train size, guaranteeing constant eviction pressure from batch 1.
-    G4_CAPACITY = 200
+    G4_CAPACITY = 200   # forces constant eviction — 4% of train size
 
-    print(f"\n\u2694\ufe0f  MECHANISM GAUNTLET (G3/G4) v3 \u2694\ufe0f")
+    print(f"\n\u2694\ufe0f  MECHANISM GAUNTLET (G3/G4) v4 \u2694\ufe0f")
     print(f"Device: {DEVICE}")
-    print(f"Dataset: {N_CLASSES} classes, orthogonal centers, antipodal clusters")
+    print(f"Dataset: {N_CLASSES} classes, shared orthogonal centers, antipodal clusters")
     print(f"G3 capacity: {G3_CAPACITY} slots | G4 capacity: {G4_CAPACITY} slots (forced eviction)")
-    print(f"Train: {N_TRAIN} samples | Test: {N_TEST} samples (held-out)")
+    print(f"Train: {N_TRAIN} | Test: {N_TEST} (same coordinate system)")
 
-    X_train, Y_train = generate_multimodal_data(DIM, N_TRAIN, N_CLASSES)
-    X_test, Y_test = generate_multimodal_data(DIM, N_TEST, N_CLASSES)
+    # --- Key fix: generate centers ONCE, reuse for both splits ---
+    class_centers = make_class_centers(N_CLASSES, DIM)
+
+    X_train, Y_train = generate_multimodal_data(DIM, N_TRAIN, N_CLASSES, class_centers)
+    X_test,  Y_test  = generate_multimodal_data(DIM, N_TEST,  N_CLASSES, class_centers)
     train_loader = DataLoader(TensorDataset(X_train, Y_train), batch_size=256)
-    test_loader = DataLoader(TensorDataset(X_test, Y_test), batch_size=256)
+    test_loader  = DataLoader(TensorDataset(X_test,  Y_test),  batch_size=256)
 
     models = {
         "G3_FAM":     FastAssociativeMemory(DIM, N_CLASSES, core_entries=G3_CAPACITY),

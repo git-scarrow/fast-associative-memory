@@ -224,6 +224,14 @@ def _mine_triplets(
     * all:        all possible (a,p,n) with at least one positive and negative
                   per anchor; this can be heavy on large batches.
     """
+    # Safety guard: cap batch for the "all" strategy to avoid OOM on large
+    # domains (e.g. Dogs). Subsample a random subset of anchors/features.
+    if strategy == "all" and proj.size(0) > 4096:
+        idx = torch.randperm(proj.size(0), device=proj.device)[:4096]
+        proj = proj[idx]
+        feats = feats[idx]
+        labels = labels[idx]
+
     device = feats.device
     B = feats.size(0)
     anchors: List[torch.Tensor] = []
@@ -725,7 +733,13 @@ def run_phase2_for_domain(
 
     axis_vals: Dict[str, List[str]] = {}
     for axis in top_axes:
-        axis_vals[axis] = select_top3_values_for_axis(domain, axis, csv_path)
+        vals = select_top3_values_for_axis(domain, axis, csv_path)
+        # Empirically, mining_strategy="all" is both slow and a weak performer.
+        # Exclude it from the focused Phase 2 grid even if it appeared in
+        # Phase 1 so we don't waste runs or hit OOMs.
+        if axis == "mining_strategy":
+            vals = [v for v in vals if v != "all"]
+        axis_vals[axis] = vals
         print(f"[G30][Phase2] {domain} axis={axis} values={axis_vals[axis]}")
 
     tr_f, tr_l, te_f, te_l, n_classes = load_domain_features(domain, data_root)
@@ -842,7 +856,10 @@ def run_phase3(
     csv_path: Path,
 ) -> None:
     # Preload features for all domains once.
-    features: Dict[DomainName, Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, int]] = {}
+    features: Dict[
+        DomainName,
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, int],
+    ] = {}
     for d in domains:
         features[d] = load_domain_features(d, data_root)
 
@@ -854,14 +871,17 @@ def run_phase3(
             print(f"[G30][Phase3] No Phase2 config for {train_domain}; skipping.")
             continue
 
-        tr_f, tr_l, _, _, _ = features[train_domain]
-        adapter, train_time = train_adapter(tr_f, tr_l, cfg, device)
+        # Train adapter on the *train_domain* features.
+        tr_f_train, tr_l_train, _, _, _ = features[train_domain]
+        adapter, train_time = train_adapter(tr_f_train, tr_l_train, cfg, device)
         adapter.eval()
 
         for eval_domain in domains:
-            _, _, te_f, te_l, n_classes = features[eval_domain]
+            # For each eval_domain, build a fresh FAM on that domain's own
+            # train/test splits, using the adapter trained on train_domain.
+            tr_f_eval, tr_l_eval, te_f, te_l, n_classes = features[eval_domain]
             acc, n_protos, cond = eval_full_stack(
-                tr_f, tr_l, te_f, te_l, n_classes, adapter, device
+                tr_f_eval, tr_l_eval, te_f, te_l, n_classes, adapter, device
             )
             print(
                 f"[G30][Phase3] train={train_domain} eval={eval_domain} → "

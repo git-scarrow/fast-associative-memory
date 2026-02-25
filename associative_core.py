@@ -8,6 +8,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 import time
 
+from dataclasses import dataclass
+from typing import Union, Tuple
+
+@dataclass
+class RetrievalTrace:
+    broad_slots: torch.Tensor          # (broad_k,) — top-100 indices by raw cosine
+    broad_sims_raw: torch.Tensor       # (broad_k,) — cosine similarities pre-Mahalanobis
+    broad_sims_reranked: torch.Tensor  # (broad_k,) — similarities post-Mahalanobis
+    csls_scores: torch.Tensor          # (broad_k,) — scores post-hubness correction
+    final_slots: torch.Tensor          # (final_k,) — survivor indices after NSTP + floor
+    final_weights: torch.Tensor        # (final_k,) — softmax vote weights
+    rejected_slots: torch.Tensor       # (broad_k - final_k,) — indices of killed candidates
+    rejection_stage: torch.Tensor      # (broad_k - final_k,) categorical: 0=rerank_drop, 1=csls, 2=nstp, 3=floor
+
 
 def _make_orthogonal_prototypes(num_vectors: int, dim: int) -> torch.Tensor:
     """Creates fixed unit-norm vectors with near-orthogonal rows."""
@@ -178,7 +192,7 @@ class ContinuousCAM(nn.Module):
     # ------------------------------------------------------------------
     # Forward / Learn — fully batched
     # ------------------------------------------------------------------
-    def forward(self, queries: torch.Tensor, nstp=None) -> torch.Tensor:
+    def forward(self, queries: torch.Tensor, nstp=None, trace: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, RetrievalTrace]]:
         """Broad cosine search → diagonal Mahalanobis re-ranking → soft-kNN vote.
 
         1. Broad search: top-100 candidates by cosine similarity (single matmul).
@@ -207,7 +221,7 @@ class ContinuousCAM(nn.Module):
         # --- Step 1: Broad cosine search ---
         q_norm = F.normalize(self._cast(queries), dim=-1)
         sims = q_norm @ self._keys_norm[valid_idx].T           # (B, N_occ)
-        _, broad_locs = sims.topk(broad_k, dim=1)              # (B, broad_k)
+        broad_sims_raw, broad_locs = sims.topk(broad_k, dim=1)              # (B, broad_k)
         broad_slots = valid_idx[broad_locs]                    # (B, broad_k)
 
         # --- Step 2: Diagonal Mahalanobis re-ranking ---
@@ -242,6 +256,7 @@ class ContinuousCAM(nn.Module):
         # --- Step 4b: NSTP lateral inhibition (optional) ---
         # Per-call `nstp` parameter takes priority; falls back to instance self.nstp.
         _nstp = nstp if nstp is not None else self.nstp
+        keep_mask = None
         if _nstp is not None:
             topk_keys = self.keys[topk_slots].float()                         # (B, final_k, key_dim)
             topk_vals = self.values[topk_slots].float()                       # (B, final_k, value_dim)
@@ -262,7 +277,99 @@ class ContinuousCAM(nn.Module):
         # Touch only Top-1 winner for LRU bookkeeping
         self.last_seen[topk_slots[:, 0]] = now
 
-        return outputs
+        if not trace:
+            return outputs
+
+        # === TRACE COLLECTION ===
+        B = queries.size(0)
+        _broad_slots = broad_slots.detach()
+        _broad_sims_raw = broad_sims_raw.detach()
+        _reranked_sims = reranked_sims.detach()
+        _csls_sims = csls_sims.detach()
+        _weights = weights.detach()
+        _topk_locs = topk_locs.detach()
+
+        rej_stages = torch.zeros(B, broad_k, dtype=torch.long, device=queries.device)
+
+        # 1. CSLS drop: start everyone at rerank_drop (0), then mark CSLS survivors as 1.
+        _, rerank_topk_locs = _reranked_sims.topk(final_k, dim=1)
+        rej_stages.scatter_(1, rerank_topk_locs, 1)
+
+        # Candidates in `topk_locs` survived CSLS. Mark them as survivor (4).
+        rej_stages.scatter_(1, _topk_locs, 4)
+
+        # Now mark NSTP and floor victims
+        _base_topk_sims = _reranked_sims.gather(1, _topk_locs)
+        
+        if keep_mask is not None:
+            _keep_mask = keep_mask.detach()
+        else:
+            _keep_mask = torch.ones_like(_base_topk_sims, dtype=torch.bool)
+            
+        floor_mask = _base_topk_sims < self.inference_sim_floor
+        _floor_rejected = floor_mask & _keep_mask
+        
+        final_slots_list = []
+        final_weights_list = []
+        rejected_slots_list = []
+        rejection_stage_list = []
+        
+        final_k_max = 0
+        rejected_k_max = 0
+        
+        for b in range(B):
+            nstp_mask_b = ~_keep_mask[b]
+            if nstp_mask_b.any():
+                rej_stages[b, _topk_locs[b][nstp_mask_b]] = 2
+                
+            floor_mask_b = _floor_rejected[b]
+            if floor_mask_b.any():
+                rej_stages[b, _topk_locs[b][floor_mask_b]] = 3
+                
+            stages = rej_stages[b]
+            survivor_mask = stages == 4
+            rejected_mask = stages != 4
+            
+            row_survivor_slots = _broad_slots[b][survivor_mask]
+            
+            surv_in_topk_mask = _keep_mask[b] & ~floor_mask[b]
+            row_survivor_weights = _weights[b][surv_in_topk_mask]
+            
+            row_rejected_slots = _broad_slots[b][rejected_mask]
+            row_rejection_stages = stages[rejected_mask]
+            
+            final_slots_list.append(row_survivor_slots)
+            final_weights_list.append(row_survivor_weights)
+            rejected_slots_list.append(row_rejected_slots)
+            rejection_stage_list.append(row_rejection_stages)
+            
+            if len(row_survivor_slots) > final_k_max:
+                final_k_max = len(row_survivor_slots)
+            if len(row_rejected_slots) > rejected_k_max:
+                rejected_k_max = len(row_rejected_slots)
+                
+        def _pad(lst, max_len):
+            padded = []
+            for t in lst:
+                if len(t) == max_len:
+                    padded.append(t)
+                elif len(t) == 0:
+                    padded.append(torch.full((max_len,), -1, dtype=t.dtype, device=t.device))
+                else:
+                    padded.append(F.pad(t, (0, max_len - len(t)), value=t[-1].item()))
+            return torch.stack(padded)
+            
+        tr = RetrievalTrace(
+            broad_slots=_broad_slots,
+            broad_sims_raw=_broad_sims_raw,
+            broad_sims_reranked=_reranked_sims,
+            csls_scores=_csls_sims,
+            final_slots=_pad(final_slots_list, final_k_max) if final_k_max > 0 else torch.empty((B, 0), dtype=torch.long, device=queries.device),
+            final_weights=_pad(final_weights_list, final_k_max) if final_k_max > 0 else torch.empty((B, 0), dtype=torch.float32, device=queries.device),
+            rejected_slots=_pad(rejected_slots_list, rejected_k_max) if rejected_k_max > 0 else torch.empty((B, 0), dtype=torch.long, device=queries.device),
+            rejection_stage=_pad(rejection_stage_list, rejected_k_max) if rejected_k_max > 0 else torch.empty((B, 0), dtype=torch.long, device=queries.device)
+        )
+        return outputs, tr
 
     def learn_local(self, queries: torch.Tensor, targets: torch.Tensor):
         """Two-pathway learning with class-match check.

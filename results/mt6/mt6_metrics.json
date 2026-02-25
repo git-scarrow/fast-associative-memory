@@ -1,0 +1,142 @@
+{
+  "results": [
+    {
+      "condition": "swap_0",
+      "k_swaps": 0,
+      "cos_mean": 1.0,
+      "cos_min": 0.9999998211860657,
+      "cos_p5": 0.9999999403953552,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.0,
+      "acc_delta": 0.0,
+      "eviction_jaccard": 1.0,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2279
+    },
+    {
+      "condition": "swap_1",
+      "k_swaps": 1,
+      "cos_mean": 0.7703478336334229,
+      "cos_min": -0.3594052493572235,
+      "cos_p5": -0.03263290598988533,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.0,
+      "acc_delta": 0.0,
+      "eviction_jaccard": 0.9881526985519965,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2252
+    },
+    {
+      "condition": "swap_2",
+      "k_swaps": 2,
+      "cos_mean": 0.5308628082275391,
+      "cos_min": -0.42022883892059326,
+      "cos_p5": -0.10097390413284302,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.099999999999994,
+      "acc_delta": 0.09999999999999432,
+      "eviction_jaccard": 0.9321093082835183,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2246
+    },
+    {
+      "condition": "swap_5",
+      "k_swaps": 5,
+      "cos_mean": 0.4011247158050537,
+      "cos_min": -0.39922428131103516,
+      "cos_p5": -0.16623589396476746,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.0,
+      "acc_delta": 0.0,
+      "eviction_jaccard": 0.9921636917718764,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2297
+    },
+    {
+      "condition": "swap_10",
+      "k_swaps": 10,
+      "cos_mean": 0.23535607755184174,
+      "cos_min": -0.5039104223251343,
+      "cos_p5": -0.1878380924463272,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.0,
+      "acc_delta": 0.0,
+      "eviction_jaccard": 0.897231543624161,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2244
+    },
+    {
+      "condition": "swap_20",
+      "k_swaps": 20,
+      "cos_mean": 0.16690683364868164,
+      "cos_min": -0.4473450183868408,
+      "cos_p5": -0.20145684480667114,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.099999999999994,
+      "acc_delta": 0.09999999999999432,
+      "eviction_jaccard": 0.8325508607198748,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2405
+    },
+    {
+      "condition": "swap_47",
+      "k_swaps": 47,
+      "cos_mean": 0.1138058677315712,
+      "cos_min": -0.5237951278686523,
+      "cos_p5": -0.19536718726158142,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 35.05,
+      "acc_delta": 0.04999999999999716,
+      "eviction_jaccard": 0.8219125048393341,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2427
+    },
+    {
+      "condition": "full_reverse",
+      "k_swaps": 47,
+      "cos_mean": 0.004263106733560562,
+      "cos_min": -0.47840315103530884,
+      "cos_p5": -0.24321074783802032,
+      "occ_agreement": 1.0,
+      "acc_s1": 35.0,
+      "acc_sk": 90.85,
+      "acc_delta": 55.849999999999994,
+      "eviction_jaccard": 0.8615260395639887,
+      "n_evictions_s1": 2279,
+      "n_evictions_sk": 2332
+    }
+  ],
+  "fits": {
+    "cos_divergence": {
+      "power_law": {
+        "a": 0.3102505515635017,
+        "beta": 0.3239637422332199,
+        "r2": 0.7795721359260914
+      },
+      "exponential": {
+        "a": 0.43905599378163845,
+        "lambda": 0.019132288484091667,
+        "r2": 0.3964462580159396
+      }
+    },
+    "acc_divergence": {
+      "power_law": {
+        "a": 0.12283894437465522,
+        "beta": -0.17379682006785088,
+        "r2": 0.41452086924813414
+      },
+      "exponential": {
+        "a": 0.11524293931560604,
+        "lambda": -0.01621396913590517,
+        "r2": 0.7443365280295708
+      }
+    }
+  }
+}

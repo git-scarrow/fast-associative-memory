@@ -274,8 +274,11 @@ class ContinuousCAM(nn.Module):
         retrieved = self.values[topk_slots].float()                           # (B, final_k, V)
         outputs = (weights.unsqueeze(-1) * retrieved).sum(dim=1)              # (B, V)
 
-        # Touch only Top-1 winner for LRU bookkeeping
-        self.last_seen[topk_slots[:, 0]] = now
+        # NOTE: last_seen is NOT updated here. Inference is read-only.
+        # learn_local() handles all last_seen bookkeeping for both new and
+        # existing prototypes. Updating last_seen during forward() caused
+        # eval contamination: wall-clock timestamps from inference protected
+        # test-relevant prototypes from eviction (see MT-6 writeup).
 
         if not trace:
             return outputs

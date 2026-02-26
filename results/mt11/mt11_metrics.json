@@ -1,0 +1,49 @@
+{
+  "commit": "d515f09",
+  "capacity": 5000,
+  "coreset_acc": 90.15151515151516,
+  "results": [
+    {
+      "write_path": "Coverage (new)",
+      "ordering": "class-sorted",
+      "accuracy": 89.83682983682984,
+      "n_protos": 5000,
+      "classes_represented": 120
+    },
+    {
+      "write_path": "Coverage (new)",
+      "ordering": "IID-shuffled",
+      "accuracy": 89.93006993006993,
+      "n_protos": 3382,
+      "classes_represented": 120
+    },
+    {
+      "write_path": "Coverage (new)",
+      "ordering": "block-shuffled",
+      "accuracy": 89.48717948717949,
+      "n_protos": 5000,
+      "classes_represented": 120
+    },
+    {
+      "write_path": "LFU (old)",
+      "ordering": "class-sorted",
+      "accuracy": 59.09090909090909,
+      "n_protos": 5000,
+      "classes_represented": 79
+    },
+    {
+      "write_path": "LFU (old)",
+      "ordering": "IID-shuffled",
+      "accuracy": 89.93006993006993,
+      "n_protos": 3382,
+      "classes_represented": 120
+    },
+    {
+      "write_path": "LFU (old)",
+      "ordering": "block-shuffled",
+      "accuracy": 59.079254079254085,
+      "n_protos": 5000,
+      "classes_represented": 79
+    }
+  ]
+}

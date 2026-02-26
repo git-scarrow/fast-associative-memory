@@ -1,0 +1,53 @@
+{
+  "commit": "d515f09",
+  "results": [
+    {
+      "capacity": 1000,
+      "acc_lfu": 36.561771561771565,
+      "acc_lfu_mt7": 38.57,
+      "acc_coverage": 71.68997668997669,
+      "acc_coreset": 89.1,
+      "gap_closure_pct": 66.86218049682992,
+      "n_protos_lfu": 1000,
+      "n_protos_cov": 1000,
+      "classes_repr_lfu": 48,
+      "classes_repr_cov": 117,
+      "min_per_class_lfu": 2,
+      "min_per_class_cov": 1,
+      "time_lfu_s": 0.28585100173950195,
+      "time_cov_s": 0.2966642379760742
+    },
+    {
+      "capacity": 5000,
+      "acc_lfu": 59.09090909090909,
+      "acc_lfu_mt7": 61.2,
+      "acc_coverage": 89.83682983682984,
+      "acc_coreset": 90.15,
+      "gap_closure_pct": 98.99169565494749,
+      "n_protos_lfu": 5000,
+      "n_protos_cov": 5000,
+      "classes_repr_lfu": 79,
+      "classes_repr_cov": 120,
+      "min_per_class_lfu": 2,
+      "min_per_class_cov": 10,
+      "time_lfu_s": 0.08559298515319824,
+      "time_cov_s": 0.26047635078430176
+    },
+    {
+      "capacity": 10000,
+      "acc_lfu": 88.77622377622377,
+      "acc_lfu_mt7": 88.75,
+      "acc_coverage": 90.09324009324008,
+      "acc_coreset": 90.13,
+      "gap_closure_pct": 97.2846393580932,
+      "n_protos_lfu": 10000,
+      "n_protos_cov": 10000,
+      "classes_repr_lfu": 118,
+      "classes_repr_cov": 120,
+      "min_per_class_lfu": 15,
+      "min_per_class_cov": 15,
+      "time_lfu_s": 0.07699298858642578,
+      "time_cov_s": 0.09606289863586426
+    }
+  ]
+}

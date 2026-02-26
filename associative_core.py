@@ -150,10 +150,15 @@ class ContinuousCAM(nn.Module):
         return best_slots, best_sims.float(), query_density
 
     def _alloc_slots_batch(self, n: int):
-        """Allocate n slots: free first, then LFU-LRU hybrid eviction.
+        """Allocate n slots: free first, then eviction for the rest.
 
-        Eviction priority: lowest usage first. Ties broken by oldest last_seen.
-        The last_seen tie-breaker is normalized to [0, 1) so it never overrides usage.
+        When use_lfu is True, uses coverage-aware eviction: evicts the
+        prototype whose nearest same-class neighbor is closest (most
+        replaceable).  Sole class representatives are protected.
+        Replaced the prior LFU-LRU hybrid after MT-12 showed coverage
+        eviction closes 67–99% of the coreset gap.
+
+        When use_lfu is False, falls back to pure LRU.
 
         When n > max_entries, only max_entries slots are returned (last-write-wins
         for the excess — matches sequential _alloc_slot semantics).
@@ -163,23 +168,17 @@ class ContinuousCAM(nn.Module):
         if len(free) >= n:
             return free[:n]
 
-        # Use all free slots, evict LFU-LRU for the rest
         needed = n - len(free)
         occupied_idx = self.occupied.nonzero(as_tuple=True)[0]
-        # Exclude slots we're already claiming as free
         if len(free) > 0:
             mask = ~torch.isin(occupied_idx, free)
             occupied_idx = occupied_idx[mask]
         needed = min(needed, len(occupied_idx))
         if needed > 0:
             if self.use_lfu:
-                # LFU-LRU hybrid: usage is primary, last_seen is tie-breaker < 1.0
-                occ_usage = self.usage[occupied_idx]
-                occ_time = self.last_seen[occupied_idx].float()
-                t_min = occ_time.min()
-                t_range = occ_time.max() - t_min
-                time_tiebreak = (occ_time - t_min) / (t_range + 1e-8)  # [0, 1)
-                eviction_score = occ_usage + time_tiebreak  # lowest = evict first
+                # Coverage-aware eviction: evict the most replaceable prototype
+                # (smallest distance to nearest same-class neighbor).
+                eviction_score = self._coverage_eviction_score(occupied_idx)
                 _, topk_idx = eviction_score.topk(needed, largest=False)
             else:
                 # Pure LRU: evict oldest by last_seen
@@ -188,6 +187,31 @@ class ContinuousCAM(nn.Module):
         else:
             victims = occupied_idx[:0]  # empty tensor
         return torch.cat([free, victims]) if len(free) > 0 else victims
+
+    def _coverage_eviction_score(self, occupied_idx: torch.Tensor) -> torch.Tensor:
+        """Score each prototype by distance to nearest same-class neighbor.
+
+        Lower score = more replaceable = evict first.
+        Score = 1 - cos(prototype, nearest same-class neighbor).
+        Sole class representatives get score = inf (protected from eviction).
+        """
+        keys_norm = self._keys_norm[occupied_idx]
+        class_labels = self.values[occupied_idx].float().argmax(dim=-1)
+        scores = torch.full(
+            (len(occupied_idx),), float("inf"),
+            device=keys_norm.device, dtype=torch.float32,
+        )
+        for c in class_labels.unique():
+            c_mask = class_labels == c
+            if c_mask.sum().item() < 2:
+                continue
+            idx_c = c_mask.nonzero(as_tuple=True)[0]
+            keys_c = keys_norm[idx_c].float()
+            sim_c = keys_c @ keys_c.T
+            sim_c.fill_diagonal_(-float("inf"))
+            max_sim, _ = sim_c.max(dim=1)
+            scores[idx_c] = 1.0 - max_sim
+        return scores
 
     # ------------------------------------------------------------------
     # Forward / Learn — fully batched

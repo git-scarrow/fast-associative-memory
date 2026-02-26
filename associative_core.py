@@ -45,6 +45,7 @@ class ContinuousCAM(nn.Module):
                  vigilance: float = 0.85, hebb_lr: float = 0.1,
                  aging_time: float = 1e9, flood_scale: float = 0.15,
                  immutable_keys: bool = False, use_lfu: bool = False,
+                 adaptive_eviction: bool = False,
                  use_bfloat16: bool = False, key_lr: float = 0.05,
                  inference_k: int = 20, inference_temp: float = 0.05,
                  ema_beta: float = 0.05,
@@ -61,6 +62,9 @@ class ContinuousCAM(nn.Module):
         self.flood_scale = flood_scale
         self.immutable_keys = immutable_keys
         self.use_lfu = use_lfu
+        self.adaptive_eviction = adaptive_eviction
+        # Track total distinct classes ever written (for adaptive eviction)
+        self._classes_ever_seen: set[int] = set()
         self.key_lr = key_lr
         self.inference_k = inference_k
         self.inference_temp = inference_temp
@@ -175,7 +179,10 @@ class ContinuousCAM(nn.Module):
             occupied_idx = occupied_idx[mask]
         needed = min(needed, len(occupied_idx))
         if needed > 0:
-            if self.use_lfu:
+            if self.adaptive_eviction:
+                eviction_score = self._adaptive_eviction_score(occupied_idx)
+                _, topk_idx = eviction_score.topk(needed, largest=False)
+            elif self.use_lfu:
                 # Coverage-aware eviction: evict the most replaceable prototype
                 # (smallest distance to nearest same-class neighbor).
                 eviction_score = self._coverage_eviction_score(occupied_idx)
@@ -212,6 +219,63 @@ class ContinuousCAM(nn.Module):
             max_sim, _ = sim_c.max(dim=1)
             scores[idx_c] = 1.0 - max_sim
         return scores
+
+    def _adaptive_eviction_score(self, occupied_idx: torch.Tensor) -> torch.Tensor:
+        """Blend coverage and LRU eviction based on class loss rate.
+
+        Tracks classes ever seen vs classes currently in store.  When no
+        classes have been lost, delegates to pure LRU (preserving EMA-refined
+        centroids).  When classes start disappearing, blends in coverage
+        eviction to protect diversity.
+
+        Score semantics: lower = evict first.
+        """
+        class_labels = self.values[occupied_idx].float().argmax(dim=-1)
+        unique_classes, class_counts = class_labels.unique(return_counts=True)
+        n_classes_present = len(unique_classes)
+        n_classes_seen = len(self._classes_ever_seen) if self._classes_ever_seen else n_classes_present
+
+        # Class loss rate: fraction of previously-seen classes no longer in store.
+        # 0.0 = all classes retained. 0.9 = 90% of classes lost.
+        if n_classes_seen > 0:
+            class_loss = 1.0 - (n_classes_present / n_classes_seen)
+        else:
+            class_loss = 0.0
+
+        # Pure LRU when no classes have been lost.
+        if class_loss < 1e-9:
+            return self.last_seen[occupied_idx]
+
+        # Any class loss immediately activates coverage blending.
+        # Linear ramp: 0% → p=0.2, 30%+ → p=1.0 (full coverage mode).
+        p = min(1.0, 0.2 + 0.8 * min(class_loss / 0.30, 1.0))
+
+        # Coverage score: lower = more replaceable = evict first
+        coverage_raw = self._coverage_eviction_score(occupied_idx)
+        finite_mask = coverage_raw.isfinite()
+        if finite_mask.any():
+            cmin = coverage_raw[finite_mask].min()
+            cmax = coverage_raw[finite_mask].max()
+            crange = cmax - cmin
+            if crange > 0:
+                coverage_norm = (coverage_raw - cmin) / crange
+            else:
+                coverage_norm = torch.ones_like(coverage_raw) * 0.5
+            coverage_norm[~finite_mask] = float("inf")
+        else:
+            return self.last_seen[occupied_idx]
+
+        # LRU score: normalized [0, 1]
+        ls = self.last_seen[occupied_idx].float()
+        ls_min, ls_max = ls.min(), ls.max()
+        ls_range = ls_max - ls_min
+        if ls_range > 0:
+            lru_norm = (ls - ls_min) / ls_range
+        else:
+            lru_norm = torch.ones_like(ls) * 0.5
+
+        blended = p * coverage_norm + (1.0 - p) * lru_norm
+        return blended
 
     # ------------------------------------------------------------------
     # Forward / Learn — fully batched
@@ -565,6 +629,11 @@ class ContinuousCAM(nn.Module):
             self.hit_counts[new_slots] = 1
             self.prototype_density[new_slots] = query_density[misses][:n_alloc]
             self._update_key_norm(new_slots)
+
+        # Track all classes seen for adaptive eviction (covers hits + misses)
+        if self.adaptive_eviction:
+            all_classes = targets.float().argmax(dim=-1)
+            self._classes_ever_seen.update(all_classes.cpu().tolist())
 
     def sleep(self, anti_lr=0.3, max_epochs=10, collision_threshold=0.5,
               chunk_size=1024, verbose=False) -> dict:

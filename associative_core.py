@@ -45,7 +45,7 @@ class ContinuousCAM(nn.Module):
                  vigilance: float = 0.85, hebb_lr: float = 0.1,
                  aging_time: float = 1e9, flood_scale: float = 0.15,
                  immutable_keys: bool = False, use_lfu: bool = False,
-                 adaptive_eviction: bool = False,
+                 adaptive_eviction: bool = True,
                  use_bfloat16: bool = False, key_lr: float = 0.05,
                  inference_k: int = 20, inference_temp: float = 0.05,
                  ema_beta: float = 0.05,

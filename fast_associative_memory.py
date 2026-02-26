@@ -76,7 +76,7 @@ class FastAssociativeMemory(nn.Module):
                  inference_k: int = 25, inference_temp: float = 0.05,
                  whitening_dim: int = 0, use_lfu: bool = True,
                  use_bfloat16: bool = False, immutable_keys: bool = False,
-                 adaptive_eviction: bool = False,
+                 adaptive_eviction: bool = True,
                  adapter: MetricAdapter | None = None,
                  nstp: NSTPController | None = None,
                   dynamic_vigilance=None):

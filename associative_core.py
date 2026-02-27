@@ -14,13 +14,11 @@ from typing import Union, Tuple
 @dataclass
 class RetrievalTrace:
     broad_slots: torch.Tensor          # (broad_k,) — top-100 indices by raw cosine
-    broad_sims_raw: torch.Tensor       # (broad_k,) — cosine similarities pre-Mahalanobis
-    broad_sims_reranked: torch.Tensor  # (broad_k,) — similarities post-Mahalanobis
-    csls_scores: torch.Tensor          # (broad_k,) — scores post-hubness correction
+    broad_sims_raw: torch.Tensor       # (broad_k,) — cosine similarities
     final_slots: torch.Tensor          # (final_k,) — survivor indices after NSTP + floor
     final_weights: torch.Tensor        # (final_k,) — softmax vote weights
     rejected_slots: torch.Tensor       # (broad_k - final_k,) — indices of killed candidates
-    rejection_stage: torch.Tensor      # (broad_k - final_k,) categorical: 0=rerank_drop, 1=csls, 2=nstp, 3=floor
+    rejection_stage: torch.Tensor      # (broad_k - final_k,) categorical: 0=topk_drop, 1=nstp, 2=floor
 
 
 def _make_orthogonal_prototypes(num_vectors: int, dim: int) -> torch.Tensor:
@@ -70,7 +68,6 @@ class ContinuousCAM(nn.Module):
         self.inference_temp = inference_temp
         self.use_bfloat16 = use_bfloat16
         self.ema_beta = ema_beta
-        self.var_ema_alpha: float = 0.01
         # Similarity floor for inference: top-K entries below this threshold are
         # masked to -inf before softmax, forcing hard winner-take-all when set high.
         # 0.0 = disabled (legacy behaviour).
@@ -89,13 +86,6 @@ class ContinuousCAM(nn.Module):
         self.register_buffer("usage", torch.zeros(max_entries, dtype=torch.float32))
         # Per-slot hit count for adaptive EMA alpha decay
         self.register_buffer("hit_counts", torch.zeros(max_entries, dtype=torch.int32))
-        # Per-class running statistics for diagonal Mahalanobis re-ranking
-        # Shape: (value_dim, key_dim) — value_dim doubles as num_classes
-        self.register_buffer("class_means", torch.zeros(value_dim, key_dim))
-        self.register_buffer("class_vars", torch.ones(value_dim, key_dim))
-        # Per-prototype local neighborhood density for CSLS hubness correction
-        self.register_buffer("prototype_density", torch.zeros(max_entries))
-        self.csls_weight: float = 1.0
         self.nstp = None  # Optional NSTPController for lateral inhibition
 
     @property
@@ -127,18 +117,14 @@ class ContinuousCAM(nn.Module):
     # Batched core — single matmul for all queries
     # ------------------------------------------------------------------
     def _get_nearest_batch(self, queries: torch.Tensor):
-        """Returns (best_slots, best_sims, query_density) tensors of shape (B,).
+        """Returns (best_slots, best_sims) tensors of shape (B,).
 
-        query_density is the mean cosine similarity to the top-100 neighbors —
-        used as an online proxy for local neighborhood density (CSLS).
         Slots are -1 where table is empty.
         """
         B = queries.size(0)
         if not self.occupied.any():
-            zeros = torch.zeros(B, device=queries.device)
             return (torch.full((B,), -1, dtype=torch.long, device=queries.device),
-                    torch.full((B,), -1.0, device=queries.device),
-                    zeros)
+                    torch.full((B,), -1.0, device=queries.device))
 
         valid_idx = self.occupied.nonzero(as_tuple=True)[0]
         q_norm = F.normalize(self._cast(queries), dim=-1)
@@ -146,12 +132,7 @@ class ContinuousCAM(nn.Module):
         best_sims, best_locs = sim_matrix.max(dim=1)
         best_slots = valid_idx[best_locs]
 
-        # Density proxy: mean similarity to the top-100 nearest prototypes
-        k_density = min(100, sim_matrix.size(1))
-        topk_sims, _ = sim_matrix.topk(k_density, dim=1)          # (B, k_density)
-        query_density = topk_sims.mean(dim=1).float()              # (B,)
-
-        return best_slots, best_sims.float(), query_density
+        return best_slots, best_sims.float()
 
     def _alloc_slots_batch(self, n: int):
         """Allocate n slots: free first, then eviction for the rest.
@@ -281,12 +262,10 @@ class ContinuousCAM(nn.Module):
     # Forward / Learn — fully batched
     # ------------------------------------------------------------------
     def forward(self, queries: torch.Tensor, nstp=None, trace: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, RetrievalTrace]]:
-        """Broad cosine search → diagonal Mahalanobis re-ranking → soft-kNN vote.
+        """Broad cosine search → soft-kNN vote.
 
         1. Broad search: top-100 candidates by cosine similarity (single matmul).
-        2. Re-rank: scale query and candidate keys by per-class inverse-std, then
-           recompute cosine similarity in the whitened feature space.
-        3. Vote: softmax-weighted sum over the top-inference_k re-ranked slots.
+        2. Vote: softmax-weighted sum over the top-inference_k candidates.
 
         Args:
             queries: Input query tensor, shape ``(B, key_dim)``.
@@ -312,34 +291,10 @@ class ContinuousCAM(nn.Module):
         broad_sims_raw, broad_locs = sims.topk(broad_k, dim=1)              # (B, broad_k)
         broad_slots = valid_idx[broad_locs]                    # (B, broad_k)
 
-        # --- Step 2: Diagonal Mahalanobis re-ranking ---
-        # Determine per-candidate class from stored one-hot values
-        candidate_classes = self.values[broad_slots].float().argmax(dim=-1)  # (B, broad_k)
-
-        # Gather per-class running variance; clamp to prevent div-by-zero
-        local_vars = self.class_vars[candidate_classes].clamp(min=1e-4)      # (B, broad_k, key_dim)
-        inv_std = local_vars.rsqrt()                                          # (B, broad_k, key_dim)
-
-        # Scale both query and candidate keys by the per-class inverse std
-        candidate_keys = self.keys[broad_slots].float()                       # (B, broad_k, key_dim)
-        scaled_Q = queries.float().unsqueeze(1) * inv_std                     # (B, broad_k, key_dim)
-        scaled_K = candidate_keys * inv_std                                   # (B, broad_k, key_dim)
-
-        reranked_sims = F.cosine_similarity(scaled_Q, scaled_K, dim=-1)      # (B, broad_k)
-
-        # --- Step 3: CSLS hubness correction ---
-        # Penalise hub prototypes by subtracting their stored local density.
-        # The query-side density term is omitted: softmax is shift-invariant so
-        # a per-query constant cancels out and need not be computed.
-        candidate_density = self.prototype_density[broad_slots]               # (B, broad_k)
-        csls_sims = 2.0 * reranked_sims - self.csls_weight * candidate_density
-
-        # --- Step 4: Top-final_k and softmax vote ---
-        # CSLS governs *which* candidates are selected; the original Mahalanobis
-        # similarities drive the softmax weights (CSLS scaling would distort τ).
-        _, topk_locs = csls_sims.topk(final_k, dim=1)                         # (B, final_k)
+        # --- Step 2: Top-final_k and softmax vote ---
+        _, topk_locs = broad_sims_raw.topk(final_k, dim=1)                    # (B, final_k)
         topk_slots = broad_slots.gather(1, topk_locs)                         # (B, final_k)
-        topk_sims = reranked_sims.gather(1, topk_locs)                        # (B, final_k)
+        topk_sims = broad_sims_raw.gather(1, topk_locs)                       # (B, final_k)
 
         # --- Step 4b: NSTP lateral inhibition (optional) ---
         # Per-call `nstp` parameter takes priority; falls back to instance self.nstp.
@@ -375,22 +330,15 @@ class ContinuousCAM(nn.Module):
         B = queries.size(0)
         _broad_slots = broad_slots.detach()
         _broad_sims_raw = broad_sims_raw.detach()
-        _reranked_sims = reranked_sims.detach()
-        _csls_sims = csls_sims.detach()
         _weights = weights.detach()
         _topk_locs = topk_locs.detach()
 
+        # 0=topk_drop, survivors start at 4
         rej_stages = torch.zeros(B, broad_k, dtype=torch.long, device=queries.device)
-
-        # 1. CSLS drop: start everyone at rerank_drop (0), then mark CSLS survivors as 1.
-        _, rerank_topk_locs = _reranked_sims.topk(final_k, dim=1)
-        rej_stages.scatter_(1, rerank_topk_locs, 1)
-
-        # Candidates in `topk_locs` survived CSLS. Mark them as survivor (4).
         rej_stages.scatter_(1, _topk_locs, 4)
 
         # Now mark NSTP and floor victims
-        _base_topk_sims = _reranked_sims.gather(1, _topk_locs)
+        _base_topk_sims = broad_sims_raw.gather(1, _topk_locs)
         
         if keep_mask is not None:
             _keep_mask = keep_mask.detach()
@@ -411,11 +359,11 @@ class ContinuousCAM(nn.Module):
         for b in range(B):
             nstp_mask_b = ~_keep_mask[b]
             if nstp_mask_b.any():
-                rej_stages[b, _topk_locs[b][nstp_mask_b]] = 2
-                
+                rej_stages[b, _topk_locs[b][nstp_mask_b]] = 1
+
             floor_mask_b = _floor_rejected[b]
             if floor_mask_b.any():
-                rej_stages[b, _topk_locs[b][floor_mask_b]] = 3
+                rej_stages[b, _topk_locs[b][floor_mask_b]] = 2
                 
             stages = rej_stages[b]
             survivor_mask = stages == 4
@@ -453,8 +401,6 @@ class ContinuousCAM(nn.Module):
         tr = RetrievalTrace(
             broad_slots=_broad_slots,
             broad_sims_raw=_broad_sims_raw,
-            broad_sims_reranked=_reranked_sims,
-            csls_scores=_csls_sims,
             final_slots=_pad(final_slots_list, final_k_max) if final_k_max > 0 else torch.empty((B, 0), dtype=torch.long, device=queries.device),
             final_weights=_pad(final_weights_list, final_k_max) if final_k_max > 0 else torch.empty((B, 0), dtype=torch.float32, device=queries.device),
             rejected_slots=_pad(rejected_slots_list, rejected_k_max) if rejected_k_max > 0 else torch.empty((B, 0), dtype=torch.long, device=queries.device),
@@ -472,20 +418,7 @@ class ContinuousCAM(nn.Module):
         queries = self._cast(queries)
         targets = self._cast(targets)
 
-        # --- Update per-class EMA mean and variance (all samples, before hit/miss) ---
-        q_float = queries.float()
-        class_labels = targets.float().argmax(dim=-1)  # (B,) — class index per sample
-        for c in class_labels.unique():
-            x_c = q_float[class_labels == c]           # (N_c, key_dim)
-            batch_mean = x_c.mean(0)
-            deviation = x_c - self.class_means[c]
-            batch_var = (deviation ** 2).mean(0)
-            self.class_means[c] = ((1.0 - self.var_ema_alpha) * self.class_means[c]
-                                   + self.var_ema_alpha * batch_mean)
-            self.class_vars[c] = ((1.0 - self.var_ema_alpha) * self.class_vars[c]
-                                  + self.var_ema_alpha * batch_var)
-
-        best_slots, best_sims, query_density = self._get_nearest_batch(queries)
+        best_slots, best_sims = self._get_nearest_batch(queries)
 
         # Flat or margin-based dynamic vigilance check
         if self.dynamic_vigilance is not None and self.occupied.any():
@@ -600,16 +533,6 @@ class ContinuousCAM(nn.Module):
                                            ).to(self._mem_dtype)
                 self._update_key_norm(unique_slots)
 
-            # CSLS density EMA: scatter-mean query densities to unique hit slots
-            hit_densities = query_density[hits]                    # (n_hits,)
-            slot_density_sum = torch.zeros(len(unique_slots), device=queries.device)
-            slot_density_sum.scatter_add_(0, inverse, hit_densities)
-            slot_density_mean = slot_density_sum / slot_counts.float()
-            self.prototype_density[unique_slots] = (
-                (1.0 - self.var_ema_alpha) * self.prototype_density[unique_slots]
-                + self.var_ema_alpha * slot_density_mean
-            )
-
             self.last_seen[hit_slots] = now
             self.usage[unique_slots] += 1
 
@@ -627,7 +550,6 @@ class ContinuousCAM(nn.Module):
             self.last_seen[new_slots] = now
             self.usage[new_slots] = 1
             self.hit_counts[new_slots] = 1
-            self.prototype_density[new_slots] = query_density[misses][:n_alloc]
             self._update_key_norm(new_slots)
 
         # Track all classes seen for adaptive eviction (covers hits + misses)
@@ -739,11 +661,6 @@ class ContinuousCAM(nn.Module):
             stats["avg_hit_count"] = self.hit_counts[occ_mask].float().mean().item()
         else:
             stats["avg_hit_count"] = 0.0
-        stats["avg_class_var"] = self.class_vars.mean().item()
-        if n_occ > 0:
-            stats["avg_prototype_density"] = self.prototype_density[self.occupied].mean().item()
-        else:
-            stats["avg_prototype_density"] = 0.0
         if self._dynamic_vigilance_stats["count"] > 0:
             count = float(self._dynamic_vigilance_stats["count"])
             stats["mean_v_effective"] = self._dynamic_vigilance_stats["sum_v"] / count

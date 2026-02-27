@@ -31,9 +31,6 @@ def cam():
         c.usage[i] = float(i + 1)
         c.hit_counts[i] = i + 1
     c._keys_norm[:10] = torch.nn.functional.normalize(c.keys[:10], dim=-1)
-    c.class_means[:] = torch.randn(8, 32)
-    c.class_vars[:] = torch.rand(8, 32) + 0.1
-    c.prototype_density[:10] = torch.rand(10)
     return c
 
 
@@ -54,8 +51,7 @@ class TestSaveLoadRoundTrip:
 
         # Check all tensor buffers
         for name in ["keys", "values", "occupied", "last_seen", "usage",
-                      "_keys_norm", "hit_counts", "class_means", "class_vars",
-                      "prototype_density"]:
+                      "_keys_norm", "hit_counts"]:
             orig = getattr(cam, name)
             loaded = getattr(cam2, name)
             assert torch.equal(orig, loaded), f"Mismatch in buffer '{name}'"

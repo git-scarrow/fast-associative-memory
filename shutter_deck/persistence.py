@@ -21,7 +21,7 @@ import torch
 logger = logging.getLogger(__name__)
 
 MAGIC = b"FCAM"
-VERSION = 1
+VERSION = 2
 HEADER_FMT = "<4sHIIII"  # magic(4) + version(2) + max_entries(4) + key_dim(4) + value_dim(4) + n_occupied(4)
 HEADER_SIZE = struct.calcsize(HEADER_FMT)
 
@@ -34,9 +34,6 @@ _TENSOR_FIELDS = [
     ("usage", np.float32),
     ("_keys_norm", np.float32),
     ("hit_counts", np.int32),
-    ("class_means", np.float32),
-    ("class_vars", np.float32),
-    ("prototype_density", np.float32),
 ]
 
 

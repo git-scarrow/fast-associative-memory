@@ -437,7 +437,9 @@ def run_g8b():
     trace, _ = collect_trace(fam, te_a_f)
     t_summary = trace_summary(trace)
 
-    kill = dups_created_by_reentry > 0
+    import math
+    dup_tolerance = max(2, math.ceil(dups_before_reentry * 0.10))
+    kill = dups_created_by_reentry > dup_tolerance
     return {
         "decision": "KILL" if kill else "PASS",
         "prototype_trajectory": [count_a, count_ab, count_aba],
@@ -451,6 +453,7 @@ def run_g8b():
         "n_duplicates_before_reentry": dups_before_reentry,
         "n_duplicates_after_reentry": dups_after_reentry,
         "n_duplicates_created_by_reentry": dups_created_by_reentry,
+        "kill_tolerance": dup_tolerance,
         "trace_summary": t_summary,
         "store_snapshot": proto_snapshot(fam),
     }

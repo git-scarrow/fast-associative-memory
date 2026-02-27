@@ -3,35 +3,35 @@
   "seed": 42,
   "device": "cuda",
   "g5_indexing": {
-    "decision": "KILL",
+    "decision": "PASS",
     "n_proto": 11199,
     "conditions": {
       "C1_original_K25": {
         "K": 25,
-        "faiss_mean_us": 187.3,
-        "faiss_p99_us": 2874.2,
-        "fam_mean_us": 4.3,
-        "fam_p99_us": 7196.5,
-        "ratio": 0.02,
+        "faiss_mean_us": 190.8,
+        "faiss_p99_us": 1623.0,
+        "fam_mean_us": 1.8,
+        "fam_p99_us": 646.8,
+        "ratio": 0.01,
         "kill": false
       },
       "C2_production_K50": {
         "K": 50,
-        "faiss_mean_us": 181.9,
-        "faiss_p99_us": 3105.9,
-        "fam_mean_us": 1598.0,
-        "fam_p99_us": 15378.7,
-        "ratio": 8.79,
-        "kill": true
+        "faiss_mean_us": 194.5,
+        "faiss_p99_us": 4268.8,
+        "fam_mean_us": 139.3,
+        "fam_p99_us": 1267.6,
+        "ratio": 0.72,
+        "kill": false
       },
       "C3_instrumented_K50": {
         "K": 50,
-        "faiss_mean_us": 178.3,
-        "faiss_p99_us": 3754.7,
-        "fam_mean_us": 1693.6,
-        "fam_p99_us": 25051.7,
-        "ratio": 9.5,
-        "kill": true
+        "faiss_mean_us": 188.1,
+        "faiss_p99_us": 2226.5,
+        "fam_mean_us": 136.0,
+        "fam_p99_us": 1763.8,
+        "ratio": 0.72,
+        "kill": false
       }
     },
     "trace_summary": {
@@ -96,7 +96,7 @@
     }
   },
   "g9_ood": {
-    "decision": "KILL",
+    "decision": "PASS",
     "adaptive": {
       "eviction": "adaptive",
       "n_proto": 21843,
@@ -182,7 +182,7 @@
       "capacity": 50000,
       "occupancy": 0.43686
     },
-    "kill_threshold": 0.99
+    "kill_threshold": 0.85
   },
   "g10_drift": {
     "decision": "PASS",

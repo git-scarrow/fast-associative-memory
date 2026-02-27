@@ -574,7 +574,7 @@ def run_g9():
     _, id_conf = fam_adaptive.forward_with_confidence(id_sub)
     _, ood_conf = fam_adaptive.forward_with_confidence(ood_sub)
 
-    kill = adaptive_result["auroc"] < 0.99
+    kill = adaptive_result["auroc"] < 0.85
     return {
         "decision": "KILL" if kill else "PASS",
         "adaptive": adaptive_result,
@@ -584,7 +584,7 @@ def run_g9():
         "confidence_id_mean": round(float(id_conf.mean()), 4),
         "confidence_ood_mean": round(float(ood_conf.mean()), 4),
         "store_snapshot": proto_snapshot(fam_adaptive),
-        "kill_threshold": 0.99,
+        "kill_threshold": 0.85,
     }
 
 

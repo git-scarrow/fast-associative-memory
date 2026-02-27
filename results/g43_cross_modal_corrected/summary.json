@@ -1,0 +1,71 @@
+{
+  "decision": "KILL \u2014 cross-modal merge rate = 0.0 (984 image-only + 3016 text-only prototypes, 0 cross-modal). FAM cannot bridge the modality gap at v=0.85.",
+  "diagnostics": {
+    "cr": 0.33333333333333337,
+    "n_proto": 4000,
+    "n_image_only": 984,
+    "n_text_only": 3016,
+    "n_cross_modal": 0,
+    "cross_modal_merge_rate": 0.0
+  },
+  "track_a": {
+    "knn_t2i": {
+      "1": 64.88000000000001,
+      "5": 87.12,
+      "10": 92.16
+    },
+    "fam_t2i": {
+      "1": 75.06,
+      "5": 83.89999999999999,
+      "10": 86.76
+    },
+    "knn_i2t": {
+      "1": 85.3,
+      "5": 98.0,
+      "10": 99.2
+    },
+    "fam_i2t": {
+      "1": 98.4,
+      "5": 98.4,
+      "10": 98.4
+    }
+  },
+  "track_b": {
+    "knn_t2i": {
+      "1": 64.88000000000001,
+      "5": 87.12,
+      "10": 92.16
+    },
+    "fam_t2i": {
+      "1": 75.06,
+      "5": 83.89999999999999,
+      "10": 86.76
+    },
+    "knn_i2t": {
+      "1": 85.3,
+      "5": 97.3,
+      "10": 99.2
+    },
+    "fam_i2t": {
+      "1": 98.4,
+      "5": 98.4,
+      "10": 98.4
+    }
+  },
+  "failures": {
+    "counts": {
+      "modality-gap": 200,
+      "condensation-fragmentation": 0,
+      "vote-collapse": 0
+    },
+    "n_incorrect": 1247
+  },
+  "config": {
+    "vigilance": 0.85,
+    "inference_k": 20,
+    "inference_temp": 0.05,
+    "max_entries": 4000,
+    "N_img": 1000,
+    "N_cap": 5000
+  }
+}

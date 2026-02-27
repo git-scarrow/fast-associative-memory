@@ -1,0 +1,233 @@
+{
+  "git_commit": "282933a",
+  "seed": 42,
+  "device": "cuda",
+  "g5_indexing": {
+    "decision": "KILL",
+    "n_proto": 11199,
+    "conditions": {
+      "C1_original_K25": {
+        "K": 25,
+        "faiss_mean_us": 187.3,
+        "faiss_p99_us": 2874.2,
+        "fam_mean_us": 4.3,
+        "fam_p99_us": 7196.5,
+        "ratio": 0.02,
+        "kill": false
+      },
+      "C2_production_K50": {
+        "K": 50,
+        "faiss_mean_us": 181.9,
+        "faiss_p99_us": 3105.9,
+        "fam_mean_us": 1598.0,
+        "fam_p99_us": 15378.7,
+        "ratio": 8.79,
+        "kill": true
+      },
+      "C3_instrumented_K50": {
+        "K": 50,
+        "faiss_mean_us": 178.3,
+        "faiss_p99_us": 3754.7,
+        "fam_mean_us": 1693.6,
+        "fam_p99_us": 25051.7,
+        "ratio": 9.5,
+        "kill": true
+      }
+    },
+    "trace_summary": {
+      "topk_drop": 37500,
+      "nstp": 0,
+      "floor": 0,
+      "total_rejected": 37500,
+      "avg_survivors": 25.0
+    },
+    "store_snapshot": {
+      "occupied": 11199,
+      "capacity": 50000,
+      "occupancy": 0.22398
+    }
+  },
+  "g8a_noise": {
+    "decision": "PASS",
+    "accuracy": 90.81,
+    "n_noisy_injected": 1000,
+    "store_snapshot": {
+      "occupied": 4777,
+      "capacity": 10000,
+      "occupancy": 0.4777
+    },
+    "trace_summary": {
+      "topk_drop": 37500,
+      "nstp": 0,
+      "floor": 0,
+      "total_rejected": 37500,
+      "avg_survivors": 25.0
+    },
+    "kill_threshold": 90.0
+  },
+  "g8b_aba": {
+    "decision": "KILL",
+    "prototype_trajectory": [
+      2315,
+      4603,
+      4604
+    ],
+    "accuracy_trajectory": {
+      "task_a_after_a": 94.26,
+      "task_a_after_b": 93.18,
+      "task_b_after_b": 88.87,
+      "task_a_after_aba": 93.18,
+      "task_b_after_aba": 88.87
+    },
+    "n_duplicates_before_reentry": 22,
+    "n_duplicates_after_reentry": 23,
+    "n_duplicates_created_by_reentry": 1,
+    "trace_summary": {
+      "topk_drop": 37500,
+      "nstp": 0,
+      "floor": 0,
+      "total_rejected": 37500,
+      "avg_survivors": 25.0
+    },
+    "store_snapshot": {
+      "occupied": 4604,
+      "capacity": 10000,
+      "occupancy": 0.4604
+    }
+  },
+  "g9_ood": {
+    "decision": "KILL",
+    "adaptive": {
+      "eviction": "adaptive",
+      "n_proto": 21843,
+      "auroc": 0.866129,
+      "void_gap": -0.6239,
+      "id_score_mean": 0.7057,
+      "id_score_min": 0.2515,
+      "ood_score_mean": 0.4819,
+      "ood_score_max": 0.8754,
+      "worst_ood_classes": {
+        "88": {
+          "mean": 0.7012,
+          "max": 0.8754
+        },
+        "95": {
+          "mean": 0.6635,
+          "max": 0.8402
+        },
+        "91": {
+          "mean": 0.5691,
+          "max": 0.8362
+        },
+        "82": {
+          "mean": 0.5961,
+          "max": 0.8332
+        },
+        "80": {
+          "mean": 0.6069,
+          "max": 0.8327
+        }
+      }
+    },
+    "lfu_control": {
+      "eviction": "lfu",
+      "n_proto": 21843,
+      "auroc": 0.866129,
+      "void_gap": -0.6239,
+      "id_score_mean": 0.7057,
+      "id_score_min": 0.2515,
+      "ood_score_mean": 0.4819,
+      "ood_score_max": 0.8754,
+      "worst_ood_classes": {
+        "88": {
+          "mean": 0.7012,
+          "max": 0.8754
+        },
+        "95": {
+          "mean": 0.6635,
+          "max": 0.8402
+        },
+        "91": {
+          "mean": 0.5691,
+          "max": 0.8362
+        },
+        "82": {
+          "mean": 0.5961,
+          "max": 0.8332
+        },
+        "80": {
+          "mean": 0.6069,
+          "max": 0.8327
+        }
+      }
+    },
+    "trace_id": {
+      "topk_drop": 37500,
+      "nstp": 0,
+      "floor": 0,
+      "total_rejected": 37500,
+      "avg_survivors": 25.0
+    },
+    "trace_ood": {
+      "topk_drop": 37500,
+      "nstp": 0,
+      "floor": 0,
+      "total_rejected": 37500,
+      "avg_survivors": 25.0
+    },
+    "confidence_id_mean": 0.8985,
+    "confidence_ood_mean": 0.6164,
+    "store_snapshot": {
+      "occupied": 21843,
+      "capacity": 50000,
+      "occupancy": 0.43686
+    },
+    "kill_threshold": 0.99
+  },
+  "g10_drift": {
+    "decision": "PASS",
+    "clean_blur_cosine_distance": 0.0053,
+    "conditions": {
+      "unconstrained_10cls_2000slots": {
+        "n_classes": 10,
+        "n_entries": 2000,
+        "acc_clean_before": 95.87,
+        "acc_blur": 96.63,
+        "acc_clean_after": 95.87,
+        "bwt": 0.0,
+        "proto_before": 949,
+        "proto_after": 1869,
+        "confidence_after_drift": 0.9695,
+        "trace_summary": {
+          "topk_drop": 37500,
+          "nstp": 0,
+          "floor": 0,
+          "total_rejected": 37500,
+          "avg_survivors": 25.0
+        },
+        "kill": false
+      },
+      "constrained_50cls_2000slots": {
+        "n_classes": 50,
+        "n_entries": 2000,
+        "acc_clean_before": 89.94,
+        "acc_blur": 87.59,
+        "acc_clean_after": 86.32,
+        "bwt": -3.61,
+        "proto_before": 2000,
+        "proto_after": 2000,
+        "confidence_after_drift": 0.5191,
+        "trace_summary": {
+          "topk_drop": 37500,
+          "nstp": 0,
+          "floor": 0,
+          "total_rejected": 37500,
+          "avg_survivors": 25.0
+        },
+        "kill": false
+      }
+    },
+    "kill_threshold_bwt": -5.0
+  },
+  "overall_decision": "KILL"
+}

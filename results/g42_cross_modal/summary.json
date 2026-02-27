@@ -1,0 +1,44 @@
+{
+  "phase_a_decision": "KILL",
+  "phase_a": {
+    "knn_t2i": {
+      "1": 64.88000000000001,
+      "5": 87.12,
+      "10": 92.16
+    },
+    "knn_i2t": {
+      "1": 85.3,
+      "5": 97.3,
+      "10": 99.2
+    },
+    "fam_t2i": {
+      "1": 75.06,
+      "5": 83.89999999999999,
+      "10": 86.76
+    },
+    "fam_i2t": {
+      "1": 98.4,
+      "5": 98.4,
+      "10": 98.4
+    },
+    "diagnostics": {
+      "cr": 0.33333333333333337,
+      "n_proto": 4000,
+      "n_image_origin": 984,
+      "n_text_origin": 3016,
+      "n_image_only": 984,
+      "n_text_only": 3016,
+      "n_cross_modal": 0,
+      "cross_modal_merge_rate": 0.0
+    },
+    "auroc": NaN,
+    "failures": {
+      "counts": {
+        "modality-gap": 200,
+        "condensation-fragmentation": 0,
+        "vote-collapse": 0
+      },
+      "n_incorrect": 1247
+    }
+  }
+}

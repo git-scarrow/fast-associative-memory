@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-G-43 — FAM Cross-Modal Retrieval (Corrected Comparison)
+G-42 (Corrected) — FAM Cross-Modal Retrieval with Matched Comparisons
 
-Fixes G-42's invalid i2t comparison by providing two matched evaluation tracks:
+Fixes the original G-42's invalid i2t comparison by providing two matched
+evaluation tracks:
 
   Track A (Classification): both kNN and FAM score over image_ids.
   Track B (Retrieval):      both kNN and FAM rank individual items.
@@ -13,7 +14,7 @@ Dataset: Flickr30k 1K test split, CLIP ViT-L/14 768-d, no adapters.
 Reuses G-42 embedding cache.
 
 Usage:
-    PYTHONPATH=. .venv/bin/python benchmarks/g43_cross_modal_corrected.py
+    PYTHONPATH=. .venv/bin/python benchmarks/g42_cross_modal_corrected.py
 """
 from __future__ import annotations
 
@@ -35,7 +36,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 EMB_CACHE = Path("data/g42_embeddings")  # reuse G-42 cache
 MODEL_CACHE = Path(".model_cache")
 HF_CACHE = Path("data/g42_embeddings/.hf_cache")
-OUT_DIR = Path("results/g43_cross_modal_corrected")
+OUT_DIR = Path("results/g42_cross_modal_corrected")
 
 EMBED_DIM = 768
 IMG_BATCH = 64
@@ -476,7 +477,7 @@ def print_report(track_a, track_b, diag, failures, kill_reason):
         return f"R@1={m[1]:.1f}  R@5={m[5]:.1f}  R@10={m[10]:.1f}"
 
     print("\n" + "=" * 70)
-    print("G-43 FINAL REPORT")
+    print("G-42 (CORRECTED) FINAL REPORT")
     print("=" * 70)
 
     print(f"\n## Decision: {kill_reason}")
@@ -516,7 +517,7 @@ def main():
     model, processor = load_clip()
 
     print("\n" + "=" * 60)
-    print("  G-43: Flickr30k 1K — Corrected Cross-Modal Comparison")
+    print("  G-42 (Corrected): Flickr30k 1K — Corrected Cross-Modal Comparison")
     print("=" * 60)
 
     data = load_and_embed("clip-benchmark/wds_flickr30k", "test", model, processor)

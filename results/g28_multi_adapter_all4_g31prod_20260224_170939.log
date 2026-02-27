@@ -1,0 +1,45 @@
+G28 — Multi-Domain Adapter: All-4 Combination
+Device : cuda  |  Seed : 42
+
+Loading Birds features from './data/cub200' …
+  train=(5994, 1024)  test=(5794, 1024)  classes=200
+Loading Cars features from './data/stanford_cars' …
+  train=(8144, 1024)  test=(8041, 1024)  classes=196
+Loading Aircraft features from './data/fgvc_aircraft' …
+  train=(3334, 1024)  test=(3333, 1024)  classes=100
+Loading Flowers features from './data/flowers102/feature_cache' …
+  train=(2040, 1024)  test=(6149, 1024)  classes=102
+
+Loading cross-domain features …
+  CIFAR-100 train=(50000, 1024)  test=(10000, 1024)
+  ImageNet-R train=(23918, 1024)  test=(6082, 1024)
+
+Concatenating training data with remapped labels …
+  Combined: (19512, 1024)  total classes=598
+
+[G28] Training all-4 multi-domain adapter: 5 epoch(s), batch=128, lr=0.0001, margin=0.2
+  Epoch 1/5  loss=0.163062
+  Epoch 2/5  loss=0.133014
+  Epoch 3/5  loss=0.125412
+  Epoch 4/5  loss=0.119038
+  Epoch 5/5  loss=0.112884
+[G28] All-4 multi-domain adapter saved → adapter_multi_all4.pt
+Traceback (most recent call last):
+  File "/mnt/data/dev/projects/fast-associative-memory/benchmarks/g28_multi_adapter_all4.py", line 651, in <module>
+    main()
+    ~~~~^^
+  File "/mnt/data/dev/projects/fast-associative-memory/benchmarks/g28_multi_adapter_all4.py", line 474, in main
+    single_adapters[name] = _load_adapter(adp_path, input_dim, device, name)
+                            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/data/dev/projects/fast-associative-memory/benchmarks/g28_multi_adapter_all4.py", line 360, in _load_adapter
+    adapter.load_state_dict(torch.load(path, map_location=device, weights_only=True))
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/data/dev/projects/fast-associative-memory/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 2635, in load_state_dict
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Error(s) in loading state_dict for MetricAdapter:
+	size mismatch for net.0.weight: copying a param with shape torch.Size([1024, 1024]) from checkpoint, the shape in current model is torch.Size([512, 1024]).
+	size mismatch for net.0.bias: copying a param with shape torch.Size([1024]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for net.2.weight: copying a param with shape torch.Size([1024, 1024]) from checkpoint, the shape in current model is torch.Size([256, 512]).
+	size mismatch for net.2.bias: copying a param with shape torch.Size([1024]) from checkpoint, the shape in current model is torch.Size([256]).

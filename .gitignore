@@ -9,3 +9,13 @@ test_drop/
 data/
 models/
 feature_cache_*/
+.hf_cache/
+.model_cache/
+*.log
+*.arrow
+*.safetensors
+*.onnx
+*.pkl
+*.npy
+*.npz
+*.h5

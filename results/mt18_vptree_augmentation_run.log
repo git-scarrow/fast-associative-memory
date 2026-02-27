@@ -1,0 +1,186 @@
+=================================================================
+  MT-18 — VP-Tree Candidate Set Augmentation
+  Device: cuda
+=================================================================
+
+=================================================================
+  DOMAIN: DOGS
+=================================================================
+  Train: 12000, Test: 8580, Classes: 120
+  Prototypes stored: 10279
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      0.9999     0.9999     0.9996
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    95.1%   93.4%   87.9%   81.8%    89.6%
+      tree    95.1%   93.4%   87.9%   81.8%    89.6%
+     union    95.1%   93.4%   87.9%   81.8%    89.6%
+
+=================================================================
+  DOMAIN: BIRDS
+=================================================================
+  Train: 5994, Test: 5794, Classes: 200
+  Prototypes stored: 5773
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      1.0000     1.0000     0.9999
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    96.1%   94.6%   89.2%   81.2%    90.3%
+      tree    96.1%   94.6%   89.2%   81.2%    90.3%
+     union    96.1%   94.6%   89.2%   81.2%    90.3%
+
+=================================================================
+  DOMAIN: CARS
+=================================================================
+  Train: 8144, Test: 8041, Classes: 196
+  Prototypes stored: 7882
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      1.0000     1.0000     0.9999
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    94.2%   92.6%   91.0%   87.0%    91.2%
+      tree    94.2%   92.6%   91.0%   87.0%    91.2%
+     union    94.2%   92.6%   91.0%   87.0%    91.2%
+
+=================================================================
+  DOMAIN: AIRCRAFT
+=================================================================
+  Train: 3334, Test: 3333, Classes: 100
+  Prototypes stored: 3276
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      1.0000     1.0000     1.0000
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    83.0%   77.1%   69.7%   67.5%    74.3%
+      tree    83.0%   77.1%   69.7%   67.5%    74.3%
+     union    83.0%   77.1%   69.7%   67.5%    74.3%
+
+  Table 3 — Aircraft class 38/37 bridge analysis:
+  Queries in classes 37/38: 67, with differing top-5: 0
+
+   True  FlatPred  TreePred  UnionPred          FlatTop5Cls          TreeTop5Cls
+
+=================================================================
+  DOMAIN: CIFAR100
+=================================================================
+  Train: 50000, Test: 10000, Classes: 100
+  Prototypes stored: 43965
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      1.0000     1.0000     0.9999
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    90.9%   90.5%   91.3%   93.4%    91.5%
+      tree    90.9%   90.5%   91.3%   93.4%    91.5%
+     union    90.9%   90.5%   91.3%   93.4%    91.5%
+
+=================================================================
+  DOMAIN: FLOWERS
+=================================================================
+  Train: 2040, Test: 6149, Classes: 102
+  Prototypes stored: 1105
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      1.0000     1.0000     1.0000
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    99.8%   99.9%   99.9%   99.8%    99.9%
+      tree    99.8%   99.9%   99.9%   99.8%    99.9%
+     union    99.8%   99.9%   99.9%   99.8%    99.9%
+
+=================================================================
+  DOMAIN: IMAGENET_R
+=================================================================
+  Train: 23918, Test: 6082, Classes: 200
+  Prototypes stored: 23006
+  Building VP-tree... done.
+
+  Table 1 — Candidate set overlap (mean Jaccard):
+     top-100     top-25      top-5
+      1.0000     0.9999     0.9996
+
+  Table 2 — Accuracy by confidence quartile:
+  Condition       Q1      Q2      Q3      Q4  Overall
+      flat    84.3%   85.2%   84.8%   82.4%    84.2%
+      tree    84.3%   85.2%   84.8%   82.4%    84.2%
+     union    84.3%   85.2%   84.8%   82.4%    84.2%
+
+================================================================================
+  MT-18 SUMMARY
+================================================================================
+
+  Table 1: Per-domain candidate set overlap (mean Jaccard)
+  Domain          Jaccard@100  Jaccard@25  Jaccard@5
+  --------------------------------------------------
+  dogs                 0.9999      0.9999     0.9996
+  birds                1.0000      1.0000     0.9999
+  cars                 1.0000      1.0000     0.9999
+  aircraft             1.0000      1.0000     1.0000
+  cifar100             1.0000      1.0000     0.9999
+  flowers              1.0000      1.0000     1.0000
+  imagenet_r           1.0000      0.9999     0.9996
+
+  Table 2: Accuracy comparison (flat vs tree vs union) by quartile
+  Domain           Cond       Q1      Q2      Q3      Q4  Overall
+  -----------------------------------------------------------------
+  dogs             flat    95.1%   93.4%   87.9%   81.8%    89.6%
+  dogs             tree    95.1%   93.4%   87.9%   81.8%    89.6%
+  dogs            union    95.1%   93.4%   87.9%   81.8%    89.6%
+
+  birds            flat    96.1%   94.6%   89.2%   81.2%    90.3%
+  birds            tree    96.1%   94.6%   89.2%   81.2%    90.3%
+  birds           union    96.1%   94.6%   89.2%   81.2%    90.3%
+
+  cars             flat    94.2%   92.6%   91.0%   87.0%    91.2%
+  cars             tree    94.2%   92.6%   91.0%   87.0%    91.2%
+  cars            union    94.2%   92.6%   91.0%   87.0%    91.2%
+
+  aircraft         flat    83.0%   77.1%   69.7%   67.5%    74.3%
+  aircraft         tree    83.0%   77.1%   69.7%   67.5%    74.3%
+  aircraft        union    83.0%   77.1%   69.7%   67.5%    74.3%
+
+  cifar100         flat    90.9%   90.5%   91.3%   93.4%    91.5%
+  cifar100         tree    90.9%   90.5%   91.3%   93.4%    91.5%
+  cifar100        union    90.9%   90.5%   91.3%   93.4%    91.5%
+
+  flowers          flat    99.8%   99.9%   99.9%   99.8%    99.9%
+  flowers          tree    99.8%   99.9%   99.9%   99.8%    99.9%
+  flowers         union    99.8%   99.9%   99.9%   99.8%    99.9%
+
+  imagenet_r       flat    84.3%   85.2%   84.8%   82.4%    84.2%
+  imagenet_r       tree    84.3%   85.2%   84.8%   82.4%    84.2%
+  imagenet_r      union    84.3%   85.2%   84.8%   82.4%    84.2%
+
+
+  VERDICT:
+    dogs          : Flat sufficient (J@100 > 0.95)
+    birds         : Flat sufficient (J@100 > 0.95)
+    cars          : Flat sufficient (J@100 > 0.95)
+    aircraft      : Flat sufficient (J@100 > 0.95)
+    cifar100      : Flat sufficient (J@100 > 0.95)
+    flowers       : Flat sufficient (J@100 > 0.95)
+    imagenet_r    : Flat sufficient (J@100 > 0.95)
+
+  Results saved to results/mt18_vptree_augmentation/results.json

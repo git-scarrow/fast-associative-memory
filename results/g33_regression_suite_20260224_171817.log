@@ -1,0 +1,9 @@
+=== G33 REGRESSION SUITE ===
+G11: REGRESSED — ratio=0.83, acc=89.91%
+G22: PASS (still) — acc=90.78% vs baseline 75.99%
+G23: PASS (still) — acc=89.80% vs baseline 65.96%
+G24: KILL (still) — acc=73.51% vs kill threshold 75.00%
+G25: PASS (still) — acc=99.67%
+G27: REGRESSED — avg=81.92% vs best-single 82.13%
+G28: KILL (still) — cited from G32 (75.83% avg, Aircraft -40.87pp)
+VERDICT: KILL (regression detected)

@@ -1,0 +1,58 @@
+G28 — Multi-Domain Adapter: All-4 Combination
+Device : cuda  |  Seed : 42
+
+Loading Birds features from './data/cub200' …
+  train=(5994, 1024)  test=(5794, 1024)  classes=200
+Loading Cars features from './data/stanford_cars' …
+  train=(8144, 1024)  test=(8041, 1024)  classes=196
+Loading Aircraft features from './data/fgvc_aircraft' …
+  train=(3334, 1024)  test=(3333, 1024)  classes=100
+Loading Flowers features from './data/flowers102/feature_cache' …
+  train=(2040, 1024)  test=(6149, 1024)  classes=102
+
+Loading cross-domain features …
+  CIFAR-100 train=(50000, 1024)  test=(10000, 1024)
+  ImageNet-R train=(23918, 1024)  test=(6082, 1024)
+
+Concatenating training data with remapped labels …
+  Combined: (19512, 1024)  total classes=598
+
+[G28] Training all-4 multi-domain adapter: 5 epoch(s), batch=128, lr=0.0001, margin=0.2
+  Epoch 1/5  loss=0.163062
+  Epoch 2/5  loss=0.133014
+  Epoch 3/5  loss=0.125412
+  Epoch 4/5  loss=0.119038
+  Epoch 5/5  loss=0.112884
+[G28] All-4 multi-domain adapter saved → adapter_multi_all4.pt
+
+Evaluating …
+  [Birds] in-domain …
+  [Cars] in-domain …
+  [Aircraft] in-domain …
+  [Flowers] in-domain …
+  [CIFAR-100] cross-domain …
+  [ImageNet-R] cross-domain …
+
+=========================================================================
+  G28 — Multi-Domain Adapter: All-4 Combination
+=========================================================================
+  Dataset              Best Single  Multi-Top2  Multi-All4  Δ vs Best
+  -------------------------------------------------------------------
+  Birds (in)                90.90%      84.12%      81.03%     -9.87
+                        prototypes=5807  condensation@0.80=0.9626
+  Cars (in)                 89.89%      74.43%      72.39%    -17.50
+                        prototypes=7763  condensation@0.80=0.9461
+  Aircraft (in)             73.33%      29.73%      32.64%    -40.68
+                        prototypes=3268  condensation@0.80=0.9802
+  Flowers (in)              99.71%      99.64%      99.64%     -0.07
+                        prototypes=1083  condensation@0.80=0.5034
+  CIFAR-100 (cross)         89.52%      89.55%      89.14%     -0.38
+                        drop vs no-adapter=+2.40 pp
+  ImageNet-R (cross)        80.89%      80.09%      80.12%     -0.77
+                        drop vs no-adapter=+2.98 pp
+  -------------------------------------------------------------------
+  AVERAGE                   87.37%      76.26%      75.83%    -11.55
+=========================================================================
+
+Kill condition: Multi-all4 avg 75.83% vs best single avg 87.37%
+→ KILL  (multi-all4 underperforms best single-domain adapter)

@@ -1,0 +1,37 @@
+# Shutter-Deck FAM — Configuration
+# All paths, budgets, and tuning knobs in one place.
+
+[paths]
+watch_dir = "/mnt/nvme/incoming"
+state_file = "/var/lib/shutter-deck/cam_state.bin"
+metadata_db = "/var/lib/shutter-deck/metadata.db"
+
+[encoder]
+backend = "onnxruntime"
+model_name = "dinov2_vitb14"
+model_path = "models/dinov2_vitb14.onnx" # requires sidecar weights file models/dinov2_vitb14.onnx.data
+device = "cpu"
+num_threads = 4
+input_size = 224
+
+[cam]
+key_dim = 768
+value_dim = 768           # autoassociative mode: value_dim == key_dim
+max_entries = 100000
+vigilance = 0.85
+hebb_lr = 0.1
+key_lr = 0.05
+inference_k = 25
+inference_temp = 0.05
+use_lfu = true
+use_bfloat16 = true
+immutable_keys = false
+
+[eviction]
+min_per_class = 5
+
+[ingest]
+batch_size = 4            # max images per encoder forward pass
+batch_window_sec = 2.0    # seconds to wait for more files before flushing
+checkpoint_interval = 100 # save state every N ingestions
+file_extensions = ["*.ARW", "*.arw", "*.JPG", "*.jpg", "*.jpeg"]

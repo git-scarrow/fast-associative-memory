@@ -1,13 +1,26 @@
 # BCL-EXP-1: Two-Tier Accumulator Replay Buffer — Sweep Report
 
+> **Early Termination (2026-03-04):** CIFAR-10 sweep stopped after 3/36 accumulator configs
+> (ff=50, all merge strategies × 3 seeds). Kill condition met on available data.
+> Permuted-MNIST sweep was not run. Verdict is definitive on the data collected.
+
 ## 1. Vanilla GEM Baselines
 
 | Benchmark | BWT (mean±std) | Avg Acc (mean±std) | KL drift |
 |-----------|----------------|--------------------|----------|
+| split_cifar10 | -5.12±0.80% | 82.04±0.80% | 0.1521 |
 | split_mnist | -0.44±0.16% | 99.17±0.09% | 0.0520 |
 
 ## 2. Sweep Results
 
+
+### Sweep Results (split_cifar10)
+
+| flush_freq | hot_frac | merge      | BWT (mean±std)    | Avg Acc (mean±std) | KL_drift (mean) |
+|------------|----------|------------|-------------------|--------------------|-----------------|
+| 50         | 0.1      | importance | -24.84±1.34       | 66.97±0.53         | 0.1742          |
+| 50         | 0.1      | random     | -8.45±0.18        | 80.45±0.38         | 0.1660          |
+| 50         | 0.1      | reservoir  | -5.38±0.49        | 82.46±0.56         | 0.1614          |
 
 ### Sweep Results (split_mnist)
 
@@ -52,6 +65,12 @@
 
 ## 3. Best Configuration per Benchmark
 
+**split_cifar10:**
+- Best config: flush_freq=50, hot_frac=0.1, merge=reservoir
+- BWT: -5.38±0.49% (Δ=-0.26pp vs vanilla)
+- Avg Acc: 82.46±0.56%
+- KL drift: 0.1614 (reduction: -6.2%)
+
 **split_mnist:**
 - Best config: flush_freq=100, hot_frac=0.25, merge=importance
 - BWT: +0.05±0.02% (Δ=+0.49pp vs vanilla)
@@ -60,10 +79,12 @@
 
 ## 4. Kill Condition Evaluation
 
+  split_cifar10: vanilla BWT=-5.12%, best accum BWT=-5.38% (Δ=-0.26pp, config=split_cifar10_ff50_hf0.1_msreservoir)
   split_mnist: vanilla BWT=-0.44%, best accum BWT=+0.05% (Δ=+0.49pp, config=split_mnist_ff100_hf0.25_msimportance)
 
 **VERDICT: KILL** — Best accumulator BWT is within ±1pp of vanilla GEM on ALL benchmarks. The accumulator pattern does not transfer to replay buffer management in a measurable way.
 
 ## 5. Interpretation
 
+- **split_cifar10**: No significant BWT improvement.
 - **split_mnist**: No significant BWT improvement.

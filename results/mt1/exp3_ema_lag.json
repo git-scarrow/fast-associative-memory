@@ -1,0 +1,128 @@
+[
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 0,
+    "N_eff": 1406.72,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 1,
+    "N_eff": 2672.65,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 5,
+    "N_eff": 7611.05,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 10,
+    "N_eff": 13511.31,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 25,
+    "N_eff": 29533.04,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 50,
+    "N_eff": 51410.3,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128 \u2192 128K",
+    "Step": 100,
+    "N_eff": 81662.77,
+    "R_max_target": 11.7598,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.993641
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 0,
+    "N_eff": 126721.28,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 1,
+    "N_eff": 125455.35,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 5,
+    "N_eff": 120516.95,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 10,
+    "N_eff": 114616.69,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 25,
+    "N_eff": 98594.96,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 50,
+    "N_eff": 76717.7,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  },
+  {
+    "Transition": "128K \u2192 128",
+    "Step": 100,
+    "N_eff": 46465.23,
+    "R_max_target": 4.852,
+    "R_max_realized": 16.8112,
+    "Violation": 0.0,
+    "alpha_s_boundary": 0.999994
+  }
+]

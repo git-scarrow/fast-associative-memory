@@ -1,0 +1,58 @@
+{
+  "variant": "Norm-Decoupled Projection (DS-14)",
+  "phase1": {
+    "rho": 0.9459995766389606,
+    "rho_pval": 1.444170651927862e-59,
+    "rho_gate": 0.3,
+    "rho_pass": true,
+    "radial_variance": 0.03643634170293808,
+    "radial_var_gate": 0.1,
+    "radial_var_pass": false,
+    "verdict": "KILL"
+  },
+  "phase2": {
+    "accuracy": 86.38694638694639,
+    "accuracy_gate": 99.5,
+    "accuracy_delta_vs_euclidean": -2.0279720279720266,
+    "verdict": "N/A (Phase 1 failed)"
+  },
+  "overall_verdict": "KILL",
+  "reason": "Phase 1 failed: rho=0.9460, var=0.0364",
+  "baselines": {
+    "euclidean_acc": 88.41491841491842,
+    "l2norm_hyp_acc": 88.65967365967366,
+    "l2norm_rho": 0.004132708647245443,
+    "l2norm_radial_std": 0.0001664240553509444
+  },
+  "ds14_stats": {
+    "n_occupied": 11144,
+    "mean_radius": 2.053345203399658,
+    "std_radius": 0.2957175672054291,
+    "min_radius": 1.2899507284164429,
+    "max_radius": 2.5845165252685547,
+    "c_eff": 0.7931472063064575
+  },
+  "sweep_results": [
+    {
+      "mag_range": "[1.0, 2.0]",
+      "accuracy": 85.51282051282051,
+      "rho": 0.9385271855863108,
+      "rho_pval": 2.428221999730732e-56,
+      "radial_var": 0.1520616114139557
+    },
+    {
+      "mag_range": "[1.2, 1.8]",
+      "accuracy": 86.38694638694639,
+      "rho": 0.9459995766389606,
+      "rho_pval": 1.444170651927862e-59,
+      "radial_var": 0.03643634170293808
+    },
+    {
+      "mag_range": "[0.8, 2.5]",
+      "accuracy": 83.12354312354313,
+      "rho": 0.9269502933178845,
+      "rho_pval": 4.552834844260617e-52,
+      "radial_var": 0.6155675053596497
+    }
+  ]
+}

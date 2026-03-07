@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Hyperbolic (no adapters, no decay)",
+    "hyp_acc": 88.65967365967366,
+    "euc_acc": 88.41491841491842,
+    "overhead": 0.23121913252584844,
+    "rho": 0.004132708647245443,
+    "rho_pval": 0.9642684081886441,
+    "verdict": "KILL",
+    "reason": "acc=88.66% < 99.5%",
+    "hyp_stats": {
+      "n_occupied": 11965,
+      "capacity": 50000,
+      "fill_pct": 23.93,
+      "vigilance_distance": 0.4658564837764629,
+      "avg_hit_count": 1.002925157546997,
+      "mean_radius": 1.54307222366333,
+      "std_radius": 0.0001664240553509444,
+      "min_radius": 1.539046049118042,
+      "max_radius": 1.5430806875228882
+    },
+    "euc_stats": {
+      "n_occupied": 11965,
+      "capacity": 50000,
+      "fill_pct": 23.93,
+      "avg_hit_count": 1.002925157546997,
+      "mean_v_effective": 0.92,
+      "mean_margin": 0.0
+    },
+    "euc_total_s": 0.3885913720005192,
+    "hyp_total_s": 0.08984975994098932,
+    "curvature": 1.0,
+    "hybrid_decay": false
+  }
+]

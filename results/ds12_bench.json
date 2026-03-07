@@ -1,0 +1,118 @@
+{
+  "128": {
+    "unfused_fp32": {
+      "fwd_ms": 0.644,
+      "fwd_bwd_ms": 3.359,
+      "mem_mb": 81.9,
+      "tokens_per_sec": 304815,
+      "ratio_vs_mha": 3.45
+    },
+    "fused_fp32": {
+      "fwd_ms": 0.612,
+      "fwd_bwd_ms": 2.979,
+      "mem_mb": 81.9,
+      "tokens_per_sec": 343741,
+      "ratio_vs_mha": 3.06
+    },
+    "fused_bf16": {
+      "fwd_ms": 0.6,
+      "fwd_bwd_ms": 2.89,
+      "mem_mb": 88.9,
+      "tokens_per_sec": 354384,
+      "ratio_vs_mha": 2.97
+    },
+    "standard_mha": {
+      "fwd_ms": 0.158,
+      "fwd_bwd_ms": 0.974,
+      "mem_mb": 73.4,
+      "tokens_per_sec": 1051056
+    }
+  },
+  "512": {
+    "unfused_fp32": {
+      "fwd_ms": 3.036,
+      "fwd_bwd_ms": 7.479,
+      "mem_mb": 454.3,
+      "tokens_per_sec": 547683,
+      "ratio_vs_mha": 3.05
+    },
+    "fused_fp32": {
+      "fwd_ms": 0.873,
+      "fwd_bwd_ms": 7.952,
+      "mem_mb": 450.4,
+      "tokens_per_sec": 515067,
+      "ratio_vs_mha": 3.24
+    },
+    "fused_bf16": {
+      "fwd_ms": 0.747,
+      "fwd_bwd_ms": 7.529,
+      "mem_mb": 466.4,
+      "tokens_per_sec": 544027,
+      "ratio_vs_mha": 3.07
+    },
+    "standard_mha": {
+      "fwd_ms": 0.758,
+      "fwd_bwd_ms": 2.453,
+      "mem_mb": 152.1,
+      "tokens_per_sec": 1670119
+    }
+  },
+  "1024": {
+    "unfused_fp32": {
+      "fwd_ms": 10.607,
+      "fwd_bwd_ms": 26.577,
+      "mem_mb": 1577.3,
+      "tokens_per_sec": 308242,
+      "ratio_vs_mha": 3.27
+    },
+    "fused_fp32": {
+      "fwd_ms": 2.069,
+      "fwd_bwd_ms": 27.99,
+      "mem_mb": 1502.1,
+      "tokens_per_sec": 292680,
+      "ratio_vs_mha": 3.44
+    },
+    "fused_bf16": {
+      "fwd_ms": 1.759,
+      "fwd_bwd_ms": 27.189,
+      "mem_mb": 1530.3,
+      "tokens_per_sec": 301293,
+      "ratio_vs_mha": 3.35
+    },
+    "standard_mha": {
+      "fwd_ms": 2.161,
+      "fwd_bwd_ms": 8.127,
+      "mem_mb": 256.8,
+      "tokens_per_sec": 1007973
+    }
+  },
+  "2048": {
+    "unfused_fp32": {
+      "fwd_ms": 40.046,
+      "fwd_bwd_ms": 99.245,
+      "mem_mb": 5551.3,
+      "tokens_per_sec": 165086,
+      "ratio_vs_mha": 3.79
+    },
+    "fused_fp32": {
+      "fwd_ms": 6.092,
+      "fwd_bwd_ms": 104.035,
+      "mem_mb": 5526.8,
+      "tokens_per_sec": 157485,
+      "ratio_vs_mha": 3.97
+    },
+    "fused_bf16": {
+      "fwd_ms": 5.736,
+      "fwd_bwd_ms": 102.99,
+      "mem_mb": 5579.3,
+      "tokens_per_sec": 159083,
+      "ratio_vs_mha": 3.93
+    },
+    "standard_mha": {
+      "fwd_ms": 6.767,
+      "fwd_bwd_ms": 26.195,
+      "mem_mb": 466.3,
+      "tokens_per_sec": 625474
+    }
+  }
+}

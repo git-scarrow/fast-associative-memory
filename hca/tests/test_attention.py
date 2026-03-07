@@ -6,6 +6,10 @@ import torch.nn as nn
 
 from hca.modules.hca_attention import HCAAttention
 
+requires_cuda = pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="CUDA required"
+)
+
 
 @pytest.fixture
 def attention():
@@ -130,3 +134,69 @@ class TestAlphaS:
         """get_c_eff should return positive value."""
         c_eff = attention.get_c_eff()
         assert c_eff > 0
+
+
+@requires_cuda
+class TestFused:
+    def test_fused_output_shape(self):
+        attn = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        x = torch.randn(2, 16, 64, device='cuda')
+        out, _ = attn(x, x, x)
+        assert out.shape == (2, 16, 64)
+
+    def test_fused_output_finite(self):
+        attn = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        x = torch.randn(4, 128, 64, device='cuda')
+        out, _ = attn(x, x, x)
+        assert torch.isfinite(out).all()
+
+    def test_fused_matches_unfused(self):
+        """Fused output matches unfused within fp32 tolerance."""
+        torch.manual_seed(42)
+        attn_f = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        attn_u = HCAAttention(d_model=64, n_heads=4, use_fused=False).cuda()
+        attn_u.load_state_dict(attn_f.state_dict())
+
+        x = torch.randn(2, 16, 64, device='cuda')
+        out_f, _ = attn_f(x, x, x)
+        out_u, _ = attn_u(x, x, x)
+        assert torch.allclose(out_f, out_u, atol=0.01)
+
+    def test_fused_causal_matches_unfused(self):
+        """Fused causal matches unfused with explicit causal mask."""
+        torch.manual_seed(42)
+        attn_f = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        attn_u = HCAAttention(d_model=64, n_heads=4, use_fused=False).cuda()
+        attn_u.load_state_dict(attn_f.state_dict())
+
+        N = 16
+        x = torch.randn(2, N, 64, device='cuda')
+        out_f, _ = attn_f(x, x, x, is_causal=True)
+        mask = torch.triu(torch.full((N, N), float("-inf"), device='cuda'), diagonal=1)
+        out_u, _ = attn_u(x, x, x, attn_mask=mask)
+        assert torch.allclose(out_f, out_u, atol=0.01)
+
+    def test_fused_backward_finite(self):
+        attn = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        x = torch.randn(2, 16, 64, device='cuda')
+        out, _ = attn(x, x, x)
+        out.sum().backward()
+        for name, p in attn.named_parameters():
+            if p.grad is not None:
+                assert torch.isfinite(p.grad).all(), f"Non-finite grad: {name}"
+
+    def test_fused_gamma_has_gradient(self):
+        attn = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        x = torch.randn(2, 16, 64, device='cuda')
+        out, _ = attn(x, x, x)
+        out.sum().backward()
+        assert attn.gamma_raw.grad is not None
+        assert attn.gamma_raw.grad.abs() > 0
+
+    def test_fused_falls_back_for_need_weights(self):
+        """Fused should fall back to unfused when need_weights=True."""
+        attn = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        x = torch.randn(2, 16, 64, device='cuda')
+        out, weights = attn(x, x, x, need_weights=True)
+        assert weights is not None
+        assert weights.shape == (2, 4, 16, 16)

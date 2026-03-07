@@ -46,10 +46,12 @@ class HyperbolicCAM(nn.Module):
                  adaptive_eviction: bool = True,
                  key_lr: float = 0.05,
                  inference_k: int = 20, inference_temp: float = 0.05,
-                 ema_beta: float = 0.05):
+                 ema_beta: float = 0.05,
+                 projection: nn.Module = None):
         super().__init__()
         self.key_dim = key_dim          # Euclidean input dimension
         self.hyp_dim = key_dim + 1      # Lorentz dimension (d+1)
+        self.projection = projection    # Optional custom projection (e.g. NormDecoupledProjection)
         self.value_dim = value_dim
         self.max_entries = max_entries
         self.vigilance = vigilance
@@ -89,13 +91,14 @@ class HyperbolicCAM(nn.Module):
         self.register_buffer("hit_counts", torch.zeros(max_entries, dtype=torch.int32))
 
     def _to_hyperboloid(self, x: torch.Tensor) -> torch.Tensor:
-        """Project Euclidean vectors to the Lorentz hyperboloid via exp-map at origin.
+        """Project Euclidean vectors to the Lorentz hyperboloid.
 
-        L2-normalizes first to ensure stable placement on the hyperboloid.
-        Without normalization, large-norm vectors (e.g., ViT features with
-        ||x|| ~ 46) would be placed at cosh(46) ~ 10^20, causing numerical
-        issues and collapsing all distance comparisons.
+        If a custom projection module is set, uses it (e.g. NormDecoupledProjection
+        which separates direction from magnitude to preserve radial variation).
+        Otherwise falls back to L2-normalize + exp-map (original behavior).
         """
+        if self.projection is not None:
+            return self.projection(x)
         x_normed = F.normalize(x, dim=-1)
         return exp_map_origin(x_normed, self.curvature)
 

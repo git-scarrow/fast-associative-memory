@@ -3,7 +3,7 @@
     "name": "Hyperbolic (no adapters, no decay)",
     "hyp_acc": 88.65967365967366,
     "euc_acc": 88.41491841491842,
-    "overhead": 0.500321897827338,
+    "overhead": 0.23121913252584844,
     "rho": 0.004132708647245443,
     "rho_pval": 0.9642684081886441,
     "verdict": "KILL",
@@ -27,8 +27,8 @@
       "mean_v_effective": 0.92,
       "mean_margin": 0.0
     },
-    "euc_total_s": 0.44360205897828564,
-    "hyp_total_s": 0.22194382402813062,
+    "euc_total_s": 0.3885913720005192,
+    "hyp_total_s": 0.08984975994098932,
     "curvature": 1.0,
     "hybrid_decay": false
   }

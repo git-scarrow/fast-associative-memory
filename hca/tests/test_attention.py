@@ -200,3 +200,88 @@ class TestFused:
         out, weights = attn(x, x, x, need_weights=True)
         assert weights is not None
         assert weights.shape == (2, 4, 16, 16)
+
+
+@requires_cuda
+class TestFusedBackwardAccuracy:
+    """DS-13: Fused backward Triton gradient accuracy tests.
+
+    Compares Triton TF32 backward vs PyTorch fp32 backward at op level.
+    TF32 tensor cores have ~1e-3 relative error vs fp32, so tolerances
+    account for this. The key guarantee: forward and backward both use
+    TF32, so gradients are self-consistent for training.
+    """
+
+    def _compare_op_grads(self, is_causal):
+        """Compare Triton backward vs PyTorch backward at op level."""
+        from hca.ops.fused_attention import _triton_fwd, _triton_bwd
+        import torch.nn.functional as F
+
+        torch.manual_seed(42)
+        BH, N, D = 8, 32, 64
+        Q_sp = torch.randn(BH, N, D, device='cuda')
+        K_sp = torch.randn(BH, N, D, device='cuda')
+        V = torch.randn(BH, N, D, device='cuda')
+        inv_c, beta, gamma_val = 1.0, 0.125, 0.6
+
+        # Triton forward + backward (TF32)
+        Out, LSE = _triton_fwd(Q_sp, K_sp, V, inv_c, beta, gamma_val, is_causal)
+        grad_out = torch.randn_like(Out)
+        dQ_t, dK_t, dV_t, dg_t = _triton_bwd(
+            Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val, is_causal
+        )
+
+        # PyTorch reference backward (fp32)
+        Q_r = Q_sp.clone().requires_grad_(True)
+        K_r = K_sp.clone().requires_grad_(True)
+        V_r = V.clone().requires_grad_(True)
+        gamma_t = torch.tensor(gamma_val, device='cuda', requires_grad=True)
+
+        q_x0 = torch.sqrt(torch.tensor(inv_c, device='cuda') + (Q_r * Q_r).sum(-1))
+        k_x0 = torch.sqrt(torch.tensor(inv_c, device='cuda') + (K_r * K_r).sum(-1))
+        lip = -(q_x0.unsqueeze(-1) * k_x0.unsqueeze(-2)) + torch.bmm(Q_r, K_r.transpose(-1, -2))
+        dsq = torch.clamp(-lip - inv_c, min=0.0)
+        log_kx0 = torch.log(k_x0.clamp(min=1e-7))
+        scores = -beta * dsq - gamma_t * log_kx0.unsqueeze(-2)
+
+        if is_causal:
+            causal = torch.triu(torch.full((N, N), float('-inf'), device='cuda'), diagonal=1)
+            scores = scores + causal
+
+        alpha = F.softmax(scores, dim=-1)
+        out_ref = torch.bmm(alpha, V_r)
+        out_ref.backward(grad_out)
+
+        # TF32 tolerance: ~1e-2 absolute for gradients with O(1) magnitude
+        tol = 1e-2
+        return {
+            'dQ': ((dQ_t - Q_r.grad).abs().max().item(), tol),
+            'dK': ((dK_t - K_r.grad).abs().max().item(), tol),
+            'dV': ((dV_t - V_r.grad).abs().max().item(), tol),
+            'dgamma': (abs(dg_t.item() - gamma_t.grad.item()), 0.1),
+        }
+
+    def test_noncausal_grad_accuracy(self):
+        """Non-causal: dQ, dK, dV, dgamma within TF32 tolerance of PyTorch."""
+        results = self._compare_op_grads(is_causal=False)
+        for name, (diff, tol) in results.items():
+            assert diff < tol, f"{name} diff {diff:.2e} > {tol}"
+
+    def test_causal_grad_accuracy(self):
+        """Causal: dQ, dK, dV, dgamma within TF32 tolerance of PyTorch."""
+        results = self._compare_op_grads(is_causal=True)
+        for name, (diff, tol) in results.items():
+            assert diff < tol, f"{name} diff {diff:.2e} > {tol}"
+
+    def test_fused_module_grads_finite_and_nonzero(self):
+        """End-to-end: fused module produces finite, nonzero grads on all params."""
+        torch.manual_seed(42)
+        attn = HCAAttention(d_model=64, n_heads=4, use_fused=True).cuda()
+        x = torch.randn(2, 32, 64, device='cuda')
+        out, _ = attn(x, x, x, is_causal=True)
+        out.sum().backward()
+
+        for name, p in attn.named_parameters():
+            assert p.grad is not None, f"{name}: no gradient"
+            assert torch.isfinite(p.grad).all(), f"{name}: non-finite gradient"
+            assert p.grad.abs().max() > 0, f"{name}: zero gradient"

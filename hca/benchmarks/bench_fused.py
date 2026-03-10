@@ -1,8 +1,11 @@
-"""DS-12 D3: Benchmark fused HCA attention vs unfused vs standard MHA.
+"""DS-13: Benchmark fused HCA attention (fwd+bwd) vs unfused vs standard MHA.
 
 Measures forward time, forward+backward time, peak memory.
-Kill condition: fused throughput must be within 2.0x of standard MHA at N=2048.
-Target: within 1.5x.
+Kill condition: fused fwd+bwd > 2.0x of standard MHA at N=2048.
+Stop condition: fused fwd+bwd within 2.0x of MHA at N=2048.
+
+DS-12 baseline (fwd-only fused, PyTorch bwd): 3.93x at N=2048.
+DS-13 target: fused backward Triton kernels close the gap.
 """
 
 import json
@@ -138,32 +141,37 @@ if __name__ == '__main__':
     assert torch.cuda.is_available(), "CUDA required"
 
     print("=" * 70)
-    print("DS-12 Benchmark: Fused HCA Attention")
+    print("DS-13 Benchmark: Fused HCA Attention (fwd+bwd Triton)")
     print(f"GPU: {torch.cuda.get_device_name()}")
     print(f"Triton: available")
     print("=" * 70)
 
     results = run_benchmark()
 
-    # Check kill condition at N=2048
+    # Check kill/stop conditions at N=2048
     if 2048 in results:
         r = results[2048]
         fwd_ratio = r['fused_bf16']['fwd_ratio_vs_mha']
         fwdbwd_ratio = r['fused_bf16']['ratio_vs_mha']
         unfused_ratio = r['unfused_fp32']['ratio_vs_mha']
-        fused_vs_unfused_fwd = r['unfused_fp32']['fwd_ms'] / r['fused_bf16']['fwd_ms']
+        fused_fp32_ratio = r['fused_fp32']['ratio_vs_mha']
 
-        print(f"\n--- RESULTS SUMMARY (N=2048) ---")
-        print(f"Forward only:  fused bf16 = {fwd_ratio:.2f}x vs MHA (target: 1.5x)")
-        print(f"Fwd+Bwd:       fused bf16 = {fwdbwd_ratio:.2f}x vs MHA (kill: >2.0x)")
-        print(f"Fused vs unfused forward speedup: {fused_vs_unfused_fwd:.1f}x")
-        print(f"Unfused fwd+bwd: {unfused_ratio:.2f}x vs MHA (baseline)")
-        print(f"\nNote: Backward is not fused — recomputes NxN attention in PyTorch.")
-        print(f"Forward-only fusion achieves competitive throughput with standard MHA.")
-        print(f"A fused backward Triton kernel is the next optimization step.")
+        print(f"\n--- DS-13 RESULTS SUMMARY (N=2048) ---")
+        print(f"Forward only:    fused bf16 = {fwd_ratio:.2f}x vs MHA")
+        print(f"Fwd+Bwd:         fused bf16 = {fwdbwd_ratio:.2f}x vs MHA")
+        print(f"Fwd+Bwd:         fused fp32 = {fused_fp32_ratio:.2f}x vs MHA")
+        print(f"Fwd+Bwd:         unfused    = {unfused_ratio:.2f}x vs MHA (DS-12 baseline)")
+        print()
+
+        if fwdbwd_ratio > 2.0:
+            print(f"KILL CONDITION: fwd+bwd {fwdbwd_ratio:.2f}x > 2.0x MHA")
+        else:
+            print(f"STOP CONDITION MET: fwd+bwd {fwdbwd_ratio:.2f}x <= 2.0x MHA")
+            speedup = unfused_ratio / fwdbwd_ratio
+            print(f"DS-13 speedup vs DS-12 unfused: {speedup:.1f}x")
 
     # Save results
-    out_path = 'results/ds12_bench.json'
+    out_path = 'results/ds13_bench.json'
     import os
     os.makedirs('results', exist_ok=True)
     with open(out_path, 'w') as f:

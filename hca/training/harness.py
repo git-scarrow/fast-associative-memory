@@ -17,10 +17,12 @@ logger = logging.getLogger(__name__)
 class HCATransformerLayer(nn.Module):
     """Single Transformer encoder layer with HCAAttention."""
 
-    def __init__(self, d_model: int, n_heads: int, d_ff: int = None, dropout: float = 0.1):
+    def __init__(self, d_model: int, n_heads: int, d_ff: int = None, dropout: float = 0.1,
+                 use_fused: bool = False, amp_enabled: bool = False):
         super().__init__()
         d_ff = d_ff or 4 * d_model
-        self.self_attn = HCAAttention(d_model, n_heads, dropout=dropout)
+        self.self_attn = HCAAttention(d_model, n_heads, dropout=dropout,
+                                      use_fused=use_fused, amp_enabled=amp_enabled)
         self.ff = nn.Sequential(
             nn.Linear(d_model, d_ff),
             nn.GELU(),
@@ -30,10 +32,10 @@ class HCATransformerLayer(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x, attn_mask=None):
+    def forward(self, x, attn_mask=None, is_causal=False):
         # Pre-norm Transformer
         h = self.norm1(x)
-        attn_out, _ = self.self_attn(h, h, h, attn_mask=attn_mask)
+        attn_out, _ = self.self_attn(h, h, h, attn_mask=attn_mask, is_causal=is_causal)
         x = x + self.dropout(attn_out)
 
         h = self.norm2(x)
@@ -52,16 +54,20 @@ class HCATransformerLM(nn.Module):
         n_layers: int = 4,
         max_seq_len: int = 256,
         dropout: float = 0.1,
+        use_fused: bool = False,
+        amp_enabled: bool = False,
     ):
         super().__init__()
         self.d_model = d_model
         self.n_layers = n_layers
         self.n_heads = n_heads
+        self.use_fused = use_fused
 
         self.embed = nn.Embedding(vocab_size, d_model)
         self.pos_embed = nn.Embedding(max_seq_len, d_model)
         self.layers = nn.ModuleList([
-            HCATransformerLayer(d_model, n_heads, dropout=dropout)
+            HCATransformerLayer(d_model, n_heads, dropout=dropout,
+                                use_fused=use_fused, amp_enabled=amp_enabled)
             for _ in range(n_layers)
         ])
         self.norm = nn.LayerNorm(d_model)
@@ -82,14 +88,18 @@ class HCATransformerLM(nn.Module):
         positions = torch.arange(N, device=input_ids.device).unsqueeze(0)
         x = self.embed(input_ids) * math.sqrt(self.d_model) + self.pos_embed(positions)
 
-        # Causal mask
-        causal_mask = torch.triu(
-            torch.full((N, N), float("-inf"), device=input_ids.device),
-            diagonal=1,
-        )
-
-        for layer in self.layers:
-            x = layer(x, attn_mask=causal_mask)
+        if self.use_fused:
+            # Fused path: use is_causal flag (no materialized mask)
+            for layer in self.layers:
+                x = layer(x, is_causal=True)
+        else:
+            # Unfused path: explicit causal mask
+            causal_mask = torch.triu(
+                torch.full((N, N), float("-inf"), device=input_ids.device),
+                diagonal=1,
+            )
+            for layer in self.layers:
+                x = layer(x, attn_mask=causal_mask)
 
         x = self.norm(x)
         logits = self.head(x)
@@ -105,7 +115,11 @@ class HCATransformerLM(nn.Module):
         return [layer.self_attn.get_alpha_s() for layer in self.layers]
 
     def get_radial_reg_loss(self):
-        """Compute radial regularization loss across all layers."""
+        """Compute radial regularization loss across all layers.
+
+        NOTE: Currently gradient-free (x0 is detached, c is .item()'d),
+        so this only contributes a monitoring signal, not training gradients.
+        """
         total = torch.tensor(0.0, device=next(self.parameters()).device)
         for layer in self.layers:
             attn = layer.self_attn
@@ -128,6 +142,8 @@ def train_hca(
     device: str = "cuda" if torch.cuda.is_available() else "cpu",
     use_wikitext: bool = True,
     qos_cadence: int = 100,
+    use_fused: bool = False,
+    amp_enabled: bool = False,
 ):
     """Run HCA training micro-benchmark.
 
@@ -142,12 +158,15 @@ def train_hca(
         device: torch device
         use_wikitext: if True, use WikiText-103; else use random data
         qos_cadence: QoS update cadence (k)
+        use_fused: use fused Triton kernels (DS-12 fwd + DS-13 bwd)
+        amp_enabled: enable bf16 mixed precision
 
     Returns:
         dict with training metrics
     """
     logger.info(f"Training HCA: steps={steps}, d_model={d_model}, n_heads={n_heads}, "
-                f"n_layers={n_layers}, seq_len={seq_len}, device={device}")
+                f"n_layers={n_layers}, seq_len={seq_len}, device={device}, "
+                f"use_fused={use_fused}, amp_enabled={amp_enabled}")
 
     # Load data
     if use_wikitext:
@@ -169,6 +188,8 @@ def train_hca(
         n_heads=n_heads,
         n_layers=n_layers,
         max_seq_len=seq_len,
+        use_fused=use_fused,
+        amp_enabled=amp_enabled,
     ).to(device)
 
     optimizer = build_optimizer(model, lr=lr)
@@ -187,9 +208,11 @@ def train_hca(
         # Forward
         _, loss = model(input_ids, targets)
 
-        # Radial regularization
+        # Radial regularization (only add when it has a gradient graph;
+        # _cached_x0 is detached so currently rad_loss is gradient-free
+        # and would just pollute the loss value with potential inf/nan)
         rad_loss = model.get_radial_reg_loss()
-        total_loss = loss + rad_loss
+        total_loss = loss + rad_loss if rad_loss.requires_grad else loss
 
         # Check for NaN/Inf
         if not torch.isfinite(total_loss):
@@ -201,7 +224,14 @@ def train_hca(
         total_loss.backward()
 
         # Gradient clipping
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+
+        # Skip update if gradients are NaN (prevents weight poisoning)
+        if not torch.isfinite(grad_norm):
+            logger.warning(f"Step {step}: NaN/Inf gradients detected, skipping update")
+            optimizer.zero_grad()
+            metrics.setdefault("nan_grad_steps", []).append(step)
+            continue
 
         # Optimizer step
         optimizer.step()

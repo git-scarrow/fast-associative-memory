@@ -206,14 +206,14 @@ class TestFused:
 class TestFusedBackwardAccuracy:
     """DS-13: Fused backward Triton gradient accuracy tests.
 
-    Compares Triton TF32 backward vs PyTorch fp32 backward at op level.
-    TF32 tensor cores have ~1e-3 relative error vs fp32, so tolerances
-    account for this. The key guarantee: forward and backward both use
-    TF32, so gradients are self-consistent for training.
+    Uses dot_precision="ieee" for both Triton forward and backward so that
+    tl.dot uses full fp32 — enabling tight comparison against PyTorch fp32
+    reference without TF32 noise. Production uses "tf32" for speed; these
+    tests verify the backward MATH is correct.
     """
 
     def _compare_op_grads(self, is_causal):
-        """Compare Triton backward vs PyTorch backward at op level."""
+        """Compare Triton ieee backward vs PyTorch fp32 backward at op level."""
         from hca.ops.fused_attention import _triton_fwd, _triton_bwd
         import torch.nn.functional as F
 
@@ -224,11 +224,15 @@ class TestFusedBackwardAccuracy:
         V = torch.randn(BH, N, D, device='cuda')
         inv_c, beta, gamma_val = 1.0, 0.125, 0.6
 
-        # Triton forward + backward (TF32)
-        Out, LSE = _triton_fwd(Q_sp, K_sp, V, inv_c, beta, gamma_val, is_causal)
+        # Triton forward + backward (ieee = full fp32 dot products)
+        Out, LSE = _triton_fwd(
+            Q_sp, K_sp, V, inv_c, beta, gamma_val, is_causal,
+            dot_precision="ieee",
+        )
         grad_out = torch.randn_like(Out)
         dQ_t, dK_t, dV_t, dg_t = _triton_bwd(
-            Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val, is_causal
+            Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val,
+            is_causal, dot_precision="ieee",
         )
 
         # PyTorch reference backward (fp32)
@@ -252,23 +256,23 @@ class TestFusedBackwardAccuracy:
         out_ref = torch.bmm(alpha, V_r)
         out_ref.backward(grad_out)
 
-        # TF32 tolerance: ~1e-2 absolute for gradients with O(1) magnitude
-        tol = 1e-2
+        # Tight fp32 tolerance: ieee Triton should match PyTorch closely
+        tol = 1e-4
         return {
             'dQ': ((dQ_t - Q_r.grad).abs().max().item(), tol),
             'dK': ((dK_t - K_r.grad).abs().max().item(), tol),
             'dV': ((dV_t - V_r.grad).abs().max().item(), tol),
-            'dgamma': (abs(dg_t.item() - gamma_t.grad.item()), 0.1),
+            'dgamma': (abs(dg_t.item() - gamma_t.grad.item()), 1e-3),
         }
 
     def test_noncausal_grad_accuracy(self):
-        """Non-causal: dQ, dK, dV, dgamma within TF32 tolerance of PyTorch."""
+        """Non-causal: dQ, dK, dV, dgamma match PyTorch fp32 within 1e-4."""
         results = self._compare_op_grads(is_causal=False)
         for name, (diff, tol) in results.items():
             assert diff < tol, f"{name} diff {diff:.2e} > {tol}"
 
     def test_causal_grad_accuracy(self):
-        """Causal: dQ, dK, dV, dgamma within TF32 tolerance of PyTorch."""
+        """Causal: dQ, dK, dV, dgamma match PyTorch fp32 within 1e-4."""
         results = self._compare_op_grads(is_causal=True)
         for name, (diff, tol) in results.items():
             assert diff < tol, f"{name} diff {diff:.2e} > {tol}"

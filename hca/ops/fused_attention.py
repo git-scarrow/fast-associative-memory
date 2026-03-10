@@ -50,6 +50,7 @@ if HAS_TRITON:
         BLOCK_N: tl.constexpr,
         BLOCK_D: tl.constexpr,
         IS_CAUSAL: tl.constexpr,
+        DOT_PRECISION: tl.constexpr = "tf32",
     ):
         pid_m = tl.program_id(0)
         pid_bh = tl.program_id(1)
@@ -85,7 +86,7 @@ if HAS_TRITON:
 
             # Lorentz inner product: -q_x0 * k_x0 + q_sp @ k_sp^T
             temporal = -(q_x0[:, None] * k_x0[None, :])
-            spatial = tl.dot(q, tl.trans(k), input_precision="tf32")
+            spatial = tl.dot(q, tl.trans(k), input_precision=DOT_PRECISION)
             lip = temporal + spatial
 
             # Distance proxy: max(-IP - 1/c, 0)
@@ -109,7 +110,7 @@ if HAS_TRITON:
 
             # Rescale accumulator and add new contribution
             acc = acc * correction[:, None]
-            acc += tl.dot(p.to(tl.float32), v, input_precision="tf32")
+            acc += tl.dot(p.to(tl.float32), v, input_precision=DOT_PRECISION)
 
             m_i = m_new
             l_i = l_new
@@ -145,6 +146,7 @@ if HAS_TRITON:
         BLOCK_N: tl.constexpr,
         BLOCK_D: tl.constexpr,
         IS_CAUSAL: tl.constexpr,
+        DOT_PRECISION: tl.constexpr = "tf32",
     ):
         """Compute dQ and partial gamma gradient. Parallelized over Q tiles."""
         pid_m = tl.program_id(0)
@@ -187,7 +189,7 @@ if HAS_TRITON:
 
             # Recompute scores (identical to forward)
             temporal = -(q_x0[:, None] * k_x0[None, :])
-            spatial = tl.dot(q, tl.trans(k), input_precision="tf32")
+            spatial = tl.dot(q, tl.trans(k), input_precision=DOT_PRECISION)
             lip = temporal + spatial
             dsq = tl.maximum(-lip - inv_c, 0.0)
             log_kx0 = tl.log(tl.maximum(k_x0, 1e-7))
@@ -201,7 +203,7 @@ if HAS_TRITON:
             p = tl.exp(s - lse[:, None])
 
             # Softmax backward: dS = P * (dO @ V^T - Delta)
-            dp = tl.dot(do, tl.trans(v), input_precision="tf32")
+            dp = tl.dot(do, tl.trans(v), input_precision=DOT_PRECISION)
             ds = p * (dp - delta[:, None])
 
             # HCA score backward: d_lip = beta * ds * active
@@ -209,7 +211,7 @@ if HAS_TRITON:
             d_lip = beta * ds * active
 
             # Spatial gradient for Q: dQ += d_lip @ K
-            dq_acc += tl.dot(d_lip.to(tl.float32), k, input_precision="tf32")
+            dq_acc += tl.dot(d_lip.to(tl.float32), k, input_precision=DOT_PRECISION)
 
             # Temporal gradient accumulation (negated after loop)
             gq_acc += tl.sum(d_lip * k_x0[None, :], axis=1)
@@ -248,6 +250,7 @@ if HAS_TRITON:
         BLOCK_N: tl.constexpr,
         BLOCK_D: tl.constexpr,
         IS_CAUSAL: tl.constexpr,
+        DOT_PRECISION: tl.constexpr = "tf32",
     ):
         """Compute dK and dV. Parallelized over K/V tiles."""
         pid_n = tl.program_id(0)
@@ -292,7 +295,7 @@ if HAS_TRITON:
 
             # Recompute scores (identical to forward)
             temporal = -(q_x0[:, None] * k_x0[None, :])
-            spatial = tl.dot(q, tl.trans(k), input_precision="tf32")
+            spatial = tl.dot(q, tl.trans(k), input_precision=DOT_PRECISION)
             lip = temporal + spatial
             dsq = tl.maximum(-lip - inv_c, 0.0)
             s = -beta * dsq - gamma * log_kx0[None, :]
@@ -305,10 +308,10 @@ if HAS_TRITON:
             p = tl.exp(s - lse[:, None])
 
             # dV += P^T @ dO
-            dv_acc += tl.dot(tl.trans(p.to(tl.float32)), do, input_precision="tf32")
+            dv_acc += tl.dot(tl.trans(p.to(tl.float32)), do, input_precision=DOT_PRECISION)
 
             # Softmax backward: dS = P * (dO @ V^T - Delta)
-            dp = tl.dot(do, tl.trans(v), input_precision="tf32")
+            dp = tl.dot(do, tl.trans(v), input_precision=DOT_PRECISION)
             ds = p * (dp - delta[:, None])
 
             # HCA score backward
@@ -316,7 +319,7 @@ if HAS_TRITON:
             d_lip = beta * ds * active
 
             # Spatial gradient for K: dK += d_lip^T @ Q
-            dk_acc += tl.dot(tl.trans(d_lip.to(tl.float32)), q, input_precision="tf32")
+            dk_acc += tl.dot(tl.trans(d_lip.to(tl.float32)), q, input_precision=DOT_PRECISION)
 
             # Temporal gradients (finalized after loop)
             gk_ip_acc += tl.sum(d_lip * q_x0[:, None], axis=0)
@@ -337,7 +340,8 @@ if HAS_TRITON:
         tl.store(dv_ptrs, dv_acc, mask=mask_n[:, None])
 
 
-def _triton_fwd(Q_sp, K_sp, V, inv_c, beta, gamma_val, is_causal):
+def _triton_fwd(Q_sp, K_sp, V, inv_c, beta, gamma_val, is_causal,
+                dot_precision="tf32"):
     """Launch Triton kernel for fused HCA attention forward."""
     BH, N_Q, D = Q_sp.shape
     _, N_K, _ = K_sp.shape
@@ -365,12 +369,14 @@ def _triton_fwd(Q_sp, K_sp, V, inv_c, beta, gamma_val, is_causal):
         LSE.stride(0), LSE.stride(1),
         BLOCK_M=BM, BLOCK_N=BN, BLOCK_D=BD,
         IS_CAUSAL=is_causal,
+        DOT_PRECISION=dot_precision,
     )
 
     return Out[:, :, :D].contiguous(), LSE
 
 
-def _triton_bwd(Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val, is_causal):
+def _triton_bwd(Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val,
+                is_causal, dot_precision="tf32"):
     """Launch Triton kernels for fused HCA attention backward (DS-13)."""
     BH, N_Q, D = Q_sp.shape
     _, N_K, _ = K_sp.shape
@@ -406,6 +412,7 @@ def _triton_bwd(Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val, is_ca
         dGamma_partial.stride(0), dGamma_partial.stride(1),
         BLOCK_M=BM, BLOCK_N=BN, BLOCK_D=BD,
         IS_CAUSAL=is_causal,
+        DOT_PRECISION=dot_precision,
         num_stages=1,
     )
 
@@ -429,6 +436,7 @@ def _triton_bwd(Q_sp, K_sp, V, Out, LSE, grad_out, inv_c, beta, gamma_val, is_ca
         dV.stride(0), dV.stride(1), dV.stride(2),
         BLOCK_M=BM, BLOCK_N=BN, BLOCK_D=BD,
         IS_CAUSAL=is_causal,
+        DOT_PRECISION=dot_precision,
         num_stages=1,
     )
 

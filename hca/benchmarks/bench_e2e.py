@@ -208,10 +208,24 @@ def main():
     # -- Verdict --
     print("\n" + "=" * 70)
 
-    # Use the best fused result for the verdict
-    best_fused = bf16 if bf16 else f32
-    best_label = "fused_bf16" if bf16 else "fused_fp32"
+    # Use the best fused result for the verdict, preferring non-killed,
+    # non-NaN/Inf runs with the lowest final loss.
+    fused_candidates = []
+    for label, run in (("fused_fp32", f32), ("fused_bf16", bf16)):
+        if not run:
+            continue
+        killed = bool(run.get("killed"))
+        nan_inf = bool(run.get("nan_inf"))
+        loss = run.get("final_loss", float("inf"))
+        fused_candidates.append(((killed, nan_inf, loss), label, run))
 
+    if fused_candidates:
+        # Select the best fused run based on (killed, nan_inf, final_loss)
+        _, best_label, best_fused = min(fused_candidates, key=lambda x: x[0])
+    else:
+        # No fused runs available; fall back to empty result to keep logic robust
+        best_label = "fused_fp32"
+        best_fused = {}
     if u.get("killed"):
         print("VERDICT: INCONCLUSIVE — unfused baseline failed")
     elif best_fused.get("killed"):

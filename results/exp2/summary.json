@@ -15,7 +15,7 @@
       44
     ],
     "lr": 0.1,
-    "batch_size": 128,
+    "batch_size": 10,
     "epochs": 1,
     "accumulator": {
       "hot_fraction": 0.5,

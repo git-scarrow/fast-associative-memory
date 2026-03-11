@@ -6,9 +6,7 @@ Conditions:
   2. Accumulator-GEM (best EXP-1 config: random merge, 50% hot, flush@100)
 
 Total buffer budget B = 1280 held constant for both conditions.
-Training knobs: lr=0.1, epochs=1, margin=0.5.
-Scout mode: batch_size=128 for fast signal detection (~13x fewer QP checks).
-Both conditions use identical batch_size so relative Δ(BWT) slope is preserved.
+Training knobs pinned to EXP-0/EXP-1: lr=0.1, epochs=1, batch_size=10, margin=0.5.
 
 Features:
   - Incremental checkpointing: each completed run saved immediately to disk.
@@ -39,7 +37,7 @@ SEEDS = [42, 43, 44]
 TOTAL_BUDGET = 1280          # B: same for both conditions
 LR = 0.1
 MARGIN = 0.5
-BATCH_SIZE = 128
+BATCH_SIZE = 10
 EPOCHS = 1
 NUM_CLASSES = 10             # Permuted-MNIST: shared 10-class label space
 
@@ -109,8 +107,6 @@ def run_single(n_tasks, condition, seed):
             torch.cuda.empty_cache()
 
     model = MLP(28 * 28, 256, num_classes).to(device)
-    model = torch.compile(model)
-
     if condition == "vanilla":
         mem_per_task = max(1, TOTAL_BUDGET // n_tasks)
         agent = GEM(model, n_tasks=n_tasks, memory_size=mem_per_task,

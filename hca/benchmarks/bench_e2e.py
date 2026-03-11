@@ -72,12 +72,16 @@ def run_one(label: str, use_fused: bool, amp_enabled: bool, seed: int = 42):
         killed = True
         kill_reason = f"final_loss={metrics['final_loss']:.4f} > 2.75"
 
-    # Check for NaN/Inf in loss curve
+    # Check for NaN/Inf in loss curve and gradients
     nan_inf = any(not torch.tensor(l).isfinite() for l in metrics.get("loss", []))
     nan_grad_steps = metrics.get("nan_grad_steps", [])
     if nan_inf:
         killed = True
         kill_reason = "NaN/Inf in loss curve"
+    elif nan_grad_steps:
+        # Any recorded NaN/Inf gradients should kill the run per benchmark spec
+        killed = True
+        kill_reason = f"NaN/Inf gradients detected at steps: {nan_grad_steps}"
 
     # Loss stability: check no sudden spikes > 2x running average
     losses = metrics.get("loss", [])

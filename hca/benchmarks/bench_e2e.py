@@ -83,7 +83,7 @@ def run_one(label: str, use_fused: bool, amp_enabled: bool, seed: int = 42):
         killed = True
         kill_reason = f"NaN/Inf gradients detected at steps: {nan_grad_steps}"
 
-    # Loss stability: check no sudden spikes > 2x running average
+    # Loss stability: check no sudden spikes > 3x running average
     losses = metrics.get("loss", [])
     loss_stable = True
     if len(losses) > 50:

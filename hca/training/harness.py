@@ -159,7 +159,9 @@ def train_hca(
         use_wikitext: if True, use WikiText-103; else use random data
         qos_cadence: QoS update cadence (k)
         use_fused: use fused Triton kernels (DS-12 fwd + DS-13 bwd)
-        amp_enabled: enable bf16 mixed precision
+        amp_enabled: enable full-model bf16 autocast (wraps forward + loss; no
+            GradScaler needed for bf16).  HCAAttention also casts QKV to bf16
+            internally, so this makes the entire forward pass bf16.
 
     Returns:
         dict with training metrics
@@ -197,6 +199,7 @@ def train_hca(
     radial_tracker = RadialPositionTracker(n_layers, n_heads, seq_len)
 
     metrics = {"loss": [], "alpha_s": [], "c_eff": [], "gamma": [], "qos_state": []}
+    device_type = device.split(":")[0]
 
     for step in range(1, steps + 1):
         # Sample batch
@@ -205,14 +208,15 @@ def train_hca(
         input_ids = batch[:, :-1]
         targets = batch[:, 1:]
 
-        # Forward
-        _, loss = model(input_ids, targets)
+        # Forward (full-model bf16 autocast when amp_enabled)
+        with torch.autocast(device_type=device_type, dtype=torch.bfloat16, enabled=amp_enabled):
+            _, loss = model(input_ids, targets)
 
-        # Radial regularization (only add when it has a gradient graph;
-        # _cached_x0 is detached so currently rad_loss is gradient-free
-        # and would just pollute the loss value with potential inf/nan)
-        rad_loss = model.get_radial_reg_loss()
-        total_loss = loss + rad_loss if rad_loss.requires_grad else loss
+            # Radial regularization (only add when it has a gradient graph;
+            # _cached_x0 is detached so currently rad_loss is gradient-free
+            # and would just pollute the loss value with potential inf/nan)
+            rad_loss = model.get_radial_reg_loss()
+            total_loss = loss + rad_loss if rad_loss.requires_grad else loss
 
         # Check for NaN/Inf
         if not torch.isfinite(total_loss):

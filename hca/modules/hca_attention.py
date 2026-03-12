@@ -70,6 +70,25 @@ class HCAAttention(nn.Module):
         self._cached_alpha_s = None
         self._cached_x0 = None
 
+        # Scale Q/K for stable hyperbolic regime
+        self._reset_hyperbolic_params()
+
+    def _reset_hyperbolic_params(self):
+        """Scale Q/K projections for stable exp_map geometry.
+
+        Standard init produces ||tangent|| ≈ sqrt(d_head), mapping to
+        cosh(sqrt_c * sqrt(d_head)) >> 1 on the hyperboloid.  This saturates
+        softmax (within-row score range >> 88) and either kills Q/K gradients
+        (unfused) or causes NaN via exp_map Jacobian amplification (fused).
+
+        Scaling by 1/sqrt(d_head) gives ||tangent|| ≈ 1, cosh ≈ 1.6,
+        keeping points near the origin where geometry is well-conditioned.
+        """
+        with torch.no_grad():
+            scale = 1.0 / math.sqrt(self.d_head)
+            self.q_proj.weight.mul_(scale)
+            self.k_proj.weight.mul_(scale)
+
     def forward(self, query, key, value, need_weights=False, attn_mask=None,
                 is_causal=False):
         """Forward pass matching nn.MultiheadAttention signature.

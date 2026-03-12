@@ -76,6 +76,9 @@ class HCATransformerLM(nn.Module):
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
+        # Re-apply hyperbolic Q/K scaling (global xavier above overwrites it)
+        for layer in self.layers:
+            layer.self_attn._reset_hyperbolic_params()
 
     def forward(self, input_ids, targets=None):
         B, N = input_ids.shape

@@ -8,7 +8,10 @@ import torch
 
 EPS_NORM = 1e-7
 EPS_SINH = 1e-6
-SINH_CLAMP = 85.0
+# Max sc = sqrt_c * ||v||.  Limits cosh(sc) and the exp_map Jacobian.
+# 85.0 gives cosh ≈ 1e36 → catastrophic Jacobian amplification.
+# 4.0 gives cosh ≈ 27, sinc_h ≈ 6.8 → manageable gradient scaling.
+SINH_CLAMP = 4.0
 
 
 def lorentz_exp_map(v: torch.Tensor, c: float) -> tuple[torch.Tensor, torch.Tensor]:

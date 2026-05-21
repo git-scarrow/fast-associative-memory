@@ -17,3 +17,7 @@ The following paths contain large data, binary, or generated content. Never read
 1. Use `chatsearch_find` or `chatsearch_ask` to locate relevant code and context.
 2. For experiment results, read only the first 20 lines to understand the schema, then use grep for specific values.
 3. For source code, use grep to find relevant functions/classes before reading files.
+
+## Advisor Personas
+
+- `personas/VIGIL.md` — adversarial theoretical auditor for stability-plasticity, energy-landscape, and sleep-replay critique. Invoke with `// VIGIL // Interrogate the following architecture/code block focusing on [Stability / Energy Landscape / Replay]:`

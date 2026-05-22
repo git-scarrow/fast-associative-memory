@@ -1,0 +1,24 @@
+{
+  "mode": "synthetic",
+  "delta_ref": 0.9719972610473633,
+  "predicted_blend_rho": 0.8621360321805522,
+  "ref_blend_rho": 0.79,
+  "v_ceiling": 0.95,
+  "max_rho_observed": 0.9755519032478333,
+  "baseline_blended": false,
+  "chimera_reachable": true,
+  "blend_onset": {
+    "epoch": 27,
+    "rho": 0.8955649733543396,
+    "offclass_weight": 0.16928070783615112,
+    "left_censored": false
+  },
+  "chimera_onset": {
+    "epoch": 31,
+    "rho": 0.9625914096832275
+  },
+  "blend_offset": 0.03342894117378736,
+  "relative_transfer": "confirmed",
+  "absolute_transfer": "n/a (synthetic reference run)",
+  "chimera_transfer": "reachable"
+}

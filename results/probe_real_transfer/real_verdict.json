@@ -1,0 +1,29 @@
+{
+  "mode": "real",
+  "delta_ref": 0.438800573348999,
+  "predicted_blend_rho": 0.32893934448218803,
+  "ref_blend_rho": 0.79,
+  "v_ceiling": 0.95,
+  "max_rho_observed": 0.480856716632843,
+  "baseline_blended": true,
+  "chimera_reachable": false,
+  "blend_onset": {
+    "epoch": 0,
+    "rho": 0.24160060286521912,
+    "offclass_weight": 0.11058264970779419,
+    "left_censored": true
+  },
+  "chimera_onset": null,
+  "blend_offset": -0.08733874161696892,
+  "relative_transfer": "confirmed",
+  "absolute_transfer": "does-not-transfer",
+  "chimera_transfer": "unreachable",
+  "categories": [
+    "rec.sport.baseball",
+    "sci.space",
+    "talk.politics.mideast",
+    "misc.forsale"
+  ],
+  "attractor_category": "sci.med",
+  "embed_model": "all-MiniLM-L6-v2"
+}

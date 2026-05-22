@@ -480,7 +480,9 @@ class ContinuousCAM(nn.Module):
             # competitor (sim_other == very_low sentinel) so the contraction
             # signal is not poisoned by single-class batches. Counted under a
             # separate denominator (count_sim_other) for correctness.
-            valid_other = sim_other_all > -1.0  # cosine in [-1, 1]; sentinel is -1e9
+            # Exclude only the very_low sentinel (no cross-class competitor); a
+            # legitimate cosine of -1.0 (antipodal competitor) must still count.
+            valid_other = sim_other_all > (very_low / 2)
             n_valid = int(valid_other.sum().item())
             if n_valid > 0:
                 so = sim_other_all[valid_other]
@@ -759,8 +761,9 @@ class ContinuousCAM(nn.Module):
             probe_labels:  (P,) long tensor of TRUE class ids.
             blend_eps:     off-class vote-mass threshold counted as a "blend".
 
-        Returns dict with mean/var of top-1 cross-class and within-class cosine,
-        the true margin, retrieval-blend metrics, and the predicted onset flags.
+        Returns dict with mean+variance of top-1 cross-class cosine, mean
+        within-class cosine, the true margin, retrieval-blend metrics, and the
+        predicted onset flags.
         Returns {"n_occupied": 0} if memory is empty (nothing to probe).
         """
         if not self.occupied.any():
@@ -786,8 +789,10 @@ class ContinuousCAM(nn.Module):
 
         # Only probes that have BOTH a same-class and an other-class prototype
         # yield a meaningful margin / contraction reading.
-        has_other = sim_other > -1.0
-        has_same = sim_same > -1.0
+        # Validity is "did such a prototype exist", i.e. not the sentinel — a
+        # legitimate cosine of -1.0 must still count as a real competitor.
+        has_other = sim_other > (very_low / 2)
+        has_same = sim_same > (very_low / 2)
         valid = has_other & has_same
 
         out = {"n_occupied": int(valid_idx.numel()), "n_probes": int(valid.sum().item())}
@@ -809,12 +814,23 @@ class ContinuousCAM(nn.Module):
         if self.inference_sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(
                 topk_sims < self.inference_sim_floor, -float("inf"))
-        weights = F.softmax(topk_sims / self.inference_temp, dim=-1)     # (Pv, k)
+        # Guard: if the floor masks every candidate in a row, softmax(-inf...)
+        # is NaN and would silently corrupt the telemetry. Neutralize those rows
+        # before softmax and exclude them from the vote-mass averages.
+        row_has_vote = torch.isfinite(topk_sims).any(dim=1)              # (Pv,)
+        safe_sims = topk_sims.masked_fill(~row_has_vote.unsqueeze(1), 0.0)
+        weights = F.softmax(safe_sims / self.inference_temp, dim=-1)     # (Pv, k)
         topk_labels = proto_labels[topk_locs]                           # (Pv, k)
         offclass = topk_labels != labels[valid].unsqueeze(1)
-        offclass_weight = (weights * offclass.float()).sum(dim=1)        # (Pv,)
-        out["mean_offclass_weight"] = float(offclass_weight.mean().item())
-        out["frac_blended"] = float((offclass_weight > blend_eps).float().mean().item())
+        offclass_weight = (weights * offclass.float()).sum(dim=1)[row_has_vote]
+        n_vote = int(row_has_vote.sum().item())
+        out["n_vote_probes"] = n_vote
+        if n_vote > 0:
+            out["mean_offclass_weight"] = float(offclass_weight.mean().item())
+            out["frac_blended"] = float((offclass_weight > blend_eps).float().mean().item())
+        else:
+            out["mean_offclass_weight"] = float("nan")
+            out["frac_blended"] = float("nan")
 
         # --- Predicted onset flags (read against live dynamic-vigilance config) ---
         dv = self.dynamic_vigilance

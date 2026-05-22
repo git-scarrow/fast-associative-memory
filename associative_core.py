@@ -54,7 +54,13 @@ class ContinuousCAM(nn.Module):
         self.max_entries = max_entries
         self.vigilance = vigilance
         self.dynamic_vigilance = dynamic_vigilance
-        self._dynamic_vigilance_stats = {"sum_v": 0.0, "sum_margin": 0.0, "count": 0}
+        self._dynamic_vigilance_stats = {
+            "sum_v": 0.0, "sum_margin": 0.0, "count": 0,
+            # rho(t) probe: top-1 cross-class cosine (manifold-contraction signal).
+            # Accumulated as sum + sum-of-squares so per-epoch mean AND variance
+            # are recoverable. See get_stats() and reset_dynamic_vigilance_stats().
+            "sum_sim_other": 0.0, "sumsq_sim_other": 0.0,
+        }
         self.hebb_lr = hebb_lr
         self.aging_time = aging_time
         self.flood_scale = flood_scale
@@ -437,6 +443,12 @@ class ContinuousCAM(nn.Module):
 
             margins = torch.empty((B,), device=queries.device, dtype=torch.float32)
             v_eff = torch.empty((B,), device=queries.device, dtype=torch.float32)
+            # rho(t) probe: retain the per-query top-1 cross-class cosine that the
+            # margin computation discards. NOTE: "cross-class" here is masked
+            # against the query's BEST-MATCH class (best_classes), not its true
+            # label, so this is a slight under-estimate of true cross-class
+            # similarity. For label-true rho(t) use probe_cross_class_similarity().
+            sim_other_all = torch.empty((B,), device=queries.device, dtype=torch.float32)
 
             very_low = -1e9
             chunk_q = 16
@@ -451,6 +463,7 @@ class ContinuousCAM(nn.Module):
                 same_class = proto_labels.unsqueeze(0) == bc.unsqueeze(1)
                 sims_other = sims.masked_fill(same_class, very_low)
                 sim_other, _ = sims_other.max(dim=1)
+                sim_other_all[s:e] = sim_other
 
                 margin = best_sims[s:e] - sim_other
                 margins[s:e] = margin
@@ -462,6 +475,25 @@ class ContinuousCAM(nn.Module):
             self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
             self._dynamic_vigilance_stats["sum_margin"] += float(margins.sum().item())
             self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
+
+            # rho(t) probe accumulation. Exclude queries that had NO cross-class
+            # competitor (sim_other == very_low sentinel) so the contraction
+            # signal is not poisoned by single-class batches. Counted under a
+            # separate denominator (count_sim_other) for correctness.
+            valid_other = sim_other_all > -1.0  # cosine in [-1, 1]; sentinel is -1e9
+            n_valid = int(valid_other.sum().item())
+            if n_valid > 0:
+                so = sim_other_all[valid_other]
+                self._dynamic_vigilance_stats["sum_sim_other"] += float(so.sum().item())
+                self._dynamic_vigilance_stats["sumsq_sim_other"] += float((so * so).sum().item())
+                self._dynamic_vigilance_stats["count_sim_other"] = (
+                    self._dynamic_vigilance_stats.get("count_sim_other", 0) + n_valid)
+
+            # Opt-in raw log (enabled when a list attribute `cross_class_sim_log`
+            # is attached), mirroring the margin_log / vigilance_log pattern.
+            cc_log = getattr(self, "cross_class_sim_log", None)
+            if isinstance(cc_log, list):
+                cc_log.append(sim_other_all[valid_other].detach().cpu())
 
             # Optional per-call logging for external analysis (enabled when
             # a list attribute `margin_log` / `vigilance_log` is attached).
@@ -668,7 +700,129 @@ class ContinuousCAM(nn.Module):
         else:
             stats["mean_v_effective"] = float(self.vigilance)
             stats["mean_margin"] = 0.0
+
+        # rho(t): empirical mean + variance of top-1 cross-class cosine. This is
+        # the manifold-contraction signal. Predicted onsets to watch:
+        #   mean_cross_class_sim >= v_ceiling (0.95) -> structural chimeras.
+        #   (retrieval-blend onset ~0.79 is measured via probe_cross_class_similarity)
+        n_cc = int(self._dynamic_vigilance_stats.get("count_sim_other", 0))
+        if n_cc > 0:
+            n = float(n_cc)
+            mean_cc = self._dynamic_vigilance_stats["sum_sim_other"] / n
+            # Population variance: E[x^2] - E[x]^2, clamped at 0 for fp safety.
+            var_cc = max(0.0, self._dynamic_vigilance_stats["sumsq_sim_other"] / n - mean_cc * mean_cc)
+            stats["mean_cross_class_sim"] = mean_cc
+            stats["var_cross_class_sim"] = var_cc
+            stats["n_cross_class_obs"] = n_cc
+        else:
+            stats["mean_cross_class_sim"] = float("nan")
+            stats["var_cross_class_sim"] = float("nan")
+            stats["n_cross_class_obs"] = 0
         return stats
+
+    def reset_dynamic_vigilance_stats(self) -> None:
+        """Zero the running vigilance / rho(t) accumulators.
+
+        Call at each epoch boundary so get_stats() reports per-epoch means
+        (and so the rho(t) degradation curve has one clean point per epoch).
+        Does NOT touch any opt-in raw logs (margin_log, vigilance_log,
+        cross_class_sim_log) — clear those externally if used.
+        """
+        self._dynamic_vigilance_stats = {
+            "sum_v": 0.0, "sum_margin": 0.0, "count": 0,
+            "sum_sim_other": 0.0, "sumsq_sim_other": 0.0, "count_sim_other": 0,
+        }
+
+    @torch.no_grad()
+    def probe_cross_class_similarity(self, probe_queries, probe_labels,
+                                     blend_eps: float = 0.10) -> dict:
+        """Read-only rho(t) probe against a held-out, TRUE-LABELED set.
+
+        This is the gold-standard manifold-contraction measurement: unlike the
+        in-band sim_other (masked against the best-MATCH class), this masks
+        against the true label, so it captures cross-class competitors even when
+        they are the top match. Use it to plot the degradation curve and to test
+        the two predicted onsets:
+
+          * Retrieval-blend onset (~0.79 for Delta~0.9): begins when a non-trivial
+            share of the inference softmax mass lands on off-class prototypes.
+            Reported as `mean_offclass_weight` (mean fraction of vote mass on
+            wrong-class prototypes) and `frac_blended` (fraction of probes whose
+            off-class mass exceeds `blend_eps`). VIGIL's analytic gap of ~0.11
+            corresponds to off-class weight ~`blend_eps`.
+          * Structural-chimera onset (0.95 = v_ceiling): begins when
+            `mean_cross_class_sim` crosses the dynamic-vigilance ceiling, after
+            which boundary writes are admitted and EMA bakes them into keys.
+
+        Args:
+            probe_queries: (P, key_dim) raw (un-normalized) query vectors.
+            probe_labels:  (P,) long tensor of TRUE class ids.
+            blend_eps:     off-class vote-mass threshold counted as a "blend".
+
+        Returns dict with mean/var of top-1 cross-class and within-class cosine,
+        the true margin, retrieval-blend metrics, and the predicted onset flags.
+        Returns {"n_occupied": 0} if memory is empty (nothing to probe).
+        """
+        if not self.occupied.any():
+            return {"n_occupied": 0}
+
+        device = self.keys.device
+        q = F.normalize(probe_queries.to(device).float(), dim=-1)        # (P, D)
+        labels = probe_labels.to(device).long()                          # (P,)
+
+        valid_idx = self.occupied.nonzero(as_tuple=True)[0]
+        keys_occ = self._keys_norm[valid_idx].float()                    # (N, D)
+        proto_labels = self.values[valid_idx].float().argmax(dim=-1)     # (N,)
+
+        sims = q @ keys_occ.T                                            # (P, N)
+        same_class = proto_labels.unsqueeze(0) == labels.unsqueeze(1)    # (P, N)
+        very_low = -1e9
+
+        # Top-1 cross-class and within-class cosine, per probe.
+        sims_other = sims.masked_fill(same_class, very_low)
+        sim_other, _ = sims_other.max(dim=1)
+        sims_same = sims.masked_fill(~same_class, very_low)
+        sim_same, _ = sims_same.max(dim=1)
+
+        # Only probes that have BOTH a same-class and an other-class prototype
+        # yield a meaningful margin / contraction reading.
+        has_other = sim_other > -1.0
+        has_same = sim_same > -1.0
+        valid = has_other & has_same
+
+        out = {"n_occupied": int(valid_idx.numel()), "n_probes": int(valid.sum().item())}
+        if out["n_probes"] == 0:
+            return out
+
+        so = sim_other[valid]
+        ss = sim_same[valid]
+        margin = ss - so
+        out["mean_cross_class_sim"] = float(so.mean().item())
+        out["var_cross_class_sim"] = float(so.var(unbiased=False).item())
+        out["mean_within_class_sim"] = float(ss.mean().item())
+        out["mean_true_margin"] = float(margin.mean().item())
+
+        # --- Retrieval-blend metric: replicate the inference softmax vote ---
+        # (matches forward(): top-inference_k sims, softmax(./inference_temp)).
+        k = min(self.inference_k, keys_occ.size(0))
+        topk_sims, topk_locs = sims[valid].topk(k, dim=1)                # (Pv, k)
+        if self.inference_sim_floor > 0.0:
+            topk_sims = topk_sims.masked_fill(
+                topk_sims < self.inference_sim_floor, -float("inf"))
+        weights = F.softmax(topk_sims / self.inference_temp, dim=-1)     # (Pv, k)
+        topk_labels = proto_labels[topk_locs]                           # (Pv, k)
+        offclass = topk_labels != labels[valid].unsqueeze(1)
+        offclass_weight = (weights * offclass.float()).sum(dim=1)        # (Pv,)
+        out["mean_offclass_weight"] = float(offclass_weight.mean().item())
+        out["frac_blended"] = float((offclass_weight > blend_eps).float().mean().item())
+
+        # --- Predicted onset flags (read against live dynamic-vigilance config) ---
+        dv = self.dynamic_vigilance
+        ceiling = float(dv.v_ceiling) if dv is not None else float("nan")
+        out["v_ceiling"] = ceiling
+        out["chimera_onset"] = bool(out["mean_cross_class_sim"] >= ceiling)
+        out["blend_onset"] = bool(out["mean_offclass_weight"] >= blend_eps)
+        return out
 
 
 class CAMNet_Continuous(nn.Module):

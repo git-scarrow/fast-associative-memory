@@ -88,6 +88,12 @@ def main() -> None:
     ap.add_argument("--plot-path", type=str, default="contraction.png")
     args = ap.parse_args()
 
+    # blend_eps is a vote-mass fraction and feeds log((1-eps)/eps); boundary
+    # values 0 or 1 are degenerate (everything / nothing counts as a blend) and
+    # would crash the analytic report. Fail fast rather than after the loop.
+    if not (0.0 < args.blend_eps < 1.0):
+        ap.error(f"--blend-eps must be in (0, 1), got {args.blend_eps}")
+
     torch.manual_seed(args.seed)
     gen = torch.Generator().manual_seed(args.seed)
 
@@ -168,7 +174,10 @@ def main() -> None:
               f"| blend={rows[-1]['blend_onset']} chimera={rows[-1]['chimera_onset']}")
 
     # --- Write CSV ---
-    with open(args.csv, "w", newline="") as f:
+    csv_path = Path(args.csv)
+    if csv_path.parent != Path(""):
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
@@ -209,16 +218,23 @@ def main() -> None:
         ax1.plot(ep, [r["rho_inband"] for r in rows], ".--", color="C0", alpha=0.5, label="rho_inband (cheap)")
         ax1.plot(ep, [r["within_probe"] for r in rows], "-", color="C2", alpha=0.6, label="within-class (Delta)")
         ax1.axhline(args.v_ceiling, color="C3", ls=":", label=f"v_ceiling={args.v_ceiling}")
-        ax1.set_xlabel("epoch"); ax1.set_ylabel("cosine similarity"); ax1.set_ylim(0, 1.02)
+        ax1.set_xlabel("epoch")
+        ax1.set_ylabel("cosine similarity")
+        ax1.set_ylim(0, 1.02)
         ax2 = ax1.twinx()
         ax2.plot(ep, [r["offclass_weight"] for r in rows], "s-", color="C1", label="off-class vote mass")
         ax2.axhline(args.blend_eps, color="C1", ls=":", alpha=0.6)
-        ax2.set_ylabel("off-class vote mass"); ax2.set_ylim(0, 1.02)
+        ax2.set_ylabel("off-class vote mass")
+        ax2.set_ylim(0, 1.02)
         lines = ax1.get_lines() + ax2.get_lines()
         ax1.legend(lines, [l.get_label() for l in lines], loc="upper left", fontsize=8)
         ax1.set_title("rho(t) contraction and retrieval-blend onset")
-        fig.tight_layout(); fig.savefig(args.plot_path, dpi=120)
-        print(f"Wrote plot to {args.plot_path}")
+        fig.tight_layout()
+        plot_path = Path(args.plot_path)
+        if plot_path.parent != Path(""):
+            plot_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(plot_path, dpi=120)
+        print(f"Wrote plot to {plot_path}")
 
 
 if __name__ == "__main__":

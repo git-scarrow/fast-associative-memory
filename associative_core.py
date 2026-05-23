@@ -426,50 +426,25 @@ class ContinuousCAM(nn.Module):
 
         best_slots, best_sims = self._get_nearest_batch(queries)
 
-        # Flat or margin-based dynamic vigilance check
+        # Dynamic vigilance: dispatch to the policy's compute() method.
+        # Supports DynamicVigilance (margin-based) and RelativeVigilance
+        # (percentile-anchored) interchangeably — see dynamic_vigilance.py.
         if self.dynamic_vigilance is not None and self.occupied.any():
-            # We already computed best match via _get_nearest_batch.
-            # To avoid allocating a second full (B, N_occ) sim matrix, compute
-            # the best *other-class* competitor in small query chunks.
             valid_idx = self.occupied.nonzero(as_tuple=True)[0]
-            keys_occ = self._keys_norm[valid_idx]  # (N_occ, D)
+            keys_occ = self._keys_norm[valid_idx]               # (N_occ, D)
             proto_labels = self.values[valid_idx].float().argmax(dim=-1)  # (N_occ,)
 
-            B = queries.size(0)
-            best_classes = torch.full((B,), -1, dtype=torch.long, device=queries.device)
-            has_best = best_slots >= 0
-            if has_best.any():
-                best_classes[has_best] = self.values[best_slots[has_best]].float().argmax(dim=-1)
+            # Single matmul over the full batch — policies that need batch-level
+            # distribution statistics (e.g. RelativeVigilance) require this.
+            q_norm = F.normalize(queries.float(), dim=-1)        # (B, D)
+            sims_full = q_norm @ keys_occ.T                     # (B, N_occ)
 
-            margins = torch.empty((B,), device=queries.device, dtype=torch.float32)
-            v_eff = torch.empty((B,), device=queries.device, dtype=torch.float32)
-            # rho(t) probe: retain the per-query top-1 cross-class cosine that the
-            # margin computation discards. NOTE: "cross-class" here is masked
-            # against the query's BEST-MATCH class (best_classes), not its true
-            # label, so this is a slight under-estimate of true cross-class
-            # similarity. For label-true rho(t) use probe_cross_class_similarity().
-            sim_other_all = torch.empty((B,), device=queries.device, dtype=torch.float32)
+            v_eff, margins = self.dynamic_vigilance.compute(sims_full, proto_labels)
 
-            very_low = -1e9
-            chunk_q = 16
-            dv = self.dynamic_vigilance
-
-            for s in range(0, B, chunk_q):
-                e = min(B, s + chunk_q)
-                q = F.normalize(queries[s:e].float(), dim=-1)  # (C, D)
-                sims = q @ keys_occ.T  # (C, N_occ)
-
-                bc = best_classes[s:e]
-                same_class = proto_labels.unsqueeze(0) == bc.unsqueeze(1)
-                sims_other = sims.masked_fill(same_class, very_low)
-                sim_other, _ = sims_other.max(dim=1)
-                sim_other_all[s:e] = sim_other
-
-                margin = best_sims[s:e] - sim_other
-                margins[s:e] = margin
-
-                v = dv.v_base - dv.alpha * margin
-                v_eff[s:e] = torch.clamp(v, dv.v_floor, dv.v_ceiling)
+            # rho(t) probe: recover top-1 off-class sim from margins for telemetry.
+            # NOTE: "off-class" is masked against the best-MATCH class (proxy for
+            # true label). For label-true rho(t) use probe_cross_class_similarity().
+            sim_other_all = best_sims.float() - margins.to(best_sims.device)
 
             # Track running means for benchmarking/telemetry
             self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
@@ -477,12 +452,11 @@ class ContinuousCAM(nn.Module):
             self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
 
             # rho(t) probe accumulation. Exclude queries that had NO cross-class
-            # competitor (sim_other == very_low sentinel) so the contraction
+            # competitor (sim_other_all ≈ -1e9 sentinel) so the contraction
             # signal is not poisoned by single-class batches. Counted under a
             # separate denominator (count_sim_other) for correctness.
-            # Exclude only the very_low sentinel (no cross-class competitor); a
-            # legitimate cosine of -1.0 (antipodal competitor) must still count.
-            valid_other = sim_other_all > (very_low / 2)
+            # Threshold -5e8 separates the -1e9 sentinel from any real cosine.
+            valid_other = sim_other_all > -5e8
             n_valid = int(valid_other.sum().item())
             if n_valid > 0:
                 so = sim_other_all[valid_other]

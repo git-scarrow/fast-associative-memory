@@ -59,7 +59,7 @@ import torch.nn.functional as F
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from associative_core import ContinuousCAM  # noqa: E402
-from dynamic_vigilance import DynamicVigilance  # noqa: E402
+from dynamic_vigilance import DynamicVigilance, RelativeVigilance  # noqa: E402
 
 
 def make_epoch_batch(centers: torch.Tensor, attractor: torch.Tensor,
@@ -238,10 +238,21 @@ def main() -> None:
     ap.add_argument("--blend-eps", type=float, default=0.10,
                     help="off-class vote-mass threshold counted as a blend")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--v-base", type=float, default=0.92)
-    ap.add_argument("--alpha", type=float, default=0.30)
+    # --- Vigilance policy ---
+    ap.add_argument("--vigilance-policy", choices=["margin", "relative"],
+                    default="margin",
+                    help="margin=DynamicVigilance (G29 default); "
+                         "relative=RelativeVigilance (issue #73 percentile-anchored)")
+    ap.add_argument("--v-base", type=float, default=0.92,
+                    help="baseline vigilance (margin policy only)")
+    ap.add_argument("--alpha", type=float, default=0.30,
+                    help="margin-to-vigilance slope (margin policy only)")
     ap.add_argument("--v-floor", type=float, default=0.30)
     ap.add_argument("--v-ceiling", type=float, default=0.95)
+    ap.add_argument("--margin-guard", type=float, default=0.05,
+                    help="safety margin above ρ-percentile anchor (relative policy)")
+    ap.add_argument("--percentile", type=float, default=0.95,
+                    help="off-class sim quantile to anchor on (relative policy)")
     ap.add_argument("--csv", type=str, default="contraction.csv")
     ap.add_argument("--plot", action="store_true")
     ap.add_argument("--plot-path", type=str, default="contraction.png")
@@ -309,8 +320,18 @@ def main() -> None:
                                            args.held_out_per_class, args.noise, gen)
             return (q, y, lab), (hq, hlab)
 
-    dv = DynamicVigilance(v_base=args.v_base, alpha=args.alpha,
-                          v_floor=args.v_floor, v_ceiling=args.v_ceiling)
+    if args.vigilance_policy == "relative":
+        dv = RelativeVigilance(v_floor=args.v_floor, v_ceiling=args.v_ceiling,
+                               margin_guard=args.margin_guard,
+                               percentile=args.percentile)
+        print(f"[policy] RelativeVigilance: percentile={args.percentile}, "
+              f"margin_guard={args.margin_guard}, "
+              f"v_floor={args.v_floor}, v_ceiling={args.v_ceiling}")
+    else:
+        dv = DynamicVigilance(v_base=args.v_base, alpha=args.alpha,
+                              v_floor=args.v_floor, v_ceiling=args.v_ceiling)
+        print(f"[policy] DynamicVigilance: v_base={args.v_base}, alpha={args.alpha}, "
+              f"v_floor={args.v_floor}, v_ceiling={args.v_ceiling}")
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes,
                         max_entries=args.max_entries, dynamic_vigilance=dv)
 

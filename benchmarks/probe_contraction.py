@@ -59,7 +59,8 @@ import torch.nn.functional as F
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from associative_core import ContinuousCAM  # noqa: E402
-from dynamic_vigilance import DynamicVigilance  # noqa: E402
+from dynamic_vigilance import (  # noqa: E402
+    DynamicVigilance, RelativeVigilance, RetrievalFloorPolicy)
 
 
 def make_epoch_batch(centers: torch.Tensor, attractor: torch.Tensor,
@@ -238,10 +239,30 @@ def main() -> None:
     ap.add_argument("--blend-eps", type=float, default=0.10,
                     help="off-class vote-mass threshold counted as a blend")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--v-base", type=float, default=0.92)
-    ap.add_argument("--alpha", type=float, default=0.30)
+    # --- Vigilance policy ---
+    ap.add_argument("--vigilance-policy", choices=["margin", "relative"],
+                    default="margin",
+                    help="margin=DynamicVigilance (G29 default); "
+                         "relative=RelativeVigilance (issue #73 percentile-anchored)")
+    ap.add_argument("--v-base", type=float, default=0.92,
+                    help="baseline vigilance (margin policy only)")
+    ap.add_argument("--alpha", type=float, default=0.30,
+                    help="margin-to-vigilance slope (margin policy only)")
     ap.add_argument("--v-floor", type=float, default=0.30)
     ap.add_argument("--v-ceiling", type=float, default=0.95)
+    ap.add_argument("--margin-guard", type=float, default=0.05,
+                    help="safety margin above ρ-percentile anchor (relative policy)")
+    ap.add_argument("--percentile", type=float, default=0.95,
+                    help="off-class sim quantile to anchor on (relative policy)")
+    # --- Retrieval-side floor policy (issue #74) ---
+    ap.add_argument("--retrieval-floor-policy", choices=["static", "live-delta"],
+                    default="static",
+                    help="static=fixed inference_sim_floor (default 0=off); "
+                         "live-delta=RetrievalFloorPolicy anchored to live Δ (#74)")
+    ap.add_argument("--k-logit-steps", type=float, default=3.0,
+                    help="floor = Δ_ema - k*inference_temp (live-delta policy)")
+    ap.add_argument("--floor-ema-beta", type=float, default=0.9,
+                    help="EMA smoothing for the live Δ estimate (live-delta policy)")
     ap.add_argument("--csv", type=str, default="contraction.csv")
     ap.add_argument("--plot", action="store_true")
     ap.add_argument("--plot-path", type=str, default="contraction.png")
@@ -271,6 +292,12 @@ def main() -> None:
     # would crash the analytic report. Fail fast rather than after the loop.
     if not (0.0 < args.blend_eps < 1.0):
         ap.error(f"--blend-eps must be in (0, 1), got {args.blend_eps}")
+    if not (0.0 <= args.percentile <= 1.0):
+        ap.error(f"--percentile must be in [0, 1], got {args.percentile}")
+    if args.k_logit_steps < 0:
+        ap.error(f"--k-logit-steps must be >= 0, got {args.k_logit_steps}")
+    if not (0.0 <= args.floor_ema_beta < 1.0):
+        ap.error(f"--floor-ema-beta must be in [0, 1), got {args.floor_ema_beta}")
 
     torch.manual_seed(args.seed)
     gen = torch.Generator().manual_seed(args.seed)
@@ -309,16 +336,38 @@ def main() -> None:
                                            args.held_out_per_class, args.noise, gen)
             return (q, y, lab), (hq, hlab)
 
-    dv = DynamicVigilance(v_base=args.v_base, alpha=args.alpha,
-                          v_floor=args.v_floor, v_ceiling=args.v_ceiling)
+    if args.vigilance_policy == "relative":
+        dv = RelativeVigilance(v_floor=args.v_floor, v_ceiling=args.v_ceiling,
+                               margin_guard=args.margin_guard,
+                               percentile=args.percentile)
+        print(f"[policy] RelativeVigilance: percentile={args.percentile}, "
+              f"margin_guard={args.margin_guard}, "
+              f"v_floor={args.v_floor}, v_ceiling={args.v_ceiling}")
+    else:
+        dv = DynamicVigilance(v_base=args.v_base, alpha=args.alpha,
+                              v_floor=args.v_floor, v_ceiling=args.v_ceiling)
+        print(f"[policy] DynamicVigilance: v_base={args.v_base}, alpha={args.alpha}, "
+              f"v_floor={args.v_floor}, v_ceiling={args.v_ceiling}")
+
+    floor_policy = None
+    if args.retrieval_floor_policy == "live-delta":
+        floor_policy = RetrievalFloorPolicy(k_logit_steps=args.k_logit_steps,
+                                            ema_beta=args.floor_ema_beta)
+        print(f"[floor] RetrievalFloorPolicy: k_logit_steps={args.k_logit_steps}, "
+              f"ema_beta={args.floor_ema_beta}")
+    else:
+        print("[floor] static inference_sim_floor (disabled, =0.0)")
+
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes,
-                        max_entries=args.max_entries, dynamic_vigilance=dv)
+                        max_entries=args.max_entries, dynamic_vigilance=dv,
+                        retrieval_floor_policy=floor_policy)
 
     fields = ["epoch", "contraction",
               "rho_inband", "var_inband", "n_inband",
               "rho_probe", "var_probe", "within_probe", "margin_probe",
               "offclass_weight", "frac_blended", "n_vote",
-              "chimera_onset", "blend_onset", "mean_v_eff"]
+              "chimera_onset", "blend_onset", "mean_v_eff",
+              "floor_delta_ema", "sim_floor_active"]
     rows = []
 
     first_blend = None
@@ -372,12 +421,15 @@ def main() -> None:
             "chimera_onset": bool(p.get("chimera_onset", False)),
             "blend_onset": bool(p.get("blend_onset", False)),
             "mean_v_eff": stats.get("mean_v_effective", float("nan")),
+            "floor_delta_ema": stats.get("floor_delta_ema", float("nan")),
+            "sim_floor_active": stats.get("sim_floor_active", float("nan")),
         })
         print(f"epoch {epoch:3d} | c={contraction:.3f} | "
               f"rho_probe={rows[-1]['rho_probe']:.3f} "
               f"within={rows[-1]['within_probe']:.3f} "
               f"offclass_w={rows[-1]['offclass_weight']:.3f} "
               f"frac_blend={rows[-1]['frac_blended']:.2f} "
+              f"floor={rows[-1]['sim_floor_active']:.3f} "
               f"| blend={rows[-1]['blend_onset']} chimera={rows[-1]['chimera_onset']}")
 
     # --- Write CSV ---

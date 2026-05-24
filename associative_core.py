@@ -47,7 +47,8 @@ class ContinuousCAM(nn.Module):
                  use_bfloat16: bool = False, key_lr: float = 0.05,
                  inference_k: int = 20, inference_temp: float = 0.05,
                  ema_beta: float = 0.05,
-                 dynamic_vigilance=None):
+                 dynamic_vigilance=None,
+                 retrieval_floor_policy=None):
         super().__init__()
         self.key_dim = key_dim
         self.value_dim = value_dim
@@ -78,6 +79,10 @@ class ContinuousCAM(nn.Module):
         # masked to -inf before softmax, forcing hard winner-take-all when set high.
         # 0.0 = disabled (legacy behaviour).
         self.inference_sim_floor: float = 0.0
+        # Optional live Δ-relative floor policy (issue #74). When set, its
+        # floor(inference_temp) value overrides the static inference_sim_floor
+        # at retrieval time; updated from within-class hits during learn_local().
+        self.retrieval_floor_policy = retrieval_floor_policy
 
         mem_dtype = torch.bfloat16 if use_bfloat16 else torch.float32
 
@@ -101,6 +106,20 @@ class ContinuousCAM(nn.Module):
     def _cast(self, t: torch.Tensor) -> torch.Tensor:
         """Cast tensor to memory dtype if needed."""
         return t.to(self._mem_dtype) if t.dtype != self._mem_dtype else t
+
+    def _active_sim_floor(self) -> float:
+        """Resolve the inference similarity floor in effect for this retrieval.
+
+        A live ``retrieval_floor_policy`` (issue #74) takes precedence over the
+        static ``inference_sim_floor`` when it returns a positive floor; before
+        the policy has seen any within-class hits it returns 0.0, in which case
+        we fall back to the static floor.
+        """
+        if self.retrieval_floor_policy is not None:
+            floor = self.retrieval_floor_policy.floor(self.inference_temp)
+            if floor > 0.0:
+                return floor
+        return self.inference_sim_floor
 
     def _update_key_norm(self, slots):
         """Update cached normalized keys for given slot indices."""
@@ -314,9 +333,10 @@ class ContinuousCAM(nn.Module):
             )
             topk_sims = topk_sims.masked_fill(~keep_mask, -float("inf"))
 
-        # Optional similarity floor
-        if self.inference_sim_floor > 0.0:
-            topk_sims = topk_sims.masked_fill(topk_sims < self.inference_sim_floor,
+        # Optional similarity floor (static, or live Δ-relative via policy)
+        sim_floor = self._active_sim_floor()
+        if sim_floor > 0.0:
+            topk_sims = topk_sims.masked_fill(topk_sims < sim_floor,
                                               -float("inf"))
 
         weights = F.softmax(topk_sims / self.inference_temp, dim=-1)          # (B, final_k)
@@ -351,7 +371,7 @@ class ContinuousCAM(nn.Module):
         else:
             _keep_mask = torch.ones_like(_base_topk_sims, dtype=torch.bool)
             
-        floor_mask = _base_topk_sims < self.inference_sim_floor
+        floor_mask = _base_topk_sims < sim_floor
         _floor_rejected = floor_mask & _keep_mask
         
         final_slots_list = []
@@ -424,85 +444,61 @@ class ContinuousCAM(nn.Module):
         queries = self._cast(queries)
         targets = self._cast(targets)
 
-        best_slots, best_sims = self._get_nearest_batch(queries)
-
-        # Flat or margin-based dynamic vigilance check
+        # When dynamic vigilance is active and memory is occupied, compute the
+        # full (B, N_occ) similarity matrix ONCE and derive best_slots/best_sims
+        # from it — avoids the duplicate matmul that _get_nearest_batch() would
+        # otherwise add. When DV is inactive, fall back to _get_nearest_batch().
         if self.dynamic_vigilance is not None and self.occupied.any():
-            # We already computed best match via _get_nearest_batch.
-            # To avoid allocating a second full (B, N_occ) sim matrix, compute
-            # the best *other-class* competitor in small query chunks.
             valid_idx = self.occupied.nonzero(as_tuple=True)[0]
-            keys_occ = self._keys_norm[valid_idx]  # (N_occ, D)
+            keys_occ = self._keys_norm[valid_idx]                # (N_occ, D)
             # TD(AgentAssociativeMemory): argmax assumes one-hot / softmax-class
             # value vectors. Works for the current classifier/probe branch but will
             # not generalise to dense arbitrary-value slots. The refactor should
             # introduce an explicit label store or a pluggable label extractor.
             proto_labels = self.values[valid_idx].float().argmax(dim=-1)  # (N_occ,)
 
-            B = queries.size(0)
-            best_classes = torch.full((B,), -1, dtype=torch.long, device=queries.device)
-            has_best = best_slots >= 0
-            if has_best.any():
-                best_classes[has_best] = self.values[best_slots[has_best]].float().argmax(dim=-1)
+            q_norm = F.normalize(queries.float(), dim=-1)         # (B, D)
+            sims_full = q_norm @ keys_occ.T                      # (B, N_occ)
 
-            margins = torch.empty((B,), device=queries.device, dtype=torch.float32)
-            v_eff = torch.empty((B,), device=queries.device, dtype=torch.float32)
-            # rho(t) probe: retain the per-query top-1 cross-class cosine that the
-            # margin computation discards. NOTE: "cross-class" here is masked
-            # against the query's BEST-MATCH class (best_classes), not its true
-            # label, so this is a slight under-estimate of true cross-class
-            # similarity. For label-true rho(t) use probe_cross_class_similarity().
-            sim_other_all = torch.empty((B,), device=queries.device, dtype=torch.float32)
+            # Best slot / sim derived from sims_full (same result as _get_nearest_batch).
+            best_sims_f, best_locs = sims_full.max(dim=1)        # (B,)
+            best_slots = valid_idx[best_locs]                     # (B,)
+            best_sims = best_sims_f.float()
 
-            very_low = -1e9
-            chunk_q = 16
-            dv = self.dynamic_vigilance
+            v_eff, margins = self.dynamic_vigilance.compute(sims_full, proto_labels)
 
-            for s in range(0, B, chunk_q):
-                e = min(B, s + chunk_q)
-                q = F.normalize(queries[s:e].float(), dim=-1)  # (C, D)
-                sims = q @ keys_occ.T  # (C, N_occ)
+            # rho(t) probe: derive top-1 off-class sim from the same matmul that
+            # produced margins — both come from sims_full, so they are consistent.
+            # NOTE: "off-class" is proxied by best-MATCH class, not true label;
+            # use probe_cross_class_similarity() for label-true rho(t).
+            sim_other_all = best_sims - margins.to(best_sims.device)
 
-                bc = best_classes[s:e]
-                same_class = proto_labels.unsqueeze(0) == bc.unsqueeze(1)
-                sims_other = sims.masked_fill(same_class, very_low)
-                sim_other, _ = sims_other.max(dim=1)
-                sim_other_all[s:e] = sim_other
-
-                margin = best_sims[s:e] - sim_other
-                margins[s:e] = margin
-
-                v = dv.v_base - dv.alpha * margin
-                v_eff[s:e] = torch.clamp(v, dv.v_floor, dv.v_ceiling)
-
-            # Track running means for benchmarking/telemetry
-            self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
-            self._dynamic_vigilance_stats["sum_margin"] += float(margins.sum().item())
-            self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
-
-            # rho(t) probe accumulation. Exclude queries that had NO cross-class
-            # competitor (sim_other == very_low sentinel) so the contraction
-            # signal is not poisoned by single-class batches. Counted under a
-            # separate denominator (count_sim_other) for correctness.
-            # Exclude only the very_low sentinel (no cross-class competitor); a
-            # legitimate cosine of -1.0 (antipodal competitor) must still count.
-            valid_other = sim_other_all > (very_low / 2)
+            # Sentinel filter: sim_other_all ≈ -1e9 when no cross-class prototype
+            # exists in memory. Exclude from margin and rho(t) telemetry.
+            valid_other = sim_other_all > -5e8
             n_valid = int(valid_other.sum().item())
+
+            # Telemetry accumulation.
+            self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
+            self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
             if n_valid > 0:
+                # sum_margin filtered to valid cases only (sentinel margins ≈ 1e9
+                # would corrupt mean_margin over long runs).
+                self._dynamic_vigilance_stats["sum_margin"] += float(
+                    margins[valid_other].sum().item())
+                self._dynamic_vigilance_stats["count_margin"] = (
+                    self._dynamic_vigilance_stats.get("count_margin", 0) + n_valid)
                 so = sim_other_all[valid_other]
                 self._dynamic_vigilance_stats["sum_sim_other"] += float(so.sum().item())
-                self._dynamic_vigilance_stats["sumsq_sim_other"] += float((so * so).sum().item())
+                self._dynamic_vigilance_stats["sumsq_sim_other"] += float(
+                    (so * so).sum().item())
                 self._dynamic_vigilance_stats["count_sim_other"] = (
                     self._dynamic_vigilance_stats.get("count_sim_other", 0) + n_valid)
 
-            # Opt-in raw log (enabled when a list attribute `cross_class_sim_log`
-            # is attached), mirroring the margin_log / vigilance_log pattern.
+            # Opt-in raw logs (enabled by attaching a list attribute externally).
             cc_log = getattr(self, "cross_class_sim_log", None)
-            if isinstance(cc_log, list):
+            if isinstance(cc_log, list) and n_valid > 0:
                 cc_log.append(sim_other_all[valid_other].detach().cpu())
-
-            # Optional per-call logging for external analysis (enabled when
-            # a list attribute `margin_log` / `vigilance_log` is attached).
             margin_log = getattr(self, "margin_log", None)
             if isinstance(margin_log, list):
                 margin_log.append(margins.detach().cpu())
@@ -512,6 +508,7 @@ class ContinuousCAM(nn.Module):
 
             vigilance_thresholds = v_eff.to(best_sims.device)
         else:
+            best_slots, best_sims = self._get_nearest_batch(queries)
             vigilance_thresholds = torch.full_like(best_sims, self.vigilance)
 
         hits = (best_slots >= 0) & (best_sims >= vigilance_thresholds)
@@ -526,6 +523,12 @@ class ContinuousCAM(nn.Module):
             if not same_class.all():
                 hit_indices = hits.nonzero(as_tuple=True)[0]
                 hits[hit_indices[~same_class]] = False
+
+        # Feed confirmed within-class hit similarities to the live Δ floor
+        # policy (issue #74). best_sims[hits] is, by construction, the cosine to
+        # a same-class prototype, i.e. an estimate of the within-class Δ.
+        if self.retrieval_floor_policy is not None and hits.any():
+            self.retrieval_floor_policy.update(best_sims[hits])
 
         misses = ~hits
 
@@ -702,9 +705,13 @@ class ContinuousCAM(nn.Module):
         if self._dynamic_vigilance_stats["count"] > 0:
             count = float(self._dynamic_vigilance_stats["count"])
             stats["mean_v_effective"] = self._dynamic_vigilance_stats["sum_v"] / count
-            stats["mean_margin"] = self._dynamic_vigilance_stats["sum_margin"] / count
         else:
             stats["mean_v_effective"] = float(self.vigilance)
+        count_margin = float(self._dynamic_vigilance_stats.get("count_margin", 0))
+        if count_margin > 0:
+            stats["mean_margin"] = (
+                self._dynamic_vigilance_stats["sum_margin"] / count_margin)
+        else:
             stats["mean_margin"] = 0.0
 
         # rho(t): empirical mean + variance of top-1 cross-class cosine. This is
@@ -724,6 +731,14 @@ class ContinuousCAM(nn.Module):
             stats["mean_cross_class_sim"] = float("nan")
             stats["var_cross_class_sim"] = float("nan")
             stats["n_cross_class_obs"] = 0
+
+        # Live Δ-relative retrieval floor telemetry (issue #74).
+        if self.retrieval_floor_policy is not None:
+            stats["floor_delta_ema"] = float(self.retrieval_floor_policy.delta_ema)
+            stats["sim_floor_active"] = float(self._active_sim_floor())
+        else:
+            stats["floor_delta_ema"] = float("nan")
+            stats["sim_floor_active"] = float(self.inference_sim_floor)
         return stats
 
     def reset_dynamic_vigilance_stats(self) -> None:
@@ -735,7 +750,8 @@ class ContinuousCAM(nn.Module):
         cross_class_sim_log) — clear those externally if used.
         """
         self._dynamic_vigilance_stats = {
-            "sum_v": 0.0, "sum_margin": 0.0, "count": 0,
+            "sum_v": 0.0, "count": 0,
+            "sum_margin": 0.0, "count_margin": 0,
             "sum_sim_other": 0.0, "sumsq_sim_other": 0.0, "count_sim_other": 0,
         }
 
@@ -816,9 +832,10 @@ class ContinuousCAM(nn.Module):
         # (matches forward(): top-inference_k sims, softmax(./inference_temp)).
         k = min(self.inference_k, keys_occ.size(0))
         topk_sims, topk_locs = sims[valid].topk(k, dim=1)                # (Pv, k)
-        if self.inference_sim_floor > 0.0:
+        sim_floor = self._active_sim_floor()
+        if sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(
-                topk_sims < self.inference_sim_floor, -float("inf"))
+                topk_sims < sim_floor, -float("inf"))
         # Guard: if the floor masks every candidate in a row, softmax(-inf...)
         # is NaN and would silently corrupt the telemetry. Neutralize those rows
         # before softmax and exclude them from the vote-mass averages.

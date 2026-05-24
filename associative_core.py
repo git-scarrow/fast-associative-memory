@@ -433,6 +433,10 @@ class ContinuousCAM(nn.Module):
             # the best *other-class* competitor in small query chunks.
             valid_idx = self.occupied.nonzero(as_tuple=True)[0]
             keys_occ = self._keys_norm[valid_idx]  # (N_occ, D)
+            # TD(AgentAssociativeMemory): argmax assumes one-hot / softmax-class
+            # value vectors. Works for the current classifier/probe branch but will
+            # not generalise to dense arbitrary-value slots. The refactor should
+            # introduce an explicit label store or a pluggable label extractor.
             proto_labels = self.values[valid_idx].float().argmax(dim=-1)  # (N_occ,)
 
             B = queries.size(0)
@@ -775,6 +779,7 @@ class ContinuousCAM(nn.Module):
 
         valid_idx = self.occupied.nonzero(as_tuple=True)[0]
         keys_occ = self._keys_norm[valid_idx].float()                    # (N, D)
+        # TD(AgentAssociativeMemory): same argmax assumption as in learn_local().
         proto_labels = self.values[valid_idx].float().argmax(dim=-1)     # (N,)
 
         sims = q @ keys_occ.T                                            # (P, N)

@@ -162,8 +162,9 @@ def test_cam_with_relative_vigilance():
 
 def test_retrieval_floor_disabled_before_first_update():
     rfp = RetrievalFloorPolicy(k_logit_steps=3.0)
-    # No update() yet → delta_ema is NaN → floor returns 0.0 (disabled).
-    assert rfp.floor(temp=0.05) == 0.0
+    # No update() yet → delta_ema is NaN → floor returns None (uninitialised),
+    # so callers fall back to the static floor.
+    assert rfp.floor(temp=0.05) is None
     assert rfp.delta_ema != rfp.delta_ema  # NaN
 
 
@@ -234,3 +235,38 @@ def test_cam_active_floor_falls_back_to_static_before_init():
     cam.inference_sim_floor = 0.25
     # Policy not yet initialised (floor()=0.0) → static floor wins.
     assert cam._active_sim_floor() == pytest.approx(0.25, abs=1e-6)
+
+
+def test_retrieval_floor_upper_clamp_to_one():
+    # Pathological: delta_ema pushed above 1.0; floor must not exceed 1.0.
+    rfp = RetrievalFloorPolicy(k_logit_steps=0.0)
+    rfp.update(torch.tensor([1.5]))   # numeric-error style overshoot
+    assert rfp.floor(temp=0.05) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_initialised_floor_zero_overrides_static():
+    # An initialised policy that computes floor 0.0 should win over a positive
+    # static floor (it means "no floor wanted"), not fall back to it.
+    rfp = RetrievalFloorPolicy(k_logit_steps=100.0, floor_min=0.0)
+    cam = ContinuousCAM(key_dim=4, value_dim=2, max_entries=16,
+                        retrieval_floor_policy=rfp)
+    cam.inference_sim_floor = 0.25
+    rfp.update(torch.tensor([0.30]))  # 0.30 - 100*0.05 < 0 → clamp to floor_min 0.0
+    assert rfp.floor(temp=0.05) == pytest.approx(0.0, abs=1e-6)
+    assert cam._active_sim_floor() == pytest.approx(0.0, abs=1e-6)
+
+
+def test_forward_no_nan_when_floor_masks_all_candidates():
+    # A floor above every stored similarity must not produce NaN outputs.
+    rfp = RetrievalFloorPolicy(k_logit_steps=0.0, ema_beta=0.0)
+    cam = ContinuousCAM(key_dim=8, value_dim=3, max_entries=64,
+                        retrieval_floor_policy=rfp)
+    torch.manual_seed(0)
+    x = torch.randn(12, 8)
+    y = torch.nn.functional.one_hot(torch.randint(0, 3, (12,)), num_classes=3).float()
+    cam.learn_local(x, y)
+    cam.learn_local(x, y)            # establish prototypes + Δ estimate
+    # Force the floor above any attainable cosine so every candidate is masked.
+    rfp._delta_ema = 2.0             # floor() → min(1.0, max(0, 2.0)) = 1.0
+    out = cam(torch.randn(5, 8))
+    assert torch.isfinite(out).all()

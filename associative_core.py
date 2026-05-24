@@ -111,14 +111,15 @@ class ContinuousCAM(nn.Module):
     def _active_sim_floor(self) -> float:
         """Resolve the inference similarity floor in effect for this retrieval.
 
-        A live ``retrieval_floor_policy`` (issue #74) takes precedence over the
-        static ``inference_sim_floor`` when it returns a positive floor; before
-        the policy has seen any within-class hits it returns 0.0, in which case
-        we fall back to the static floor.
+        A live ``retrieval_floor_policy`` (issue #74) takes precedence once it is
+        initialised: its ``floor()`` returns ``None`` until the first Δ estimate,
+        in which case we fall back to the static ``inference_sim_floor``. An
+        initialised policy that computes a floor of exactly 0.0 still wins (it
+        means "no floor wanted"), so the static value does not override it.
         """
         if self.retrieval_floor_policy is not None:
             floor = self.retrieval_floor_policy.floor(self.inference_temp)
-            if floor > 0.0:
+            if floor is not None:
                 return floor
         return self.inference_sim_floor
 
@@ -370,6 +371,14 @@ class ContinuousCAM(nn.Module):
             topk_sims = topk_sims.masked_fill(topk_sims < sim_floor,
                                               -float("inf"))
 
+        # Guard: NSTP and/or the floor can mask every candidate in a row. A row
+        # of all -inf makes softmax produce NaN, which would corrupt outputs.
+        # Neutralize fully-masked rows to 0.0 → uniform weights over their top-k
+        # (a "no confident match" fallback), matching probe_cross_class_similarity().
+        row_has_vote = torch.isfinite(topk_sims).any(dim=1)                  # (B,)
+        if not bool(row_has_vote.all()):
+            topk_sims = topk_sims.masked_fill(~row_has_vote.unsqueeze(1), 0.0)
+
         weights = F.softmax(topk_sims / self.inference_temp, dim=-1)          # (B, final_k)
         retrieved = self.values[topk_slots].float()                           # (B, final_k, V)
         outputs = (weights.unsqueeze(-1) * retrieved).sum(dim=1)              # (B, V)
@@ -402,7 +411,13 @@ class ContinuousCAM(nn.Module):
         else:
             _keep_mask = torch.ones_like(_base_topk_sims, dtype=torch.bool)
             
-        floor_mask = _base_topk_sims < sim_floor
+        # Floor only rejects when actually active (sim_floor > 0); otherwise the
+        # trace must not mark negative-similarity candidates as floor victims
+        # (forward() didn't mask them either).
+        if sim_floor > 0.0:
+            floor_mask = _base_topk_sims < sim_floor
+        else:
+            floor_mask = torch.zeros_like(_base_topk_sims, dtype=torch.bool)
         _floor_rejected = floor_mask & _keep_mask
         
         final_slots_list = []

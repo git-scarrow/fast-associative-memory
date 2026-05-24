@@ -253,10 +253,13 @@ class RetrievalFloorPolicy:
             raise ValueError(f"ema_beta must be in [0, 1), got {self.ema_beta}")
 
     def update(self, within_class_sims: torch.Tensor) -> None:
-        """Update the Δ EMA from a batch of confirmed within-class similarities.
+        """Update the Δ EMA from a batch of within-class generalization sims.
 
-        Call with ``best_sims[hits]`` from ``learn_local()`` after the
-        same-class check.  Ignores empty tensors (no-op).
+        ``ContinuousCAM.learn_local()`` feeds the leave-one-out (2nd-best)
+        same-class cosine by true label (see ``_within_class_loo``), NOT the
+        vigilance-gated ``best_sims[hits]`` — the latter only sees near-duplicate
+        hits and self-matches, which would inflate Δ. Pass a 1-D tensor of
+        per-query within-class similarities; empty tensors are a no-op.
         """
         if within_class_sims.numel() == 0:
             return
@@ -266,14 +269,18 @@ class RetrievalFloorPolicy:
         else:
             self._delta_ema = self.ema_beta * self._delta_ema + (1.0 - self.ema_beta) * obs
 
-    def floor(self, temp: float) -> float:
-        """Return the current similarity floor value.
+    def floor(self, temp: float) -> float | None:
+        """Return the current similarity floor, or None if uninitialised.
 
-        Returns 0.0 (disabled) until the first ``update()`` call.
+        Returns ``None`` until the first ``update()`` call so the caller can
+        distinguish "policy has no opinion yet" (fall back to the static floor)
+        from "policy actively wants a floor of 0.0". Once initialised, returns
+        ``clamp(delta_ema - k_logit_steps * temp, floor_min, 1.0)``.
         """
         if math.isnan(self._delta_ema):
-            return 0.0
-        return max(self.floor_min, self._delta_ema - self.k_logit_steps * temp)
+            return None
+        raw = self._delta_ema - self.k_logit_steps * temp
+        return min(1.0, max(self.floor_min, raw))
 
     @property
     def delta_ema(self) -> float:

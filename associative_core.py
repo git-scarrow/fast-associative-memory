@@ -3,6 +3,7 @@ associative_core.py — Online prototype memory with EMA updates,
 temperature-scaled soft-kNN retrieval, and LFU-LRU hybrid eviction.
 """
 
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -120,6 +121,36 @@ class ContinuousCAM(nn.Module):
             if floor > 0.0:
                 return floor
         return self.inference_sim_floor
+
+    @staticmethod
+    def _within_class_loo(sims: torch.Tensor, proto_labels: torch.Tensor,
+                          true_labels: torch.Tensor) -> torch.Tensor:
+        """Per-query leave-one-out (2nd-best) cosine to a same-class prototype.
+
+        Estimates the *generalization* within-class Δ for the retrieval floor
+        policy (issue #74). Two biases must be avoided:
+
+          * Vigilance gating — ``best_sims[hits]`` only sees near-duplicate hits
+            (sim ≥ v_base), inflating Δ toward 1.0.
+          * Self-matching — in the persistent continual setting a training query
+            re-matches its own stored prototype at ~1.0, so the top-1 same-class
+            cosine is NOT a generalization estimate.
+
+        Excluding the single closest same-class prototype (the self-match / EMA
+        target) and taking the next best approximates the similarity to the
+        nearest *other* same-class prototype — i.e. how well the class
+        generalizes, which is what the held-out probe's within-class Δ measures
+        and what the floor must sit below. Requires ≥2 same-class prototypes per
+        query; queries with fewer are dropped.
+        """
+        same_mask = proto_labels.unsqueeze(0) == true_labels.unsqueeze(1)  # (B, N)
+        sims_same = sims.masked_fill(~same_mask, -1e9)
+        k = min(2, sims_same.size(1))
+        if k < 2:
+            return sims_same.new_empty(0)
+        top2, _ = sims_same.topk(2, dim=1)                                 # (B, 2)
+        loo = top2[:, 1]                                                    # (B,)
+        return loo[loo > -5e8]
 
     def _update_key_norm(self, slots):
         """Update cached normalized keys for given slot indices."""
@@ -507,9 +538,31 @@ class ContinuousCAM(nn.Module):
                 v_log.append(v_eff.detach().cpu())
 
             vigilance_thresholds = v_eff.to(best_sims.device)
+
+            # Within-class Δ estimate for the retrieval floor policy (issue #74),
+            # reusing the sims_full / proto_labels already computed here.
+            if self.retrieval_floor_policy is not None:
+                true_labels = targets.float().argmax(dim=-1)
+                within_class_sims = self._within_class_loo(
+                    sims_full, proto_labels, true_labels)
+            else:
+                within_class_sims = None
         else:
             best_slots, best_sims = self._get_nearest_batch(queries)
             vigilance_thresholds = torch.full_like(best_sims, self.vigilance)
+
+            # No sims_full was computed on this path; compute a dedicated
+            # query↔prototype matmul only if the floor policy needs Δ.
+            within_class_sims = None
+            if self.retrieval_floor_policy is not None and self.occupied.any():
+                valid_idx = self.occupied.nonzero(as_tuple=True)[0]
+                keys_occ = self._keys_norm[valid_idx]
+                proto_labels = self.values[valid_idx].float().argmax(dim=-1)
+                q_norm = F.normalize(queries.float(), dim=-1)
+                sims_wc = q_norm @ keys_occ.T
+                true_labels = targets.float().argmax(dim=-1)
+                within_class_sims = self._within_class_loo(
+                    sims_wc, proto_labels, true_labels)
 
         hits = (best_slots >= 0) & (best_sims >= vigilance_thresholds)
 
@@ -524,11 +577,11 @@ class ContinuousCAM(nn.Module):
                 hit_indices = hits.nonzero(as_tuple=True)[0]
                 hits[hit_indices[~same_class]] = False
 
-        # Feed confirmed within-class hit similarities to the live Δ floor
-        # policy (issue #74). best_sims[hits] is, by construction, the cosine to
-        # a same-class prototype, i.e. an estimate of the within-class Δ.
-        if self.retrieval_floor_policy is not None and hits.any():
-            self.retrieval_floor_policy.update(best_sims[hits])
+        # Feed the unbiased within-class Δ estimate (leave-one-out same-class
+        # cosine by TRUE label, computed above) to the live Δ floor policy
+        # (issue #74). Not vigilance-gated, not self-matched — see _within_class_loo().
+        if self.retrieval_floor_policy is not None and within_class_sims is not None:
+            self.retrieval_floor_policy.update(within_class_sims)
 
         misses = ~hits
 
@@ -592,6 +645,26 @@ class ContinuousCAM(nn.Module):
             self.usage[new_slots] = 1
             self.hit_counts[new_slots] = 1
             self._update_key_norm(new_slots)
+
+        # Cold-start seed for the retrieval floor policy (issue #74). On the
+        # very first batch, memory was empty when within_class_sims was computed
+        # (pre-write), so the policy has no Δ estimate and the floor would stay
+        # disabled for one whole epoch — leaving the first probe unprotected. Now
+        # that this batch is written, re-estimate Δ against the populated memory
+        # so the floor is live before the first retrieval. One-time only (fires
+        # while the policy is still uninitialised).
+        if (self.retrieval_floor_policy is not None
+                and math.isnan(self.retrieval_floor_policy.delta_ema)
+                and self.occupied.any()):
+            valid_idx = self.occupied.nonzero(as_tuple=True)[0]
+            keys_occ = self._keys_norm[valid_idx]
+            proto_labels = self.values[valid_idx].float().argmax(dim=-1)
+            q_norm = F.normalize(queries.float(), dim=-1)
+            sims_seed = q_norm @ keys_occ.T
+            true_labels = targets.float().argmax(dim=-1)
+            seed_sims = self._within_class_loo(sims_seed, proto_labels, true_labels)
+            if seed_sims.numel() > 0:
+                self.retrieval_floor_policy.update(seed_sims)
 
         # Track all classes seen for adaptive eviction (covers hits + misses)
         if self.adaptive_eviction:

@@ -140,6 +140,12 @@ class RelativeVigilance:
 
     _rho_ema: float = field(default=float("nan"), init=False, repr=False)
 
+    def __post_init__(self) -> None:
+        if not (0.0 <= self.percentile <= 1.0):
+            raise ValueError(f"percentile must be in [0, 1], got {self.percentile}")
+        if not (0.0 <= self.ema_beta < 1.0):
+            raise ValueError(f"ema_beta must be in [0, 1), got {self.ema_beta}")
+
     def compute(self, similarities: torch.Tensor, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Return per-query effective vigilance and margins.
 

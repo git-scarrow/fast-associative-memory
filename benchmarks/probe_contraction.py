@@ -282,6 +282,8 @@ def main() -> None:
     # would crash the analytic report. Fail fast rather than after the loop.
     if not (0.0 < args.blend_eps < 1.0):
         ap.error(f"--blend-eps must be in (0, 1), got {args.blend_eps}")
+    if not (0.0 <= args.percentile <= 1.0):
+        ap.error(f"--percentile must be in [0, 1], got {args.percentile}")
 
     torch.manual_seed(args.seed)
     gen = torch.Generator().manual_seed(args.seed)

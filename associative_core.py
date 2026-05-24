@@ -424,55 +424,57 @@ class ContinuousCAM(nn.Module):
         queries = self._cast(queries)
         targets = self._cast(targets)
 
-        best_slots, best_sims = self._get_nearest_batch(queries)
-
-        # Dynamic vigilance: dispatch to the policy's compute() method.
-        # Supports DynamicVigilance (margin-based) and RelativeVigilance
-        # (percentile-anchored) interchangeably — see dynamic_vigilance.py.
+        # When dynamic vigilance is active and memory is occupied, compute the
+        # full (B, N_occ) similarity matrix ONCE and derive best_slots/best_sims
+        # from it — avoids the duplicate matmul that _get_nearest_batch() would
+        # otherwise add. When DV is inactive, fall back to _get_nearest_batch().
         if self.dynamic_vigilance is not None and self.occupied.any():
             valid_idx = self.occupied.nonzero(as_tuple=True)[0]
-            keys_occ = self._keys_norm[valid_idx]               # (N_occ, D)
+            keys_occ = self._keys_norm[valid_idx]                # (N_occ, D)
             proto_labels = self.values[valid_idx].float().argmax(dim=-1)  # (N_occ,)
 
-            # Single matmul over the full batch — policies that need batch-level
-            # distribution statistics (e.g. RelativeVigilance) require this.
-            q_norm = F.normalize(queries.float(), dim=-1)        # (B, D)
-            sims_full = q_norm @ keys_occ.T                     # (B, N_occ)
+            q_norm = F.normalize(queries.float(), dim=-1)         # (B, D)
+            sims_full = q_norm @ keys_occ.T                      # (B, N_occ)
+
+            # Best slot / sim derived from sims_full (same result as _get_nearest_batch).
+            best_sims_f, best_locs = sims_full.max(dim=1)        # (B,)
+            best_slots = valid_idx[best_locs]                     # (B,)
+            best_sims = best_sims_f.float()
 
             v_eff, margins = self.dynamic_vigilance.compute(sims_full, proto_labels)
 
-            # rho(t) probe: recover top-1 off-class sim from margins for telemetry.
-            # NOTE: "off-class" is masked against the best-MATCH class (proxy for
-            # true label). For label-true rho(t) use probe_cross_class_similarity().
-            sim_other_all = best_sims.float() - margins.to(best_sims.device)
+            # rho(t) probe: derive top-1 off-class sim from the same matmul that
+            # produced margins — both come from sims_full, so they are consistent.
+            # NOTE: "off-class" is proxied by best-MATCH class, not true label;
+            # use probe_cross_class_similarity() for label-true rho(t).
+            sim_other_all = best_sims - margins.to(best_sims.device)
 
-            # Track running means for benchmarking/telemetry
-            self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
-            self._dynamic_vigilance_stats["sum_margin"] += float(margins.sum().item())
-            self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
-
-            # rho(t) probe accumulation. Exclude queries that had NO cross-class
-            # competitor (sim_other_all ≈ -1e9 sentinel) so the contraction
-            # signal is not poisoned by single-class batches. Counted under a
-            # separate denominator (count_sim_other) for correctness.
-            # Threshold -5e8 separates the -1e9 sentinel from any real cosine.
+            # Sentinel filter: sim_other_all ≈ -1e9 when no cross-class prototype
+            # exists in memory. Exclude from margin and rho(t) telemetry.
             valid_other = sim_other_all > -5e8
             n_valid = int(valid_other.sum().item())
+
+            # Telemetry accumulation.
+            self._dynamic_vigilance_stats["sum_v"] += float(v_eff.sum().item())
+            self._dynamic_vigilance_stats["count"] += int(v_eff.numel())
             if n_valid > 0:
+                # sum_margin filtered to valid cases only (sentinel margins ≈ 1e9
+                # would corrupt mean_margin over long runs).
+                self._dynamic_vigilance_stats["sum_margin"] += float(
+                    margins[valid_other].sum().item())
+                self._dynamic_vigilance_stats["count_margin"] = (
+                    self._dynamic_vigilance_stats.get("count_margin", 0) + n_valid)
                 so = sim_other_all[valid_other]
                 self._dynamic_vigilance_stats["sum_sim_other"] += float(so.sum().item())
-                self._dynamic_vigilance_stats["sumsq_sim_other"] += float((so * so).sum().item())
+                self._dynamic_vigilance_stats["sumsq_sim_other"] += float(
+                    (so * so).sum().item())
                 self._dynamic_vigilance_stats["count_sim_other"] = (
                     self._dynamic_vigilance_stats.get("count_sim_other", 0) + n_valid)
 
-            # Opt-in raw log (enabled when a list attribute `cross_class_sim_log`
-            # is attached), mirroring the margin_log / vigilance_log pattern.
+            # Opt-in raw logs (enabled by attaching a list attribute externally).
             cc_log = getattr(self, "cross_class_sim_log", None)
-            if isinstance(cc_log, list):
+            if isinstance(cc_log, list) and n_valid > 0:
                 cc_log.append(sim_other_all[valid_other].detach().cpu())
-
-            # Optional per-call logging for external analysis (enabled when
-            # a list attribute `margin_log` / `vigilance_log` is attached).
             margin_log = getattr(self, "margin_log", None)
             if isinstance(margin_log, list):
                 margin_log.append(margins.detach().cpu())
@@ -482,6 +484,7 @@ class ContinuousCAM(nn.Module):
 
             vigilance_thresholds = v_eff.to(best_sims.device)
         else:
+            best_slots, best_sims = self._get_nearest_batch(queries)
             vigilance_thresholds = torch.full_like(best_sims, self.vigilance)
 
         hits = (best_slots >= 0) & (best_sims >= vigilance_thresholds)
@@ -672,9 +675,13 @@ class ContinuousCAM(nn.Module):
         if self._dynamic_vigilance_stats["count"] > 0:
             count = float(self._dynamic_vigilance_stats["count"])
             stats["mean_v_effective"] = self._dynamic_vigilance_stats["sum_v"] / count
-            stats["mean_margin"] = self._dynamic_vigilance_stats["sum_margin"] / count
         else:
             stats["mean_v_effective"] = float(self.vigilance)
+        count_margin = float(self._dynamic_vigilance_stats.get("count_margin", 0))
+        if count_margin > 0:
+            stats["mean_margin"] = (
+                self._dynamic_vigilance_stats["sum_margin"] / count_margin)
+        else:
             stats["mean_margin"] = 0.0
 
         # rho(t): empirical mean + variance of top-1 cross-class cosine. This is
@@ -705,7 +712,8 @@ class ContinuousCAM(nn.Module):
         cross_class_sim_log) — clear those externally if used.
         """
         self._dynamic_vigilance_stats = {
-            "sum_v": 0.0, "sum_margin": 0.0, "count": 0,
+            "sum_v": 0.0, "count": 0,
+            "sum_margin": 0.0, "count_margin": 0,
             "sum_sim_other": 0.0, "sumsq_sim_other": 0.0, "count_sim_other": 0,
         }
 

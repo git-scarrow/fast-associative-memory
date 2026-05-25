@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import time
 
+from collections.abc import Hashable
 from dataclasses import dataclass
 from typing import Union, Tuple
 
@@ -121,7 +122,7 @@ class ContinuousCAM(nn.Module):
         # does not move with .to(device). Opt-in — None when disabled so the core
         # CAM math and all existing callers are byte-for-byte unchanged.
         self.track_provenance = track_provenance
-        self.slot_records: list | None = (
+        self.slot_records: list[set[Hashable] | None] | None = (
             [None] * max_entries if track_provenance else None)
 
     @property
@@ -221,23 +222,29 @@ class ContinuousCAM(nn.Module):
                 "Provenance is disabled (track_provenance=False). Construct "
                 "ContinuousCAM(track_provenance=True) to record and read it.")
 
-    def records_for(self, slot: int) -> set:
+    def records_for(self, slot: int) -> set[Hashable]:
         """Provenance record set for a single slot (read-only copy).
 
-        Returns an empty set for unoccupied/unstamped slots. Requires
-        ``track_provenance=True``.
+        Returns an empty set for unoccupied/unstamped slots and for the ``-1``
+        trace-padding sentinel (a negative index must NOT wrap to the last
+        slot). Requires ``track_provenance=True``.
         """
         self._require_provenance()
-        rec = self.slot_records[int(slot)]
+        s = int(slot)
+        if s < 0:
+            return set()
+        rec = self.slot_records[s]
         return set(rec) if rec else set()
 
-    def records_for_slots(self, slots) -> list:
+    def records_for_slots(self, slots) -> list[set[Hashable]]:
         """Provenance record sets for an iterable / tensor of slot indices.
 
         Returns a list of sets aligned to ``slots`` (empty where a slot has no
         recorded history). Accepts a :class:`RetrievalTrace`'s ``final_slots`` /
         top-k slot tensor so callers can map retrieved prototypes back to their
-        sources without altering tensor retrieval. Copies are returned so the
+        sources without altering tensor retrieval. The ``-1`` trace-padding
+        sentinel maps to an empty set — a negative index must NOT wrap to the
+        last slot and report another query's sources. Copies are returned so the
         internal history sets cannot be mutated through the accessor. Requires
         ``track_provenance=True``.
         """
@@ -246,7 +253,11 @@ class ContinuousCAM(nn.Module):
             slots = slots.flatten().tolist()
         out = []
         for s in slots:
-            rec = self.slot_records[int(s)]
+            si = int(s)
+            if si < 0:
+                out.append(set())
+                continue
+            rec = self.slot_records[si]
             out.append(set(rec) if rec else set())
         return out
 

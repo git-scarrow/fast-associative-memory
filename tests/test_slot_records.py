@@ -176,3 +176,33 @@ class TestAccessors:
         mapped = cam.records_for_slots(tr.final_slots)  # 2-D tensor flattens
         assert isinstance(mapped, list)
         assert all(isinstance(x, set) for x in mapped)
+
+    def test_negative_index_does_not_wrap_to_last_slot(self):
+        """trace.final_slots uses -1 padding; a negative index must map to an
+        empty set, NOT wrap to the last slot's provenance (PR #78 review, P1)."""
+        cam = ContinuousCAM(key_dim=8, value_dim=4, max_entries=16,
+                            track_provenance=True)
+        cam.slot_records[-1] = {"LAST"}  # poison the final slot
+        assert cam.records_for(-1) == set()
+        assert cam.records_for_slots(torch.tensor([-1, -1])) == [set(), set()]
+        # The real last slot is still reachable by its positive index.
+        assert cam.records_for(15) == {"LAST"}
+
+
+class TestPersistenceReset:
+    def test_load_clears_stale_provenance(self, tmp_path):
+        """Records aren't serialized; loading must reset slot_records so stale
+        in-memory provenance can't survive and mismatch loaded tensors."""
+        from shutter_deck.persistence import save_cam_state, load_cam_state
+
+        cam = ContinuousCAM(key_dim=8, value_dim=4, max_entries=16,
+                            track_provenance=True, vigilance=0.99)
+        cam.learn_local(torch.randn(2, 8), _one_hot([0, 1], 4),
+                        record_ids=["a", "b"])
+        assert any(r for r in cam.slot_records)  # precondition: has provenance
+
+        path = tmp_path / "state.bin"
+        save_cam_state(cam, path)
+        # Load back into the SAME (already-populated) cam → records must clear.
+        assert load_cam_state(cam, path) is True
+        assert cam.slot_records == [None] * 16

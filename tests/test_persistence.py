@@ -27,6 +27,9 @@ def cam():
         c.keys[i] = torch.randn(32)
         c.values[i] = torch.randn(8)
         c.occupied[i] = True
+        # Explicit non-sentinel label pattern so the round-trip exercises real
+        # occupied-slot label persistence, not just the -1 default.
+        c.slot_labels[i] = i % 8
         c.last_seen[i] = float(i * 100)
         c.usage[i] = float(i + 1)
         c.hit_counts[i] = i + 1

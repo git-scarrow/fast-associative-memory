@@ -63,17 +63,68 @@ class TestLabelStability:
 
 class TestDecoupledFromPayload:
     def test_dense_values_do_not_define_identity(self):
-        """With dense (non-one-hot) targets, identity comes from the writer, not
-        from whatever argmax(values) happens to land on later."""
+        """Identity is stamped from the target at write time and does NOT track
+        the payload: mutating values afterward must not change slot_labels."""
         cam = ContinuousCAM(key_dim=16, value_dim=8, max_entries=64, vigilance=0.95)
-        # Orthogonal-style dense targets (argmax position == intended label).
+        # Dense (non-one-hot) targets; all misses → slots 0..2 in input order.
         protos = F.normalize(torch.randn(3, 8), dim=-1)
-        ids = torch.tensor([0, 1, 2])
-        cam.learn_local(torch.randn(3, 16), protos[ids])
+        targets = protos[torch.tensor([0, 1, 2])]
+        cam.learn_local(torch.randn(3, 16), targets)
         occ = cam.occupied.nonzero(as_tuple=True)[0]
-        # Labels are concrete LongTensor entries, present and stable.
-        assert cam.slot_labels[occ].dtype == torch.long
-        assert cam.slot_labels[occ].numel() == 3
+
+        # Labels equal what the compat writer derived from the written targets.
+        expected = cam._labels_from_targets(targets)
+        assert torch.equal(cam.slot_labels[occ], expected)
+
+        # Now scramble the payload. Identity must be unaffected — it lives in
+        # slot_labels, not in argmax(values).
+        before = cam.slot_labels[occ].clone()
+        cam.values[occ] = F.normalize(torch.randn(occ.numel(), 8), dim=-1)
+        assert torch.equal(cam.slot_labels[occ], before)
+
+
+class TestSentinelRepair:
+    """Occupied slots populated WITHOUT learn_local keep label -1; consumers
+    that need a non-negative index must repair them via argmax(values) rather
+    than crash (PR #77 review)."""
+
+    def _prepopulate_unstamped(self, value_dim=6, max_entries=32):
+        cam = ContinuousCAM(key_dim=16, value_dim=value_dim, max_entries=max_entries)
+        # Direct buffer fill — bypasses _labels_from_targets, so slot_labels==-1.
+        n = 8
+        cam.keys[:n] = torch.randn(n, 16)
+        cam.values[:n] = _one_hot(torch.arange(n) % value_dim, value_dim)
+        cam._keys_norm[:n] = F.normalize(cam.keys[:n], dim=-1)
+        cam.occupied[:n] = True
+        assert torch.all(cam.slot_labels[:n] == -1)  # precondition
+        return cam, n
+
+    def test_effective_labels_repairs_occupied_sentinels(self):
+        cam, n = self._prepopulate_unstamped()
+        occ = cam.occupied.nonzero(as_tuple=True)[0]
+        eff = cam.effective_slot_labels(occ)
+        assert torch.all(eff >= 0)
+        assert torch.equal(eff, cam.values[occ].float().argmax(dim=-1))
+        # The underlying buffer is NOT mutated by the read-time repair.
+        assert torch.all(cam.slot_labels[occ] == -1)
+
+    def test_probe_does_not_crash_on_unstamped(self):
+        cam, n = self._prepopulate_unstamped()
+        out = cam.probe_cross_class_similarity(torch.randn(5, 16),
+                                               torch.randint(0, 6, (5,)))
+        assert "n_occupied" in out
+
+    def test_density_eviction_does_not_crash_on_unstamped(self):
+        from shutter_deck.eviction import alloc_slots_density_aware
+        cam, n = self._prepopulate_unstamped(max_entries=8)
+        # Request more than free → forces the eviction path through slot_labels.
+        slots = alloc_slots_density_aware(
+            n=4, occupied=cam.occupied, usage=cam.usage,
+            last_seen=cam.last_seen, values=cam.values,
+            max_entries=cam.max_entries, min_per_class=1,
+            slot_labels=cam.slot_labels,
+        )
+        assert slots.numel() <= 4
 
 
 class TestLifecyclePathsUseLabels:

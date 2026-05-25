@@ -71,6 +71,13 @@ def alloc_slots_density_aware(
     # back to argmax(values) for backward compatibility when not supplied.
     if slot_labels is not None:
         class_id = slot_labels[occ_idx]  # (N_occ,)
+        # Repair occupied-but-unstamped slots (sentinel -1, e.g. directly
+        # prepopulated buffers) via argmax(values); a negative index would
+        # break class_pop sizing and scatter_add_ below.
+        unstamped = class_id < 0
+        if unstamped.any():
+            class_id = class_id.clone()
+            class_id[unstamped] = values[occ_idx][unstamped].argmax(dim=-1)
     else:
         class_id = values[occ_idx].argmax(dim=-1)  # (N_occ,)
 

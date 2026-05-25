@@ -28,6 +28,11 @@ VERSION = 3
 HEADER_FMT = "<4sHIIII"  # magic(4) + version(2) + max_entries(4) + key_dim(4) + value_dim(4) + n_occupied(4)
 HEADER_SIZE = struct.calcsize(HEADER_FMT)
 
+# NOTE: ContinuousCAM.slot_records (per-slot provenance) is intentionally NOT
+# serialized here — it holds arbitrary Python hashables, not a fixed-width
+# tensor. A provenance sidecar (e.g. JSON) is a documented follow-up; loading a
+# state file leaves slot_records at its constructed default.
+#
 # Ordered list of (buffer_name, numpy_dtype) for serialization
 _TENSOR_FIELDS = [
     ("keys", np.float32),

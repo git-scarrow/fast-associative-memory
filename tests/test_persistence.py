@@ -50,8 +50,8 @@ class TestSaveLoadRoundTrip:
         assert ok is True
 
         # Check all tensor buffers
-        for name in ["keys", "values", "occupied", "last_seen", "usage",
-                      "_keys_norm", "hit_counts"]:
+        for name in ["keys", "values", "slot_labels", "occupied", "last_seen",
+                      "usage", "_keys_norm", "hit_counts"]:
             orig = getattr(cam, name)
             loaded = getattr(cam2, name)
             assert torch.equal(orig, loaded), f"Mismatch in buffer '{name}'"

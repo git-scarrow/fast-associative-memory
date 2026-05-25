@@ -211,7 +211,8 @@ class FastAssociativeMemory(nn.Module):
         else:
             rej_slots = tr.rejected_slots.clamp(min=0, max=core.max_entries - 1)
             occupied_mask = core.occupied[rej_slots]                        # (B, rej_k)
-            rej_classes = core.values[rej_slots].float().argmax(dim=-1)     # (B, rej_k)
+            rej_classes = core.slot_labels[rej_slots]                       # (B, rej_k)
+            # Unoccupied slots carry label -1; mask them to 0 before one_hot.
             rej_classes = rej_classes.masked_fill(~occupied_mask, 0)
             rej_one_hot = F.one_hot(rej_classes, n_classes).float()         # (B, rej_k, nc)
             rej_hists = (

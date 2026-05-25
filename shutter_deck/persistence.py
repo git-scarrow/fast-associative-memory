@@ -21,7 +21,10 @@ import torch
 logger = logging.getLogger(__name__)
 
 MAGIC = b"FCAM"
-VERSION = 2
+# v3: added slot_labels (int64) — first-class semantic identity decoupled from
+# the `values` payload. v2 files are rejected by the version check and cold-start
+# (existing graceful-fallback contract); a cold start re-stamps labels at write.
+VERSION = 3
 HEADER_FMT = "<4sHIIII"  # magic(4) + version(2) + max_entries(4) + key_dim(4) + value_dim(4) + n_occupied(4)
 HEADER_SIZE = struct.calcsize(HEADER_FMT)
 
@@ -29,6 +32,7 @@ HEADER_SIZE = struct.calcsize(HEADER_FMT)
 _TENSOR_FIELDS = [
     ("keys", np.float32),
     ("values", np.float32),
+    ("slot_labels", np.int64),
     ("occupied", np.bool_),
     ("last_seen", np.float64),
     ("usage", np.float32),

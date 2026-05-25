@@ -90,6 +90,15 @@ class ContinuousCAM(nn.Module):
         # Memory storage — all on same device via register_buffer
         self.register_buffer("keys", torch.zeros(max_entries, key_dim, dtype=mem_dtype))
         self.register_buffer("values", torch.zeros(max_entries, value_dim, dtype=mem_dtype))
+        # Per-slot discrete semantic label (AgentAssociativeMemory semantic
+        # decoupling). First-class identity state — keys hold retrieval geometry,
+        # values hold continuous payload, slot_labels hold semantic identity.
+        # Written at learn time via the compatibility writer _labels_from_targets()
+        # so that internal consumers (vigilance, sleep, eviction, telemetry) never
+        # have to re-derive class identity from the `values` payload. -1 = no label
+        # (unoccupied). Discrete LongTensor for now; soft/multi-label schemes can
+        # extend _labels_from_targets — the single, narrow escape hatch.
+        self.register_buffer("slot_labels", torch.full((max_entries,), -1, dtype=torch.long))
         self.register_buffer("occupied", torch.zeros(max_entries, dtype=torch.bool))
         self.register_buffer("last_seen", torch.zeros(max_entries, dtype=torch.float64))
         # Pre-normalized key cache for fast cosine similarity
@@ -156,6 +165,19 @@ class ContinuousCAM(nn.Module):
     def _update_key_norm(self, slots):
         """Update cached normalized keys for given slot indices."""
         self._keys_norm[slots] = F.normalize(self.keys[slots], dim=-1)
+
+    def _labels_from_targets(self, targets: torch.Tensor) -> torch.Tensor:
+        """Compatibility label writer: derive discrete slot labels from targets.
+
+        This is the *single* narrow point where semantic identity is inferred
+        from value-space vectors. The default — argmax over the value dimension —
+        reproduces the legacy one-hot / orthogonal-prototype classification
+        behavior exactly for a freshly written slot, so existing image/classifier
+        callers are unchanged. Future soft- or multi-label schemes should extend
+        or replace this method rather than re-introducing ``values.argmax()`` at
+        call sites; the rest of the engine reads ``self.slot_labels`` instead.
+        """
+        return targets.float().argmax(dim=-1).long()
 
     # ------------------------------------------------------------------
     # Single-query API (kept for compatibility)
@@ -241,7 +263,7 @@ class ContinuousCAM(nn.Module):
         Sole class representatives get score = inf (protected from eviction).
         """
         keys_norm = self._keys_norm[occupied_idx]
-        class_labels = self.values[occupied_idx].float().argmax(dim=-1)
+        class_labels = self.slot_labels[occupied_idx]
         scores = torch.full(
             (len(occupied_idx),), float("inf"),
             device=keys_norm.device, dtype=torch.float32,
@@ -268,7 +290,7 @@ class ContinuousCAM(nn.Module):
 
         Score semantics: lower = evict first.
         """
-        class_labels = self.values[occupied_idx].float().argmax(dim=-1)
+        class_labels = self.slot_labels[occupied_idx]
         unique_classes, class_counts = class_labels.unique(return_counts=True)
         n_classes_present = len(unique_classes)
         n_classes_seen = len(self._classes_ever_seen) if self._classes_ever_seen else n_classes_present
@@ -360,8 +382,10 @@ class ContinuousCAM(nn.Module):
         if _nstp is not None:
             topk_keys = self.keys[topk_slots].float()                         # (B, final_k, key_dim)
             topk_vals = self.values[topk_slots].float()                       # (B, final_k, value_dim)
+            topk_labels = self.slot_labels[topk_slots]                        # (B, final_k)
             keep_mask, _ = _nstp.prune_batch(
-                q_norm.float(), topk_keys, topk_vals, topk_sims
+                q_norm.float(), topk_keys, topk_vals, topk_sims,
+                labels=topk_labels,
             )
             topk_sims = topk_sims.masked_fill(~keep_mask, -float("inf"))
 
@@ -497,11 +521,9 @@ class ContinuousCAM(nn.Module):
         if self.dynamic_vigilance is not None and self.occupied.any():
             valid_idx = self.occupied.nonzero(as_tuple=True)[0]
             keys_occ = self._keys_norm[valid_idx]                # (N_occ, D)
-            # TD(AgentAssociativeMemory): argmax assumes one-hot / softmax-class
-            # value vectors. Works for the current classifier/probe branch but will
-            # not generalise to dense arbitrary-value slots. The refactor should
-            # introduce an explicit label store or a pluggable label extractor.
-            proto_labels = self.values[valid_idx].float().argmax(dim=-1)  # (N_occ,)
+            # Semantic identity comes from the first-class label store, not from
+            # argmax over the `values` payload (see _labels_from_targets).
+            proto_labels = self.slot_labels[valid_idx]           # (N_occ,)
 
             q_norm = F.normalize(queries.float(), dim=-1)         # (B, D)
             sims_full = q_norm @ keys_occ.T                      # (B, N_occ)
@@ -557,7 +579,7 @@ class ContinuousCAM(nn.Module):
             # Within-class Δ estimate for the retrieval floor policy (issue #74),
             # reusing the sims_full / proto_labels already computed here.
             if self.retrieval_floor_policy is not None:
-                true_labels = targets.float().argmax(dim=-1)
+                true_labels = self._labels_from_targets(targets)
                 within_class_sims = self._within_class_loo(
                     sims_full, proto_labels, true_labels)
             else:
@@ -572,10 +594,10 @@ class ContinuousCAM(nn.Module):
             if self.retrieval_floor_policy is not None and self.occupied.any():
                 valid_idx = self.occupied.nonzero(as_tuple=True)[0]
                 keys_occ = self._keys_norm[valid_idx]
-                proto_labels = self.values[valid_idx].float().argmax(dim=-1)
+                proto_labels = self.slot_labels[valid_idx]
                 q_norm = F.normalize(queries.float(), dim=-1)
                 sims_wc = q_norm @ keys_occ.T
-                true_labels = targets.float().argmax(dim=-1)
+                true_labels = self._labels_from_targets(targets)
                 within_class_sims = self._within_class_loo(
                     sims_wc, proto_labels, true_labels)
 
@@ -655,6 +677,9 @@ class ContinuousCAM(nn.Module):
             n_alloc = len(new_slots)
             self.keys[new_slots] = miss_queries[:n_alloc]
             self.values[new_slots] = miss_targets[:n_alloc]
+            # Stamp semantic identity at write time (compat writer). Reused
+            # eviction victims get their stale label overwritten here.
+            self.slot_labels[new_slots] = self._labels_from_targets(miss_targets[:n_alloc])
             self.occupied[new_slots] = True
             self.last_seen[new_slots] = now
             self.usage[new_slots] = 1
@@ -673,17 +698,17 @@ class ContinuousCAM(nn.Module):
                 and self.occupied.any()):
             valid_idx = self.occupied.nonzero(as_tuple=True)[0]
             keys_occ = self._keys_norm[valid_idx]
-            proto_labels = self.values[valid_idx].float().argmax(dim=-1)
+            proto_labels = self.slot_labels[valid_idx]
             q_norm = F.normalize(queries.float(), dim=-1)
             sims_seed = q_norm @ keys_occ.T
-            true_labels = targets.float().argmax(dim=-1)
+            true_labels = self._labels_from_targets(targets)
             seed_sims = self._within_class_loo(sims_seed, proto_labels, true_labels)
             if seed_sims.numel() > 0:
                 self.retrieval_floor_policy.update(seed_sims)
 
         # Track all classes seen for adaptive eviction (covers hits + misses)
         if self.adaptive_eviction:
-            all_classes = targets.float().argmax(dim=-1)
+            all_classes = self._labels_from_targets(targets)
             self._classes_ever_seen.update(all_classes.cpu().tolist())
 
     def sleep(self, anti_lr=0.3, max_epochs=10, collision_threshold=0.5,
@@ -700,7 +725,7 @@ class ContinuousCAM(nn.Module):
             return {"epochs": 0, "collisions_initial": 0,
                     "collisions_final": 0, "keys_modified": 0}
 
-        class_labels = self.values[occ_idx].argmax(dim=-1)   # (N_occ,)
+        class_labels = self.slot_labels[occ_idx]              # (N_occ,)
         all_keys_norm = self._keys_norm[occ_idx]              # (N_occ, D)
 
         collisions_initial = None
@@ -883,8 +908,8 @@ class ContinuousCAM(nn.Module):
 
         valid_idx = self.occupied.nonzero(as_tuple=True)[0]
         keys_occ = self._keys_norm[valid_idx].float()                    # (N, D)
-        # TD(AgentAssociativeMemory): same argmax assumption as in learn_local().
-        proto_labels = self.values[valid_idx].float().argmax(dim=-1)     # (N,)
+        # Semantic identity from the first-class label store (see _labels_from_targets).
+        proto_labels = self.slot_labels[valid_idx]                       # (N,)
 
         sims = q @ keys_occ.T                                            # (P, N)
         same_class = proto_labels.unsqueeze(0) == labels.unsqueeze(1)    # (P, N)

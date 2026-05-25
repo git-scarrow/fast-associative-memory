@@ -40,7 +40,8 @@ class NSTPController:
 
     def prune(self, query: torch.Tensor, keys: torch.Tensor,
               values: torch.Tensor, sims: torch.Tensor,
-              root_vec: torch.Tensor | None = None):
+              root_vec: torch.Tensor | None = None,
+              labels: torch.Tensor | None = None):
         """Apply lateral inhibition to a set of retrieved candidates.
 
         Args:
@@ -51,6 +52,10 @@ class NSTPController:
             root_vec: External root vector for ``'context'`` strategy,
                       shape ``(D,)``.  Ignored when strategy is
                       ``'proximity'``.
+            labels: Optional ``(K,)`` discrete semantic labels for class-aware
+                    suppression. When provided (the decoupled path), identity
+                    comes from the caller's label store; when ``None`` it falls
+                    back to ``values.argmax`` for backward compatibility.
 
         Returns:
             Tuple ``(mask, sims_out)`` where:
@@ -96,8 +101,12 @@ class NSTPController:
         keep = torch.ones(K, dtype=torch.bool, device=keys.device)
 
         if siblings.any():
-            # Get class labels from values for class-aware suppression
-            classes = values.float().argmax(dim=-1)  # (K,)
+            # Class labels for class-aware suppression: prefer the caller's
+            # decoupled label store; fall back to argmax(values) for compat.
+            if labels is not None:
+                classes = labels
+            else:
+                classes = values.float().argmax(dim=-1)  # (K,)
 
             # Only suppress siblings of DIFFERENT classes
             # (same-class siblings should reinforce, not compete)
@@ -133,7 +142,8 @@ class NSTPController:
         return keep, sims_out
 
     def prune_batch(self, queries: torch.Tensor, keys: torch.Tensor,
-                    values: torch.Tensor, sims: torch.Tensor):
+                    values: torch.Tensor, sims: torch.Tensor,
+                    labels: torch.Tensor | None = None):
         """Batched version: applies prune() per query in the batch.
 
         Args:
@@ -141,6 +151,8 @@ class NSTPController:
             keys:    ``(B, K, D)``
             values:  ``(B, K, V)``
             sims:    ``(B, K)``
+            labels:  Optional ``(B, K)`` discrete semantic labels; forwarded
+                     per-row to :meth:`prune`. ``None`` → argmax(values) compat.
 
         Returns:
             Tuple ``(masks, sims_out)`` — both ``(B, K)``.
@@ -150,7 +162,9 @@ class NSTPController:
         sims_out = sims.clone()
 
         for b in range(B):
-            m, s = self.prune(queries[b], keys[b], values[b], sims[b])
+            labels_b = labels[b] if labels is not None else None
+            m, s = self.prune(queries[b], keys[b], values[b], sims[b],
+                              labels=labels_b)
             masks[b] = m
             sims_out[b] = s
 

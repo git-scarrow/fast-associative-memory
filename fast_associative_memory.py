@@ -79,7 +79,8 @@ class FastAssociativeMemory(nn.Module):
                  adaptive_eviction: bool = True,
                  adapter: MetricAdapter | None = None,
                  nstp: NSTPController | None = None,
-                  dynamic_vigilance=None):
+                  dynamic_vigilance=None,
+                 track_provenance: bool = False):
         super().__init__()
         self.input_dim = input_dim
         self.value_dim = value_dim
@@ -117,6 +118,7 @@ class FastAssociativeMemory(nn.Module):
             use_bfloat16=use_bfloat16,
             immutable_keys=immutable_keys,
             dynamic_vigilance=dynamic_vigilance,
+            track_provenance=track_provenance,
         )
         if nstp is not None:
             self.core_cam.nstp = nstp

@@ -194,6 +194,7 @@ def build_fam(N_img: int, max_entries: int) -> FastAssociativeMemory:
         adaptive_eviction=True,
         adapter=None,
         nstp=None,
+        track_provenance=True,
     ).to(DEVICE)
 
 
@@ -204,12 +205,19 @@ def write_fam_interleaved(fam, img_embs, cap_embs, cap_imgid, N_img):
         caps_for_img[img_id].append(ci)
 
     seq_feats, seq_labels = [], []
+    # Per-position provenance record ids, modality-tagged so the true write
+    # history can be partitioned back into image vs caption origins:
+    #   ("img", image_id)        — an image write
+    #   ("cap", cap_idx, image_id) — a caption write
+    seq_records: list[tuple] = []
     for img_id in range(N_img):
         seq_feats.append(img_embs[img_id])
         seq_labels.append(img_id)
+        seq_records.append(("img", img_id))
         for ci in caps_for_img[img_id]:
             seq_feats.append(cap_embs[ci])
             seq_labels.append(img_id)
+            seq_records.append(("cap", ci, img_id))
 
     seq_feats = torch.stack(seq_feats, dim=0)
     seq_labels = torch.tensor(seq_labels, dtype=torch.long)
@@ -220,7 +228,10 @@ def write_fam_interleaved(fam, img_embs, cap_embs, cap_imgid, N_img):
     for i in range(0, len(seq_feats), batch):
         bx = seq_feats[i:i + batch].to(DEVICE)
         bt = targets[i:i + batch].to(DEVICE)
-        fam.core_cam.learn_local(fam._project(bx), bt)
+        # Pass record_ids so slot_records captures the actual write/merge
+        # history; provenance is then read natively, not reconstructed.
+        fam.core_cam.learn_local(fam._project(bx), bt,
+                                 record_ids=seq_records[i:i + batch])
         if i % 2000 == 0:
             n_occ = int(fam.core_cam.occupied.sum().item())
             print(f"    write {i}/{len(seq_feats)} | prototypes: {n_occ}", end="\r")
@@ -235,26 +246,31 @@ def write_fam_interleaved(fam, img_embs, cap_embs, cap_imgid, N_img):
 # ---------------------------------------------------------------------------
 
 @torch.no_grad()
-def compute_provenance(fam, img_embs, cap_embs, cap_imgid, N_img):
+def compute_provenance(fam):
+    """Read each prototype's TRUE write/merge history from native slot_records.
+
+    This replaces the former O(N*P) reconstruction that re-assigned every image
+    and caption to its current nearest prototype (argmax cosine). That answered
+    "where would this item retrieve to now"; slot_records answers "which writes
+    actually formed this prototype" — the question the cross-modal merge metric
+    intends. The two differ: a coincidental nearest-neighbour is not a merge,
+    and an evicted item's record is dropped rather than reattributed.
+
+    Records were written modality-tagged in write_fam_interleaved:
+      ("img", image_id)          -> proto_img_ids[slot]
+      ("cap", cap_idx, image_id) -> proto_cap_ids[slot]
+    """
     valid_idx = fam.core_cam.occupied.nonzero(as_tuple=True)[0]
-    proto_keys = fam.core_cam._keys_norm[valid_idx]
-
-    def assign(feats):
-        assigns = []
-        for i in range(0, len(feats), 512):
-            sims = feats[i:i + 512].float().to(DEVICE) @ proto_keys.T
-            assigns.append(valid_idx[sims.argmax(dim=1)].cpu())
-        return torch.cat(assigns, dim=0)
-
-    img_assign = assign(img_embs)
-    cap_assign = assign(cap_embs)
 
     proto_img_ids: dict[int, set] = defaultdict(set)
     proto_cap_ids: dict[int, set] = defaultdict(set)
-    for img_id in range(N_img):
-        proto_img_ids[img_assign[img_id].item()].add(img_id)
-    for ci, img_id in enumerate(cap_imgid.tolist()):
-        proto_cap_ids[cap_assign[ci].item()].add((ci, img_id))
+    for slot in valid_idx.tolist():
+        for rec in fam.core_cam.records_for(slot):
+            kind = rec[0]
+            if kind == "img":
+                proto_img_ids[slot].add(rec[1])           # image_id
+            elif kind == "cap":
+                proto_cap_ids[slot].add((rec[1], rec[2]))  # (cap_idx, image_id)
 
     return {
         "proto_img_ids": dict(proto_img_ids),
@@ -537,7 +553,7 @@ def main():
 
     # Provenance + diagnostics
     print("  Computing provenance ...")
-    prov = compute_provenance(fam, img_embs, cap_embs, cap_imgid, N_img)
+    prov = compute_provenance(fam)
     diag = compute_diagnostics(fam, prov, N_img, n_written)
 
     # Primary kill signal: cross-modal merge rate

@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import time
 
+from collections.abc import Hashable
 from dataclasses import dataclass
 from typing import Union, Tuple
 
@@ -49,7 +50,8 @@ class ContinuousCAM(nn.Module):
                  inference_k: int = 20, inference_temp: float = 0.05,
                  ema_beta: float = 0.05,
                  dynamic_vigilance=None,
-                 retrieval_floor_policy=None):
+                 retrieval_floor_policy=None,
+                 track_provenance: bool = False):
         super().__init__()
         self.key_dim = key_dim
         self.value_dim = value_dim
@@ -108,6 +110,20 @@ class ContinuousCAM(nn.Module):
         # Per-slot hit count for adaptive EMA alpha decay
         self.register_buffer("hit_counts", torch.zeros(max_entries, dtype=torch.int32))
         self.nstp = None  # Optional NSTPController for lateral inhibition
+
+        # Per-slot provenance (AgentAssociativeMemory). The fourth layer of the
+        # decoupling: keys=geometry, values=payload, slot_labels=identity,
+        # slot_records=provenance/history. Each entry is the set of external
+        # record IDs whose writes/merges formed that prototype — the ACTUAL
+        # write history, never reconstructed from nearest-prototype assignment.
+        # Records are arbitrary hashables (ints, tuples, strings) so this is a
+        # plain Python list, not a tensor buffer: it is intentionally NOT part of
+        # the binary persistence format (a sidecar is a documented follow-up) and
+        # does not move with .to(device). Opt-in — None when disabled so the core
+        # CAM math and all existing callers are byte-for-byte unchanged.
+        self.track_provenance = track_provenance
+        self.slot_records: list[set[Hashable] | None] | None = (
+            [None] * max_entries if track_provenance else None)
 
     @property
     def _mem_dtype(self):
@@ -199,6 +215,51 @@ class ContinuousCAM(nn.Module):
             labels = labels.clone()
             labels[repair] = vals[repair].float().argmax(dim=-1)
         return labels
+
+    def _require_provenance(self):
+        if self.slot_records is None:
+            raise RuntimeError(
+                "Provenance is disabled (track_provenance=False). Construct "
+                "ContinuousCAM(track_provenance=True) to record and read it.")
+
+    def records_for(self, slot: int) -> set[Hashable]:
+        """Provenance record set for a single slot (read-only copy).
+
+        Returns an empty set for unoccupied/unstamped slots and for the ``-1``
+        trace-padding sentinel (a negative index must NOT wrap to the last
+        slot). Requires ``track_provenance=True``.
+        """
+        self._require_provenance()
+        s = int(slot)
+        if s < 0:
+            return set()
+        rec = self.slot_records[s]
+        return set(rec) if rec else set()
+
+    def records_for_slots(self, slots) -> list[set[Hashable]]:
+        """Provenance record sets for an iterable / tensor of slot indices.
+
+        Returns a list of sets aligned to ``slots`` (empty where a slot has no
+        recorded history). Accepts a :class:`RetrievalTrace`'s ``final_slots`` /
+        top-k slot tensor so callers can map retrieved prototypes back to their
+        sources without altering tensor retrieval. The ``-1`` trace-padding
+        sentinel maps to an empty set — a negative index must NOT wrap to the
+        last slot and report another query's sources. Copies are returned so the
+        internal history sets cannot be mutated through the accessor. Requires
+        ``track_provenance=True``.
+        """
+        self._require_provenance()
+        if isinstance(slots, torch.Tensor):
+            slots = slots.flatten().tolist()
+        out = []
+        for s in slots:
+            si = int(s)
+            if si < 0:
+                out.append(set())
+                continue
+            rec = self.slot_records[si]
+            out.append(set(rec) if rec else set())
+        return out
 
     # ------------------------------------------------------------------
     # Single-query API (kept for compatibility)
@@ -525,13 +586,33 @@ class ContinuousCAM(nn.Module):
         )
         return outputs, tr
 
-    def learn_local(self, queries: torch.Tensor, targets: torch.Tensor):
+    def learn_local(self, queries: torch.Tensor, targets: torch.Tensor,
+                    record_ids=None):
         """Two-pathway learning with class-match check.
 
         1. Hit (sim >= vigilance, same class) → EMA update + key centroid drift
         2. Miss (below vigilance OR class collision) → allocate new slot via LFU
+
+        Args:
+            record_ids: Optional per-row external provenance IDs (any hashable),
+                a sequence of length ``B``. Captured into ``slot_records`` as the
+                actual write/merge history: a miss stamps the new slot with
+                ``{id}``, a same-class hit unions the id into the slot's set, and
+                a reused (evicted) slot's stale set is cleared first. Requires
+                ``track_provenance=True``; passing ids while provenance is off
+                raises ``ValueError`` so a caller never assumes capture happened.
         """
         now = time.time()
+        if record_ids is not None:
+            if not self.track_provenance:
+                raise ValueError(
+                    "record_ids provided but track_provenance=False — provenance "
+                    "was NOT captured. Construct ContinuousCAM(track_provenance="
+                    "True) to record write history.")
+            if len(record_ids) != queries.size(0):
+                raise ValueError(
+                    f"record_ids length {len(record_ids)} != batch size "
+                    f"{queries.size(0)}")
         queries = self._cast(queries)
         targets = self._cast(targets)
 
@@ -688,6 +769,20 @@ class ContinuousCAM(nn.Module):
             self.last_seen[hit_slots] = now
             self.usage[unique_slots] += 1
 
+            # Provenance: union each incoming record id into its destination
+            # slot's history set (a merge accumulates all sources that formed
+            # the prototype). `inverse` is aligned to the hit rows in order.
+            if self.slot_records is not None and record_ids is not None:
+                hit_rows = hits.nonzero(as_tuple=True)[0].tolist()
+                inv = inverse.tolist()
+                for k, local in enumerate(inv):
+                    slot = int(unique_slots[local].item())
+                    bucket = self.slot_records[slot]
+                    if bucket is None:
+                        bucket = set()
+                        self.slot_records[slot] = bucket
+                    bucket.add(record_ids[hit_rows[k]])
+
         # --- Batch allocation for misses ---
         if misses.any():
             miss_queries = queries[misses]
@@ -706,6 +801,20 @@ class ContinuousCAM(nn.Module):
             self.usage[new_slots] = 1
             self.hit_counts[new_slots] = 1
             self._update_key_norm(new_slots)
+
+            # Provenance: a fresh allocation owns a new history set. A reused
+            # (evicted) slot's stale set MUST be cleared first so the new
+            # prototype never inherits the previous occupant's sources. With no
+            # record_ids we still clear (don't invent ids).
+            if self.slot_records is not None:
+                alloc_slots = new_slots[:n_alloc].tolist()
+                if record_ids is not None:
+                    miss_rows = misses.nonzero(as_tuple=True)[0].tolist()
+                    for j, slot in enumerate(alloc_slots):
+                        self.slot_records[slot] = {record_ids[miss_rows[j]]}
+                else:
+                    for slot in alloc_slots:
+                        self.slot_records[slot] = None
 
         # Cold-start seed for the retrieval floor policy (issue #74). On the
         # very first batch, memory was empty when within_class_sims was computed

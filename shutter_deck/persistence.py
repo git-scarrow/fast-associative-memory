@@ -28,6 +28,12 @@ VERSION = 3
 HEADER_FMT = "<4sHIIII"  # magic(4) + version(2) + max_entries(4) + key_dim(4) + value_dim(4) + n_occupied(4)
 HEADER_SIZE = struct.calcsize(HEADER_FMT)
 
+# NOTE: ContinuousCAM.slot_records (per-slot provenance) is intentionally NOT
+# serialized here — it holds arbitrary Python hashables, not a fixed-width
+# tensor. A provenance sidecar (e.g. JSON) is a documented follow-up. On load,
+# slot_records is explicitly reset to the cold default (see load_cam_state) so
+# stale provenance can never survive a load and mismatch the loaded tensors.
+#
 # Ordered list of (buffer_name, numpy_dtype) for serialization
 _TENSOR_FIELDS = [
     ("keys", np.float32),
@@ -113,6 +119,12 @@ def load_cam_state(cam, path: Path) -> bool:
                 return False
             arr = np.frombuffer(raw, dtype=dtype).reshape(buf.shape)
             buf.copy_(torch.from_numpy(arr.copy()))
+
+    # slot_records is not part of the binary format. Reset it to the cold
+    # default so stale in-memory provenance from prior use of this CAM cannot
+    # survive a load and mismatch the freshly loaded tensor state.
+    if getattr(cam, "track_provenance", False):
+        cam.slot_records = [None] * cam.max_entries
 
     logger.info("Loaded CAM state: %d occupied slots from %s", n_occupied, path)
     return True

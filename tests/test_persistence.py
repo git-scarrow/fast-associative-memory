@@ -27,6 +27,9 @@ def cam():
         c.keys[i] = torch.randn(32)
         c.values[i] = torch.randn(8)
         c.occupied[i] = True
+        # Explicit non-sentinel label pattern so the round-trip exercises real
+        # occupied-slot label persistence, not just the -1 default.
+        c.slot_labels[i] = i % 8
         c.last_seen[i] = float(i * 100)
         c.usage[i] = float(i + 1)
         c.hit_counts[i] = i + 1
@@ -50,8 +53,8 @@ class TestSaveLoadRoundTrip:
         assert ok is True
 
         # Check all tensor buffers
-        for name in ["keys", "values", "occupied", "last_seen", "usage",
-                      "_keys_norm", "hit_counts"]:
+        for name in ["keys", "values", "slot_labels", "occupied", "last_seen",
+                      "usage", "_keys_norm", "hit_counts"]:
             orig = getattr(cam, name)
             loaded = getattr(cam2, name)
             assert torch.equal(orig, loaded), f"Mismatch in buffer '{name}'"

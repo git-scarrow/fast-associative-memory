@@ -20,6 +20,7 @@ def alloc_slots_density_aware(
     values: torch.Tensor,
     max_entries: int,
     min_per_class: int = 5,
+    slot_labels: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Allocate *n* slots using density-aware eviction with class-balanced floors.
 
@@ -66,8 +67,19 @@ def alloc_slots_density_aware(
     if occ_idx.numel() == 0:
         return free[:n]
 
-    # Step 2a: compute class labels from stored value vectors
-    class_id = values[occ_idx].argmax(dim=-1)  # (N_occ,)
+    # Step 2a: semantic labels — prefer the decoupled slot_labels store; fall
+    # back to argmax(values) for backward compatibility when not supplied.
+    if slot_labels is not None:
+        class_id = slot_labels[occ_idx]  # (N_occ,)
+        # Repair occupied-but-unstamped slots (sentinel -1, e.g. directly
+        # prepopulated buffers) via argmax(values); a negative index would
+        # break class_pop sizing and scatter_add_ below.
+        unstamped = class_id < 0
+        if unstamped.any():
+            class_id = class_id.clone()
+            class_id[unstamped] = values[occ_idx][unstamped].argmax(dim=-1)
+    else:
+        class_id = values[occ_idx].argmax(dim=-1)  # (N_occ,)
 
     # Step 2b: per-class population counts
     # Use scatter to count in a single pass
@@ -137,6 +149,7 @@ def install_density_eviction(cam, min_per_class: int = 5):
             values=self.values,
             max_entries=self.max_entries,
             min_per_class=min_per_class,
+            slot_labels=self.slot_labels,
         )
 
     cam._alloc_slots_batch = types.MethodType(_alloc_slots_batch, cam)

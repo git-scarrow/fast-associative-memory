@@ -222,3 +222,43 @@ class TestProvenanceSidecar:
         save_cam_state(cam, state_path)  # cam has track_provenance=False
         assert save_provenance_sidecar(cam, state_path) is False
         assert not _provenance_path(state_path).exists()
+
+    def test_save_refuses_unbound_sidecar(self, prov_cam, state_path):
+        """No binary state file → no sidecar (would be unbound / null digest)."""
+        assert not state_path.exists()
+        assert save_provenance_sidecar(prov_cam, state_path) is False
+        assert not _provenance_path(state_path).exists()
+
+    def test_load_rejects_missing_state_file(self, prov_cam, state_path):
+        """A sidecar with no matching binary state file must not be applied."""
+        save_cam_state(prov_cam, state_path, write_provenance=True)
+        state_path.unlink()  # remove the binary, leave the sidecar in place
+        assert _provenance_path(state_path).exists()
+        c = ContinuousCAM(key_dim=32, value_dim=8, max_entries=100,
+                          track_provenance=True)
+        assert load_provenance_sidecar(c, state_path) is False
+        assert c.slot_records == [None] * 100
+
+    @pytest.mark.parametrize("bad", ["[]", '{"records": []}', '"a string"', "42"])
+    def test_load_rejects_wrong_shape_json(self, prov_cam, state_path, bad):
+        """Valid JSON of the wrong shape → graceful cold fallback, not a crash."""
+        save_cam_state(prov_cam, state_path, write_provenance=True)
+        _provenance_path(state_path).write_text(bad)
+        c = ContinuousCAM(key_dim=32, value_dim=8, max_entries=100,
+                          track_provenance=True)
+        # Must return False (or the digest guard fires first) — never raise.
+        assert load_provenance_sidecar(c, state_path) is False
+        assert c.slot_records == [None] * 100
+
+    def test_load_rejects_malformed_records_field(self, prov_cam, state_path):
+        """Valid version/digest but non-dict 'records' → graceful, not a crash."""
+        import json
+        save_cam_state(prov_cam, state_path, write_provenance=True)
+        sidecar = _provenance_path(state_path)
+        payload = json.loads(sidecar.read_text())
+        payload["records"] = []  # wrong shape; version/max_entries/digest intact
+        sidecar.write_text(json.dumps(payload))
+        c = ContinuousCAM(key_dim=32, value_dim=8, max_entries=100,
+                          track_provenance=True)
+        assert load_provenance_sidecar(c, state_path) is False
+        assert c.slot_records == [None] * 100

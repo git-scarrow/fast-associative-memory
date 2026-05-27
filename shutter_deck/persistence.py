@@ -222,7 +222,9 @@ def _decode_record(obj):
 def save_provenance_sidecar(cam, state_path: Path) -> bool:
     """Write ``cam.slot_records`` to a JSON sidecar next to ``state_path``.
 
-    No-op (returns False) when provenance tracking is disabled. The sidecar
+    No-op (returns False) when provenance tracking is disabled or when the
+    binary state file does not yet exist — a sidecar is only meaningful bound to
+    real on-disk bytes, so it is never written with a null digest. The sidecar
     stores a SHA-256 digest of the binary state file so a later load can refuse
     to apply provenance onto a state file it was not saved alongside. Written
     via tmp-file + atomic rename, mirroring the binary writer.
@@ -231,8 +233,15 @@ def save_provenance_sidecar(cam, state_path: Path) -> bool:
         return False
 
     state_path = Path(state_path)
+    if not state_path.exists():
+        # A sidecar is only meaningful bound to a binary state file. Refuse to
+        # write one with a null digest that nothing could later validate against.
+        logger.warning(
+            "No binary state file at %s — refusing to write an unbound provenance sidecar.",
+            state_path)
+        return False
     sidecar = _provenance_path(state_path)
-    digest = _file_digest(state_path) if state_path.exists() else None
+    digest = _file_digest(state_path)
 
     records = {
         str(slot): [_encode_record(r) for r in rec]
@@ -267,6 +276,12 @@ def load_provenance_sidecar(cam, state_path: Path) -> bool:
         return False
 
     state_path = Path(state_path)
+    if not state_path.exists():
+        # No tensor state to bind to — a provenance set with no matching binary
+        # cannot be validated, so never apply one.
+        logger.warning(
+            "No binary state file at %s — provenance stays cold.", state_path)
+        return False
     sidecar = _provenance_path(state_path)
     if not sidecar.exists():
         logger.info("No provenance sidecar at %s — provenance stays cold.", sidecar)
@@ -277,6 +292,11 @@ def load_provenance_sidecar(cam, state_path: Path) -> bool:
             payload = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         logger.warning("Unreadable provenance sidecar %s (%s) — provenance stays cold.", sidecar, e)
+        return False
+
+    if not isinstance(payload, dict):
+        logger.warning(
+            "Provenance sidecar %s is not a JSON object — provenance stays cold.", sidecar)
         return False
 
     if payload.get("provenance_version") != PROVENANCE_VERSION:
@@ -291,13 +311,17 @@ def load_provenance_sidecar(cam, state_path: Path) -> bool:
         return False
 
     expected = payload.get("state_digest")
-    actual = _file_digest(state_path) if state_path.exists() else None
+    actual = _file_digest(state_path)  # state_path existence checked above
     if expected != actual:
         logger.warning(
             "Provenance sidecar digest mismatch for %s — provenance stays cold.", state_path)
         return False
 
     records = payload.get("records", {})
+    if not isinstance(records, dict):
+        logger.warning(
+            "Provenance sidecar %s has malformed 'records' — provenance stays cold.", sidecar)
+        return False
     restored = [None] * cam.max_entries
     try:
         for slot_str, rec_list in records.items():

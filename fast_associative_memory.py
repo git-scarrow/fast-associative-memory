@@ -79,7 +79,7 @@ class FastAssociativeMemory(nn.Module):
                  adaptive_eviction: bool = True,
                  adapter: MetricAdapter | None = None,
                  nstp: NSTPController | None = None,
-                  dynamic_vigilance=None,
+                 dynamic_vigilance=None,
                  track_provenance: bool = False):
         super().__init__()
         self.input_dim = input_dim

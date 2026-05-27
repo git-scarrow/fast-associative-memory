@@ -367,12 +367,18 @@ def main() -> None:
               "rho_probe", "var_probe", "within_probe", "margin_probe",
               "offclass_weight", "frac_blended", "n_vote",
               "chimera_onset", "blend_onset", "mean_v_eff",
-              "floor_delta_ema", "sim_floor_active"]
+              "floor_delta_ema", "sim_floor_active",
+              # Write-side metrics (issue #73): how the vigilance policy shapes
+              # the prototype set. occupied=slots in use; alloc=new slots this
+              # epoch; merged=writes absorbed into existing prototypes;
+              # merge_rate=merged/n_written; acc=held-out top-1 accuracy.
+              "occupied", "alloc", "merged", "merge_rate", "acc"]
     rows = []
 
     first_blend = None
     first_chimera = None
     delta_ref = None  # within-class self-similarity at epoch 0 (the analytic Delta)
+    prev_occ = 0      # occupancy after the previous epoch, for alloc/merge accounting
 
     for epoch in range(args.epochs):
         # Linear contraction schedule.
@@ -387,12 +393,24 @@ def main() -> None:
 
         # --- Build this epoch's batch from the selected source ---
         (q, y, _), (hq, hlab) = get_batch(contraction)
+        n_written = q.size(0)
 
         # --- Train (continual: memory persists across epochs) ---
         mem.learn_local(q, y)
 
         # --- Cheap in-band curve (lagged: reflects pre-call memory state) ---
         stats = mem.get_stats()
+
+        # --- Write-side accounting: allocation vs merge for this epoch ---
+        occ = int(stats["n_occupied"])
+        alloc = max(0, occ - prev_occ)          # net new slots (0 once at capacity)
+        merged = n_written - alloc               # writes absorbed into existing protos
+        merge_rate = merged / n_written if n_written else float("nan")
+        prev_occ = occ
+
+        # --- Held-out top-1 accuracy (read-only forward vote) ---
+        pred = mem.forward(hq).argmax(dim=-1)
+        acc = (pred == hlab.to(pred.device)).float().mean().item()
 
         # --- Authoritative held-out probe (post-write, true labels) ---
         p = mem.probe_cross_class_similarity(hq, hlab, blend_eps=args.blend_eps)
@@ -423,13 +441,18 @@ def main() -> None:
             "mean_v_eff": stats.get("mean_v_effective", float("nan")),
             "floor_delta_ema": stats.get("floor_delta_ema", float("nan")),
             "sim_floor_active": stats.get("sim_floor_active", float("nan")),
+            "occupied": occ,
+            "alloc": alloc,
+            "merged": merged,
+            "merge_rate": round(merge_rate, 4),
+            "acc": round(acc, 4),
         })
         print(f"epoch {epoch:3d} | c={contraction:.3f} | "
               f"rho_probe={rows[-1]['rho_probe']:.3f} "
               f"within={rows[-1]['within_probe']:.3f} "
               f"offclass_w={rows[-1]['offclass_weight']:.3f} "
               f"frac_blend={rows[-1]['frac_blended']:.2f} "
-              f"floor={rows[-1]['sim_floor_active']:.3f} "
+              f"occ={occ} merge={merge_rate:.2f} acc={acc:.3f} "
               f"| blend={rows[-1]['blend_onset']} chimera={rows[-1]['chimera_onset']}")
 
     # --- Write CSV ---

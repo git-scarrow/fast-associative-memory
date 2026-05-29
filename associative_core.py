@@ -65,6 +65,16 @@ class ContinuousCAM(nn.Module):
             # are recoverable. See get_stats() and reset_dynamic_vigilance_stats().
             "sum_sim_other": 0.0, "sumsq_sim_other": 0.0,
         }
+        # Literal per-call write accounting from the last learn_local(). These are
+        # counted from the hits/misses masks and the actual allocation, NOT from
+        # occupancy deltas — so they stay correct under capacity saturation and
+        # LFU eviction/slot reuse (where occupancy does not change on a write).
+        #   written   = rows in the batch
+        #   merged    = same-class hits absorbed into existing prototypes (EMA)
+        #   allocated = misses that obtained a slot (fresh OR reused-via-eviction)
+        #   dropped   = misses that could not be allocated (capacity exhausted)
+        self.last_write_stats = {"written": 0, "merged": 0,
+                                 "allocated": 0, "dropped": 0}
         self.hebb_lr = hebb_lr
         self.aging_time = aging_time
         self.flood_scale = flood_scale
@@ -723,6 +733,7 @@ class ContinuousCAM(nn.Module):
             self.retrieval_floor_policy.update(within_class_sims)
 
         misses = ~hits
+        n_allocated = 0  # set inside the misses block; literal slots obtained
 
         # --- EMA update for same-class hits ---
         if hits.any():
@@ -791,6 +802,7 @@ class ContinuousCAM(nn.Module):
 
             new_slots = self._alloc_slots_batch(n_miss)
             n_alloc = len(new_slots)
+            n_allocated = n_alloc  # may be < n_miss if capacity is exhausted
             self.keys[new_slots] = miss_queries[:n_alloc]
             self.values[new_slots] = miss_targets[:n_alloc]
             # Stamp semantic identity at write time (compat writer). Reused
@@ -840,6 +852,18 @@ class ContinuousCAM(nn.Module):
         if self.adaptive_eviction:
             all_classes = self._labels_from_targets(targets)
             self._classes_ever_seen.update(all_classes.cpu().tolist())
+
+        # Literal write accounting for this call (see __init__ for semantics).
+        # merged is the post-class-check hit count, so demoted cross-class hits
+        # are correctly counted as misses, not merges.
+        n_merged = int(hits.sum().item())
+        n_written = int(queries.size(0))
+        self.last_write_stats = {
+            "written": n_written,
+            "merged": n_merged,
+            "allocated": int(n_allocated),
+            "dropped": n_written - n_merged - int(n_allocated),
+        }
 
     def sleep(self, anti_lr=0.3, max_epochs=10, collision_threshold=0.5,
               chunk_size=1024, verbose=False) -> dict:

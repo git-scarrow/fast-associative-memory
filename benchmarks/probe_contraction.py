@@ -369,16 +369,17 @@ def main() -> None:
               "chimera_onset", "blend_onset", "mean_v_eff",
               "floor_delta_ema", "sim_floor_active",
               # Write-side metrics (issue #73): how the vigilance policy shapes
-              # the prototype set. occupied=slots in use; alloc=new slots this
-              # epoch; merged=writes absorbed into existing prototypes;
+              # the prototype set. Counts are literal (from learn_local's
+              # hits/misses + allocation), not occupancy deltas. occupied=slots
+              # in use; alloc=misses that got a slot; merged=same-class hits
+              # absorbed; dropped=misses dropped at capacity;
               # merge_rate=merged/n_written; acc=held-out top-1 accuracy.
-              "occupied", "alloc", "merged", "merge_rate", "acc"]
+              "occupied", "alloc", "merged", "dropped", "merge_rate", "acc"]
     rows = []
 
     first_blend = None
     first_chimera = None
     delta_ref = None  # within-class self-similarity at epoch 0 (the analytic Delta)
-    prev_occ = 0      # occupancy after the previous epoch, for alloc/merge accounting
 
     for epoch in range(args.epochs):
         # Linear contraction schedule.
@@ -401,12 +402,16 @@ def main() -> None:
         # --- Cheap in-band curve (lagged: reflects pre-call memory state) ---
         stats = mem.get_stats()
 
-        # --- Write-side accounting: allocation vs merge for this epoch ---
+        # --- Write-side accounting: literal merge/alloc counts from the write ---
+        # Read learn_local's per-call accounting, NOT occupancy deltas: the delta
+        # proxy under-counts allocations once the table saturates or reuses
+        # evicted slots (occupancy stops growing while writes keep allocating).
         occ = int(stats["n_occupied"])
-        alloc = max(0, occ - prev_occ)          # net new slots (0 once at capacity)
-        merged = n_written - alloc               # writes absorbed into existing protos
+        ws = mem.last_write_stats
+        merged = ws["merged"]                    # same-class hits absorbed (EMA)
+        alloc = ws["allocated"]                  # misses that obtained a slot
+        dropped = ws["dropped"]                  # misses dropped at capacity
         merge_rate = merged / n_written if n_written else float("nan")
-        prev_occ = occ
 
         # --- Held-out top-1 accuracy (read-only forward vote) ---
         pred = mem.forward(hq).argmax(dim=-1)
@@ -444,6 +449,7 @@ def main() -> None:
             "occupied": occ,
             "alloc": alloc,
             "merged": merged,
+            "dropped": dropped,
             "merge_rate": round(merge_rate, 4),
             "acc": round(acc, 4),
         })
@@ -452,7 +458,8 @@ def main() -> None:
               f"within={rows[-1]['within_probe']:.3f} "
               f"offclass_w={rows[-1]['offclass_weight']:.3f} "
               f"frac_blend={rows[-1]['frac_blended']:.2f} "
-              f"occ={occ} merge={merge_rate:.2f} acc={acc:.3f} "
+              f"occ={occ} alloc={alloc} merged={merged} drop={dropped} "
+              f"merge_rate={merge_rate:.2f} acc={acc:.3f} "
               f"| blend={rows[-1]['blend_onset']} chimera={rows[-1]['chimera_onset']}")
 
     # --- Write CSV ---

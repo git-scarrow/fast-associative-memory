@@ -1,0 +1,9 @@
+split,model,train_target_acc,threshold,n_total,no_abstention_accuracy,retained_coverage,retained_accuracy,abstention_rate,error_capture_rate,false_abstain_rate_on_correct,n_retained,n_errors_captured
+parity,main:rank_gap+manifold_support,0.5,0.672013,1849,0.1698,0.0,nan,1.0,1.0,1.0,0,1535
+parity,main:rank_gap+manifold_support,0.6,0.672013,1849,0.1698,0.0,nan,1.0,1.0,1.0,0,1535
+parity,main:rank_gap+manifold_support,0.7,0.672013,1849,0.1698,0.0,nan,1.0,1.0,1.0,0,1535
+parity,main:rank_gap+manifold_support,0.8,0.672013,1849,0.1698,0.0,nan,1.0,1.0,1.0,0,1535
+contiguous,main:rank_gap+manifold_support,0.5,0.240315,2311,0.1527,0.4396,0.3366,0.5604,0.6558,0.0312,1016,1284
+contiguous,main:rank_gap+manifold_support,0.6,0.550219,2311,0.1527,0.1255,0.2931,0.8745,0.8953,0.7592,290,1753
+contiguous,main:rank_gap+manifold_support,0.7,0.550219,2311,0.1527,0.1255,0.2931,0.8745,0.8953,0.7592,290,1753
+contiguous,main:rank_gap+manifold_support,0.8,0.550219,2311,0.1527,0.1255,0.2931,0.8745,0.8953,0.7592,290,1753

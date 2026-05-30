@@ -1,0 +1,121 @@
+{
+  "input_csv": "results/issue_inr_vitl14_breadth/per_probe.csv",
+  "n_rows_total": 12539,
+  "study_window": [
+    8,
+    29
+  ],
+  "forced_zone": {
+    "n_rows": 3520,
+    "n_epochs": 22,
+    "base_accuracy_vote": 0.175,
+    "base_accuracy_top1": 0.1332
+  },
+  "feature_set_fixed_a_priori": {
+    "rank_gap": "top1_top2_margin",
+    "manifold_support": "effective_support",
+    "support_breadth": "n_surviving_votes"
+  },
+  "splits": {
+    "parity": {
+      "train_epochs": [
+        8,
+        10,
+        12,
+        14,
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28
+      ],
+      "test_epochs": [
+        9,
+        11,
+        13,
+        15,
+        17,
+        19,
+        21,
+        23,
+        25,
+        27,
+        29
+      ]
+    },
+    "contiguous": {
+      "train_epochs": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "test_epochs": [
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29
+      ],
+      "train_frac": 0.6
+    }
+  },
+  "headline_target": "vote_correct",
+  "main_model": "main:rank_gap+manifold_support",
+  "heldout_auc": {
+    "parity_vote": 0.8376,
+    "contiguous_vote": 0.8309
+  },
+  "operating_point_parity_vote": {
+    "split": "parity",
+    "target": "vote_correct",
+    "model": "main:rank_gap+manifold_support",
+    "selection": "youden_J_train",
+    "threshold": 0.213759,
+    "n_total": 1849,
+    "no_abstention_accuracy": 0.1698,
+    "retained_coverage": 0.4218,
+    "retained_accuracy": 0.3833,
+    "abstention_rate": 0.5782,
+    "error_capture_rate": 0.6866,
+    "false_abstain_rate_on_correct": 0.0478,
+    "n_retained": 780,
+    "n_errors_captured": 1054
+  },
+  "operating_point_contiguous_vote": {
+    "split": "contiguous",
+    "target": "vote_correct",
+    "model": "main:rank_gap+manifold_support",
+    "selection": "youden_J_train",
+    "threshold": 0.242091,
+    "n_total": 2311,
+    "no_abstention_accuracy": 0.1527,
+    "retained_coverage": 0.4396,
+    "retained_accuracy": 0.3366,
+    "abstention_rate": 0.5604,
+    "error_capture_rate": 0.6558,
+    "false_abstain_rate_on_correct": 0.0312,
+    "n_retained": 1016,
+    "n_errors_captured": 1284
+  },
+  "operationally_useful": {
+    "parity": true,
+    "contiguous": true
+  },
+  "verdict": "Two axes \u2014 RANK confidence (rank_gap) and SUPPORT stability (manifold_support) \u2014 were combined in a logistic detector fit ONLY on train epochs and evaluated ONLY on held-out epochs inside the forced zone (base accuracy 0.175). Held-out forced-zone AUC for the main two-axis model: parity=0.8376, contiguous=0.8309 (chance 0.5). The detector SURVIVES held-out evaluation on both the charitable (parity) and adversarial (contiguous) epoch splits: at the train-selected operating point it lifts retained accuracy above the no-abstention base and captures more errors than correct rows it wrongly abstains. Abstention on probable FALSE COLLAPSE is operationally useful but NOT production-ready; sharpening/truncation remains hazardous because support breadth is part of the correctness signal."
+}

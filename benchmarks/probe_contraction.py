@@ -51,6 +51,7 @@ import csv
 import math
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import torch
@@ -253,6 +254,24 @@ def _resolve_vision_cache(path: str | None) -> Path:
         "--vision-cache)")
 
 
+@dataclass(frozen=True)
+class VisionSelectionState:
+    """Frozen, read-only snapshot of a ``VisionDriftStream``'s selection state.
+
+    Every field is a fresh clone of the stream's internal tensors, so a caller
+    (e.g. the A2b ``ReembedDriftStream``, which must replay the *same* cache rows
+    back to source images) can consume the exact selection without recomputing
+    RNG / class selection / assignment, and without being able to mutate the
+    stream. Indices are cache rows (into the on-disk cache's ``embeds``/``labels``)
+    in the same order as ``train_X`` / ``held_X`` / ``attractor_feats``.
+    """
+    train_indices: torch.Tensor       # (n_train,) cache rows behind train_X
+    held_indices: torch.Tensor        # (n_held,)  cache rows behind held_X
+    attractor_indices: torch.Tensor   # (A,)       cache rows behind attractor_feats
+    train_assign: torch.Tensor        # (n_train,) per-train-sample -> attractor pool index
+    held_assign: torch.Tensor         # (n_held,)  per-held-sample  -> attractor pool index
+
+
 class VisionDriftStream:
     """Epoch-ordered DINOv2 ViT-L/14 feature stream whose inter-class similarity rises.
 
@@ -296,6 +315,7 @@ class VisionDriftStream:
 
         need = samples_per_class + held_out_per_class
         train_blocks, held_blocks = [], []
+        train_idx_blocks, held_idx_blocks = [], []
         self.train_labels: list[int] = []
         self.held_labels: list[int] = []
         for ci, cat in enumerate(categories):
@@ -307,6 +327,8 @@ class VisionDriftStream:
             tr, ho = perm[:samples_per_class], perm[samples_per_class:need]
             train_blocks.append(embeds[tr])
             held_blocks.append(embeds[ho])
+            train_idx_blocks.append(tr)
+            held_idx_blocks.append(ho)
             self.train_labels += [ci] * samples_per_class
             self.held_labels += [ci] * held_out_per_class
 
@@ -316,6 +338,12 @@ class VisionDriftStream:
         aidx = aidx[torch.randperm(aidx.numel(), generator=rng)]
         self.attractor_feats = embeds[aidx]                # (A, D), unit
         self.attractor_category = attractor_category
+        # Cache-row indices behind each selected pool (into the on-disk cache's
+        # `embeds`/`labels`), in the SAME order as train_X / held_X / attractor_feats.
+        # Stored only for read-only export via `selection_state`; not used in blend.
+        self._train_indices = torch.cat(train_idx_blocks, dim=0)   # (n_train,)
+        self._held_indices = torch.cat(held_idx_blocks, dim=0)     # (n_held,)
+        self._attractor_indices = aidx                             # (A,)
 
         self.train_X = torch.cat(train_blocks, dim=0)      # (n_train, D)
         self.held_X = torch.cat(held_blocks, dim=0)        # (n_held, D)
@@ -342,6 +370,24 @@ class VisionDriftStream:
         held_q = self._blend(self.held_X, self._held_assign, contraction)
         train_y = F.one_hot(self.train_lab, num_classes=self.num_classes).float()
         return (train_q, train_y, self.train_lab), (held_q, self.held_lab)
+
+    @property
+    def selection_state(self) -> "VisionSelectionState":
+        """Read-only snapshot of which cache rows this stream selected.
+
+        Returns a frozen ``VisionSelectionState`` of **cloned** tensors, so a
+        consumer can replay the identical selection (the A2b paired-path arm)
+        without recomputing RNG/selection/assignment and without being able to
+        mutate this stream's internal state. Purely an accessor over state fixed
+        at construction — it does not change any selection or blend behavior.
+        """
+        return VisionSelectionState(
+            train_indices=self._train_indices.clone(),
+            held_indices=self._held_indices.clone(),
+            attractor_indices=self._attractor_indices.clone(),
+            train_assign=self._train_assign.clone(),
+            held_assign=self._held_assign.clone(),
+        )
 
 
 def main() -> None:

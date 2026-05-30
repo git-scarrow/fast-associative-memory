@@ -1076,7 +1076,8 @@ class ContinuousCAM(nn.Module):
 
     @torch.no_grad()
     def probe_cross_class_similarity(self, probe_queries, probe_labels,
-                                     blend_eps: float = 0.10) -> dict:
+                                     blend_eps: float = 0.10,
+                                     return_per_probe: bool = False) -> dict:
         """Read-only rho(t) probe against a held-out, TRUE-LABELED set.
 
         This is the gold-standard manifold-contraction measurement: unlike the
@@ -1117,6 +1118,22 @@ class ContinuousCAM(nn.Module):
         blended probes, the share whose top-1 neighbour is the correct class —
         high means confidence-weighting can recover the blend, low means it is
         confidently wrong and no inference-time gate helps).
+
+        If ``return_per_probe`` is True, the result also carries a ``per_probe``
+        sub-dict of 1-D CPU tensors -- one row per *voting* probe (the same V
+        rows the scalar means above reduce over) -- so a calibration analysis can
+        ask whether the label-free confidence signals separate correct from wrong
+        retrievals at the probe level. This is read-only telemetry: it changes
+        neither ``forward()`` nor any aggregate already returned (the dict is
+        bit-identical with the flag off). Keys: ``true_label``, ``top1_label``
+        (nearest prototype's class), ``top1_correct``, ``vote_pred_label`` (the
+        class the softmax vote elects -- exactly what ``forward().argmax`` would
+        emit for this row), ``vote_correct``, ``is_blended`` (off-class mass >
+        blend_eps), ``offclass_weight``, ``top1_top2_margin``, ``top1_sim``,
+        ``top2_sim``, ``vote_entropy``, ``effective_support``,
+        ``max_vote_weight``, ``n_surviving_votes``, ``true_margin`` (ss-so), and
+        ``margin_bucket`` (0=forced, 1=borderline, 2=recoverable). The
+        confidence keys are label-free; the rest are evaluation labels/context.
         Returns {"n_occupied": 0} if memory is empty (nothing to probe).
         """
         if not self.occupied.any():
@@ -1172,6 +1189,24 @@ class ContinuousCAM(nn.Module):
         top1_raw = topk_sims[:, 0]                                       # (Pv,)
         top2_raw = topk_sims[:, 1] if k >= 2 else topk_sims.new_full(
             (topk_sims.size(0),), float("nan"))
+        # NSTP lateral inhibition (optional) — mirror forward() so the per-probe
+        # vote reflects the SAME retrieval rule that is deployed. forward() prunes
+        # the top-k with NSTP (masking suppressed candidates to -inf) BEFORE the
+        # floor/softmax; if the probe skipped it, the softmax weights — and hence
+        # vote_pred_label / vote_correct / effective_support / n_surviving_votes —
+        # would diverge from forward().argmax whenever self.nstp is attached. The
+        # raw top1/top2 cosines captured just above are intentionally pre-NSTP
+        # (label-free nearest-neighbour geometry), exactly as in forward().
+        if self.nstp is not None:
+            topk_slots = valid_idx[topk_locs]                            # (Pv, k)
+            keep_mask, _ = self.nstp.prune_batch(
+                q[valid].float(),
+                self.keys[topk_slots].float(),
+                self.values[topk_slots].float(),
+                topk_sims,
+                labels=self.effective_slot_labels(topk_slots),
+            )
+            topk_sims = topk_sims.masked_fill(~keep_mask, -float("inf"))
         sim_floor = self._active_sim_floor()
         if sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(
@@ -1270,6 +1305,46 @@ class ContinuousCAM(nn.Module):
             out["frac_blend_top1_correct"] = (
                 float((top1_correct & blended).sum().item() / n_blended)
                 if n_blended > 0 else float("nan"))
+
+            # --- Per-probe calibration telemetry (issue #82, opt-in) ----------
+            # Read-only: emit the per-voting-probe predictors + evaluation labels
+            # so a downstream study can test whether label-free confidence
+            # separates correct from wrong retrievals. Nothing here feeds the
+            # vote; all aggregates above are unchanged.
+            if return_per_probe:
+                true_lab_v = labels[valid][row_has_vote]                 # (V,)
+                topk_lab_v = topk_labels[row_has_vote]                   # (V, k)
+                # The vote the engine elects: aggregate softmax mass by candidate
+                # class, take the argmax. This reproduces forward().argmax for
+                # this row (forward sums weights * one-hot values == this scatter)
+                # without re-running retrieval.
+                class_mass = torch.zeros(
+                    w_v.size(0), self.value_dim, device=w_v.device, dtype=w_v.dtype)
+                class_mass.scatter_add_(1, topk_lab_v, w_v)             # (V, C)
+                vote_pred = class_mass.argmax(dim=1)                     # (V,)
+                bucket = torch.where(
+                    m_v >= temp, torch.full_like(m_v, 2.0),
+                    torch.where(m_v >= 0.5 * temp,
+                                torch.full_like(m_v, 1.0),
+                                torch.zeros_like(m_v))).long()           # (V,)
+                out["per_probe"] = {
+                    "true_label": true_lab_v.detach().cpu(),
+                    "top1_label": topk_lab_v[:, 0].detach().cpu(),
+                    "top1_correct": top1_correct.detach().cpu().long(),
+                    "vote_pred_label": vote_pred.detach().cpu(),
+                    "vote_correct": (vote_pred == true_lab_v).detach().cpu().long(),
+                    "is_blended": blended.detach().cpu().long(),
+                    "offclass_weight": offclass_weight_all[row_has_vote].detach().cpu(),
+                    "top1_top2_margin": t1t2.detach().cpu(),
+                    "top1_sim": top1_raw[row_has_vote].detach().cpu(),
+                    "top2_sim": top2_raw[row_has_vote].detach().cpu(),
+                    "vote_entropy": vote_entropy.detach().cpu(),
+                    "effective_support": effective_support.detach().cpu(),
+                    "max_vote_weight": max_vote_weight.detach().cpu(),
+                    "n_surviving_votes": n_surviving.detach().cpu().long(),
+                    "true_margin": m_v.detach().cpu(),
+                    "margin_bucket": bucket.detach().cpu(),
+                }
         else:
             for key in ("mean_top1_sim", "mean_top2_sim", "mean_top1_top2_margin",
                         "median_top1_top2_margin", "mean_vote_entropy",
@@ -1279,6 +1354,21 @@ class ContinuousCAM(nn.Module):
                         "frac_margin_recoverable", "frac_margin_borderline",
                         "frac_margin_forced", "frac_blend_top1_correct"):
                 out[key] = float("nan")
+            if return_per_probe:
+                empty_f = torch.empty(0)
+                empty_l = torch.empty(0, dtype=torch.long)
+                out["per_probe"] = {
+                    k: (empty_l if k in ("true_label", "top1_label",
+                                         "top1_correct", "vote_pred_label",
+                                         "vote_correct", "is_blended",
+                                         "n_surviving_votes", "margin_bucket")
+                        else empty_f)
+                    for k in ("true_label", "top1_label", "top1_correct",
+                              "vote_pred_label", "vote_correct", "is_blended",
+                              "offclass_weight", "top1_top2_margin", "top1_sim",
+                              "top2_sim", "vote_entropy", "effective_support",
+                              "max_vote_weight", "n_surviving_votes",
+                              "true_margin", "margin_bucket")}
 
         # --- Predicted onset flags (read against live dynamic-vigilance config) ---
         dv = self.dynamic_vigilance

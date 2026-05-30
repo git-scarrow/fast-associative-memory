@@ -1051,6 +1051,20 @@ class ContinuousCAM(nn.Module):
         Returns dict with mean+variance of top-1 cross-class cosine, mean
         within-class cosine, the true margin, retrieval-blend metrics, and the
         predicted onset flags.
+
+        It also returns retrieval-confidence / effective-support telemetry
+        (issue #82) used to classify late-epoch saturation as premature vs
+        forced: ``mean_top1_top2_margin`` / ``median_top1_top2_margin`` (label-
+        free confidence), ``mean_vote_entropy``, ``mean_effective_support`` /
+        ``median_effective_support`` (effective # of voting prototypes,
+        exp(entropy)), ``mean_max_vote_weight``, ``mean_n_surviving_votes``,
+        ``frac_low_margin`` (top1-top2 < inference_temp), ``frac_high_entropy``
+        (normalized entropy >= 0.5), the label-aware recoverability split
+        ``frac_margin_{recoverable,borderline,forced}`` (on the true ss-so
+        margin, temperature-relative), and ``frac_blend_top1_correct`` (of
+        blended probes, the share whose top-1 neighbour is the correct class —
+        high means confidence-weighting can recover the blend, low means it is
+        confidently wrong and no inference-time gate helps).
         Returns {"n_occupied": 0} if memory is empty (nothing to probe).
         """
         if not self.occupied.any():
@@ -1099,6 +1113,13 @@ class ContinuousCAM(nn.Module):
         # (matches forward(): top-inference_k sims, softmax(./inference_temp)).
         k = min(self.inference_k, keys_occ.size(0))
         topk_sims, topk_locs = sims[valid].topk(k, dim=1)                # (Pv, k)
+        # Capture the two best *raw* (pre-floor) cosine neighbours before any
+        # masking: topk() returns descending order, so [:, 0]/[:, 1] are the
+        # top-1/top-2 candidates. This is the label-free retrieval-confidence
+        # signal (deployable at inference, where true labels are unknown).
+        top1_raw = topk_sims[:, 0]                                       # (Pv,)
+        top2_raw = topk_sims[:, 1] if k >= 2 else topk_sims.new_full(
+            (topk_sims.size(0),), float("nan"))
         sim_floor = self._active_sim_floor()
         if sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(
@@ -1111,7 +1132,8 @@ class ContinuousCAM(nn.Module):
         weights = F.softmax(safe_sims / self.inference_temp, dim=-1)     # (Pv, k)
         topk_labels = proto_labels[topk_locs]                           # (Pv, k)
         offclass = topk_labels != labels[valid].unsqueeze(1)
-        offclass_weight = (weights * offclass.float()).sum(dim=1)[row_has_vote]
+        offclass_weight_all = (weights * offclass.float()).sum(dim=1)    # (Pv,)
+        offclass_weight = offclass_weight_all[row_has_vote]
         n_vote = int(row_has_vote.sum().item())
         out["n_vote_probes"] = n_vote
         if n_vote > 0:
@@ -1120,6 +1142,87 @@ class ContinuousCAM(nn.Module):
         else:
             out["mean_offclass_weight"] = float("nan")
             out["frac_blended"] = float("nan")
+
+        # --- Retrieval-confidence + effective-support telemetry (issue #82) -----
+        # The #80 live-Δ floor de-censors the blend *onset* but late-epoch blend
+        # still saturates under sustained contraction. To tell whether that
+        # saturation is *premature* (a usable signal the vote is fumbling) or
+        # *forced* (the manifold has genuinely collapsed, no signal to recover),
+        # we instrument the realised vote on the voting rows:
+        #
+        #   top1_top2_margin   label-free confidence: gap between the best two
+        #                      cosine neighbours. A confidence gate sees only this.
+        #   vote_entropy       Shannon entropy of the softmax weights (nats).
+        #   effective_support  exp(entropy) — the effective # of prototypes the
+        #                      vote is spread across (1 = winner-take-all, k = flat).
+        #   max_vote_weight    the single largest softmax weight.
+        #   n_surviving_votes  candidates that survived the floor (finite sims).
+        #
+        # The recoverable/borderline/forced split, however, is a *label-aware*
+        # question — confidence alone cannot answer it. A neighbourhood can be
+        # high-confidence yet confidently WRONG (top-1 is off-class). So we bin on
+        # the true within-vs-off margin (ss - so), temperature-relative:
+        #   recoverable: margin >= temp      (within-class clearly wins; the blend
+        #                                      is the soft vote fumbling a real edge)
+        #   borderline:  0.5*temp <= margin < temp
+        #   forced:      margin < 0.5*temp   (within/off co-located; no signal)
+        # and we cross-tabulate the actual blend against top-1 correctness:
+        #   frac_blend_top1_correct — of probes whose off-class mass > blend_eps,
+        #   the share whose top-1 neighbour is nonetheless the correct class.
+        #   High → sharpening/confidence-weighting can recover the blend.
+        #   Low  → the blend is confidently wrong; no inference-time gate helps.
+        temp = float(self.inference_temp)
+        if n_vote > 0:
+            w_v = weights[row_has_vote]                                  # (V, k)
+            vote_entropy = -(w_v * w_v.clamp_min(1e-12).log()).sum(dim=1)  # (V,)
+            effective_support = torch.exp(vote_entropy)                 # (V,) in [1, k]
+            max_vote_weight = w_v.max(dim=1).values                     # (V,)
+            n_surviving = torch.isfinite(topk_sims[row_has_vote]).sum(dim=1)  # (V,)
+            t1t2 = (top1_raw - top2_raw)[row_has_vote]                  # (V,) NaN if k<2
+
+            out["mean_top1_sim"] = float(top1_raw[row_has_vote].mean().item())
+            out["mean_top2_sim"] = float(top2_raw[row_has_vote].mean().item())
+            out["mean_top1_top2_margin"] = float(t1t2.mean().item())
+            out["median_top1_top2_margin"] = float(t1t2.median().item())
+            out["mean_vote_entropy"] = float(vote_entropy.mean().item())
+            out["mean_effective_support"] = float(effective_support.mean().item())
+            out["median_effective_support"] = float(effective_support.median().item())
+            out["mean_max_vote_weight"] = float(max_vote_weight.mean().item())
+            out["mean_n_surviving_votes"] = float(n_surviving.float().mean().item())
+            # Deployable confidence flags: low margin (< temp) and high *normalized*
+            # entropy (>= 0.5 of log(support) — scale-free across epochs as the
+            # surviving support count drifts). Single-survivor rows (support 1,
+            # log=0) are defined non-high-entropy.
+            out["frac_low_margin"] = float((t1t2 < temp).float().mean().item())
+            norm_entropy = torch.where(
+                n_surviving > 1,
+                vote_entropy / n_surviving.clamp_min(2).float().log(),
+                torch.zeros_like(vote_entropy))
+            out["frac_high_entropy"] = float((norm_entropy >= 0.5).float().mean().item())
+
+            # Label-aware recoverability split on the true (ss - so) margin.
+            m_v = margin[row_has_vote]                                  # (V,)
+            out["frac_margin_recoverable"] = float((m_v >= temp).float().mean().item())
+            out["frac_margin_borderline"] = float(
+                ((m_v >= 0.5 * temp) & (m_v < temp)).float().mean().item())
+            out["frac_margin_forced"] = float((m_v < 0.5 * temp).float().mean().item())
+
+            # Of the actually-blended probes, is the top-1 neighbour correct?
+            blended = offclass_weight_all[row_has_vote] > blend_eps     # (V,)
+            top1_correct = topk_labels[row_has_vote][:, 0] == labels[valid][row_has_vote]
+            n_blended = int(blended.sum().item())
+            out["frac_blend_top1_correct"] = (
+                float((top1_correct & blended).sum().item() / n_blended)
+                if n_blended > 0 else float("nan"))
+        else:
+            for key in ("mean_top1_sim", "mean_top2_sim", "mean_top1_top2_margin",
+                        "median_top1_top2_margin", "mean_vote_entropy",
+                        "mean_effective_support", "median_effective_support",
+                        "mean_max_vote_weight", "mean_n_surviving_votes",
+                        "frac_low_margin", "frac_high_entropy",
+                        "frac_margin_recoverable", "frac_margin_borderline",
+                        "frac_margin_forced", "frac_blend_top1_correct"):
+                out[key] = float("nan")
 
         # --- Predicted onset flags (read against live dynamic-vigilance config) ---
         dv = self.dynamic_vigilance

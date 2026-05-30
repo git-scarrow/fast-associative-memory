@@ -8,9 +8,13 @@ the embedding stream: the 20-Newsgroups text source is swapped for a cached
 **DINOv2 ViT-L/14** feature manifold (CIFAR-100, 1024-d). Top-1 / vote correctness
 is used **only** as an evaluation label, never to steer retrieval.
 
-> **Verdict (one line):** The #86 result is **manifold-general, not
-> text-specific.** Every load-bearing finding of the text forced-zone study
-> reproduces on the ViT-L/14 vision manifold — *all errors are forced*, the
+> **Verdict (one line):** The #86 result is **not text-specific** — it transfers
+> to a *second, non-text* manifold. The scope of "general" here is exactly **two
+> demonstrated points** (20NG/MiniLM text and CIFAR-100/DINOv2 ViT-L/14 vision),
+> **not** all vision and **not** all embedding spaces; it is a transfer existence
+> proof, not a sweep (see "Methodological caveats"). On that second manifold every
+> load-bearing finding of the text forced-zone study
+> reproduces — *all errors are forced*, the
 > forced-zone failure signature is *false collapse* (a **sharp** top-1 over
 > **thin** support, voting off-class), `rank_gap` **flips sign** in the forced
 > zone, and a two-axis **rank_gap + manifold_support** detector **fit on train
@@ -223,11 +227,13 @@ higher held-out AUC).
 
 ## What this does and does not license
 
-* **Licenses** the conclusion that the #86 confidence-gated **abstention** layer is
-  **manifold-general**: the two-axis collapse detector is not an artifact of text
-  embedding geometry. The honest mechanism on a collapsing vision manifold is the
-  same — *report uncertainty under collapse*, read-only, never changing the elected
-  class of a retained row.
+* **Licenses** the narrower conclusion that the #86 collapse detector is **not an
+  artifact of text embedding geometry specifically** — it also holds on the
+  CIFAR-100 DINOv2 ViT-L/14 manifold. It does **not** license a claim over all
+  vision encoders, datasets, or embedding spaces. Within that scope, the honest
+  mechanism on a collapsing manifold is the same as text — *report uncertainty
+  under collapse*, read-only, never changing the elected class of a retained row,
+  and still a **diagnostic, not a production-ready gate**.
 * **Does not license sharpening/truncation.** Support breadth is **part of the
   correctness signal on vision too** (forced correct manifold_support 9.02 vs wrong
   6.07; orientation +1). The #84 truncation lever attacks exactly that axis, so it

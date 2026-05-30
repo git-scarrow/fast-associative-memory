@@ -187,3 +187,124 @@ honest mechanism is abstention. Concretely, the next increment should:
 | `selective_risk.csv` | accuracy + error-recall vs coverage (correctly oriented) |
 | `reliability.csv` | decile reliability per label-free predictor |
 | `calibration_summary.json` | machine-readable verdict + headline numbers |
+| `heldout_auc.csv` | **held-out** forced-zone AUC, per (split, target, model), train vs held-out |
+| `heldout_operating_point.csv` | held-out abstention metrics at the train-selected (Youden-J) threshold |
+| `heldout_coverage_sweep.csv` | held-out coverage/accuracy tradeoff at train-selected retained-accuracy targets |
+| `heldout_abstention_summary.json` | machine-readable held-out verdict + operating point |
+
+---
+
+# Held-out two-axis abstention — does the #85 number survive? (PR follow-up)
+
+The §Decision point 3 above flagged the open risk: the forced-zone two-axis AUC
+(~0.79) was **in-sample** — orientation and the logistic fit were not held out
+across a calibration split, and `support_breadth` is partly a readout of the
+per-epoch live-Δ floor. This section closes that out.
+
+> **Held-out verdict (one line):** The two-axis collapse detector — **RANK
+> confidence** (`rank_gap`) + **SUPPORT stability** (`manifold_support`), fit on
+> train epochs only — **survives held-out epoch evaluation**: forced-zone
+> AUC ≈ **0.75** (parity split) / **0.74** (contiguous split) for the deployed
+> `vote_correct` target, vs a no-abstention base accuracy of **0.305**. At a
+> train-selected operating point it **lifts retained accuracy to ~0.44 while
+> capturing ~53% of errors** and wrongly abstaining only ~14% of correct rows.
+> Abstention on probable **false collapse** is **operationally useful but not
+> production-ready**; **sharpening stays hazardous** because the support axis
+> carries correctness signal.
+
+## "Confidence" = rank confidence × support stability
+
+The detector makes the #85 two-axis story concrete and **label-free**. Fit on
+*train epochs only* inside the forced zone, the single-axis orientations are:
+
+| axis | telemetry | learned forced-zone orientation | reading |
+|------|-----------|-------------------------------|---------|
+| **rank confidence** | `rank_gap` (top1−top2 margin) | higher → **WRONG** (−1) | a *sharp* top-1 over thin support is **false collapse** |
+| **support stability** | `manifold_support` (`exp(vote_entropy)`) | higher → **CORRECT** (+1) | a *broad* surviving neighbourhood is a healthy recall |
+
+The two axes pull in opposite directions, so no single global threshold works —
+they must be combined. That is the whole point: low entropy / few survivors is
+**not** confidence here, it is often false collapse.
+
+## Held-out protocol (the guardrails)
+
+* **Operational zone only.** Recoverable + borderline buckets are ~100% correct
+  (nothing to gate); the detector is fit and evaluated **entirely inside the
+  forced bucket**, post-onset window e8–e29.
+* **Split by epoch, never by row.** Rows in one epoch share that epoch's floor
+  scalar, so a by-row split would leak the floor context. Two epoch splits are
+  reported:
+  * **parity** (primary, charitable) — train = even epochs, test = odd. Isolates
+    "does the *signal* generalise to unseen rows?" while controlling for the
+    drift-regime shift (a neighbour epoch's floor is similar).
+  * **contiguous** (adversarial) — train = earliest 60% of epochs, test = latest
+    40%. The held-out floor regime is genuinely unseen; this is the direct test
+    of the floor-readout worry.
+* **No leakage.** Standardisation means/stds, logistic coefficients, the
+  single-axis orientation, *and* the abstention threshold are all fit on train
+  epochs and then frozen before held-out is scored. The feature set is fixed a
+  priori from the #85 in-sample study, not chosen on the held-out data.
+* **No labels at inference.** The detector score is a function of label-free
+  predictors only; correctness is used solely to fit/evaluate.
+* **No retrieval intervention.** Abstention is a pure post-hoc mask — it never
+  changes the elected class of a retained row. `forward()` and `associative_core`
+  are untouched (pinned by `tests/test_heldout_abstention.py`).
+
+## Held-out AUC (`heldout_auc.csv`, target = `vote_correct`)
+
+| model | parity train → **held-out** | contiguous train → **held-out** |
+|-------|----------------------------:|--------------------------------:|
+| baseline: `rank_gap` only | 0.736 → 0.720 | 0.768 → 0.705 |
+| baseline: `support_breadth` only | 0.640 → 0.625 | 0.728 → 0.607 |
+| baseline: `manifold_support` only | 0.689 → 0.677 | 0.761 → 0.680 |
+| **main: `rank_gap` + `manifold_support`** | **0.768 → 0.748** | **0.827 → 0.740** |
+| diag: + `manifold_support²` | 0.772 → 0.751 | 0.828 → 0.741 |
+
+Two axes beat either alone on held-out in every split. The quadratic band-pass
+term adds only ~+0.003 held-out — **kept as a diagnostic, not adopted**: the
+simple two-axis logistic is the auditable model. The biggest train→held-out gap
+is on the contiguous split (0.827 → 0.740), exactly the floor-readout shrinkage
+the split was designed to expose — but the signal still clears 0.74, so it
+**survives** the adversarial split, not just the charitable one.
+
+## Operating point (`heldout_operating_point.csv`, main model, train-selected Youden-J)
+
+A fixed retained-accuracy *target* is the wrong knob in a zone whose base
+accuracy is 0.305 — targeting 0.80 collapses coverage to <1% (see
+`heldout_coverage_sweep.csv`). So the headline threshold maximises Youden's J
+(error_capture − false_abstain) **on train**, then is applied to held-out:
+
+| split | retained coverage | retained acc (base 0.305) | error capture | false-abstain (correct) |
+|-------|------------------:|--------------------------:|--------------:|------------------------:|
+| **parity** | 0.59 | **0.44** | **0.53** | 0.14 |
+| **contiguous** | 0.69 | **0.41** | 0.41 | 0.07 |
+
+Both lift retained accuracy well above the no-abstention base and capture far
+more errors than the correct rows they sacrifice (positive held-out Youden J).
+The `heldout_coverage_sweep.csv` curve shows the full coverage/accuracy tradeoff
+for callers who want a different operating point.
+
+## What this does and does not license
+
+* **Licenses** a confidence-gated **abstention / "report uncertainty under
+  collapse"** layer on the forward prediction, driven by the two-axis detector.
+  It is read-only and does not touch retrieval selection.
+* **Does not license sharpening/truncation.** Support breadth is *part of the
+  correctness signal* (orientation +1). The #84 truncation lever attacks it, so
+  it pushes correct-but-forced rows toward the false-collapse signature — a
+  confident-error hazard. The held-out result reinforces, not relaxes, this.
+* **Validity scope.** The claim is only as strong as held-out epoch performance,
+  which is reported above for both a charitable and an adversarial split. If a
+  future stream's drift regime departs from training, re-fit and re-check the
+  contiguous split before trusting the score.
+
+## Reproduce
+
+```bash
+# 1. (if needed) regenerate the per-probe dump
+python benchmarks/calibration_probe.py \
+    --epochs 30 --contraction-end 0.9 --held-out-per-class 64 \
+    --out results/issue82_retrieval_confidence_calibration/per_probe.csv
+# 2. held-out two-axis abstention calibration (auto-regenerates the dump if absent)
+python benchmarks/heldout_abstention.py --e-lo 8 --e-hi 29
+```

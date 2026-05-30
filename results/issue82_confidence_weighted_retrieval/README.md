@@ -112,13 +112,21 @@ true recoverability signal.
 1. **Adaptive support truncation is sound infrastructure but a weak lever here.**
    It is correct, tested (off-by-default parity, self-gating in the forced
    regime, stage-3 trace accounting), and composes with the floor — keep it.
-   But on this manifold it deflates support without improving correctness.
-2. **Selective application needs a per-probe *correctness* signal, not a
-   *confidence* signal.** `top1_top2_margin` does not separate the
-   top-1-correct half from the confident-wrong half (it is ~0.045–0.051 in both
-   the recoverable and forced regimes). A useful gate would have to predict
-   top-1 correctness — which the label-free telemetry, as instrumented, does not
-   provide. This is the open question for the next increment.
+   But on this manifold it deflates support without improving correctness, so it
+   ships off by default and makes no accuracy claim.
+2. **The open question is a *calibration* question, not another gate.** Whether
+   truncation (or any selective sharpening) could ever pay off hinges on a prior
+   unknown: **can label-free confidence telemetry predict top-1 correctness in
+   the recoverable mid-window?** Note `top1_top2_margin` alone does not (it is
+   ~0.045–0.051 in *both* the recoverable and forced regimes) — but it has not
+   been tested jointly with the other label-free signals. The next increment is
+   therefore a **calibration study**, not an intervention: regress top-1
+   correctness on `top1_top2_margin`, `vote_entropy`, `effective_support`,
+   `max_vote_weight`, and `n_surviving_votes`, using top-1 correctness **only as
+   the evaluation label** — never as an inference-time gate. Gating on true
+   correctness would be an oracle and is explicitly out of scope. Only if a
+   label-free predictor is shown to be calibrated does a selective lever become
+   worth building.
 3. **The forced tail still wants abstention, not recovery** (#83's second
    lever), unchanged by this result.
 

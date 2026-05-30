@@ -1,0 +1,7 @@
+bucket,top1_correct,n,top1_top2_margin,vote_entropy,effective_support,max_vote_weight,n_surviving_votes,sim_floor_active,offclass_weight,true_margin
+forced,1,310,0.0084,2.0341,9.0222,0.2496,11.1032,0.4123,0.3209,0.0122
+forced,0,976,0.0594,1.4931,6.067,0.4996,9.6066,0.4079,0.6687,-0.0687
+borderline,1,426,0.0212,2.0466,9.0869,0.2866,11.6948,0.4127,0.207,0.0385
+borderline,0,0,,,,,,,,
+recoverable,1,3652,0.0444,1.8382,7.7531,0.4008,12.9628,0.4169,0.0427,0.1493
+recoverable,0,0,,,,,,,,

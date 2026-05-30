@@ -1,0 +1,63 @@
+{
+  "input_csv": "results/issue_vitl14_blend_confidence/per_probe.csv",
+  "n_rows_total": 14645,
+  "primary_slice": {
+    "dataset": "real-20NG",
+    "floor": "live-delta",
+    "epochs": [
+      8,
+      18
+    ],
+    "policies": [
+      "margin",
+      "relative"
+    ],
+    "n_rows_midwindow": 5364
+  },
+  "concept_map": {
+    "top1_top2_margin": "rank_gap",
+    "vote_entropy": "support_dispersion",
+    "effective_support": "manifold_support",
+    "max_vote_weight": "peak_mass",
+    "n_surviving_votes": "support_breadth",
+    "sim_floor_active": "floor_level"
+  },
+  "label_free_confidence_separates_correctness": true,
+  "key_findings": {
+    "confidence_is_not_one_scalar": true,
+    "operational_zone": "forced",
+    "recoverable_bucket_acc": 1.0,
+    "borderline_bucket_acc": 1.0,
+    "forced_bucket_acc": 0.2411,
+    "wrong_top1_by_bucket_midwindow": {
+      "forced": 976,
+      "borderline": 0,
+      "recoverable": 0
+    },
+    "rank_gap_sign_flips_in_forced_zone": true,
+    "rank_gap_forced_orientation": -1,
+    "forced_zone_best_single_auc": 0.689,
+    "forced_zone_two_axis_auc": 0.8596,
+    "support_breadth_mid_window": {
+      "peak_decile": 7,
+      "high_tail_drops": true,
+      "low_acc": 0.6922,
+      "peak_acc": 0.933,
+      "high_acc": 0.8808
+    },
+    "support_breadth_late_window": {
+      "peak_decile": 7,
+      "high_tail_drops": true,
+      "low_acc": 0.3419,
+      "peak_acc": 0.5539,
+      "high_acc": 0.3212
+    }
+  },
+  "robust_forced_separators": {
+    "rank_gap": true,
+    "support_dispersion": true,
+    "manifold_support": true,
+    "peak_mass": true
+  },
+  "verdict": "SEPARATES, WITH STRUCTURE -- 'confidence' is not one scalar. The recoverable+borderline buckets are ~100% correct (no gating needed); 100% of errors are forced (manifold collapse). Within that zone the failure signature is FALSE COLLAPSE: a sharp top-1 (high rank_gap, high peak_mass) over THIN support (low manifold_support / few surviving votes) voting off-class. A correct recall keeps broad support. rank_gap therefore FLIPS sign in the forced zone (globally higher->correct, but in forced higher->wrong), so no single global signed threshold works; a two-axis rank_gap + manifold_support rule reaches forced-zone AUC ~0.8596. In the late window support_breadth is BAND-PASS (both collapse and saturated off-class blend are wrong). This supports confidence-gated ABSTENTION / review on a two-axis collapse detector -- and warns AGAINST retrieval sharpening (the #84 truncation lever attacks support breadth, i.e. it pushes correct-but-forced rows toward the false-collapse failure signature)."
+}

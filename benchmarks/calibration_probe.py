@@ -41,7 +41,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from associative_core import ContinuousCAM  # noqa: E402
 from dynamic_vigilance import (  # noqa: E402
     DynamicVigilance, RelativeVigilance, RetrievalFloorPolicy)
-from benchmarks.probe_contraction import RealDriftStream  # noqa: E402
+from benchmarks.probe_contraction import (  # noqa: E402
+    RealDriftStream, VisionDriftStream)
 
 
 # Per-probe columns: epoch-scalar context first, then the label-free predictors,
@@ -152,23 +153,50 @@ def main():
     ap.add_argument("--attractor-category", type=str, default="sci.med")
     ap.add_argument("--embed-model", type=str, default="all-MiniLM-L6-v2")
     ap.add_argument("--max-sentences", type=int, default=24)
+    # vision ViT-L/14 stream (A1 transfer test) — swaps the 20NG text source for a
+    # cached DINOv2 ViT-L/14 feature manifold. Everything downstream (engine, probe,
+    # floor, vote, analysis) is identical; only the embedding stream changes.
+    ap.add_argument("--vision", action="store_true",
+                    help="drive the loop from a cached DINOv2 ViT-L/14 feature "
+                         "manifold instead of 20NG text (A1 transfer test)")
+    ap.add_argument("--vision-cache", type=str, default=None,
+                    help="path to the *_train.pt feature cache; if unset, probe the "
+                         "feature_cache_vitl14 symlink + known archive locations")
+    ap.add_argument("--vision-classes", type=str, default="0,8,19,33",
+                    help="comma-separated cached class ids used as classes (vision)")
+    ap.add_argument("--vision-attractor-class", type=int, default=71,
+                    help="cached class id whose features are the shared attractor "
+                         "blended into every class (vision)")
     ap.add_argument("--out", type=str,
                     default="results/issue82_retrieval_confidence_calibration/per_probe.csv")
     args = ap.parse_args()
 
-    cats = [c.strip() for c in args.real_categories.split(",") if c.strip()]
     policies = [p.strip() for p in args.policies.split(",") if p.strip()]
 
-    print(f"[real] loading {args.embed_model} and {len(cats)} 20NG topics "
-          f"(attractor={args.attractor_category}) ...")
-    stream = RealDriftStream(
-        categories=cats, attractor_category=args.attractor_category,
-        samples_per_class=args.samples_per_class,
-        held_out_per_class=args.held_out_per_class,
-        model_name=args.embed_model, max_sentences=args.max_sentences,
-        seed=args.seed)
-    num_classes, dim = stream.num_classes, stream.dim
-    print(f"[real] dim={dim}, classes={cats}, held/class={args.held_out_per_class}")
+    if args.vision:
+        vcats = [int(c.strip()) for c in args.vision_classes.split(",") if c.strip()]
+        print(f"[vision] loading DINOv2 ViT-L/14 cache, {len(vcats)} classes "
+              f"(attractor={args.vision_attractor_class}) ...")
+        stream = VisionDriftStream(
+            categories=vcats, attractor_category=args.vision_attractor_class,
+            samples_per_class=args.samples_per_class,
+            held_out_per_class=args.held_out_per_class,
+            seed=args.seed, cache_path=args.vision_cache)
+        num_classes, dim = stream.num_classes, stream.dim
+        print(f"[vision] cache={stream.cache_path} dim={dim}, classes={vcats}, "
+              f"held/class={args.held_out_per_class}")
+    else:
+        cats = [c.strip() for c in args.real_categories.split(",") if c.strip()]
+        print(f"[real] loading {args.embed_model} and {len(cats)} 20NG topics "
+              f"(attractor={args.attractor_category}) ...")
+        stream = RealDriftStream(
+            categories=cats, attractor_category=args.attractor_category,
+            samples_per_class=args.samples_per_class,
+            held_out_per_class=args.held_out_per_class,
+            model_name=args.embed_model, max_sentences=args.max_sentences,
+            seed=args.seed)
+        num_classes, dim = stream.num_classes, stream.dim
+        print(f"[real] dim={dim}, classes={cats}, held/class={args.held_out_per_class}")
 
     # Precompute every epoch's batch ONCE (identical across policies).
     print(f"[embed] precomputing {args.epochs} epoch batches ...")

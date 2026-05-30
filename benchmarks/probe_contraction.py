@@ -223,6 +223,127 @@ class RealDriftStream:
         return (train_q, train_y, train_lab), (held_q, held_lab)
 
 
+# --------------------------------------------------------------------------- #
+# Vision drifting feature stream (ViT-L/14 transfer test — A1)
+# --------------------------------------------------------------------------- #
+# Candidate locations for the CIFAR-100 DINOv2 ViT-L/14 feature cache. The
+# repo-root `feature_cache_vitl14` symlink is the canonical entry; it points at a
+# Linux /mnt path that resolves only on the compute host (it is a dead link on a
+# macOS checkout). We probe a short list so the stream is robust to which copy of
+# the cache happens to be mounted, rather than hard-failing on one absolute path.
+_VISION_CACHE_CANDIDATES = [
+    "feature_cache_vitl14/cifar100_dinov2_train.pt",
+    "/mnt/storage/workspace-archive/campus-fabric/feature_cache_vitl14/cifar100_dinov2_train.pt",
+    "/mnt/data/dev/projects/campus-fabric/feature_cache_vitl14/cifar100_dinov2_train.pt",
+]
+
+
+def _resolve_vision_cache(path: str | None) -> Path:
+    """Return the first existing vision feature cache, preferring an explicit path."""
+    tried = []
+    candidates = ([path] if path else []) + _VISION_CACHE_CANDIDATES
+    for c in candidates:
+        tried.append(c)
+        p = Path(c)
+        if p.exists():
+            return p
+    raise FileNotFoundError(
+        "no ViT-L/14 feature cache found; tried:\n  " + "\n  ".join(tried) +
+        "\n(fix or recreate the `feature_cache_vitl14` symlink, or pass "
+        "--vision-cache)")
+
+
+class VisionDriftStream:
+    """Epoch-ordered DINOv2 ViT-L/14 feature stream whose inter-class similarity rises.
+
+    The vision analogue of ``RealDriftStream`` for the A1 transfer test. K
+    well-separated cached classes (default: CIFAR-100 via DINOv2 ViT-L/14, 1024-d)
+    are the classes; one further class is the shared attractor. At contraction
+    ``c`` every sample's (unit) feature is convex-blended toward a
+    *deterministically assigned* real attractor-class feature and renormalized, so
+    cross-class cosine rho(t) rises emergently as ``c`` -> 1. The same samples are
+    reused every epoch (only the blend fraction changes) and train vs held-out
+    pools are disjoint per class — matching ``RealDriftStream``'s continual setting.
+
+    METHODOLOGICAL NOTE vs ``RealDriftStream``. Text drift is produced at the
+    INPUT level (swap in attractor sentences, then *re-embed* with the real model),
+    so the trajectory is the model's own nonlinear manifold. A precomputed feature
+    cache has no cheap re-embed, so drift here is a LINEAR convex blend in feature
+    space between two *real* endpoints — the sample and an assigned real attractor
+    feature. Both endpoints carry real DINOv2 anisotropy and real intra-/inter-class
+    spread; only the path between them is linear. This is the faithful cache-only
+    analogue; input-level (pixel/patch) re-embedding is a future faithfulness check.
+    The probe, engine, retrieval floor and vote are untouched — only the data
+    source changes.
+    """
+
+    def __init__(self, categories: list[int], attractor_category: int,
+                 samples_per_class: int, held_out_per_class: int, seed: int,
+                 cache_path: str | None = None):
+        cache = _resolve_vision_cache(cache_path)
+        blob = torch.load(cache, map_location="cpu", weights_only=False)
+        embeds = blob["embeds"].float()                    # (N, D), raw features
+        labels = blob["labels"].long()                     # (N,)
+        # Work in unit features so the convex blend is a clean angular interpolation
+        # knob; the engine/probe normalize internally, so this only fixes the
+        # endpoints' geometry, it does not change retrieval.
+        embeds = F.normalize(embeds, dim=-1)
+        self.cache_path = str(cache)
+        self.dim = int(embeds.shape[1])
+        self.num_classes = len(categories)
+        self.categories = list(categories)
+        rng = torch.Generator().manual_seed(seed)
+
+        need = samples_per_class + held_out_per_class
+        train_blocks, held_blocks = [], []
+        self.train_labels: list[int] = []
+        self.held_labels: list[int] = []
+        for ci, cat in enumerate(categories):
+            idx = (labels == cat).nonzero(as_tuple=True)[0]
+            if idx.numel() < need:
+                raise RuntimeError(
+                    f"class {cat} has {idx.numel()} cached features, need {need}")
+            perm = idx[torch.randperm(idx.numel(), generator=rng)]
+            tr, ho = perm[:samples_per_class], perm[samples_per_class:need]
+            train_blocks.append(embeds[tr])
+            held_blocks.append(embeds[ho])
+            self.train_labels += [ci] * samples_per_class
+            self.held_labels += [ci] * held_out_per_class
+
+        aidx = (labels == attractor_category).nonzero(as_tuple=True)[0]
+        if aidx.numel() == 0:
+            raise RuntimeError(f"attractor class {attractor_category} not in cache")
+        aidx = aidx[torch.randperm(aidx.numel(), generator=rng)]
+        self.attractor_feats = embeds[aidx]                # (A, D), unit
+        self.attractor_category = attractor_category
+
+        self.train_X = torch.cat(train_blocks, dim=0)      # (n_train, D)
+        self.held_X = torch.cat(held_blocks, dim=0)        # (n_held, D)
+        self.train_lab = torch.tensor(self.train_labels, dtype=torch.long)
+        self.held_lab = torch.tensor(self.held_labels, dtype=torch.long)
+        # Deterministic per-sample attractor assignment, stable across epochs, so a
+        # sample's blend grows monotonically with c toward the SAME real attractor
+        # feature (the direct analogue of the text driver's monotone sentence swap).
+        A = self.attractor_feats.shape[0]
+        self._train_assign = torch.randint(0, A, (self.train_X.shape[0],),
+                                           generator=rng)
+        self._held_assign = torch.randint(0, A, (self.held_X.shape[0],),
+                                          generator=rng)
+
+    def _blend(self, X: torch.Tensor, assign: torch.Tensor,
+               contraction: float) -> torch.Tensor:
+        a = self.attractor_feats[assign]                   # (n, D)
+        mixed = (1.0 - contraction) * X + contraction * a
+        return F.normalize(mixed, dim=-1)
+
+    def batch(self, contraction: float):
+        """Return (train_q, train_y, train_lab), (held_q, held_lab) at `c`."""
+        train_q = self._blend(self.train_X, self._train_assign, contraction)
+        held_q = self._blend(self.held_X, self._held_assign, contraction)
+        train_y = F.one_hot(self.train_lab, num_classes=self.num_classes).float()
+        return (train_q, train_y, self.train_lab), (held_q, self.held_lab)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)

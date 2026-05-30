@@ -1,0 +1,17 @@
+target,model,auc,separation,orientation
+top1_correct,single:rank_gap,0.1406,0.3594,-1
+top1_correct,single:support_dispersion,0.689,0.189,1
+top1_correct,single:manifold_support,0.689,0.189,1
+top1_correct,single:peak_mass,0.2027,0.2973,-1
+top1_correct,single:support_breadth,0.5719,0.0719,1
+top1_correct,single:floor_level,0.6129,0.1129,1
+top1_correct,two-axis:rank_gap+manifold_support,0.8596,0.3596,
+top1_correct,three:rank_gap+manifold_support+support_breadth,0.8686,0.3686,
+vote_correct,single:rank_gap,0.1454,0.3546,-1
+vote_correct,single:support_dispersion,0.8385,0.3385,1
+vote_correct,single:manifold_support,0.8385,0.3385,1
+vote_correct,single:peak_mass,0.1098,0.3902,-1
+vote_correct,single:support_breadth,0.7231,0.2231,1
+vote_correct,single:floor_level,0.587,0.087,1
+vote_correct,two-axis:rank_gap+manifold_support,0.8887,0.3887,
+vote_correct,three:rank_gap+manifold_support+support_breadth,0.8888,0.3888,

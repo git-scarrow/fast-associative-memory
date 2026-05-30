@@ -208,8 +208,9 @@ per-epoch live-Δ floor. This section closes that out.
 > `vote_correct` target, vs a no-abstention base accuracy of **0.305**. At a
 > train-selected operating point it **lifts retained accuracy to ~0.44 while
 > capturing ~53% of errors** and wrongly abstaining only ~14% of correct rows.
-> Abstention on probable **false collapse** is operationally useful; **sharpening
-> stays hazardous** because the support axis carries correctness signal.
+> Abstention on probable **false collapse** is **operationally useful but not
+> production-ready**; **sharpening stays hazardous** because the support axis
+> carries correctness signal.
 
 ## "Confidence" = rank confidence × support stability
 

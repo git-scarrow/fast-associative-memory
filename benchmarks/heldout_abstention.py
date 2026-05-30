@@ -511,7 +511,8 @@ def _verdict_text(mp, mc, op_p, op_c, base, pu, cu):
                 "selected operating point it lifts retained accuracy above the "
                 "no-abstention base and captures more errors than correct rows it "
                 "wrongly abstains. Abstention on probable FALSE COLLAPSE is "
-                "operationally useful; sharpening/truncation remains hazardous "
+                "operationally useful but NOT production-ready; "
+                "sharpening/truncation remains hazardous "
                 "because support breadth is part of the correctness signal.")
     elif pu and not cu:
         tail = ("The detector survives the charitable parity split but DEGRADES on "

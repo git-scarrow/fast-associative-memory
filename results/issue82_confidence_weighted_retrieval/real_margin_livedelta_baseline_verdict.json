@@ -1,0 +1,33 @@
+{
+  "mode": "real",
+  "delta_ref": 0.421573668718338,
+  "predicted_blend_rho": 0.311712439851527,
+  "ref_blend_rho": 0.79,
+  "v_ceiling": 0.95,
+  "max_rho_observed": 0.45311105251312256,
+  "baseline_blended": false,
+  "chimera_reachable": false,
+  "blend_onset": {
+    "epoch": 4,
+    "rho": 0.23603412508964539,
+    "offclass_weight": 0.10247544199228287,
+    "left_censored": false
+  },
+  "chimera_onset": null,
+  "blend_offset": -0.07567831476188164,
+  "relative_transfer": "confirmed",
+  "absolute_transfer": "does-not-transfer",
+  "chimera_transfer": "unreachable",
+  "retrieval_floor_policy": "live-delta",
+  "support_truncation": false,
+  "truncation_window_steps": null,
+  "truncation_gate_steps": null,
+  "categories": [
+    "sci.space",
+    "rec.sport.hockey",
+    "talk.politics.guns",
+    "comp.graphics"
+  ],
+  "attractor_category": "sci.med",
+  "embed_model": "all-MiniLM-L6-v2"
+}

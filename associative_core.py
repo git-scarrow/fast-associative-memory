@@ -17,10 +17,10 @@ from typing import Union, Tuple
 class RetrievalTrace:
     broad_slots: torch.Tensor          # (broad_k,) — top-100 indices by raw cosine
     broad_sims_raw: torch.Tensor       # (broad_k,) — cosine similarities
-    final_slots: torch.Tensor          # (final_k,) — survivor indices after NSTP + floor
+    final_slots: torch.Tensor          # (final_k,) — survivor indices after NSTP + floor + truncation
     final_weights: torch.Tensor        # (final_k,) — softmax vote weights
     rejected_slots: torch.Tensor       # (broad_k - final_k,) — indices of killed candidates
-    rejection_stage: torch.Tensor      # (broad_k - final_k,) categorical: 0=topk_drop, 1=nstp, 2=floor
+    rejection_stage: torch.Tensor      # (broad_k - final_k,) categorical: 0=topk_drop, 1=nstp, 2=floor, 3=truncation
 
 
 def _make_orthogonal_prototypes(num_vectors: int, dim: int) -> torch.Tensor:
@@ -51,6 +51,7 @@ class ContinuousCAM(nn.Module):
                  ema_beta: float = 0.05,
                  dynamic_vigilance=None,
                  retrieval_floor_policy=None,
+                 retrieval_truncation_policy=None,
                  track_provenance: bool = False):
         super().__init__()
         self.key_dim = key_dim
@@ -96,6 +97,13 @@ class ContinuousCAM(nn.Module):
         # floor(inference_temp) value overrides the static inference_sim_floor
         # at retrieval time; updated from within-class hits during learn_local().
         self.retrieval_floor_policy = retrieval_floor_policy
+        # Optional adaptive vote-support truncation policy (issue #82). When set,
+        # it masks the per-probe off-class tail (candidates > window steps below
+        # that row's top-1) before the softmax vote. The window is self-gating:
+        # a co-located/forced neighbourhood has no separated tail to cut, so the
+        # cut is a near no-op there and only the premature (recoverable) blend is
+        # removed. None = disabled; retrieval is bit-identical to the #74 baseline.
+        self.retrieval_truncation_policy = retrieval_truncation_policy
 
         mem_dtype = torch.bfloat16 if use_bfloat16 else torch.float32
 
@@ -157,6 +165,27 @@ class ContinuousCAM(nn.Module):
             if floor is not None:
                 return floor
         return self.inference_sim_floor
+
+    def _apply_support_truncation(self, topk_sims: torch.Tensor) -> torch.Tensor:
+        """Adaptive vote-support truncation (issue #82), shared by both paths.
+
+        Masks the per-row off-class tail to ``-inf`` according to
+        ``retrieval_truncation_policy`` (a :class:`RetrievalTruncationPolicy`).
+        Applied at the *same* point — right after the retrieval floor, before the
+        fully-masked-row guard — in both :meth:`forward` (the deployed vote) and
+        :meth:`probe_cross_class_similarity` (the telemetry), so the probe always
+        reflects the retrieval the deployed path actually performs.
+
+        No-op (returns ``topk_sims`` unchanged) when no policy is attached or the
+        policy is inactive. The top-1 always survives the cut, and rows already
+        fully ``-inf`` (floor-masked) are untouched, so this never newly empties
+        a row that had a finite candidate.
+        """
+        policy = self.retrieval_truncation_policy
+        if policy is None or not policy.active:
+            return topk_sims
+        keep = policy.keep_mask(topk_sims, self.inference_temp)
+        return topk_sims.masked_fill(~keep, -float("inf"))
 
     @staticmethod
     def _within_class_loo(sims: torch.Tensor, proto_labels: torch.Tensor,
@@ -487,6 +516,11 @@ class ContinuousCAM(nn.Module):
             topk_sims = topk_sims.masked_fill(topk_sims < sim_floor,
                                               -float("inf"))
 
+        # Optional adaptive vote-support truncation (issue #82). Runs on the
+        # floor survivors; drops each row's off-class tail (gated on top1-top2)
+        # so premature blend mass cannot accumulate. No-op when unconfigured.
+        topk_sims = self._apply_support_truncation(topk_sims)
+
         # Guard: NSTP and/or the floor can mask every candidate in a row. A row
         # of all -inf makes softmax produce NaN, which would corrupt outputs.
         # Neutralize fully-masked rows to 0.0 → uniform weights over their top-k
@@ -535,7 +569,21 @@ class ContinuousCAM(nn.Module):
         else:
             floor_mask = torch.zeros_like(_base_topk_sims, dtype=torch.bool)
         _floor_rejected = floor_mask & _keep_mask
-        
+
+        # Adaptive support truncation (issue #82): mark, as stage 3, candidates
+        # the truncation policy dropped from among the NSTP+floor survivors.
+        # Reconstruct the sims that entered the cut (NSTP and floor victims at
+        # -inf, mirroring forward()'s order) so the per-row top-1/window match.
+        _trunc_policy = self.retrieval_truncation_policy
+        if _trunc_policy is not None and _trunc_policy.active:
+            _pre_trunc = _base_topk_sims.masked_fill(~_keep_mask, -float("inf"))
+            if sim_floor > 0.0:
+                _pre_trunc = _pre_trunc.masked_fill(floor_mask, -float("inf"))
+            _trunc_keep = _trunc_policy.keep_mask(_pre_trunc, self.inference_temp)
+        else:
+            _trunc_keep = torch.ones_like(_base_topk_sims, dtype=torch.bool)
+        _trunc_rejected = ~_trunc_keep & _keep_mask & ~floor_mask
+
         final_slots_list = []
         final_weights_list = []
         rejected_slots_list = []
@@ -552,14 +600,18 @@ class ContinuousCAM(nn.Module):
             floor_mask_b = _floor_rejected[b]
             if floor_mask_b.any():
                 rej_stages[b, _topk_locs[b][floor_mask_b]] = 2
-                
+
+            trunc_mask_b = _trunc_rejected[b]
+            if trunc_mask_b.any():
+                rej_stages[b, _topk_locs[b][trunc_mask_b]] = 3
+
             stages = rej_stages[b]
             survivor_mask = stages == 4
             rejected_mask = stages != 4
-            
+
             row_survivor_slots = _broad_slots[b][survivor_mask]
-            
-            surv_in_topk_mask = _keep_mask[b] & ~floor_mask[b]
+
+            surv_in_topk_mask = _keep_mask[b] & ~floor_mask[b] & _trunc_keep[b]
             row_survivor_weights = _weights[b][surv_in_topk_mask]
             
             row_rejected_slots = _broad_slots[b][rejected_mask]
@@ -1124,6 +1176,10 @@ class ContinuousCAM(nn.Module):
         if sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(
                 topk_sims < sim_floor, -float("inf"))
+        # Adaptive vote-support truncation (issue #82) — applied at the same
+        # post-floor point as forward(), via the shared helper, so this probe's
+        # vote-mass / support telemetry reflects the deployed retrieval exactly.
+        topk_sims = self._apply_support_truncation(topk_sims)
         # Guard: if the floor masks every candidate in a row, softmax(-inf...)
         # is NaN and would silently corrupt the telemetry. Neutralize those rows
         # before softmax and exclude them from the vote-mass averages.

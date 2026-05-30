@@ -60,7 +60,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from associative_core import ContinuousCAM  # noqa: E402
 from dynamic_vigilance import (  # noqa: E402
-    DynamicVigilance, RelativeVigilance, RetrievalFloorPolicy)
+    DynamicVigilance, RelativeVigilance, RetrievalFloorPolicy,
+    RetrievalTruncationPolicy)
 
 
 def make_epoch_batch(centers: torch.Tensor, attractor: torch.Tensor,
@@ -263,6 +264,21 @@ def main() -> None:
                     help="floor = Δ_ema - k*inference_temp (live-delta policy)")
     ap.add_argument("--floor-ema-beta", type=float, default=0.9,
                     help="EMA smoothing for the live Δ estimate (live-delta policy)")
+    # --- Adaptive vote-support truncation (issue #82 intervention) ---
+    ap.add_argument("--support-truncation", action="store_true",
+                    help="enable adaptive vote-support truncation: drop each "
+                         "probe's off-class tail (> window steps below its top-1) "
+                         "before the softmax vote (#82). The window is "
+                         "self-gating — a co-located/forced neighbourhood has no "
+                         "tail to cut. Composes with --retrieval-floor-policy.")
+    ap.add_argument("--truncation-window-steps", type=float, default=2.0,
+                    help="tail width in inference_temp steps below the per-row "
+                         "top-1; candidates below top1 - w*temp are dropped "
+                         "(smaller = more aggressive)")
+    ap.add_argument("--truncation-gate-steps", type=float, default=0.0,
+                    help="optional min top1-top2 gap (in inference_temp steps) to "
+                         "truncate a row; 0=no gate (rely on window self-gating, "
+                         "recommended). Higher = isolated-winner rows only.")
     ap.add_argument("--csv", type=str, default="contraction.csv")
     ap.add_argument("--plot", action="store_true")
     ap.add_argument("--plot-path", type=str, default="contraction.png")
@@ -358,9 +374,21 @@ def main() -> None:
     else:
         print("[floor] static inference_sim_floor (disabled, =0.0)")
 
+    truncation_policy = None
+    if args.support_truncation:
+        truncation_policy = RetrievalTruncationPolicy(
+            window_steps=args.truncation_window_steps,
+            gate_steps=args.truncation_gate_steps)
+        print(f"[truncation] RetrievalTruncationPolicy: "
+              f"window_steps={args.truncation_window_steps}, "
+              f"gate_steps={args.truncation_gate_steps}")
+    else:
+        print("[truncation] adaptive support truncation (disabled)")
+
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes,
                         max_entries=args.max_entries, dynamic_vigilance=dv,
-                        retrieval_floor_policy=floor_policy)
+                        retrieval_floor_policy=floor_policy,
+                        retrieval_truncation_policy=truncation_policy)
 
     fields = ["epoch", "contraction",
               "rho_inband", "var_inband", "n_inband",
@@ -548,7 +576,15 @@ def main() -> None:
                "blend_offset": None,
                "relative_transfer": "indeterminate",
                "absolute_transfer": "indeterminate",
-               "chimera_transfer": "unreachable" if not chimera_reachable else "reachable"}
+               "chimera_transfer": "unreachable" if not chimera_reachable else "reachable",
+               # Intervention config (issue #82) so each verdict records the exact
+               # retrieval-side levers active for this run (baseline vs intervention).
+               "retrieval_floor_policy": args.retrieval_floor_policy,
+               "support_truncation": bool(args.support_truncation),
+               "truncation_window_steps": (
+                   args.truncation_window_steps if args.support_truncation else None),
+               "truncation_gate_steps": (
+                   args.truncation_gate_steps if args.support_truncation else None)}
     if args.real:
         verdict["categories"] = stream.categories
         verdict["attractor_category"] = args.attractor_category

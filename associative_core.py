@@ -1189,6 +1189,24 @@ class ContinuousCAM(nn.Module):
         top1_raw = topk_sims[:, 0]                                       # (Pv,)
         top2_raw = topk_sims[:, 1] if k >= 2 else topk_sims.new_full(
             (topk_sims.size(0),), float("nan"))
+        # NSTP lateral inhibition (optional) — mirror forward() so the per-probe
+        # vote reflects the SAME retrieval rule that is deployed. forward() prunes
+        # the top-k with NSTP (masking suppressed candidates to -inf) BEFORE the
+        # floor/softmax; if the probe skipped it, the softmax weights — and hence
+        # vote_pred_label / vote_correct / effective_support / n_surviving_votes —
+        # would diverge from forward().argmax whenever self.nstp is attached. The
+        # raw top1/top2 cosines captured just above are intentionally pre-NSTP
+        # (label-free nearest-neighbour geometry), exactly as in forward().
+        if self.nstp is not None:
+            topk_slots = valid_idx[topk_locs]                            # (Pv, k)
+            keep_mask, _ = self.nstp.prune_batch(
+                q[valid].float(),
+                self.keys[topk_slots].float(),
+                self.values[topk_slots].float(),
+                topk_sims,
+                labels=self.effective_slot_labels(topk_slots),
+            )
+            topk_sims = topk_sims.masked_fill(~keep_mask, -float("inf"))
         sim_floor = self._active_sim_floor()
         if sim_floor > 0.0:
             topk_sims = topk_sims.masked_fill(

@@ -96,3 +96,36 @@ def test_vote_pred_matches_forward_row_for_row():
         "vote_pred_label must equal forward().argmax row-for-row"
     # and the label column agrees with the elected-class correctness
     assert torch.equal(pp["vote_correct"], (fwd_pred == hl).long())
+
+
+def test_vote_pred_matches_forward_with_nstp_attached():
+    # The per-probe vote must reproduce forward()'s DEPLOYED retrieval rule, which
+    # includes NSTP lateral inhibition when self.nstp is set. forward() prunes the
+    # top-k with NSTP before the floor/softmax; the probe must too, or
+    # vote_pred_label would be labeled against a different rule than the one being
+    # evaluated. Floor OFF + all classes present => rows align with forward().
+    from nstp import NSTPController
+
+    mem, hq, hl = _build(floor=False)
+    # Probe with NO NSTP: floor is off and there is no truncation, so the ONLY
+    # thing that can mask a candidate is NSTP — every row keeps all k survivors.
+    surv_no_nstp = mem.probe_cross_class_similarity(
+        hq, hl, return_per_probe=True)["per_probe"]["n_surviving_votes"]
+
+    mem.nstp = NSTPController(sibling_threshold=0.5, depth_epsilon=0.10)
+    fwd_pred = mem.forward(hq).argmax(dim=-1)
+    out = mem.probe_cross_class_similarity(hq, hl, return_per_probe=True)
+    pp = out["per_probe"]
+
+    assert pp["true_label"].numel() == hl.numel(), \
+        "NSTP fully pruned a row; pick a gentler controller for this alignment test"
+    # THE PIN, under NSTP: the probe's elected class equals forward().argmax.
+    assert torch.equal(pp["vote_pred_label"], fwd_pred), \
+        "vote_pred_label must equal forward().argmax row-for-row WITH nstp"
+    assert torch.equal(pp["vote_correct"], (fwd_pred == hl).long())
+    # Regression guard: the probe must actually RUN NSTP. With the floor off and
+    # no truncation, pruning is the only way a candidate can be masked, so a probe
+    # that (re)skips NSTP would leave n_surviving_votes unchanged. Require it to
+    # drop for at least one row.
+    assert bool((pp["n_surviving_votes"] < surv_no_nstp).any()), \
+        "probe did not apply NSTP — n_surviving_votes unchanged vs no-NSTP probe"

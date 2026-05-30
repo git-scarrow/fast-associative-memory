@@ -366,6 +366,17 @@ def main() -> None:
               "rho_inband", "var_inband", "n_inband",
               "rho_probe", "var_probe", "within_probe", "margin_probe",
               "offclass_weight", "frac_blended", "n_vote",
+              # Retrieval-confidence + effective-support telemetry (issue #82):
+              # decompose late-epoch blend into premature (usable margin still
+              # present) vs forced (manifold collapsed). top1_top2_margin and
+              # entropy/support are label-free (deployable at inference); the
+              # margin-regime split + blend_top1_correct are label-aware (which
+              # confidence-weighting can/can't recover).
+              "top1_top2_margin", "median_top1_top2_margin", "vote_entropy",
+              "effective_support", "median_effective_support", "max_vote_weight",
+              "n_surviving_votes", "frac_low_margin", "frac_high_entropy",
+              "frac_margin_recoverable", "frac_margin_borderline",
+              "frac_margin_forced", "frac_blend_top1_correct",
               "chimera_onset", "blend_onset", "mean_v_eff",
               "floor_delta_ema", "sim_floor_active",
               # Write-side metrics (issue #73): how the vigilance policy shapes
@@ -441,6 +452,19 @@ def main() -> None:
             "offclass_weight": p.get("mean_offclass_weight", float("nan")),
             "frac_blended": p.get("frac_blended", float("nan")),
             "n_vote": p.get("n_vote_probes", 0),
+            "top1_top2_margin": p.get("mean_top1_top2_margin", float("nan")),
+            "median_top1_top2_margin": p.get("median_top1_top2_margin", float("nan")),
+            "vote_entropy": p.get("mean_vote_entropy", float("nan")),
+            "effective_support": p.get("mean_effective_support", float("nan")),
+            "median_effective_support": p.get("median_effective_support", float("nan")),
+            "max_vote_weight": p.get("mean_max_vote_weight", float("nan")),
+            "n_surviving_votes": p.get("mean_n_surviving_votes", float("nan")),
+            "frac_low_margin": p.get("frac_low_margin", float("nan")),
+            "frac_high_entropy": p.get("frac_high_entropy", float("nan")),
+            "frac_margin_recoverable": p.get("frac_margin_recoverable", float("nan")),
+            "frac_margin_borderline": p.get("frac_margin_borderline", float("nan")),
+            "frac_margin_forced": p.get("frac_margin_forced", float("nan")),
+            "frac_blend_top1_correct": p.get("frac_blend_top1_correct", float("nan")),
             "chimera_onset": bool(p.get("chimera_onset", False)),
             "blend_onset": bool(p.get("blend_onset", False)),
             "mean_v_eff": stats.get("mean_v_effective", float("nan")),
@@ -458,6 +482,9 @@ def main() -> None:
               f"within={rows[-1]['within_probe']:.3f} "
               f"offclass_w={rows[-1]['offclass_weight']:.3f} "
               f"frac_blend={rows[-1]['frac_blended']:.2f} "
+              f"eff_supp={rows[-1]['effective_support']:.1f} "
+              f"forced={rows[-1]['frac_margin_forced']:.2f} "
+              f"blend_t1ok={rows[-1]['frac_blend_top1_correct']:.2f} "
               f"occ={occ} alloc={alloc} merged={merged} drop={dropped} "
               f"merge_rate={merge_rate:.2f} acc={acc:.3f} "
               f"| blend={rows[-1]['blend_onset']} chimera={rows[-1]['chimera_onset']}")

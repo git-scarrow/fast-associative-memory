@@ -286,3 +286,138 @@ class RetrievalFloorPolicy:
     def delta_ema(self) -> float:
         """Current within-class Δ estimate (NaN if not yet initialised)."""
         return self._delta_ema
+
+
+@dataclass
+class RetrievalTruncationPolicy:
+    """Adaptive vote-support truncation (issue #82 intervention).
+
+    A per-probe, *relative-margin* cut applied to the top-k candidate cosine
+    similarities **before** the softmax vote. For each probe row, candidates
+    more than ``window_steps`` softmax-temperature steps below that row's own
+    top-1 are masked to ``-inf``:
+
+        keep[j]  iff  sim[j] >= top1 - window_steps * temp
+
+    Unlike :class:`RetrievalFloorPolicy` (issue #74), which masks against a
+    single *absolute* Δ-anchored floor shared by every probe, this cut is
+    *relative to each probe's own top-1* — so the number of surviving voters
+    adapts to the local neighbourhood geometry. In a confident neighbourhood
+    (a tight within-class core with the off-class competitors sitting a margin
+    below) the off-class tail is dropped and the vote sharpens onto the core;
+    in a collapsed neighbourhood (within/off co-located, no margin) every
+    candidate is within the window, so the cut is a near no-op.
+
+    The top-1 candidate always survives (``top1 - top1 = 0 <= window``), so the
+    truncation can only *sharpen toward the local winner*, never invert it.
+
+    **The window is self-gating — this is the primary "do not gamble on the
+    forced tail" guard.** In the recoverable regime a tight within-class core
+    sits a clear margin above the off-class tail, so the window slices between
+    them: the off-class tail is dropped and the (correct) core wins more
+    cleanly. In the *forced* regime (issue #82: Δ−ρ negative, within/off
+    co-located) there is no separated tail — every candidate sits within the
+    window of the top-1 — so the cut removes (almost) nothing and the vote is a
+    near no-op. The intervention therefore acts where the blend is *premature*
+    and leaves the genuinely collapsed neighbourhood alone, without needing to
+    know the labels. (Verified on a *separable-tail* neighbourhood: off-class
+    vote mass collapses ~0.18→~0.00 while a co-located forced one barely moves.
+    Caveat: when within- and off-class neighbours are *interleaved* in one narrow
+    band — the real all-MiniLM 20NG mid-window — there is no separable tail, so
+    the cut deflates the diffuse-vote support but cannot excise off-class mass
+    selectively, and accuracy is a wash. See
+    results/issue82_confidence_weighted_retrieval/README.md.)
+
+    Both knobs are expressed in ``inference_temp`` (logit) steps, matching
+    ``RetrievalFloorPolicy.k_logit_steps``: a candidate ``s`` steps below top-1
+    carries softmax weight ``exp(-s)`` relative to it, so ``window_steps`` is
+    directly the log-weight budget of the tail that is allowed to vote. The
+    blend it targets is a *numerous* tail — many off-class candidates each
+    carrying a small ``exp(-s)`` weight that sums to real vote mass and inflates
+    ``effective_support`` — which is why dropping it both cuts off-class mass and
+    deflates the effective support back toward the within-class core.
+
+    ``gate_steps`` is an **optional, off-by-default** extra-conservative knob.
+    When > 0 the cut is applied to a row only if its top1−top2 gap clears
+    ``gate_steps`` steps:
+
+        truncate[row]  iff  (top1 - top2) >= gate_steps * temp
+
+    This restricts truncation to rows with a single clear winner and
+    deliberately *skips* rows whose top-1 and top-2 are near-tied. Note this
+    also skips recoverable rows that have within-class *siblings* near the top
+    (top1 ≈ top2, both correct) — so it trades away mid-window gains for safety
+    against sharpening a lone borderline winner. Leave it at 0.0 to rely on the
+    window's self-gating (the recommended default); raise it only when you
+    explicitly want to act on isolated-winner rows alone.
+
+    Composes with the write-gate and the retrieval floor: it runs on whatever
+    candidates survived the floor mask. Off by default (no policy attached) →
+    retrieval is bit-identical to the pre-intervention baseline.
+
+    Args:
+        window_steps: Tail width in ``inference_temp`` steps below the per-row
+                      top-1; candidates below ``top1 - window_steps*temp`` are
+                      dropped. Smaller = more aggressive truncation. Must be > 0
+                      for the policy to have any effect.
+        gate_steps:   Optional minimum top1−top2 gap (in ``inference_temp``
+                      steps) required to truncate a row. 0.0 = no gate (rely on
+                      the window's self-gating, recommended). Higher = restrict
+                      the cut to isolated-winner rows only.
+    """
+
+    window_steps: float = 2.0
+    gate_steps: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.window_steps < 0:
+            raise ValueError(
+                f"window_steps must be >= 0, got {self.window_steps}")
+        if self.gate_steps < 0:
+            raise ValueError(
+                f"gate_steps must be >= 0, got {self.gate_steps}")
+
+    @property
+    def active(self) -> bool:
+        """Whether the policy can mask anything (window_steps > 0)."""
+        return self.window_steps > 0.0
+
+    def keep_mask(self, topk_sims: torch.Tensor, temp: float) -> torch.Tensor:
+        """Per-candidate keep mask for the adaptive support truncation.
+
+        Args:
+            topk_sims: ``(B, k)`` candidate cosine similarities, in descending
+                       order per row (as produced by ``topk``). May already
+                       contain ``-inf`` entries masked out by an upstream floor;
+                       those rows/entries are handled safely (see below).
+            temp:      The softmax ``inference_temp`` the vote will use.
+
+        Returns:
+            ``(B, k)`` boolean tensor — ``True`` for candidates that should vote.
+            When the policy is inactive every entry is ``True`` (no-op).
+
+        The top-1 (column 0) always survives. A row whose top1−top2 gap is below
+        ``gate_steps*temp`` is left fully intact (gate closed). Rows that were
+        already fully ``-inf`` (e.g. floor-masked) yield an all-``True`` mask
+        here — ``top1`` is ``-inf`` and ``sim >= -inf - w`` holds for every
+        entry — so the existing fully-masked-row guard still owns that case.
+        """
+        if not self.active:
+            return torch.ones_like(topk_sims, dtype=torch.bool)
+
+        # Per-row top-1 (descending order ⇒ column 0). Use the tensor itself so
+        # any upstream -inf masking is respected.
+        top1 = topk_sims[:, :1]                                  # (B, 1)
+        cutoff = top1 - self.window_steps * temp                 # (B, 1)
+        keep = topk_sims >= cutoff                               # (B, k)
+
+        # Confidence gate: only truncate rows with a clear local winner.
+        if self.gate_steps > 0.0 and topk_sims.size(1) >= 2:
+            top2 = topk_sims[:, 1:2]                             # (B, 1)
+            gap = top1 - top2                                    # (B, 1), NaN if both -inf
+            gate_open = gap >= self.gate_steps * temp            # (B, 1); NaN ⇒ False
+            keep = keep | ~gate_open                             # closed-gate rows kept whole
+
+        # The top-1 always votes (guards against degenerate temp/window combos).
+        keep[:, 0] = True
+        return keep

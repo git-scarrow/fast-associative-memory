@@ -266,3 +266,25 @@ def test_nonlinear_path_passes(tmp_path):
     verdict = pilot_verdict(reembed, vision)
     assert verdict["verdict"] == "PASS"
     assert verdict["gate"] is None
+
+
+# --------------------------------------------------------------------------
+# 5. Verdict logic: parity break -> FAIL
+# --------------------------------------------------------------------------
+def test_parity_break_fails(tmp_path):
+    images = _make_pil_images()
+    geom, normalize = split_transform(_REAL_COMPOSE)
+    vision, reembed = _paired(tmp_path, _linear_model(), geom, normalize, images)
+
+    # Sanity: starts as a valid stream.
+    assert assignment_parity(reembed, vision)
+
+    # Tamper: shift every train assignment by 1 mod the attractor pool size.
+    n_attr = reembed.attractor_indices.numel()
+    reembed.train_assign = (reembed.train_assign + 1) % n_attr
+
+    assert not assignment_parity(reembed, vision)
+
+    verdict = pilot_verdict(reembed, vision)
+    assert verdict["verdict"] == "FAIL"
+    assert verdict["gate"] == "parity"

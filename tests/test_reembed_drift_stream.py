@@ -287,4 +287,4 @@ def test_parity_break_fails(tmp_path):
 
     verdict = pilot_verdict(reembed, vision)
     assert verdict["verdict"] == "FAIL"
-    assert verdict["gate"] == "parity"
+    assert verdict["gate"] == "assignment_parity"

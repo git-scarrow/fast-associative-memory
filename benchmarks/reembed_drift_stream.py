@@ -235,7 +235,7 @@ def pilot_verdict(reembed: "ReembedDriftStream", vision,
     """
     parity = assignment_parity(reembed, vision)
     if not parity:
-        return {"verdict": "FAIL", "gate": "parity", "parity": False,
+        return {"verdict": "FAIL", "gate": "assignment_parity", "parity": False,
                 "reason": "assignment/endpoint parity broken vs VisionDriftStream; "
                           "the paired comparison is void.",
                 "g1_min_cosine": None, "g2_divergence": None}

@@ -61,9 +61,10 @@ def main() -> None:
                          "first-three subset of #88's {166,63,77,156})")
     ap.add_argument("--vision-attractor-class", type=int, default=134,
                     help="shared attractor class blended into every class")
-    ap.add_argument("--vision-cache", type=str,
-                    default="feature_cache_inr_vitl14/imagenetr_dinov2_train.pt",
-                    help="path to the *_train.pt ImageNet-R ViT-L/14 cache")
+    ap.add_argument("--vision-cache", type=str, default=None,
+                    help="path to the ImageNet-R ViT-L/14 feature cache; if "
+                         "unset, defaults to the extractor's cache dir / "
+                         "imagenetr_dinov2_<split>.pt (follows --split)")
     ap.add_argument("--samples-per-class", type=int, default=32)
     ap.add_argument("--held-out-per-class", type=int, default=64)
     ap.add_argument("--seed", type=int, default=0)
@@ -107,6 +108,13 @@ def main() -> None:
     from reembed_drift_stream import (                 # noqa: E402
         G1_COS_THRESHOLD, G2_MIN_DIVERGENCE, ReembedDriftStream, pilot_verdict)
     from calibration_probe import run_policy, ALL_COLS  # noqa: E402
+
+    # Resolve the cache from --split when not overridden, so the row->image map
+    # (which ReembedDriftStream derives from --split) always matches the cache
+    # the cache-linear arm reads. Mirrors probe_reembed_pilot.py.
+    if args.vision_cache is None:
+        args.vision_cache = str(
+            Path(ex.CACHE_DIR) / f"imagenetr_dinov2_{args.split}.pt")
 
     host = socket.gethostname()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

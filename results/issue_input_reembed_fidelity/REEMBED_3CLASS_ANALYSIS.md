@@ -110,7 +110,7 @@
 | **Peak:** | — | — | 0.9701 @ decile 9 | — |
 | **High-tail drop:** | — | — | **false** | — |
 
-**Interpretation:** Mid-window support-breadth is monotone-increasing in correctness (low support → 0.59 acc, high support → 1.0 acc), confirming the +1 orientation. Late-window accuracy is non-monotone (a broad ~0.43–0.60 band from deciles 0–7, then rapid rise to 0.97 at deciles 8–9), but does NOT show the high-tail drop observed in the anchor dataset. This suggests slightly different manifold behavior under input-level re-embedding, but the core support-breadth signal survives.
+**Interpretation:** Support-breadth orientation is positive overall, but the decile curve is not strictly monotone. Low support correlates with ~0.59 acc in mid-window and ~0.35 acc in late-window; high support reaches ~1.0 and 0.97 respectively, confirming the +1 orientation. Late-window accuracy shows a broad ~0.43–0.60 band from deciles 0–7, then rapid rise to 0.97 at deciles 8–9, and does NOT show the high-tail drop observed in the anchor dataset. This suggests slightly different manifold behavior under input-level re-embedding, but the core support-breadth signal survives.
 
 ---
 
@@ -118,9 +118,7 @@
 
 **Forced-zone logistic AUC:** blank (NaN in analyzer output).
 
-**Note:** This does not prove the two-axis detector failed; it reflects a small-sample or separation condition in the logistic fit. The individual features are strong (best single-feature AUC 0.8093), and the false-collapse signature is intact. Recommend either:
-1. Larger input-reembed subset to improve sample size in the forced zone.
-2. Small-sample-safe AUC calculation (e.g., Wilson score, exact binomial) as a follow-on supplement.
+**Note:** The analyzer returned blank/NaN for forced-zone two-axis logistic AUC. Per analyzer control flow, this should be diagnosed by checking scikit-learn availability and post-filter forced-zone label counts. Do not treat the blank value as evidence that the two-axis detector failed.
 
 ---
 
@@ -135,7 +133,7 @@ Core observations:
 - `rank_gap` sign-flips in forced zone (−1 orientation, as expected).
 - `support_breadth` orientation survives (+1, broad = correct).
 - All five label-free predictors separate in forced zone.
-- Mid-window support is monotone in correctness; late-window shows band-pass shape but no high-tail drop.
+- Support-breadth orientation is positive overall, but the decile curve is not strictly monotone.
 
 **Limitations:**
 - Two-axis logistic AUC is unresolved in this subset.
@@ -143,13 +141,10 @@ Core observations:
 - 3-class subset is small; larger reembed run would reduce small-sample artifacts.
 
 **Recommended next step:**
-Do not advance directly to full A2b or cache-linear arm comparison yet. Run a larger input-reembed subset (6–8 classes, same 32 train / 64 held per class, same schedule) using the same driver with no code changes. This will:
-1. Resolve the two-axis logistic AUC in a larger sample.
-2. Confirm whether late-window band-pass is a real divergence or a 3-class artifact.
-3. Provide a more robust forced-zone signature before committing to a paired cache-linear comparison.
+Do not advance directly to full A2b. Before using two-axis logistic AUC as a decision gate, inspect dependency availability and post-filter forced-zone label counts. A larger input-reembed subset may still be useful for robustness, but it is not the direct fix for the blank AUC.
 
 ---
 
 **Analysis date:** 2026-06-08  
 **Analyzer:** `benchmarks/analyze_calibration.py` (unmodified)  
-**Input CSV location (Gentoo):** `~/projects/fast-associative-memory/results/issue_input_reembed_fidelity/per_probe_reembed.csv`
+**Input CSV location (Gentoo):** `results/issue_input_reembed_fidelity/per_probe_reembed.csv`

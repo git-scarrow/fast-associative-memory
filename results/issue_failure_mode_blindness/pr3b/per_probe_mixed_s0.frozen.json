@@ -1,0 +1,210 @@
+{
+  "frozen_detector": {
+    "fit_csv": "../../../results/issue_vitl14_blend_confidence/per_probe.csv",
+    "fit_summary": "../../../results/issue_vitl14_blend_confidence/heldout_abstention_summary.json",
+    "features": [
+      "top1_top2_margin",
+      "effective_support"
+    ],
+    "target": "vote_correct",
+    "split": "parity (PRIMARY in heldout_abstention.py)",
+    "train_epochs": [
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      20,
+      22,
+      24,
+      26,
+      28
+    ],
+    "verified_heldout_parity_auc": 0.804,
+    "frozen_threshold_youden": 0.292748,
+    "standardization_mean": [
+      0.063177,
+      7.643486
+    ],
+    "standardization_std": [
+      0.08701,
+      5.265615
+    ],
+    "logistic_coef": [
+      -3.546096,
+      0.411217
+    ],
+    "logistic_intercept": -2.292901
+  },
+  "mixed": {
+    "n_probes": 2530,
+    "wrong": 489,
+    "zone_composition": {
+      "correct": {
+        "n": 2041,
+        "n_forced_zone": 1192,
+        "forced_zone_share": 0.584
+      },
+      "contra_wrong": {
+        "n": 424,
+        "n_forced_zone": 423,
+        "forced_zone_share": 0.9976
+      },
+      "stale_wrong": {
+        "n": 63,
+        "n_forced_zone": 63,
+        "forced_zone_share": 1.0
+      },
+      "other_wrong": {
+        "n": 2,
+        "n_forced_zone": 2,
+        "forced_zone_share": 1.0
+      }
+    },
+    "score_distribution": {
+      "correct": {
+        "n": 2041,
+        "median": 0.5488,
+        "p10": 0.0637,
+        "p90": 0.7424
+      },
+      "contra_wrong": {
+        "n": 424,
+        "median": 0.577,
+        "p10": 0.4798,
+        "p90": 0.7313
+      },
+      "stale_wrong": {
+        "n": 63,
+        "median": 0.6532,
+        "p10": 0.5525,
+        "p90": 0.738
+      },
+      "other_wrong": {
+        "n": 2,
+        "median": 0.2278,
+        "p10": 0.2278,
+        "p90": 0.2278
+      }
+    },
+    "auc": {
+      "all_rows": {
+        "contra_wrong": 0.4115,
+        "stale_wrong": 0.3062,
+        "other_wrong": 0.779
+      },
+      "forced_zone": {
+        "contra_wrong": 0.6437,
+        "stale_wrong": 0.4979,
+        "other_wrong": 1.0
+      }
+    },
+    "confidently_wrong": {
+      "all_rows": {
+        "contra_wrong": 0.5731,
+        "stale_wrong": 0.8889
+      },
+      "forced_zone": {
+        "contra_wrong": 0.2955,
+        "stale_wrong": 0.4921
+      }
+    },
+    "operating_point": {
+      "zoned": {
+        "threshold": 0.292748,
+        "retained_coverage": 0.9968,
+        "retained_accuracy": 0.8073,
+        "false_abstain_rate_on_correct": 0.0024,
+        "error_capture_contra_wrong": 0.0024,
+        "error_capture_stale_wrong": 0.0
+      },
+      "unzoned": {
+        "threshold": 0.292748,
+        "retained_coverage": 0.7953,
+        "retained_accuracy": 0.7589,
+        "false_abstain_rate_on_correct": 0.2518,
+        "error_capture_contra_wrong": 0.0047,
+        "error_capture_stale_wrong": 0.0
+      }
+    },
+    "dose_response": {
+      "contra_vote_weight": [
+        {
+          "bin": "0",
+          "n": 832,
+          "wrong_rate": 0.0781
+        },
+        {
+          "bin": "(0.0,0.25]",
+          "n": 230,
+          "wrong_rate": 0.0
+        },
+        {
+          "bin": "(0.25,0.5]",
+          "n": 546,
+          "wrong_rate": 0.0842
+        },
+        {
+          "bin": "(0.5,0.75]",
+          "n": 856,
+          "wrong_rate": 0.3645
+        },
+        {
+          "bin": "(0.75,1.0]",
+          "n": 66,
+          "wrong_rate": 1.0
+        }
+      ],
+      "stale_vote_weight": [
+        {
+          "bin": "0",
+          "n": 2165,
+          "wrong_rate": 0.1968
+        },
+        {
+          "bin": "(0.0,0.25]",
+          "n": 240,
+          "wrong_rate": 0.0
+        },
+        {
+          "bin": "(0.25,0.5]",
+          "n": 125,
+          "wrong_rate": 0.504
+        },
+        {
+          "bin": "(0.5,0.75]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.75,1.0]",
+          "n": 0,
+          "wrong_rate": null
+        }
+      ]
+    }
+  },
+  "pre_registered_triggers": {
+    "definitions": {
+      "contra_auc_le": 0.6,
+      "contra_confidently_wrong_gt": 0.5,
+      "stale_auc_le": 0.55
+    },
+    "primary_scope": "all_rows",
+    "contradictory": {
+      "auc": null,
+      "confidently_wrong": null,
+      "auc_forced_zone_secondary": null,
+      "fired": false,
+      "consequence_if_fired": "write-time contradiction detection required"
+    },
+    "stale": {
+      "auc": null,
+      "confidently_wrong": null,
+      "auc_forced_zone_secondary": null,
+      "fired": false,
+      "consequence_if_fired": "recency must enter the readout"
+    }
+  }
+}

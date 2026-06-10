@@ -97,6 +97,40 @@ MODE_PRECEDENCE = ["CONTRADICTORY_STRICT", "STALE_STRICT",
                    "CONTRADICTORY_LENIENT", "STALE_LENIENT",
                    "BLENDED", "OTHER_WRONG"]
 
+# Ground-truth write-event classes (PR-3b fork_events.csv; PR3_DESIGN.md §7).
+# `initial` / `duplicate-rewrite` / `clean-rewrite` are protocol-certified
+# non-conflict classes; `one-shot-ambiguous` is supersession whose single
+# write the protocol certifies as observationally undecidable. payload-drift
+# and key-drift are reserved in the design memo and NOT instantiable here.
+EVENT_INITIAL = "initial"
+EVENT_DUPLICATE = "duplicate-rewrite"   # vision: identical batch re-written
+EVENT_CLEAN_REWRITE = "clean-rewrite"   # synthetic: fresh same-class samples
+EVENT_CONTRADICTION = "contradiction"
+EVENT_SUPERSESSION = "supersession"
+EVENT_ONE_SHOT = "one-shot-ambiguous"
+
+# fork_events.csv schema: write-time observables ONLY (label-free at the
+# feature level) + the protocol's ground-truth event_class. No registry-
+# derived failure labels may appear here (pinned by test). Recency is
+# expressed as the incumbent's latest provenance sequence number
+# (protocol-time write recency) because the engine's `last_seen` is
+# wall-clock and would break byte-determinism.
+EVENT_COLS = ["arm", "epoch", "event_class", "record_tag", "record_seq",
+              "outcome", "pre_sim", "payload_cos_incumbent",
+              "effective_vigilance", "incumbent_slot",
+              "incumbent_hit_counts", "incumbent_last_write_seq",
+              "incumbent_n_records", "owner_slot", "injected_label"]
+
+# per_slot.csv schema: one row per occupied slot per probe epoch. Role flags
+# are NOT mutually exclusive; `role` collapses them by the documented
+# precedence (contra_fork > stale_superseded > merge_candidate >
+# current_fork > clean). Ground-truth roles come from the registry;
+# merge_candidate is observational (PR3_DESIGN.md §7).
+SLOT_COLS = ["arm", "epoch", "slot", "decode", "hit_counts",
+             "last_write_seq", "usage", "n_records", "is_contra_fork",
+             "is_stale_superseded", "is_current_fork", "is_merge_candidate",
+             "role"]
+
 NEW_COLS = ["arm", "injection_rate", "supersede_epoch", "probe_index",
             "top1_slot", "failure_mode",
             "contradictory_strict", "contradictory_lenient",
@@ -120,6 +154,7 @@ class StaleGroup:
     pre_label: int
     post_label: int
     phase1_ids: set = field(default_factory=set)
+    phase2_ids: set = field(default_factory=set)
     superseded: bool = False
     supersede_epoch: int = -1
 
@@ -151,7 +186,9 @@ class FailureModeRegistry:
     # -- contradiction arm ---------------------------------------------------
     def inject_contradictions(self, mem: ContinuousCAM, queries: torch.Tensor,
                               true_labels: torch.Tensor, num_classes: int,
-                              rate: float, rng: torch.Generator):
+                              rate: float, rng: torch.Generator,
+                              eligible: torch.Tensor | None = None,
+                              events: list | None = None, epoch: int = -1):
         """Re-write ``rate`` of the batch rows with permuted-label payloads.
 
         Each injected row keeps its real query (key) but carries a one-hot
@@ -159,6 +196,15 @@ class FailureModeRegistry:
         model. Writes go through the normal ``learn_local``; the outcome of
         each (forked / plain-miss / absorbed / dropped) is classified from the
         pre-write nearest sim, the effective vigilance, and provenance.
+
+        ``eligible`` (optional bool mask over batch rows) restricts which rows
+        may be injected — the mixed arm excludes the superseded group's
+        pre-label rows so supersession ground truth on those keys stays pure.
+        With ``eligible=None`` the selection is identical to the PR-2a/2b
+        behavior (a permutation prefix). ``events`` (optional list) collects
+        one write-event row per injection (ground-truth class
+        ``contradiction``) with the same pre-write observables as
+        ``logged_learn`` — PR-3b's fork_events.csv channel.
         """
         if mem.slot_records is None:
             raise RuntimeError(
@@ -168,17 +214,20 @@ class FailureModeRegistry:
         n_inj = int(round(rate * B))
         if n_inj == 0:
             return []
-        rows = torch.randperm(B, generator=rng)[:n_inj]
+        perm = torch.randperm(B, generator=rng)
+        if eligible is not None:
+            perm = perm[eligible[perm]]
+        rows = perm[:min(n_inj, perm.numel())]
         inj_q = queries[rows]
         true = true_labels[rows]
+        n_sel = rows.numel()
         # Uniform wrong label: shift by 1..C-1 (mod C) — never the true class.
-        shift = torch.randint(1, num_classes, (n_inj,), generator=rng)
+        shift = torch.randint(1, num_classes, (n_sel,), generator=rng)
         wrong = (true + shift) % num_classes
         inj_y = F.one_hot(wrong, num_classes).float()
 
-        ids = self.next_ids("contra", n_inj)
-        pre_best_slots, pre_best_sims = mem._get_nearest_batch(inj_q)
-        thresholds = self._effective_vigilance(mem, inj_q, n_inj)
+        ids = self.next_ids("contra", n_sel)
+        pre = _pre_write_observables(mem, inj_q, inj_y, self)
 
         mem.learn_local(inj_q, inj_y, record_ids=ids)
 
@@ -189,11 +238,16 @@ class FailureModeRegistry:
                 outcome = DROPPED
             elif mem.records_for(slot) == {rid}:
                 outcome = (FORKED
-                           if float(pre_best_sims[j]) >= float(thresholds[j])
+                           if float(pre["pre_sim"][j]) >= float(
+                               pre["effective_vigilance"][j])
                            else PLAIN_MISS)
             else:
                 outcome = ABSORBED
             self.contra[rid] = {"label": int(wrong[j]), "outcome": outcome}
+            if events is not None:
+                events.append(_event_row(
+                    epoch, EVENT_CONTRADICTION, rid, outcome, pre, j,
+                    owners.get(rid), injected_label=int(wrong[j])))
         return ids
 
     @staticmethod
@@ -268,6 +322,7 @@ class FailureModeRegistry:
                                "write_phase2 — stale labels are undefined "
                                "while A is still current ground truth.")
         ids = self.next_ids(f"stale2:{group.name}", queries.size(0))
+        group.phase2_ids.update(ids)
         mem.learn_local(queries, targets, record_ids=ids)
         return ids
 
@@ -312,6 +367,177 @@ def _owner_slots(mem: ContinuousCAM, ids: list) -> dict:
             found[rid] = slot
         wanted -= hit
     return {rid: found.get(rid) for rid in ids}
+
+
+# ---------------------------------------------------------------------------
+# PR-3b: write-event log (fork_events.csv) and per-slot table (per_slot.csv).
+# Both are READ-ONLY observers — every write still goes through learn_local.
+# ---------------------------------------------------------------------------
+@torch.no_grad()
+def _pre_write_observables(mem: ContinuousCAM, queries: torch.Tensor,
+                           targets: torch.Tensor,
+                           registry: "FailureModeRegistry") -> dict:
+    """Per-row pre-write state vs the PRE-BATCH memory (the same convention
+    as the PR-2a outcome classification): nearest slot/sim, the vigilance
+    threshold the call will apply, the payload cosine between the incoming
+    target and the incumbent's stored value, and incumbent maturity/recency/
+    lineage stats. Within-batch interactions are NOT captured."""
+    n = queries.size(0)
+    if not mem.occupied.any():
+        return {"pre_sim": [float("nan")] * n,
+                "payload_cos": [float("nan")] * n,
+                "effective_vigilance": [float(mem.vigilance)] * n,
+                "incumbent_slot": [-1] * n,
+                "incumbent_hits": [0] * n,
+                "incumbent_last_write_seq": [-1] * n,
+                "incumbent_n_records": [0] * n}
+    pre_slots, pre_sims = mem._get_nearest_batch(queries)
+    thresholds = registry._effective_vigilance(mem, queries, n)
+    inc_vals = F.normalize(mem.values[pre_slots].float(), dim=-1)
+    pay = F.normalize(targets.float(), dim=-1)
+    pcos = (inc_vals * pay).sum(dim=-1)
+    return {
+        "pre_sim": [float(s) for s in pre_sims],
+        "payload_cos": [float(c) for c in pcos],
+        "effective_vigilance": [float(t) for t in thresholds],
+        "incumbent_slot": [int(s) for s in pre_slots],
+        "incumbent_hits": [int(mem.hit_counts[int(s)]) for s in pre_slots],
+        "incumbent_last_write_seq": [_last_write_seq(mem, int(s))
+                                     for s in pre_slots],
+        "incumbent_n_records": [len(mem.records_for(int(s)))
+                                for s in pre_slots],
+    }
+
+
+def _last_write_seq(mem: ContinuousCAM, slot: int) -> int:
+    """Protocol-time write recency: the latest provenance sequence number in
+    the slot's record set (every write is stamped, so this is the slot's
+    last write). Used instead of the engine's wall-clock ``last_seen`` so
+    the side tables stay byte-deterministic; the audit pins that both are
+    write-path-only."""
+    recs = mem.records_for(slot)
+    return max((seq for _tag, seq in recs), default=-1)
+
+
+def _event_row(epoch: int, event_class: str, rid, outcome: str, pre: dict,
+               j: int, owner, injected_label: int = -1) -> dict:
+    tag, seq = rid
+    return {"epoch": epoch, "event_class": event_class,
+            "record_tag": tag, "record_seq": seq, "outcome": outcome,
+            "pre_sim": round(pre["pre_sim"][j], 6),
+            "payload_cos_incumbent": round(pre["payload_cos"][j], 6),
+            "effective_vigilance": round(pre["effective_vigilance"][j], 6),
+            "incumbent_slot": pre["incumbent_slot"][j],
+            "incumbent_hit_counts": pre["incumbent_hits"][j],
+            "incumbent_last_write_seq": pre["incumbent_last_write_seq"][j],
+            "incumbent_n_records": pre["incumbent_n_records"][j],
+            "owner_slot": -1 if owner is None else int(owner),
+            "injected_label": injected_label}
+
+
+def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
+                 queries: torch.Tensor, targets: torch.Tensor,
+                 epoch: int, event_class: str, events: list | None,
+                 write_fn) -> list:
+    """Wrap one write call with pre-write observables and outcome rows.
+
+    ``write_fn(ids_or_none)`` performs the actual write and returns the
+    record ids — either by consuming pre-generated ids (clean writes) or by
+    generating its own (the registry's phase helpers). Outcome
+    classification mirrors inject_contradictions: a slot whose record set is
+    exactly {rid} is fresh (forked above the threshold, plain-miss below);
+    anything else absorbed; no owner = dropped."""
+    pre = _pre_write_observables(mem, queries, targets, registry)
+    ids = write_fn()
+    if events is None:
+        return ids
+    owners = _owner_slots(mem, ids)
+    for j, rid in enumerate(ids):
+        slot = owners.get(rid)
+        if slot is None:
+            outcome = DROPPED
+        elif mem.records_for(slot) == {rid}:
+            outcome = (FORKED
+                       if pre["pre_sim"][j] == pre["pre_sim"][j]  # not NaN
+                       and pre["pre_sim"][j] >= pre["effective_vigilance"][j]
+                       else PLAIN_MISS)
+        else:
+            outcome = ABSORBED
+        events.append(_event_row(epoch, event_class, rid, outcome, pre, j,
+                                 slot))
+    return ids
+
+
+@torch.no_grad()
+def slot_table_rows(mem: ContinuousCAM, registry: FailureModeRegistry,
+                    epoch: int) -> list[dict]:
+    """One row per occupied slot at this probe epoch: engine state (decode,
+    maturity, recency, usage, lineage size) + ground-truth role flags from
+    the registry, plus the observational merge_candidate flag (provenance
+    spans both phases of one group — only instantiable on the merge path)."""
+    contra_slots = registry.contra_fork_slots(mem)
+    stale_slots = registry.stale_slots(mem)
+    groups = [g for g in registry.stale_groups if g.superseded]
+    rows = []
+    for slot in mem.occupied.nonzero(as_tuple=True)[0].tolist():
+        recs = mem.records_for(slot)
+        decode = int(mem.values[slot].float().argmax())
+        is_contra = slot in contra_slots
+        is_stale = slot in stale_slots
+        is_current = any((recs & g.phase2_ids) and decode == g.post_label
+                         for g in groups)
+        is_merge = any((recs & g.phase1_ids) and (recs & g.phase2_ids)
+                       for g in groups)
+        role = ("contra_fork" if is_contra
+                else "stale_superseded" if is_stale
+                else "merge_candidate" if is_merge
+                else "current_fork" if is_current
+                else "clean")
+        rows.append({"epoch": epoch, "slot": slot, "decode": decode,
+                     "hit_counts": int(mem.hit_counts[slot]),
+                     "last_write_seq": _last_write_seq(mem, slot),
+                     "usage": float(mem.usage[slot]),
+                     "n_records": len(recs),
+                     "is_contra_fork": int(is_contra),
+                     "is_stale_superseded": int(is_stale),
+                     "is_current_fork": int(is_current),
+                     "is_merge_candidate": int(is_merge),
+                     "role": role})
+    return rows
+
+
+def _write_side_table(path: Path, cols: list[str], rows: list[dict],
+                      arm_label: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        for r in rows:
+            w.writerow({"arm": arm_label, **r})
+
+
+def resolve_fork_outcome(epoch_log: list[dict]) -> str:
+    """Observational fork-resolution label for a run's supersession group,
+    from the per-epoch superseded-key election counts (PR3_DESIGN.md §7:
+    natural-history outcome, never a classifier target). Tie detection uses
+    the median stale vote mass on superseded keys at the final epoch."""
+    post = [e for e in epoch_log if e.get("superseded")]
+    if not post or post[-1].get("superseded_key_probes", 0) == 0:
+        return "unresolved"
+    last = post[-1]
+    n = last["superseded_key_probes"]
+    frac_new = last["updated_selected"] / n
+    frac_old = last["stale_selected"] / n
+    w = last.get("stale_weight_median_superseded")
+    if w is not None and 0.45 <= w <= 0.55:
+        return "persistent-tie"
+    if frac_new >= 0.9:
+        return "later-dominates"
+    if frac_old >= 0.9:
+        return "old-persists"
+    if frac_new > 0 and frac_old > 0:
+        return "persistent-split"
+    return "mixed"
 
 
 @torch.no_grad()
@@ -483,6 +709,106 @@ def append_rows(writer: csv.DictWriter, ctx: dict, labeled: dict) -> int:
     return V
 
 
+def soft_supersession_targets(n: int, pre_label: int, post_label: int,
+                              num_classes: int) -> torch.Tensor:
+    """Non-orthogonal phase-2 targets for the merge-path stale arm:
+    0.6*e_A + 0.8*e_B (unit norm). cosine to the stored A payload is 0.6 >
+    0.5, so the engine's bipartite check takes the HIT path and EMA-merges
+    into the mature slot; argmax is B, so ground truth still flips."""
+    y = (0.6 * F.one_hot(torch.full((n,), pre_label), num_classes)
+         + 0.8 * F.one_hot(torch.full((n,), post_label), num_classes))
+    return y.float()
+
+
+def run_epoch_writes(mem: ContinuousCAM, registry: FailureModeRegistry,
+                     group: StaleGroup | None, arm: str, epoch: int,
+                     q: torch.Tensor, y: torch.Tensor, lab: torch.Tensor, *,
+                     rate: float, num_classes: int, rng: torch.Generator,
+                     supersede_epoch: int, one_shot: bool = False,
+                     key_jitter: float = 0.0,
+                     jitter_gen: torch.Generator | None = None,
+                     payload_mode: str = "onehot",
+                     events: list | None = None,
+                     clean_rewrite_class: str = EVENT_DUPLICATE):
+    """All of one epoch's writes for any arm (shared by the synthetic and
+    vision runners; behavior for the PR-2 arms is unchanged):
+
+      clean  — every row through learn_local.
+      contra — clean writes, then permuted-label injections at ``rate``.
+      stale  — group rows through the supersession protocol (phase 1 before
+               ``supersede_epoch``; phase 2 at/after — exactly once with
+               ``one_shot``, with keys jittered by ``key_jitter``, with
+               merge-path soft targets under ``payload_mode='soft'``);
+               remaining rows clean.
+      mixed  — stale protocol AND contra injections in the same memory;
+               the group's pre-label rows are EXCLUDED from injection so
+               supersession ground truth on those keys stays pure.
+    """
+    clean_cls = EVENT_INITIAL if epoch == 0 else clean_rewrite_class
+    if group is not None:
+        g0 = lab == group.pre_label
+        if epoch < supersede_epoch:
+            logged_learn(
+                mem, registry, q[g0], y[g0], epoch, clean_cls, events,
+                lambda: registry.write_phase1(mem, group, q[g0], y[g0]))
+        else:
+            first = not group.superseded
+            if first:
+                registry.supersede(group, epoch)
+            if first or not one_shot:
+                q2 = q[g0]
+                if key_jitter > 0.0:
+                    # direction-normalized noise: key_jitter IS the L2
+                    # perturbation magnitude, independent of dim (raw randn
+                    # scales with sqrt(dim) and would obliterate the key).
+                    noise = F.normalize(
+                        torch.randn(q2.shape, generator=jitter_gen), dim=-1)
+                    q2 = F.normalize(q2 + key_jitter * noise, dim=-1)
+                n2 = int(g0.sum())
+                if payload_mode == "soft":
+                    y2 = soft_supersession_targets(
+                        n2, group.pre_label, group.post_label, num_classes)
+                else:
+                    y2 = F.one_hot(torch.full((n2,), group.post_label),
+                                   num_classes).float()
+                ev = EVENT_ONE_SHOT if one_shot else EVENT_SUPERSESSION
+                logged_learn(
+                    mem, registry, q2, y2, epoch, ev, events,
+                    lambda: registry.write_phase2(mem, group, q2, y2))
+        rest = ~g0
+        q_c, y_c = q[rest], y[rest]
+    else:
+        q_c, y_c = q, y
+
+    def _clean_write():
+        ids = registry.next_ids("clean", q_c.size(0))
+        mem.learn_local(q_c, y_c, record_ids=ids)
+        return ids
+
+    logged_learn(mem, registry, q_c, y_c, epoch, clean_cls, events,
+                 _clean_write)
+
+    if arm in ("contra", "mixed"):
+        eligible = (lab != group.pre_label) if group is not None else None
+        registry.inject_contradictions(mem, q, lab, num_classes, rate, rng,
+                                       eligible=eligible, events=events,
+                                       epoch=epoch)
+
+
+def arm_label_for(arm: str, one_shot: bool, key_jitter: float,
+                  payload_mode: str) -> str:
+    """CSV `arm` value encoding the protocol variant, so multi-file analyses
+    group correctly (e.g. stale-oneshot, stale-jitter0.05, stale-soft)."""
+    label = arm
+    if one_shot:
+        label += "-oneshot"
+    if key_jitter > 0.0:
+        label += f"-jitter{key_jitter:g}"
+    if payload_mode == "soft":
+        label += "-soft"
+    return label
+
+
 # ---------------------------------------------------------------------------
 # Synthetic harness — used by the hermetic tests and the --synthetic CLI mode.
 # ---------------------------------------------------------------------------
@@ -506,27 +832,39 @@ def build_synthetic_stream(num_classes=4, dim=32, n_per=24, held_per=16,
 
 def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
                   out_path: Path, seed: int = 0, num_classes: int = 4,
-                  dim: int = 32) -> int:
+                  dim: int = 32, one_shot: bool = False,
+                  key_jitter: float = 0.0,
+                  payload_mode: str = "onehot") -> int:
     """End-to-end synthetic run for one arm; returns rows written.
 
     clean  — no injections (negative control: no contra/stale labels may fire)
     contra — permuted-label injections at ``rate`` per epoch
     stale  — class 0 superseded by ``num_classes - 1`` at ``supersede_epoch``;
              held-out class-0 ground truth flips at that epoch
+    mixed  — stale protocol + contra injections (pre-label rows excluded)
+
+    PR-3b variants (stale/mixed): ``one_shot`` writes phase 2 exactly once;
+    ``key_jitter`` perturbs phase-2 keys; ``payload_mode='soft'`` takes the
+    EMA-merge path. Side tables ``<out>.per_slot.csv`` and
+    ``<out>.fork_events.csv`` are always written next to the main CSV.
     """
     batches, hq, hlab = build_synthetic_stream(
         num_classes=num_classes, dim=dim, epochs=epochs, seed=seed)
     rng = torch.Generator().manual_seed(seed + 1)
+    jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes, max_entries=1024,
                         dynamic_vigilance=DynamicVigilance(),
                         retrieval_floor_policy=RetrievalFloorPolicy(),
                         track_provenance=True)
     group = None
-    if arm == "stale":
+    if arm in ("stale", "mixed"):
         group = registry.new_stale_group("synthetic-class0",
                                          pre_label=0,
                                          post_label=num_classes - 1)
+    label = arm_label_for(arm, one_shot, key_jitter, payload_mode)
+    events: list = []
+    slot_rows: list = []
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     total = 0
@@ -536,31 +874,17 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
         for epoch, (q, y, lab) in enumerate(batches):
             mem.reset_dynamic_vigilance_stats()
             truth = hlab.clone()
-            if arm == "stale":
-                g0 = lab == group.pre_label
-                if epoch < supersede_epoch:
-                    registry.write_phase1(mem, group, q[g0], y[g0])
-                    ids = registry.next_ids("clean", int((~g0).sum()))
-                    mem.learn_local(q[~g0], y[~g0], record_ids=ids)
-                else:
-                    if not group.superseded:
-                        registry.supersede(group, epoch)
-                    y2 = F.one_hot(
-                        torch.full((int(g0.sum()),), group.post_label),
-                        num_classes).float()
-                    registry.write_phase2(mem, group, q[g0], y2)
-                    ids = registry.next_ids("clean", int((~g0).sum()))
-                    mem.learn_local(q[~g0], y[~g0], record_ids=ids)
-                if group.superseded:
-                    truth = torch.where(hlab == group.pre_label,
-                                        torch.full_like(hlab, group.post_label),
-                                        hlab)
-            else:
-                ids = registry.next_ids("clean", q.size(0))
-                mem.learn_local(q, y, record_ids=ids)
-                if arm == "contra":
-                    registry.inject_contradictions(
-                        mem, q, lab, num_classes, rate, rng)
+            run_epoch_writes(
+                mem, registry, group, arm, epoch, q, y, lab,
+                rate=rate, num_classes=num_classes, rng=rng,
+                supersede_epoch=supersede_epoch, one_shot=one_shot,
+                key_jitter=key_jitter, jitter_gen=jitter_gen,
+                payload_mode=payload_mode, events=events,
+                clean_rewrite_class=EVENT_CLEAN_REWRITE)
+            if group is not None and group.superseded:
+                truth = torch.where(hlab == group.pre_label,
+                                    torch.full_like(hlab, group.post_label),
+                                    hlab)
 
             stats = mem.get_stats()
             acc = (mem.forward(hq).argmax(dim=-1) == truth).float().mean()
@@ -580,10 +904,16 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
                     "sim_floor_active", float("nan"))), 6),
                 "floor_delta_ema": round(float(stats.get(
                     "floor_delta_ema", float("nan"))), 6),
-                "arm": arm, "injection_rate": rate,
-                "supersede_epoch": supersede_epoch if arm == "stale" else -1,
+                "arm": label,
+                "injection_rate": rate if arm in ("contra", "mixed") else 0.0,
+                "supersede_epoch": supersede_epoch if group is not None else -1,
             }
             total += append_rows(writer, ctx, labeled)
+            slot_rows += slot_table_rows(mem, registry, epoch)
+    _write_side_table(out_path.with_suffix(".per_slot.csv"),
+                      SLOT_COLS, slot_rows, label)
+    _write_side_table(out_path.with_suffix(".fork_events.csv"),
+                      EVENT_COLS, events, label)
     return total
 
 
@@ -596,7 +926,8 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                samples_per_class: int = 32, held_out_per_class: int = 64,
                contraction: float = 0.0, max_entries: int = 4096,
                blend_eps: float = 0.10, seed: int = 0,
-               supersede_epoch: int = 6):
+               supersede_epoch: int = 6, one_shot: bool = False,
+               key_jitter: float = 0.0, payload_mode: str = "onehot"):
     """Cache-backed clean/contra/stale arm over the DINOv2 ViT-L/14 manifold.
 
     PR-2b/PR-2c protocol. The stream is the verified ``vitl14_cifar100_train``
@@ -631,9 +962,9 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     counts, per-epoch wrong/labeled rates, stale-selection counts) is also
     what the CLI dumps as JSON next to the CSV.
     """
-    if arm not in ("clean", "contra", "stale"):
-        raise ValueError(f"vision mode wires clean/contra (PR-2b) and stale "
-                         f"(PR-2c) — got {arm!r}")
+    if arm not in ("clean", "contra", "stale", "mixed"):
+        raise ValueError(f"vision mode wires clean/contra (PR-2b), stale "
+                         f"(PR-2c) and mixed/variants (PR-3b) — got {arm!r}")
     stream = VisionDriftStream(
         categories=list(classes), attractor_category=attractor_class,
         samples_per_class=samples_per_class,
@@ -643,12 +974,13 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     num_classes = stream.num_classes
 
     rng = torch.Generator().manual_seed(seed + 1)
+    jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
     group = None
-    if arm == "stale":
+    if arm in ("stale", "mixed"):
         if not (0 < supersede_epoch < epochs):
             raise ValueError(
-                f"stale arm needs 0 < supersede_epoch < epochs so both "
+                f"stale/mixed arms need 0 < supersede_epoch < epochs so both "
                 f"phases run — got supersede_epoch={supersede_epoch}, "
                 f"epochs={epochs}")
         # Synthetic-arm convention: first remapped class is superseded by the
@@ -661,6 +993,9 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                         dynamic_vigilance=DynamicVigilance(),
                         retrieval_floor_policy=RetrievalFloorPolicy(),
                         track_provenance=True)
+    label = arm_label_for(arm, one_shot, key_jitter, payload_mode)
+    events: list = []
+    slot_rows: list = []
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     total = 0
@@ -671,31 +1006,17 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
         for epoch in range(epochs):
             mem.reset_dynamic_vigilance_stats()
             truth = hlab.clone()
-            if arm == "stale":
-                g0 = lab == group.pre_label
-                if epoch < supersede_epoch:
-                    registry.write_phase1(mem, group, q[g0], y[g0])
-                    ids = registry.next_ids("clean", int((~g0).sum()))
-                    mem.learn_local(q[~g0], y[~g0], record_ids=ids)
-                else:
-                    if not group.superseded:
-                        registry.supersede(group, epoch)
-                    y2 = F.one_hot(
-                        torch.full((int(g0.sum()),), group.post_label),
-                        num_classes).float()
-                    registry.write_phase2(mem, group, q[g0], y2)
-                    ids = registry.next_ids("clean", int((~g0).sum()))
-                    mem.learn_local(q[~g0], y[~g0], record_ids=ids)
-                if group.superseded:
-                    truth = torch.where(hlab == group.pre_label,
-                                        torch.full_like(hlab, group.post_label),
-                                        hlab)
-            else:
-                ids = registry.next_ids("clean", q.size(0))
-                mem.learn_local(q, y, record_ids=ids)
-                if arm == "contra":
-                    registry.inject_contradictions(
-                        mem, q, lab, num_classes, rate, rng)
+            run_epoch_writes(
+                mem, registry, group, arm, epoch, q, y, lab,
+                rate=rate, num_classes=num_classes, rng=rng,
+                supersede_epoch=supersede_epoch, one_shot=one_shot,
+                key_jitter=key_jitter, jitter_gen=jitter_gen,
+                payload_mode=payload_mode, events=events,
+                clean_rewrite_class=EVENT_DUPLICATE)
+            if group is not None and group.superseded:
+                truth = torch.where(hlab == group.pre_label,
+                                    torch.full_like(hlab, group.post_label),
+                                    hlab)
 
             stats = mem.get_stats()
             acc = (mem.forward(hq).argmax(dim=-1) == truth).float().mean()
@@ -716,10 +1037,12 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                     "sim_floor_active", float("nan"))), 6),
                 "floor_delta_ema": round(float(stats.get(
                     "floor_delta_ema", float("nan"))), 6),
-                "arm": arm, "injection_rate": rate if arm == "contra" else 0.0,
-                "supersede_epoch": supersede_epoch if arm == "stale" else -1,
+                "arm": label,
+                "injection_rate": rate if arm in ("contra", "mixed") else 0.0,
+                "supersede_epoch": supersede_epoch if group is not None else -1,
             }
             total += append_rows(writer, ctx, labeled)
+            slot_rows += slot_table_rows(mem, registry, epoch)
             V = labeled["n_rows"]
             wrong = (V - int(labeled["per_probe"]["vote_correct"].sum())
                      if V else 0)
@@ -732,7 +1055,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                 "live_fork_slots": n_fork_slots,
                 "acc_epoch": round(float(acc), 6),
             }
-            if arm == "stale":
+            if group is not None:
                 ss = int(labeled["stale_strict"].sum()) if V else 0
                 sl = int(labeled["stale_lenient"].sum()) if V else 0
                 # Stale-selection accounting on the superseded keys: held-out
@@ -743,6 +1066,8 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                        else torch.zeros(max(V, 0), dtype=torch.bool))
                 pred = (labeled["per_probe"]["vote_pred_label"]
                         if V else torch.zeros(0, dtype=torch.long))
+                sw = (labeled["stale_vote_weight"][sup]
+                      if V else torch.zeros(0))
                 entry.update({
                     "stale_strict": ss, "stale_lenient": sl,
                     "live_stale_slots": len(registry.stale_slots(mem)),
@@ -752,22 +1077,31 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                         ((pred == group.pre_label) & sup).sum()),
                     "updated_selected": int(
                         ((pred == group.post_label) & sup).sum()),
+                    "stale_weight_median_superseded": (
+                        round(float(sw.median()), 6) if sw.numel() else None),
                 })
             epoch_log.append(entry)
             extra = (f" s_strict={entry.get('stale_strict')} "
                      f"s_lenient={entry.get('stale_lenient')} "
                      f"stale_slots={entry.get('live_stale_slots')} "
                      f"stale_sel={entry.get('stale_selected')}"
-                     if arm == "stale" else "")
-            print(f"[{arm}] epoch {epoch:3d} | acc={acc:.3f} probes={V} "
+                     if group is not None else "")
+            print(f"[{label}] epoch {epoch:3d} | acc={acc:.3f} probes={V} "
                   f"wrong={wrong} c_strict={cs} c_lenient={cl} "
                   f"fork_slots={n_fork_slots}{extra}")
+
+    _write_side_table(out_path.with_suffix(".per_slot.csv"),
+                      SLOT_COLS, slot_rows, label)
+    _write_side_table(out_path.with_suffix(".fork_events.csv"),
+                      EVENT_COLS, events, label)
 
     outcomes = {}
     for meta in registry.contra.values():
         outcomes[meta["outcome"]] = outcomes.get(meta["outcome"], 0) + 1
     summary = {
-        "arm": arm, "cache_path": stream.cache_path,
+        "arm": label, "base_arm": arm, "one_shot": one_shot,
+        "key_jitter": key_jitter, "payload_mode": payload_mode,
+        "cache_path": stream.cache_path,
         "classes": list(classes), "attractor_class": attractor_class,
         "samples_per_class": samples_per_class,
         "held_out_per_class": held_out_per_class,
@@ -779,7 +1113,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
         "rows_written": total,
         "per_epoch": epoch_log,
     }
-    if arm == "stale":
+    if group is not None:
         summary.update({
             "supersede_epoch": supersede_epoch,
             "stale_pre_label": group.pre_label,
@@ -787,6 +1121,8 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
             "stale_pre_cache_class": int(classes[0]),
             "stale_post_cache_class": int(classes[-1]),
             "n_phase1_writes": len(group.phase1_ids),
+            "n_phase2_writes": len(group.phase2_ids),
+            "fork_resolution": resolve_fork_outcome(epoch_log),
         })
     return total, summary
 
@@ -795,12 +1131,25 @@ def main():
     ap = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--arm", choices=["clean", "contra", "stale"],
+    ap.add_argument("--arm", choices=["clean", "contra", "stale", "mixed"],
                     required=True)
     ap.add_argument("--rate", type=float, default=0.15,
-                    help="contradictory-injection rate (contra arm)")
+                    help="contradictory-injection rate (contra/mixed arms)")
     ap.add_argument("--supersede-epoch", type=int, default=3,
-                    help="epoch at which K→B supersession begins (stale arm)")
+                    help="epoch at which K→B supersession begins "
+                         "(stale/mixed arms)")
+    ap.add_argument("--one-shot", action="store_true",
+                    help="write the superseding fact exactly ONCE (PR-3b: "
+                         "does the boundary tie regime persist?)")
+    ap.add_argument("--key-jitter", type=float, default=0.0,
+                    help="L2 noise scale on phase-2 keys before "
+                         "renormalization (PR-3b: breaks the exact-tie "
+                         "protocol artifact)")
+    ap.add_argument("--payload-mode", choices=["onehot", "soft"],
+                    default="onehot",
+                    help="'soft' = non-orthogonal phase-2 targets (cosine "
+                         "0.6 to the stored payload) forcing the EMA-merge "
+                         "stale path (PR-3b)")
     ap.add_argument("--epochs", type=int, default=6)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--synthetic", action="store_true",
@@ -841,7 +1190,9 @@ def main():
             samples_per_class=args.samples_per_class,
             held_out_per_class=args.held_out_per_class,
             contraction=args.contraction, max_entries=args.max_entries,
-            seed=args.seed, supersede_epoch=args.supersede_epoch)
+            seed=args.seed, supersede_epoch=args.supersede_epoch,
+            one_shot=args.one_shot, key_jitter=args.key_jitter,
+            payload_mode=args.payload_mode)
         summary_path = Path(args.out).with_suffix(".summary.json")
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
@@ -849,7 +1200,9 @@ def main():
         print(f"[{args.arm}] summary -> {summary_path}")
         return
     n = run_synthetic(args.arm, args.rate, args.epochs, args.supersede_epoch,
-                      Path(args.out), seed=args.seed)
+                      Path(args.out), seed=args.seed, one_shot=args.one_shot,
+                      key_jitter=args.key_jitter,
+                      payload_mode=args.payload_mode)
     print(f"[{args.arm}] wrote {n} labeled per-probe rows to {args.out}")
 
 

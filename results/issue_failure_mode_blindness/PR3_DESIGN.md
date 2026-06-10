@@ -4,7 +4,14 @@
 fired. PR-3b executed (`PR3B_RESULT.md`) — signatures are additionally
 class-geometry-conditioned (pair-B sign flips); merge-path stale
 confirmed persistent; one-shot tie confirmed permanent; H1 near-falsified
-as geometry-general, H2 strengthened. PR-3c not started.**
+as geometry-general, H2 strengthened. PR-3c executed (PR3C_RESULT.md) —
+H1 failure confirmed (pair-B collapse; 3-way never predicts stale-wrong);
+H2 separable but forced-choice classifiers misroute one-shot ambiguity and
+absorbed supersession (rule router with explicit ambiguity is what works);
+H3: pre-registered quarantine-both mode-conditioning fails non-inferiority
+on contra, exploratory trust refinement (deprecate the unreinforced side)
+passes on pair A with a measured pair-B collateral caveat. Shadow only —
+no deployed retrieval change.**
 Written after PR-2a/2b/2c landed (main `2d264c4`). Everything below is
 stated before any PR-3 data exists; numbers quoted are from the PR-2 memos.
 

@@ -485,10 +485,39 @@ def h1_study(runs: dict[str, dict]) -> dict:
     for name, (c_run, s_run) in pools.items():
         cols = _h1_dataset(runs[c_run]["probes"] + runs[s_run]["probes"])
         splits[name] = auc_on(cols, np.ones(len(cols["epoch"]), bool))
+
+    # 3-way version including `correct` — deployment never knows a probe is
+    # wrong, so the binary task overstates what a deployed classifier sees.
+    def _xy(cols, mask):
+        sel = mask & (cols["_mode_rows"] | cols["_correct"])
+        X = np.column_stack([cols[f][sel] for f in H1_FEATURES])
+        y = np.where(cols["_correct"][sel], 0,
+                     np.where(cols["is_contra"][sel] > 0, 1, 2))
+        return X, y
+
+    X_tr, y_tr = _xy(fit, even)
+    model, mean, std = _fit_multinomial(X_tr, y_tr)
+    threeway = {}
+    for name, cols, mask in (
+            [("mixed_s0_heldout_epochs", fit, fit["epoch"] % 2 == 1)]
+            + [(n, _h1_dataset(runs[n]["probes"]),
+                np.ones(len(runs[n]["probes"]), bool))
+               for n in ("mixed_s1", "mixed_s2", "mixed_s0_pairB")]):
+        X, y = _xy(cols, mask)
+        Xs = np.clip((X - mean) / std, -10, 10)
+        pred = model.predict_proba(Xs).argmax(axis=1)
+        names = ["correct", "contra-wrong", "stale-wrong"]
+        threeway[name] = {
+            "n": int(len(y)),
+            "per_class": {names[c]: {
+                "n": int((y == c).sum()),
+                "as": {names[k]: int((pred[y == c] == k).sum())
+                       for k in range(3)}} for c in range(3)
+                if (y == c).any()}}
     return {"features": H1_FEATURES,
             "fit": "mixed_s0 even epochs, contra-wrong(1) vs stale-wrong(0),"
                    " lenient flags, overlap rows excluded",
-            "splits": splits}
+            "splits": splits, "threeway": threeway}
 
 
 # ---------------------------------------------------------------------------

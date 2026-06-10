@@ -4887,6 +4887,116 @@
     "n_contra": 255,
     "n_stale": 374
    }
+  },
+  "threeway": {
+   "mixed_s0_heldout_epochs": {
+    "n": 1264,
+    "per_class": {
+     "contra-wrong": {
+      "as": {
+       "contra-wrong": 75,
+       "correct": 156,
+       "stale-wrong": 0
+      },
+      "n": 231
+     },
+     "correct": {
+      "as": {
+       "contra-wrong": 40,
+       "correct": 993,
+       "stale-wrong": 0
+      },
+      "n": 1033
+     }
+    }
+   },
+   "mixed_s0_pairB": {
+    "n": 2700,
+    "per_class": {
+     "contra-wrong": {
+      "as": {
+       "contra-wrong": 57,
+       "correct": 456,
+       "stale-wrong": 0
+      },
+      "n": 513
+     },
+     "correct": {
+      "as": {
+       "contra-wrong": 67,
+       "correct": 2063,
+       "stale-wrong": 0
+      },
+      "n": 2130
+     },
+     "stale-wrong": {
+      "as": {
+       "contra-wrong": 6,
+       "correct": 51,
+       "stale-wrong": 0
+      },
+      "n": 57
+     }
+    }
+   },
+   "mixed_s1": {
+    "n": 2479,
+    "per_class": {
+     "contra-wrong": {
+      "as": {
+       "contra-wrong": 140,
+       "correct": 301,
+       "stale-wrong": 0
+      },
+      "n": 441
+     },
+     "correct": {
+      "as": {
+       "contra-wrong": 76,
+       "correct": 1902,
+       "stale-wrong": 0
+      },
+      "n": 1978
+     },
+     "stale-wrong": {
+      "as": {
+       "contra-wrong": 1,
+       "correct": 59,
+       "stale-wrong": 0
+      },
+      "n": 60
+     }
+    }
+   },
+   "mixed_s2": {
+    "n": 2638,
+    "per_class": {
+     "contra-wrong": {
+      "as": {
+       "contra-wrong": 156,
+       "correct": 247,
+       "stale-wrong": 0
+      },
+      "n": 403
+     },
+     "correct": {
+      "as": {
+       "contra-wrong": 94,
+       "correct": 2078,
+       "stale-wrong": 0
+      },
+      "n": 2172
+     },
+     "stale-wrong": {
+      "as": {
+       "contra-wrong": 2,
+       "correct": 61,
+       "stale-wrong": 0
+      },
+      "n": 63
+     }
+    }
+   }
   }
  },
  "h2": {

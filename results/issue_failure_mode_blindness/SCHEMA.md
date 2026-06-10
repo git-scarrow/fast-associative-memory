@@ -73,6 +73,36 @@ and blended (the fork-becomes-blend channel is itself a finding). The single
 `CONTRADICTORY_STRICT > STALE_STRICT > CONTRADICTORY_LENIENT >
 STALE_LENIENT > BLENDED > OTHER_WRONG`; analyses should prefer the flags.
 
+### Exposure vs causality — what the labels do and do not assert
+
+The labels are **exposure** classifications, not counterfactual causality
+proofs. The vote is an aggregate over up to `inference_k` candidates, so a
+wrong answer can draw mass from slots outside the flagged set even when a
+flagged slot is present.
+
+* **Strict = leading-support exposure.** The raw-cosine top-1 is, on every
+  emitted row, also the maximum-weight voter: the floor only masks sims
+  below threshold, a row whose top-1 (its max) is masked has no vote and is
+  excluded entirely, and softmax weight is monotone in similarity. So a
+  strict flag asserts that the single strongest contributor to the wrong
+  vote belongs to the fork/stale set.
+  * `STALE_STRICT` additionally requires the elected class to BE the stale
+    slot's pre-update label (K still retrieves A), which ties the answer's
+    identity to the flagged slot — the closest the labels come to causal
+    attribution.
+  * `CONTRADICTORY_STRICT` does **not** require the elected class to equal
+    the fork's injected label; it asserts leading-support exposure plus a
+    wrong answer. (`vote_pred_label` and the fork slot's decode are both in
+    the row, so the stricter identity-matched subset is recoverable in
+    analysis without re-running.)
+* **Lenient = top-k implication only.** A lenient flag asserts the wrong
+  vote's surviving candidate set *contained* fork/stale support — nothing
+  about how much that support contributed.
+* **Causal weight is quantified, not asserted:** `contra_vote_weight` /
+  `stale_vote_weight` record the actual softmax mass on each flagged set,
+  so PR-3 can run dose-response analysis (error rate vs flagged mass)
+  instead of treating exposure as attribution.
+
 ## CSV schema (`per_probe_injected.csv`)
 
 All columns of the issue-#82 `per_probe.csv` (context, label-free predictors,

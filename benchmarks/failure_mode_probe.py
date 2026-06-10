@@ -42,8 +42,17 @@ Label definitions (see results/issue_failure_mode_blindness/SCHEMA.md):
 
 "top-1" follows the established per-probe convention (``top1_label`` in the
 issue-#82 telemetry): the best raw cosine candidate before any floor masking.
-"Surviving top-k" = candidates with finite post-floor similarity (the
-``n_surviving_votes`` set). Strict implies lenient by construction.
+On every emitted row this is also the maximum-weight voter (a row whose max
+sim is floor-masked has no vote and is excluded; softmax weight is monotone
+in sim), so strict = leading-support EXPOSURE — the strongest contributor to
+the wrong vote is in the flagged set. STALE_STRICT additionally ties the
+answer's identity to that slot (the vote elects its pre-update label);
+CONTRADICTORY_STRICT does not require the elected class to equal the fork's
+label. "Surviving top-k" = candidates with finite post-floor similarity (the
+``n_surviving_votes`` set); lenient = top-k implication only, NOT causal
+attribution — ``contra_vote_weight`` / ``stale_vote_weight`` quantify the
+actual mass for dose-response analysis. Strict implies lenient by
+construction.
 
 No GPU results are produced by this file in PR-2a; the synthetic mode exists
 so tests/test_failure_mode_probe.py can validate every mechanism hermetically

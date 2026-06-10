@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-"""Failure-mode confidence analysis (PR-2b, issue: failure-mode blindness).
+"""Failure-mode confidence analysis (PR-2b/PR-2c, issue: failure-mode blindness).
 
 ANALYSIS ONLY. Reads ``per_probe_injected.csv`` files produced by
-benchmarks/failure_mode_probe.py and answers, per arm, the PR-2b memo
-questions for the CONTRADICTORY mode:
+benchmarks/failure_mode_probe.py and answers, per arm, the memo questions
+for the CONTRADICTORY (PR-2b) and STALE (PR-2c) modes symmetrically:
 
-  * label rates — wrong rate, contradictory strict/lenient rates (overall and
-    as a share of wrong answers), failure_mode distribution;
+  * label rates — wrong rate, contradictory and stale strict/lenient rates
+    (overall and as a share of wrong answers), failure_mode distribution,
+    and the explicit contra∧stale lenient overlap (a probe implicated by
+    both modes is counted in both AND reported as overlap — STALE is never
+    silently folded into CONTRADICTORY);
   * confidence behavior — distribution of every existing label-free signal
     (vote_entropy, top1_top2_margin, top1_sim, effective_support,
     max_vote_weight, n_surviving_votes) on CORRECT vs CONTRA-WRONG
-    (contradictory_lenient) vs OTHER-WRONG probes;
+    (contradictory_lenient) vs STALE-WRONG (stale_lenient) vs OTHER-WRONG
+    probes;
   * per-signal discriminability — rank AUC of each signal for separating
-    contra-wrong from correct (and all-wrong from correct), with the signal's
-    confidence orientation fixed a priori (see ``SIGNALS``), so AUC > 0.5
-    always means "the signal flags the failure";
-  * confidently-wrong rate — share of contra-wrong probes whose confidence
+    each wrong group from correct, with the signal's confidence orientation
+    fixed a priori (see ``SIGNALS``), so AUC > 0.5 always means "the signal
+    flags the failure";
+  * confidently-wrong rate — share of mode-wrong probes whose confidence
     exceeds the MEDIAN confidence of correct probes under the same signal
-    (the SCHEMA.md pre-registered definition, applied per signal).
+    (the SCHEMA.md pre-registered definition, applied per signal per mode).
 
 No detector is refit and no operating point is chosen here: every number is
 computed from the frozen telemetry columns the driver emitted. The frozen
@@ -90,9 +94,12 @@ def analyze_arm(rows: list[dict]) -> dict:
     wrong = np.array([r["vote_correct"] == 0 for r in rows])
     c_strict = np.array([r["contradictory_strict"] == 1 for r in rows])
     c_lenient = np.array([r["contradictory_lenient"] == 1 for r in rows])
+    s_strict = np.array([r["stale_strict"] == 1 for r in rows])
+    s_lenient = np.array([r["stale_lenient"] == 1 for r in rows])
     correct = ~wrong
     contra_wrong = wrong & c_lenient
-    other_wrong = wrong & ~c_lenient
+    stale_wrong = wrong & s_lenient
+    other_wrong = wrong & ~c_lenient & ~s_lenient
 
     modes: dict[str, int] = {}
     for r in rows:
@@ -110,13 +117,27 @@ def analyze_arm(rows: list[dict]) -> dict:
         "contra_lenient_share_of_wrong":
             round(float(c_lenient.sum() / wrong.sum()), 4)
             if wrong.any() else float("nan"),
+        "stale_strict": int(s_strict.sum()),
+        "stale_lenient": int(s_lenient.sum()),
+        "stale_strict_share_of_wrong":
+            round(float(s_strict.sum() / wrong.sum()), 4)
+            if wrong.any() else float("nan"),
+        "stale_lenient_share_of_wrong":
+            round(float(s_lenient.sum() / wrong.sum()), 4)
+            if wrong.any() else float("nan"),
+        # Explicit overlap: probes lenient-implicated by BOTH modes. STALE is
+        # never folded into CONTRADICTORY — overlap is reported, not hidden.
+        "contra_and_stale_lenient_overlap": int((c_lenient & s_lenient).sum()),
         "failure_mode_counts": dict(sorted(modes.items())),
         "contra_vote_weight_on_contra_wrong": summarize(np.array(
             [r["contra_vote_weight"] for r, m in zip(rows, contra_wrong) if m])),
+        "stale_vote_weight_on_stale_wrong": summarize(np.array(
+            [r["stale_vote_weight"] for r, m in zip(rows, stale_wrong) if m])),
         "groups": {}, "signals": {},
     }
 
     for name, mask in (("correct", correct), ("contra_wrong", contra_wrong),
+                       ("stale_wrong", stale_wrong),
                        ("other_wrong", other_wrong)):
         out["groups"][name] = {
             col: summarize(np.array([r[col] for r, m in zip(rows, mask) if m]))
@@ -130,14 +151,23 @@ def analyze_arm(rows: list[dict]) -> dict:
             # AUC of risk for flagging the failure group vs correct
             "auc_contra_wrong_vs_correct":
                 round(rank_auc(risk[contra_wrong], risk[correct]), 4),
+            "auc_stale_wrong_vs_correct":
+                round(rank_auc(risk[stale_wrong], risk[correct]), 4),
             "auc_all_wrong_vs_correct":
                 round(rank_auc(risk[wrong], risk[correct]), 4),
         }
-        if correct.any() and contra_wrong.any():
+        if correct.any():
             med_conf = np.median(vals[correct])
-            conf_w = ((vals[contra_wrong] > med_conf) if hi_conf
-                      else (vals[contra_wrong] < med_conf))
-            sig["confidently_wrong_rate_contra"] = round(float(conf_w.mean()), 4)
+            if contra_wrong.any():
+                conf_w = ((vals[contra_wrong] > med_conf) if hi_conf
+                          else (vals[contra_wrong] < med_conf))
+                sig["confidently_wrong_rate_contra"] = round(
+                    float(conf_w.mean()), 4)
+            if stale_wrong.any():
+                conf_w = ((vals[stale_wrong] > med_conf) if hi_conf
+                          else (vals[stale_wrong] < med_conf))
+                sig["confidently_wrong_rate_stale"] = round(
+                    float(conf_w.mean()), 4)
         out["signals"][col] = sig
     return out
 

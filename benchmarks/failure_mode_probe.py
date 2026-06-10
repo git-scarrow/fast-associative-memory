@@ -595,14 +595,15 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                classes: list[int] = (0, 8, 19, 33), attractor_class: int = 71,
                samples_per_class: int = 32, held_out_per_class: int = 64,
                contraction: float = 0.0, max_entries: int = 4096,
-               blend_eps: float = 0.10, seed: int = 0):
-    """Cache-backed clean/contra arm over the DINOv2 ViT-L/14 manifold.
+               blend_eps: float = 0.10, seed: int = 0,
+               supersede_epoch: int = 6):
+    """Cache-backed clean/contra/stale arm over the DINOv2 ViT-L/14 manifold.
 
-    PR-2b protocol. The stream is the verified ``vitl14_cifar100_train``
+    PR-2b/PR-2c protocol. The stream is the verified ``vitl14_cifar100_train``
     cache through ``VisionDriftStream`` (the exact #87 A1 stream), held at a
     FIXED contraction (default 0.0, i.e. stationary). Stationarity is the
     point: the calibration sequence already characterizes confidence under
-    drift (BLENDED); this arm asks whether a contradictory fork is visible
+    drift (BLENDED); these arms ask whether an injected failure is visible
     to retrieval-time confidence on an otherwise-healthy manifold, so drift
     is deliberately excluded rather than crossed with injection.
 
@@ -612,15 +613,27 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     model). Forks therefore accumulate monotonically across epochs, giving a
     within-run dose ramp. Held-out probes are never written.
 
-    The stale arm is intentionally NOT wired here (PR-2c).
+    Stale arm (PR-2c): the PR-2a supersession protocol, vision-backed. The
+    first cached class (remapped label 0, pre-update label A) is the
+    superseded group; the last cached class (remapped ``num_classes - 1``,
+    label B) is the superseding ground truth — the synthetic-arm convention.
+    Phase 1 (epochs < ``supersede_epoch``): the A rows of the batch are
+    written K→A through ``write_phase1``; all other rows are clean writes.
+    Phase 2 (epochs >= ``supersede_epoch``): the SAME keys are re-written
+    K→B through ``write_phase2``; held-out ground truth for A-keys flips to
+    B at that epoch. Whether phase 2 merges (EMA-freeze stale) or forks
+    (co-resident stale) is decided by the engine, not the driver. STALE is
+    kept distinct from CONTRADICTORY: phase-2 writes are never registered as
+    contradictions, so any contra flag in this arm would be a labeling bug
+    (pinned by test). No contra injections run in the stale arm.
 
     Returns ``(rows_written, summary_dict)``; the summary (injection outcome
-    counts, per-epoch wrong/labeled rates) is also what the CLI dumps as JSON
-    next to the CSV.
+    counts, per-epoch wrong/labeled rates, stale-selection counts) is also
+    what the CLI dumps as JSON next to the CSV.
     """
-    if arm not in ("clean", "contra"):
-        raise ValueError(f"vision mode wires clean/contra only (PR-2b); "
-                         f"stale is PR-2c — got {arm!r}")
+    if arm not in ("clean", "contra", "stale"):
+        raise ValueError(f"vision mode wires clean/contra (PR-2b) and stale "
+                         f"(PR-2c) — got {arm!r}")
     stream = VisionDriftStream(
         categories=list(classes), attractor_category=attractor_class,
         samples_per_class=samples_per_class,
@@ -631,6 +644,18 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
 
     rng = torch.Generator().manual_seed(seed + 1)
     registry = FailureModeRegistry()
+    group = None
+    if arm == "stale":
+        if not (0 < supersede_epoch < epochs):
+            raise ValueError(
+                f"stale arm needs 0 < supersede_epoch < epochs so both "
+                f"phases run — got supersede_epoch={supersede_epoch}, "
+                f"epochs={epochs}")
+        # Synthetic-arm convention: first remapped class is superseded by the
+        # last remapped class. In cache-class terms: classes[0] → classes[-1].
+        group = registry.new_stale_group(
+            f"vision-class{classes[0]}", pre_label=0,
+            post_label=num_classes - 1)
     mem = ContinuousCAM(key_dim=stream.dim, value_dim=num_classes,
                         max_entries=max_entries,
                         dynamic_vigilance=DynamicVigilance(),
@@ -645,15 +670,36 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
         writer.writeheader()
         for epoch in range(epochs):
             mem.reset_dynamic_vigilance_stats()
-            ids = registry.next_ids("clean", q.size(0))
-            mem.learn_local(q, y, record_ids=ids)
-            if arm == "contra":
-                registry.inject_contradictions(
-                    mem, q, lab, num_classes, rate, rng)
+            truth = hlab.clone()
+            if arm == "stale":
+                g0 = lab == group.pre_label
+                if epoch < supersede_epoch:
+                    registry.write_phase1(mem, group, q[g0], y[g0])
+                    ids = registry.next_ids("clean", int((~g0).sum()))
+                    mem.learn_local(q[~g0], y[~g0], record_ids=ids)
+                else:
+                    if not group.superseded:
+                        registry.supersede(group, epoch)
+                    y2 = F.one_hot(
+                        torch.full((int(g0.sum()),), group.post_label),
+                        num_classes).float()
+                    registry.write_phase2(mem, group, q[g0], y2)
+                    ids = registry.next_ids("clean", int((~g0).sum()))
+                    mem.learn_local(q[~g0], y[~g0], record_ids=ids)
+                if group.superseded:
+                    truth = torch.where(hlab == group.pre_label,
+                                        torch.full_like(hlab, group.post_label),
+                                        hlab)
+            else:
+                ids = registry.next_ids("clean", q.size(0))
+                mem.learn_local(q, y, record_ids=ids)
+                if arm == "contra":
+                    registry.inject_contradictions(
+                        mem, q, lab, num_classes, rate, rng)
 
             stats = mem.get_stats()
-            acc = (mem.forward(hq).argmax(dim=-1) == hlab).float().mean()
-            labeled = label_probes(mem, hq, hlab, registry,
+            acc = (mem.forward(hq).argmax(dim=-1) == truth).float().mean()
+            labeled = label_probes(mem, hq, truth, registry,
                                    blend_eps=blend_eps)
             ctx = {
                 "vigilance_policy": "margin",
@@ -671,7 +717,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                 "floor_delta_ema": round(float(stats.get(
                     "floor_delta_ema", float("nan"))), 6),
                 "arm": arm, "injection_rate": rate if arm == "contra" else 0.0,
-                "supersede_epoch": -1,
+                "supersede_epoch": supersede_epoch if arm == "stale" else -1,
             }
             total += append_rows(writer, ctx, labeled)
             V = labeled["n_rows"]
@@ -680,15 +726,42 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
             cs = int(labeled["contradictory_strict"].sum()) if V else 0
             cl = int(labeled["contradictory_lenient"].sum()) if V else 0
             n_fork_slots = len(registry.contra_fork_slots(mem))
-            epoch_log.append({
+            entry = {
                 "epoch": epoch, "probes": V, "wrong": wrong,
                 "contradictory_strict": cs, "contradictory_lenient": cl,
                 "live_fork_slots": n_fork_slots,
                 "acc_epoch": round(float(acc), 6),
-            })
+            }
+            if arm == "stale":
+                ss = int(labeled["stale_strict"].sum()) if V else 0
+                sl = int(labeled["stale_lenient"].sum()) if V else 0
+                # Stale-selection accounting on the superseded keys: held-out
+                # probes whose ORIGINAL class is A — after supersession their
+                # ground truth is B; electing A is selecting the stale value.
+                sup = (hlab[labeled["probe_index"]] == group.pre_label
+                       if V and group.superseded
+                       else torch.zeros(max(V, 0), dtype=torch.bool))
+                pred = (labeled["per_probe"]["vote_pred_label"]
+                        if V else torch.zeros(0, dtype=torch.long))
+                entry.update({
+                    "stale_strict": ss, "stale_lenient": sl,
+                    "live_stale_slots": len(registry.stale_slots(mem)),
+                    "superseded": bool(group.superseded),
+                    "superseded_key_probes": int(sup.sum()),
+                    "stale_selected": int(
+                        ((pred == group.pre_label) & sup).sum()),
+                    "updated_selected": int(
+                        ((pred == group.post_label) & sup).sum()),
+                })
+            epoch_log.append(entry)
+            extra = (f" s_strict={entry.get('stale_strict')} "
+                     f"s_lenient={entry.get('stale_lenient')} "
+                     f"stale_slots={entry.get('live_stale_slots')} "
+                     f"stale_sel={entry.get('stale_selected')}"
+                     if arm == "stale" else "")
             print(f"[{arm}] epoch {epoch:3d} | acc={acc:.3f} probes={V} "
                   f"wrong={wrong} c_strict={cs} c_lenient={cl} "
-                  f"fork_slots={n_fork_slots}")
+                  f"fork_slots={n_fork_slots}{extra}")
 
     outcomes = {}
     for meta in registry.contra.values():
@@ -706,6 +779,15 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
         "rows_written": total,
         "per_epoch": epoch_log,
     }
+    if arm == "stale":
+        summary.update({
+            "supersede_epoch": supersede_epoch,
+            "stale_pre_label": group.pre_label,
+            "stale_post_label": group.post_label,
+            "stale_pre_cache_class": int(classes[0]),
+            "stale_post_cache_class": int(classes[-1]),
+            "n_phase1_writes": len(group.phase1_ids),
+        })
     return total, summary
 
 
@@ -727,7 +809,8 @@ def main():
     # cache-backed vision mode (PR-2b) — mirrors calibration_probe --vision
     ap.add_argument("--vision", action="store_true",
                     help="drive the loop from the cached DINOv2 ViT-L/14 "
-                         "feature manifold (PR-2b; clean/contra arms only)")
+                         "feature manifold (clean/contra: PR-2b; stale: "
+                         "PR-2c)")
     ap.add_argument("--vision-cache", type=str, default=None,
                     help="path to the *_train.pt feature cache; if unset, "
                          "resolve via the feature_cache_vitl14 symlink")
@@ -758,7 +841,7 @@ def main():
             samples_per_class=args.samples_per_class,
             held_out_per_class=args.held_out_per_class,
             contraction=args.contraction, max_entries=args.max_entries,
-            seed=args.seed)
+            seed=args.seed, supersede_epoch=args.supersede_epoch)
         summary_path = Path(args.out).with_suffix(".summary.json")
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)

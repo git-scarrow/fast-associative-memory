@@ -152,6 +152,12 @@ def logistic_auc(feature_cols, y):
     try:
         from sklearn.linear_model import LogisticRegression
     except ImportError:
+        import sys
+        # Warn once; subsequent calls are silent to avoid spam.
+        if not getattr(logistic_auc, "_warned", False):
+            print("WARNING: scikit-learn not available — logistic AUC rows will be NaN. "
+                  "Install scikit-learn in the active environment.", file=sys.stderr)
+            logistic_auc._warned = True
         return float("nan")
     X = np.column_stack([(f - f.mean()) / (f.std() + 1e-9) for f in feature_cols])
     if len(np.unique(y)) < 2:

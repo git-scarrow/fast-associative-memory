@@ -1,5 +1,11 @@
 # Failure-mode blindness study — injection driver schema (PR-2a)
 
+**PR-3c executed** (`PR3C_RESULT.md`): shadow-governance comparison over
+24 re-runs with the `topk.csv` shadow basis (per-probe CSVs byte-identical
+to the PR-3b/PR-2 baselines). Write-time event evidence governs; read-time
+mode classification fails as pre-registered (pair-B collapse; 3-way never
+predicts stale-wrong). No deployed retrieval change.
+
 **Status: PR-2b contradiction-arm and PR-2c stale-arm results landed**
 (gentoo, `vitl14_cifar100_train` — see `PR2B_CONTRA_RESULT.md` and
 `PR2C_STALE_RESULT.md`). Cache-backed runs are gated on
@@ -165,6 +171,18 @@ separable. Pre-write observables are vs the PRE-BATCH state (the PR-2a
 outcome-classification convention); within-batch interactions are not
 captured. `payload-drift` / `key-drift` remain reserved (PR3_DESIGN.md §7)
 and are NOT instantiable by these arms.
+
+`<out>.topk.csv` (PR-3c; stored gzipped as `.topk.csv.gz` in result
+dirs, `gzip -n`) — one row per probe x top-k candidate: `arm, epoch,
+probe_index, rank, slot, sim, surviving, weight, decode`. This is the
+logged basis for SHADOW governance: counterfactual readouts are
+recomputed offline from these rows (`benchmarks/analyze_fork_governance
+.py`); the deployed `forward()` is never altered. `sim`/`weight` are
+float32 round-trip text (`%.9g`); the driver re-derives the vote from
+the emitted text at write time and raises on mismatch, so the offline
+policy-`none` vote is bit-identical to deployment — including at exact
+0.5/0.5 ties (pinned by test). Non-surviving candidates carry weight
+exactly 0.
 
 Vision summaries additionally record `fork_resolution` per run — an
 observational natural-history label from the per-epoch superseded-key

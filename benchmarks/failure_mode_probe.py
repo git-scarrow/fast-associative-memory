@@ -131,6 +131,18 @@ SLOT_COLS = ["arm", "epoch", "slot", "decode", "hit_counts",
              "is_stale_superseded", "is_current_fork", "is_merge_candidate",
              "role"]
 
+# topk.csv schema (PR-3c): the candidate composition of every deployed
+# vote, one row per probe x top-k candidate. This is the logged basis for
+# SHADOW governance (PR3_DESIGN.md §5 PR-3c): counterfactual readouts are
+# recomputed offline from these rows; the deployed forward() is never
+# altered. sim/weight are emitted at float32 round-trip precision ("%.9g")
+# so the offline policy-`none` vote is bit-identical to deployment — the
+# driver re-derives the vote from the emitted text at write time and
+# raises on any mismatch (one-shot rows sit at exact 0.5/0.5 ties, so
+# anything short of bit fidelity would silently flip elections).
+TOPK_COLS = ["arm", "epoch", "probe_index", "rank", "slot", "sim",
+             "surviving", "weight", "decode"]
+
 NEW_COLS = ["arm", "injection_rate", "supersede_epoch", "probe_index",
             "top1_slot", "failure_mode",
             "contradictory_strict", "contradictory_lenient",
@@ -516,6 +528,68 @@ def _write_side_table(path: Path, cols: list[str], rows: list[dict],
             w.writerow({"arm": arm_label, **r})
 
 
+def _f32_text(x: float) -> str:
+    """float32 round-trip text (9 significant decimal digits)."""
+    return f"{float(x):.9g}"
+
+
+def vote_pred_from_candidates(weights, decodes, value_dim: int) -> int:
+    """Recompute the deployed vote from one probe's logged top-k rows.
+
+    Accumulates float32 mass in rank order (the replicated vote's
+    scatter_add order) and argmaxes with first-index tie-break — the exact
+    aggregation ``label_probes`` performs, so a policy-`none` shadow
+    readout built on topk.csv is bit-identical to deployment. Shared by
+    the driver's write-time fidelity check and the PR-3c governance
+    analyzer; any divergence raises there instead of mis-electing.
+    """
+    mass = torch.zeros(int(value_dim), dtype=torch.float32)
+    for w, d in zip(weights, decodes):
+        mass[int(d)] += torch.tensor(float(w), dtype=torch.float32)
+    return int(torch.argmax(mass))
+
+
+def topk_table_rows(labeled: dict, epoch: int) -> list[dict]:
+    """Per-candidate rows for ``<out>.topk.csv`` (PR-3c shadow basis).
+
+    Emits every replicated top-k candidate (including non-surviving ones,
+    whose weight is exactly 0) and verifies, per probe, that the vote
+    re-derived from the EMITTED TEXT equals the deployed vote — the
+    shadow-readout fidelity requirement (PR3_DESIGN.md §10), enforced at
+    generation time rather than discovered at analysis time.
+    """
+    V = labeled["n_rows"]
+    if V == 0:
+        return []
+    pp = labeled["per_probe"]
+    k = labeled["topk_slots"].shape[1]
+    rows = []
+    for i in range(V):
+        ws, ds = [], []
+        for r in range(k):
+            row = {
+                "epoch": epoch,
+                "probe_index": int(labeled["probe_index"][i]),
+                "rank": r,
+                "slot": int(labeled["topk_slots"][i][r]),
+                "sim": _f32_text(labeled["topk_sims"][i][r]),
+                "surviving": int(labeled["topk_surviving"][i][r]),
+                "weight": _f32_text(labeled["topk_weights"][i][r]),
+                "decode": int(labeled["topk_decode"][i][r]),
+            }
+            rows.append(row)
+            ws.append(row["weight"])
+            ds.append(row["decode"])
+        shadow = vote_pred_from_candidates(ws, ds, labeled["value_dim"])
+        if shadow != int(pp["vote_pred_label"][i]):
+            raise RuntimeError(
+                f"topk shadow-vote mismatch at epoch {epoch} probe "
+                f"{int(labeled['probe_index'][i])}: offline {shadow} vs "
+                f"deployed {int(pp['vote_pred_label'][i])} — logged "
+                f"precision is insufficient for shadow governance.")
+    return rows
+
+
 def resolve_fork_outcome(epoch_log: list[dict]) -> str:
     """Observational fork-resolution label for a run's supersession group,
     from the per-epoch superseded-key election counts (PR3_DESIGN.md §7:
@@ -682,6 +756,14 @@ def label_probes(mem: ContinuousCAM, probe_queries: torch.Tensor,
         "n_stale_topk": stale_topk.sum(dim=1).long(),
         "contra_vote_weight": (w_cpu * contra_topk.float()).sum(dim=1),
         "stale_vote_weight": (w_cpu * stale_topk.float()).sum(dim=1),
+        # PR-3c shadow basis: the full replicated candidate composition,
+        # rank-ordered, with the decode labels the vote actually used.
+        "topk_slots": topk_slots.cpu(),
+        "topk_sims": topk_sims[vote_rows].cpu(),
+        "topk_surviving": surv_v.cpu(),
+        "topk_weights": w_cpu,
+        "topk_decode": proto_labels[topk_locs[vote_rows]].cpu(),
+        "value_dim": mem.value_dim,
     }
 
 
@@ -865,6 +947,7 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
     label = arm_label_for(arm, one_shot, key_jitter, payload_mode)
     events: list = []
     slot_rows: list = []
+    topk_rows: list = []
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     total = 0
@@ -910,10 +993,13 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
             }
             total += append_rows(writer, ctx, labeled)
             slot_rows += slot_table_rows(mem, registry, epoch)
+            topk_rows += topk_table_rows(labeled, epoch)
     _write_side_table(out_path.with_suffix(".per_slot.csv"),
                       SLOT_COLS, slot_rows, label)
     _write_side_table(out_path.with_suffix(".fork_events.csv"),
                       EVENT_COLS, events, label)
+    _write_side_table(out_path.with_suffix(".topk.csv"),
+                      TOPK_COLS, topk_rows, label)
     return total
 
 
@@ -996,6 +1082,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     label = arm_label_for(arm, one_shot, key_jitter, payload_mode)
     events: list = []
     slot_rows: list = []
+    topk_rows: list = []
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     total = 0
@@ -1043,6 +1130,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
             }
             total += append_rows(writer, ctx, labeled)
             slot_rows += slot_table_rows(mem, registry, epoch)
+            topk_rows += topk_table_rows(labeled, epoch)
             V = labeled["n_rows"]
             wrong = (V - int(labeled["per_probe"]["vote_correct"].sum())
                      if V else 0)
@@ -1094,6 +1182,8 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                       SLOT_COLS, slot_rows, label)
     _write_side_table(out_path.with_suffix(".fork_events.csv"),
                       EVENT_COLS, events, label)
+    _write_side_table(out_path.with_suffix(".topk.csv"),
+                      TOPK_COLS, topk_rows, label)
 
     outcomes = {}
     for meta in registry.contra.values():

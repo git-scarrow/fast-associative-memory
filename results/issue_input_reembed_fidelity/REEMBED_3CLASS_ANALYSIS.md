@@ -116,9 +116,14 @@
 
 ## Two-axis detector (rank_gap + manifold_support)
 
-**Forced-zone logistic AUC:** blank (NaN in analyzer output).
+**Forced-zone logistic AUC (in-sample):**
 
-**Note:** The analyzer returned blank/NaN for forced-zone two-axis logistic AUC. Per analyzer control flow, this should be diagnosed by checking scikit-learn availability and post-filter forced-zone label counts. Do not treat the blank value as evidence that the two-axis detector failed.
+| Target | two-axis (rank_gap + manifold_support) | three-axis (+ support_breadth) |
+|--------|---------------------------------------|-------------------------------|
+| `top1_correct` | **0.9222** (sep 0.4222) | 0.9231 |
+| `vote_correct` | **0.9289** (sep 0.4289) | 0.9322 |
+
+**Root cause of original blank:** The analyzer was invoked with the system interpreter, which lacks scikit-learn. `logistic_auc` silently returns NaN on `ImportError`; every numpy-only computation resolved correctly. Re-running with the project venv (sklearn 1.8.0) recovers the values above — all other numbers reproduce bit-for-bit (9,085 rows, mid-window 3,378, forced acc 0.080, 574 forced errors). The fix: `analyze_calibration.py` now emits a stderr warning on ImportError instead of returning NaN silently.
 
 ---
 
@@ -133,15 +138,15 @@ Core observations:
 - `rank_gap` sign-flips in forced zone (−1 orientation, as expected).
 - `support_breadth` orientation survives (+1, broad = correct).
 - All five label-free predictors separate in forced zone.
+- Two-axis forced-zone AUC = **0.9222** (sep 0.4222 >> 0.15 gate), matching #88 structure.
 - Support-breadth orientation is positive overall, but the decile curve is not strictly monotone.
 
 **Limitations:**
-- Two-axis logistic AUC is unresolved in this subset.
-- Late-window band-pass / high-tail drop does not fully reproduce.
+- Late-window band-pass / high-tail drop does not fully reproduce (real, not an artifact).
 - 3-class subset is small; larger reembed run would reduce small-sample artifacts.
 
 **Recommended next step:**
-Do not advance directly to full A2b. Before using two-axis logistic AUC as a decision gate, inspect dependency availability and post-filter forced-zone label counts. A larger input-reembed subset may still be useful for robustness, but it is not the direct fix for the blank AUC.
+Full A2b is unblocked on the two-axis front. The late-window high-tail-drop divergence is real but not a blocker for the core fidelity question. A larger input-reembed subset remains useful for robustness but is not required before advancing.
 
 ---
 

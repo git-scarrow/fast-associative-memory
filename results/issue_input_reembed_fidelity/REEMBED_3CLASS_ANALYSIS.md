@@ -123,7 +123,7 @@
 | `top1_correct` | **0.9222** (sep 0.4222) | 0.9231 |
 | `vote_correct` | **0.9289** (sep 0.4289) | 0.9322 |
 
-**Root cause of original blank:** The analyzer was invoked with the system interpreter, which lacks scikit-learn. `logistic_auc` silently returns NaN on `ImportError`; every numpy-only computation resolved correctly. Re-running with the project venv (sklearn 1.8.0) recovers the values above — all other numbers reproduce bit-for-bit (9,085 rows, mid-window 3,378, forced acc 0.080, 574 forced errors). The fix: `analyze_calibration.py` now emits a stderr warning on ImportError instead of returning NaN silently.
+**Root cause of original blank:** The analyzer was invoked with the system interpreter, which lacks scikit-learn. `logistic_auc` silently returns NaN on `ImportError`; every numpy-only computation resolved correctly. Re-running with the project venv (scikit-learn installed) recovers the values above — all other numbers reproduce bit-for-bit (9,085 rows, mid-window 3,378, forced acc 0.080, 574 forced errors). The fix: `analyze_calibration.py` now emits a one-time stderr warning on ImportError instead of returning NaN silently.
 
 ---
 

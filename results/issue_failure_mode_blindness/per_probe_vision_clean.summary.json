@@ -1,0 +1,132 @@
+{
+  "arm": "clean",
+  "cache_path": "feature_cache_vitl14/cifar100_dinov2_train.pt",
+  "classes": [
+    0,
+    8,
+    19,
+    33
+  ],
+  "attractor_class": 71,
+  "samples_per_class": 32,
+  "held_out_per_class": 64,
+  "contraction": 0.0,
+  "injection_rate": 0.15,
+  "epochs": 12,
+  "seed": 0,
+  "max_entries": 4096,
+  "dim": 1024,
+  "n_injections": 0,
+  "injection_outcomes": {},
+  "rows_written": 2532,
+  "per_epoch": [
+    {
+      "epoch": 0,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 1,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 2,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 3,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 4,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 5,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 6,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 7,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 8,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 9,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 10,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 11,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    }
+  ]
+}

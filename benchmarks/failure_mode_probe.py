@@ -67,6 +67,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -81,6 +82,7 @@ from dynamic_vigilance import (  # noqa: E402
     DynamicVigilance, RelativeVigilance, RetrievalFloorPolicy)
 from benchmarks.calibration_probe import (  # noqa: E402
     ALL_COLS, CONTEXT_COLS, PER_PROBE_KEYS)
+from benchmarks.probe_contraction import VisionDriftStream  # noqa: E402
 
 
 # Injection outcomes (mechanical classification of each injected write).
@@ -585,6 +587,128 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
     return total
 
 
+# ---------------------------------------------------------------------------
+# Cache-backed vision arm (PR-2b) — first exercised on gentoo.
+# ---------------------------------------------------------------------------
+def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
+               cache_path: str | None = None,
+               classes: list[int] = (0, 8, 19, 33), attractor_class: int = 71,
+               samples_per_class: int = 32, held_out_per_class: int = 64,
+               contraction: float = 0.0, max_entries: int = 4096,
+               blend_eps: float = 0.10, seed: int = 0):
+    """Cache-backed clean/contra arm over the DINOv2 ViT-L/14 manifold.
+
+    PR-2b protocol. The stream is the verified ``vitl14_cifar100_train``
+    cache through ``VisionDriftStream`` (the exact #87 A1 stream), held at a
+    FIXED contraction (default 0.0, i.e. stationary). Stationarity is the
+    point: the calibration sequence already characterizes confidence under
+    drift (BLENDED); this arm asks whether a contradictory fork is visible
+    to retrieval-time confidence on an otherwise-healthy manifold, so drift
+    is deliberately excluded rather than crossed with injection.
+
+    Per epoch: write the (same) train batch through ``learn_local``, then —
+    contra arm only — re-write ``rate`` of the batch rows with permuted-label
+    payloads via ``inject_contradictions`` (the PR-2a hallucinating-writer
+    model). Forks therefore accumulate monotonically across epochs, giving a
+    within-run dose ramp. Held-out probes are never written.
+
+    The stale arm is intentionally NOT wired here (PR-2c).
+
+    Returns ``(rows_written, summary_dict)``; the summary (injection outcome
+    counts, per-epoch wrong/labeled rates) is also what the CLI dumps as JSON
+    next to the CSV.
+    """
+    if arm not in ("clean", "contra"):
+        raise ValueError(f"vision mode wires clean/contra only (PR-2b); "
+                         f"stale is PR-2c — got {arm!r}")
+    stream = VisionDriftStream(
+        categories=list(classes), attractor_category=attractor_class,
+        samples_per_class=samples_per_class,
+        held_out_per_class=held_out_per_class,
+        seed=seed, cache_path=cache_path)
+    (q, y, lab), (hq, hlab) = stream.batch(contraction)
+    num_classes = stream.num_classes
+
+    rng = torch.Generator().manual_seed(seed + 1)
+    registry = FailureModeRegistry()
+    mem = ContinuousCAM(key_dim=stream.dim, value_dim=num_classes,
+                        max_entries=max_entries,
+                        dynamic_vigilance=DynamicVigilance(),
+                        retrieval_floor_policy=RetrievalFloorPolicy(),
+                        track_provenance=True)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    total = 0
+    epoch_log = []
+    with open(out_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=OUT_COLS)
+        writer.writeheader()
+        for epoch in range(epochs):
+            mem.reset_dynamic_vigilance_stats()
+            ids = registry.next_ids("clean", q.size(0))
+            mem.learn_local(q, y, record_ids=ids)
+            if arm == "contra":
+                registry.inject_contradictions(
+                    mem, q, lab, num_classes, rate, rng)
+
+            stats = mem.get_stats()
+            acc = (mem.forward(hq).argmax(dim=-1) == hlab).float().mean()
+            labeled = label_probes(mem, hq, hlab, registry,
+                                   blend_eps=blend_eps)
+            ctx = {
+                "vigilance_policy": "margin",
+                "retrieval_floor_policy": "live-delta",
+                "epoch": epoch, "contraction": round(contraction, 4),
+                "rho_probe": round(labeled["aggregates"].get(
+                    "mean_cross_class_sim", float("nan")), 6),
+                "within_probe": round(labeled["aggregates"].get(
+                    "mean_within_class_sim", float("nan")), 6),
+                "offclass_weight_mean": round(labeled["aggregates"].get(
+                    "mean_offclass_weight", float("nan")), 6),
+                "acc_epoch": round(float(acc), 6),
+                "sim_floor_active": round(float(stats.get(
+                    "sim_floor_active", float("nan"))), 6),
+                "floor_delta_ema": round(float(stats.get(
+                    "floor_delta_ema", float("nan"))), 6),
+                "arm": arm, "injection_rate": rate if arm == "contra" else 0.0,
+                "supersede_epoch": -1,
+            }
+            total += append_rows(writer, ctx, labeled)
+            V = labeled["n_rows"]
+            wrong = (V - int(labeled["per_probe"]["vote_correct"].sum())
+                     if V else 0)
+            cs = int(labeled["contradictory_strict"].sum()) if V else 0
+            cl = int(labeled["contradictory_lenient"].sum()) if V else 0
+            n_fork_slots = len(registry.contra_fork_slots(mem))
+            epoch_log.append({
+                "epoch": epoch, "probes": V, "wrong": wrong,
+                "contradictory_strict": cs, "contradictory_lenient": cl,
+                "live_fork_slots": n_fork_slots,
+                "acc_epoch": round(float(acc), 6),
+            })
+            print(f"[{arm}] epoch {epoch:3d} | acc={acc:.3f} probes={V} "
+                  f"wrong={wrong} c_strict={cs} c_lenient={cl} "
+                  f"fork_slots={n_fork_slots}")
+
+    outcomes = {}
+    for meta in registry.contra.values():
+        outcomes[meta["outcome"]] = outcomes.get(meta["outcome"], 0) + 1
+    summary = {
+        "arm": arm, "cache_path": stream.cache_path,
+        "classes": list(classes), "attractor_class": attractor_class,
+        "samples_per_class": samples_per_class,
+        "held_out_per_class": held_out_per_class,
+        "contraction": contraction, "injection_rate": rate,
+        "epochs": epochs, "seed": seed, "max_entries": max_entries,
+        "dim": stream.dim,
+        "n_injections": len(registry.contra),
+        "injection_outcomes": outcomes,
+        "rows_written": total,
+        "per_epoch": epoch_log,
+    }
+    return total, summary
+
+
 def main():
     ap = argparse.ArgumentParser(
         description=__doc__,
@@ -600,16 +724,47 @@ def main():
     ap.add_argument("--synthetic", action="store_true",
                     help="hermetic CPU mode (no caches, no GPU) — the only "
                          "mode exercised in PR-2a")
+    # cache-backed vision mode (PR-2b) — mirrors calibration_probe --vision
+    ap.add_argument("--vision", action="store_true",
+                    help="drive the loop from the cached DINOv2 ViT-L/14 "
+                         "feature manifold (PR-2b; clean/contra arms only)")
+    ap.add_argument("--vision-cache", type=str, default=None,
+                    help="path to the *_train.pt feature cache; if unset, "
+                         "resolve via the feature_cache_vitl14 symlink")
+    ap.add_argument("--vision-classes", type=str, default="0,8,19,33")
+    ap.add_argument("--vision-attractor-class", type=int, default=71)
+    ap.add_argument("--samples-per-class", type=int, default=32)
+    ap.add_argument("--held-out-per-class", type=int, default=64)
+    ap.add_argument("--contraction", type=float, default=0.0,
+                    help="FIXED contraction for the vision stream; PR-2b is "
+                         "deliberately stationary (0.0) to decouple "
+                         "contradiction from drift/BLENDED")
+    ap.add_argument("--max-entries", type=int, default=4096)
     ap.add_argument("--out", type=str,
                     default="results/issue_failure_mode_blindness/"
                             "per_probe_injected.csv")
     args = ap.parse_args()
 
-    if not args.synthetic:
+    if args.synthetic == args.vision:
         raise SystemExit(
-            "PR-2a ships the mechanism + hermetic tests only. The cache-backed "
-            "vision arms are wired in PR-2b (gentoo) once the mechanism tests "
-            "pass — run with --synthetic for the validated path.")
+            "pick exactly one mode: --synthetic (hermetic CPU, PR-2a) or "
+            "--vision (cache-backed ViT-L/14 manifold, PR-2b).")
+    if args.vision:
+        classes = [int(c) for c in args.vision_classes.split(",") if c.strip()]
+        n, summary = run_vision(
+            args.arm, args.rate, args.epochs, Path(args.out),
+            cache_path=args.vision_cache, classes=classes,
+            attractor_class=args.vision_attractor_class,
+            samples_per_class=args.samples_per_class,
+            held_out_per_class=args.held_out_per_class,
+            contraction=args.contraction, max_entries=args.max_entries,
+            seed=args.seed)
+        summary_path = Path(args.out).with_suffix(".summary.json")
+        with open(summary_path, "w") as f:
+            json.dump(summary, f, indent=2)
+        print(f"[{args.arm}] wrote {n} labeled per-probe rows to {args.out}")
+        print(f"[{args.arm}] summary -> {summary_path}")
+        return
     n = run_synthetic(args.arm, args.rate, args.epochs, args.supersede_epoch,
                       Path(args.out), seed=args.seed)
     print(f"[{args.arm}] wrote {n} labeled per-probe rows to {args.out}")

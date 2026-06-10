@@ -1,9 +1,11 @@
 # Failure-mode blindness study — injection driver schema (PR-2a)
 
-**Status: mechanism + schema only. No GPU results exist yet.** Gentoo runs
-(PR-2b contradiction arm, PR-2c stale arm) are gated on
-`tests/test_failure_mode_probe.py` passing — the labels below are only
-meaningful if the fork and supersession mechanisms are mechanically valid.
+**Status: PR-2b contradiction-arm result landed** (gentoo,
+`vitl14_cifar100_train` — see `PR2B_CONTRA_RESULT.md`). The PR-2c stale arm
+has no results yet. Cache-backed runs are gated on
+`tests/test_failure_mode_probe.py` + `tests/test_failure_mode_vision.py`
+passing — the labels below are only meaningful if the fork and supersession
+mechanisms are mechanically valid.
 
 ## Question
 

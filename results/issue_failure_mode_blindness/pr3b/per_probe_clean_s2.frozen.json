@@ -1,0 +1,201 @@
+{
+  "frozen_detector": {
+    "fit_csv": "../../../results/issue_vitl14_blend_confidence/per_probe.csv",
+    "fit_summary": "../../../results/issue_vitl14_blend_confidence/heldout_abstention_summary.json",
+    "features": [
+      "top1_top2_margin",
+      "effective_support"
+    ],
+    "target": "vote_correct",
+    "split": "parity (PRIMARY in heldout_abstention.py)",
+    "train_epochs": [
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      20,
+      22,
+      24,
+      26,
+      28
+    ],
+    "verified_heldout_parity_auc": 0.804,
+    "frozen_threshold_youden": 0.292748,
+    "standardization_mean": [
+      0.063177,
+      7.643486
+    ],
+    "standardization_std": [
+      0.08701,
+      5.265615
+    ],
+    "logistic_coef": [
+      -3.546096,
+      0.411217
+    ],
+    "logistic_intercept": -2.292901
+  },
+  "clean": {
+    "n_probes": 2688,
+    "wrong": 0,
+    "zone_composition": {
+      "correct": {
+        "n": 2688,
+        "n_forced_zone": 0,
+        "forced_zone_share": 0.0
+      },
+      "contra_wrong": {
+        "n": 0,
+        "n_forced_zone": 0,
+        "forced_zone_share": null
+      },
+      "stale_wrong": {
+        "n": 0,
+        "n_forced_zone": 0,
+        "forced_zone_share": null
+      },
+      "other_wrong": {
+        "n": 0,
+        "n_forced_zone": 0,
+        "forced_zone_share": null
+      }
+    },
+    "score_distribution": {
+      "correct": {
+        "n": 2688,
+        "median": 0.2263,
+        "p10": 0.0095,
+        "p90": 0.5073
+      },
+      "contra_wrong": {
+        "n": 0
+      },
+      "stale_wrong": {
+        "n": 0
+      },
+      "other_wrong": {
+        "n": 0
+      }
+    },
+    "auc": {
+      "all_rows": {
+        "contra_wrong": null,
+        "stale_wrong": null,
+        "other_wrong": null
+      },
+      "forced_zone": {
+        "contra_wrong": null,
+        "stale_wrong": null,
+        "other_wrong": null
+      }
+    },
+    "confidently_wrong": {
+      "all_rows": {
+        "contra_wrong": null,
+        "stale_wrong": null
+      },
+      "forced_zone": {
+        "contra_wrong": null,
+        "stale_wrong": null
+      }
+    },
+    "operating_point": {
+      "zoned": {
+        "threshold": 0.292748,
+        "retained_coverage": 1.0,
+        "retained_accuracy": 1.0,
+        "false_abstain_rate_on_correct": 0.0,
+        "error_capture_contra_wrong": null,
+        "error_capture_stale_wrong": null
+      },
+      "unzoned": {
+        "threshold": 0.292748,
+        "retained_coverage": 0.4152,
+        "retained_accuracy": 1.0,
+        "false_abstain_rate_on_correct": 0.5848,
+        "error_capture_contra_wrong": null,
+        "error_capture_stale_wrong": null
+      }
+    },
+    "dose_response": {
+      "contra_vote_weight": [
+        {
+          "bin": "0",
+          "n": 2688,
+          "wrong_rate": 0.0
+        },
+        {
+          "bin": "(0.0,0.25]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.25,0.5]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.5,0.75]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.75,1.0]",
+          "n": 0,
+          "wrong_rate": null
+        }
+      ],
+      "stale_vote_weight": [
+        {
+          "bin": "0",
+          "n": 2688,
+          "wrong_rate": 0.0
+        },
+        {
+          "bin": "(0.0,0.25]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.25,0.5]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.5,0.75]",
+          "n": 0,
+          "wrong_rate": null
+        },
+        {
+          "bin": "(0.75,1.0]",
+          "n": 0,
+          "wrong_rate": null
+        }
+      ]
+    }
+  },
+  "pre_registered_triggers": {
+    "definitions": {
+      "contra_auc_le": 0.6,
+      "contra_confidently_wrong_gt": 0.5,
+      "stale_auc_le": 0.55
+    },
+    "primary_scope": "all_rows",
+    "contradictory": {
+      "auc": null,
+      "confidently_wrong": null,
+      "auc_forced_zone_secondary": null,
+      "fired": false,
+      "consequence_if_fired": "write-time contradiction detection required"
+    },
+    "stale": {
+      "auc": null,
+      "confidently_wrong": null,
+      "auc_forced_zone_secondary": null,
+      "fired": false,
+      "consequence_if_fired": "recency must enter the readout"
+    }
+  }
+}

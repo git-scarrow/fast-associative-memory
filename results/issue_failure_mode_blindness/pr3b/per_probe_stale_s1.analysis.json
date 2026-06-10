@@ -1,0 +1,224 @@
+{
+  "stale": {
+    "n_probes": 2116,
+    "wrong": 62,
+    "wrong_rate": 0.0293,
+    "contradictory_strict": 0,
+    "contradictory_lenient": 0,
+    "contra_strict_share_of_wrong": 0.0,
+    "contra_lenient_share_of_wrong": 0.0,
+    "stale_strict": 20,
+    "stale_lenient": 60,
+    "stale_strict_share_of_wrong": 0.3226,
+    "stale_lenient_share_of_wrong": 0.9677,
+    "contra_and_stale_lenient_overlap": 0,
+    "failure_mode_counts": {
+      "BLENDED": 2,
+      "CORRECT": 2054,
+      "STALE_LENIENT": 40,
+      "STALE_STRICT": 20
+    },
+    "contra_vote_weight_on_contra_wrong": {
+      "n": 0
+    },
+    "stale_vote_weight_on_stale_wrong": {
+      "n": 60,
+      "mean": 0.5,
+      "median": 0.5,
+      "p10": 0.5,
+      "p90": 0.5
+    },
+    "groups": {
+      "correct": {
+        "vote_entropy": {
+          "n": 2054,
+          "mean": 1.2641,
+          "median": 1.263,
+          "p10": 0.0,
+          "p90": 2.5576
+        },
+        "top1_top2_margin": {
+          "n": 2054,
+          "mean": 0.0464,
+          "median": 0.03,
+          "p10": 0.0,
+          "p90": 0.1122
+        },
+        "top1_sim": {
+          "n": 2054,
+          "mean": 0.6767,
+          "median": 0.6614,
+          "p10": 0.5526,
+          "p90": 0.8422
+        },
+        "max_vote_weight": {
+          "n": 2054,
+          "mean": 0.5392,
+          "median": 0.5214,
+          "p10": 0.1319,
+          "p90": 1.0
+        },
+        "effective_support": {
+          "n": 2054,
+          "mean": 5.0785,
+          "median": 3.536,
+          "p10": 1.0,
+          "p90": 12.9055
+        },
+        "n_surviving_votes": {
+          "n": 2054,
+          "mean": 7.9985,
+          "median": 6.0,
+          "p10": 1.0,
+          "p90": 20.0
+        }
+      },
+      "contra_wrong": {
+        "vote_entropy": {
+          "n": 0
+        },
+        "top1_top2_margin": {
+          "n": 0
+        },
+        "top1_sim": {
+          "n": 0
+        },
+        "max_vote_weight": {
+          "n": 0
+        },
+        "effective_support": {
+          "n": 0
+        },
+        "n_surviving_votes": {
+          "n": 0
+        }
+      },
+      "stale_wrong": {
+        "vote_entropy": {
+          "n": 60,
+          "mean": 2.2686,
+          "median": 2.3365,
+          "p10": 1.6121,
+          "p90": 2.7981
+        },
+        "top1_top2_margin": {
+          "n": 60,
+          "mean": 0.0,
+          "median": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+        },
+        "top1_sim": {
+          "n": 60,
+          "mean": 0.7467,
+          "median": 0.755,
+          "p10": 0.6143,
+          "p90": 0.8778
+        },
+        "max_vote_weight": {
+          "n": 60,
+          "mean": 0.2278,
+          "median": 0.2006,
+          "p10": 0.1204,
+          "p90": 0.369
+        },
+        "effective_support": {
+          "n": 60,
+          "mean": 10.5845,
+          "median": 10.3479,
+          "p10": 5.0135,
+          "p90": 16.4138
+        },
+        "n_surviving_votes": {
+          "n": 60,
+          "mean": 17.8333,
+          "median": 20.0,
+          "p10": 12.0,
+          "p90": 20.0
+        }
+      },
+      "other_wrong": {
+        "vote_entropy": {
+          "n": 2,
+          "mean": 0.0,
+          "median": 0.0,
+          "p10": 0.0,
+          "p90": -0.0
+        },
+        "top1_top2_margin": {
+          "n": 2,
+          "mean": 0.0469,
+          "median": 0.0469,
+          "p10": 0.0469,
+          "p90": 0.0469
+        },
+        "top1_sim": {
+          "n": 2,
+          "mean": 0.4776,
+          "median": 0.4776,
+          "p10": 0.4776,
+          "p90": 0.4776
+        },
+        "max_vote_weight": {
+          "n": 2,
+          "mean": 1.0,
+          "median": 1.0,
+          "p10": 1.0,
+          "p90": 1.0
+        },
+        "effective_support": {
+          "n": 2,
+          "mean": 1.0,
+          "median": 1.0,
+          "p10": 1.0,
+          "p90": 1.0
+        },
+        "n_surviving_votes": {
+          "n": 2,
+          "mean": 1.0,
+          "median": 1.0,
+          "p10": 1.0,
+          "p90": 1.0
+        }
+      }
+    },
+    "signals": {
+      "vote_entropy": {
+        "auc_contra_wrong_vs_correct": NaN,
+        "auc_stale_wrong_vs_correct": 0.8379,
+        "auc_all_wrong_vs_correct": 0.8131,
+        "confidently_wrong_rate_stale": 0.0333
+      },
+      "top1_top2_margin": {
+        "auc_contra_wrong_vs_correct": NaN,
+        "auc_stale_wrong_vs_correct": 0.9292,
+        "auc_all_wrong_vs_correct": 0.9111,
+        "confidently_wrong_rate_stale": 0.0
+      },
+      "top1_sim": {
+        "auc_contra_wrong_vs_correct": NaN,
+        "auc_stale_wrong_vs_correct": 0.3139,
+        "auc_all_wrong_vs_correct": 0.3359,
+        "confidently_wrong_rate_stale": 0.7833
+      },
+      "max_vote_weight": {
+        "auc_contra_wrong_vs_correct": NaN,
+        "auc_stale_wrong_vs_correct": 0.8306,
+        "auc_all_wrong_vs_correct": 0.806,
+        "confidently_wrong_rate_stale": 0.0
+      },
+      "effective_support": {
+        "auc_contra_wrong_vs_correct": NaN,
+        "auc_stale_wrong_vs_correct": 0.8379,
+        "auc_all_wrong_vs_correct": 0.8131,
+        "confidently_wrong_rate_stale": 0.0333
+      },
+      "n_surviving_votes": {
+        "auc_contra_wrong_vs_correct": NaN,
+        "auc_stale_wrong_vs_correct": 0.8672,
+        "auc_all_wrong_vs_correct": 0.8414,
+        "confidently_wrong_rate_stale": 0.0167
+      }
+    }
+  }
+}

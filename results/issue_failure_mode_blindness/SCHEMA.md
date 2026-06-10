@@ -114,9 +114,9 @@ plus:
 
 | Column | Meaning |
 |---|---|
-| `arm` | `clean` / `contra` / `stale` |
-| `injection_rate` | contra arm rate (0.0 otherwise) |
-| `supersede_epoch` | stale arm flip epoch (−1 otherwise) |
+| `arm` | base arm (`clean`/`contra`/`stale`/`mixed`) plus PR-3b variant suffixes: `-oneshot`, `-jitter<eps>`, `-soft` (e.g. `stale-jitter0.05`) |
+| `injection_rate` | contra/mixed arm rate (0.0 otherwise) |
+| `supersede_epoch` | stale/mixed arm flip epoch (−1 otherwise) |
 | `probe_index` | row index into the held-out probe set |
 | `top1_slot` | raw-cosine top-1 slot id |
 | `failure_mode` | precedence-collapsed label (see above) |
@@ -124,6 +124,53 @@ plus:
 | `stale_strict` / `stale_lenient` | 0/1 flags |
 | `n_contra_topk` / `n_stale_topk` | surviving top-k members in each slot set |
 | `contra_vote_weight` / `stale_vote_weight` | softmax vote mass on each slot set |
+
+## PR-3b arms (variants of the protocols above; PR3_DESIGN.md §5)
+
+| Arm / flag | Protocol |
+|---|---|
+| `mixed` | contra injections AND one supersession group in the same memory. The group's pre-label rows are excluded from injection (eligible mask) so supersession ground truth stays pure; label overlap is reported, never folded. |
+| `--one-shot` | phase 2 writes K→B exactly once; later epochs never re-write the group's keys. Tests whether the boundary tie regime persists. |
+| `--key-jitter ε` | phase-2 keys perturbed by direction-normalized noise of L2 magnitude ε (dimension-independent), breaking the exact-tie artifact. |
+| `--payload-mode soft` | phase-2 targets `0.6·e_A + 0.8·e_B` (cosine 0.6 to the stored payload > 0.5) force the engine's EMA-merge path: the mature slot absorbs the update and keeps decoding A — the merge-path stale mode. |
+
+**Platform caveat (pinned by test):** at an exact 0.5/0.5 fork tie the
+*elected* class is platform-dependent (last-ulp differences in the float32
+vote sums flip the argmax across BLAS implementations; observed darwin vs
+gentoo). Only the tie and the A/B-only split are stable facts; no analysis
+may rely on the tie-break direction.
+
+## Side tables (PR-3b; written next to every per-probe CSV)
+
+`<out>.per_slot.csv` — one row per occupied slot per probe epoch:
+`arm, epoch, slot, decode, hit_counts, last_write_seq, usage, n_records`,
+role flags `is_contra_fork / is_stale_superseded / is_current_fork /
+is_merge_candidate` (NOT mutually exclusive), and `role` collapsed by the
+precedence `contra_fork > stale_superseded > merge_candidate >
+current_fork > clean`. Contra/stale/current roles are registry ground
+truth; `merge_candidate` (provenance spans both phases of one group) is
+observational. `last_write_seq` is protocol-time write recency (the
+slot's latest provenance sequence number) — the engine's `last_seen` is
+wall-clock and would break byte-determinism.
+
+`<out>.fork_events.csv` — one row per stamped write: write-time
+observables ONLY (`pre_sim`, `payload_cos_incumbent`,
+`effective_vigilance`, incumbent maturity/recency/lineage, `outcome`,
+`owner_slot`) plus the protocol's ground-truth `event_class`:
+`initial` / `duplicate-rewrite` (vision; identical batch re-written) /
+`clean-rewrite` (synthetic; fresh same-class samples) / `contradiction` /
+`supersession` / `one-shot-ambiguous`. None of the per-probe failure
+labels appear here (pinned by test): features and classifier targets stay
+separable. Pre-write observables are vs the PRE-BATCH state (the PR-2a
+outcome-classification convention); within-batch interactions are not
+captured. `payload-drift` / `key-drift` remain reserved (PR3_DESIGN.md §7)
+and are NOT instantiable by these arms.
+
+Vision summaries additionally record `fork_resolution` per run — an
+observational natural-history label from the per-epoch superseded-key
+elections (`later-dominates` / `old-persists` / `persistent-tie` /
+`persistent-split` / `mixed` / `unresolved`) — and
+`stale_weight_median_superseded` per epoch.
 
 ## Integrity guards baked into the driver
 

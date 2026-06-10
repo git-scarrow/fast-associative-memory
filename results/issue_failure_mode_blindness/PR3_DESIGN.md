@@ -1,7 +1,10 @@
 # PR-3 design memo — mode-conditioned failure detection and fork governance
 
-**Status: PR-3a executed (see `PR3A_RESULT.md`) — audit PASS, both
-triggers fired; PR-3b/3c not started.**
+**Status: PR-3a executed (`PR3A_RESULT.md`) — audit PASS, both triggers
+fired. PR-3b executed (`PR3B_RESULT.md`) — signatures are additionally
+class-geometry-conditioned (pair-B sign flips); merge-path stale
+confirmed persistent; one-shot tie confirmed permanent; H1 near-falsified
+as geometry-general, H2 strengthened. PR-3c not started.**
 Written after PR-2a/2b/2c landed (main `2d264c4`). Everything below is
 stated before any PR-3 data exists; numbers quoted are from the PR-2 memos.
 

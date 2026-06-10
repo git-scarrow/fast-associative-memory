@@ -1,0 +1,905 @@
+{
+  "generated_at": "2026-06-10T16:56:45.018539+00:00",
+  "host": "gentoo",
+  "platform": "Linux-7.0.11-tkg-eevdf-x86_64-12th_Gen_Intel-R-_Core-TM-_i9-12900K-with-glibc2.43",
+  "python": "3.13.13",
+  "torch": "2.10.0+cu128",
+  "repo_commit": "13c37062f7953760881d0b616180e9890c60d501",
+  "hashed": true,
+  "summary": {
+    "ok": 16
+  },
+  "caches": [
+    {
+      "id": "vitl14_cifar100_train",
+      "tier": "a-track",
+      "path": "feature_cache_vitl14/cifar100_dinov2_train.pt",
+      "consumers": [
+        "benchmarks/probe_contraction.py:VisionDriftStream (A1 #87)",
+        "benchmarks/calibration_probe.py --vision",
+        "benchmark_sleep.py:load_features",
+        "benchmarks/mt15_adaptive_eviction.py"
+      ],
+      "symlink": {
+        "symlink": "feature_cache_vitl14",
+        "target": "/mnt/data/dev/projects/campus-fabric/feature_cache_vitl14",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitl14/cifar100_dinov2_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitl14/cifar100_dinov2_train.pt",
+      "size_bytes": 205202005,
+      "mtime": "2026-02-22T02:31:46.368878+00:00",
+      "sha256": "773428964882d2ac31e411fc74c1fbdfdc60851035efcd74e2b6f17d79e0b5b3",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          50000,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 45.88874053955078,
+        "norm_std": 1.4514837265014648,
+        "norm_min": 35.91753005981445,
+        "norm_max": 49.13038635253906
+      },
+      "labels": {
+        "shape": [
+          50000
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 100,
+        "label_min": 0,
+        "label_max": 99,
+        "per_class_min": 500,
+        "per_class_median": 500.0,
+        "per_class_max": 500
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true,
+        "study": "A1 (#87)",
+        "required_class_counts": {
+          "0": 500,
+          "8": 500,
+          "19": 500,
+          "33": 500
+        },
+        "attractor_count": {
+          "71": 500
+        },
+        "study_requirements_met": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "vitl14_cifar100_test",
+      "tier": "a-track",
+      "path": "feature_cache_vitl14/cifar100_dinov2_test.pt",
+      "consumers": [
+        "benchmark_sleep.py:load_features",
+        "benchmarks/mt15_adaptive_eviction.py"
+      ],
+      "symlink": {
+        "symlink": "feature_cache_vitl14",
+        "target": "/mnt/data/dev/projects/campus-fabric/feature_cache_vitl14",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitl14/cifar100_dinov2_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitl14/cifar100_dinov2_test.pt",
+      "size_bytes": 41041997,
+      "mtime": "2026-02-22T02:31:46.572883+00:00",
+      "sha256": "323f3bbeb2adcb5801162163014ad6a8ac1bdafef2e018c41861e2ff6eb2e059",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          10000,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 45.876792907714844,
+        "norm_std": 1.455743670463562,
+        "norm_min": 36.035213470458984,
+        "norm_max": 48.84622573852539
+      },
+      "labels": {
+        "shape": [
+          10000
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 100,
+        "label_min": 0,
+        "label_max": 99,
+        "per_class_min": 100,
+        "per_class_median": 100.0,
+        "per_class_max": 100
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "inr_vitl14_train",
+      "tier": "a-track",
+      "path": "feature_cache_inr_vitl14/imagenetr_dinov2_train.pt",
+      "consumers": [
+        "benchmarks/calibration_probe.py --vision-cache (A2 INR breadth)",
+        "benchmarks/benchmark_dynamic_vigilance.py:DATASET_SPECS[ImageNet-R]",
+        "evaluate_baselines.py",
+        "probe_g0g1_reembed.py"
+      ],
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/feature_cache_inr_vitl14/imagenetr_dinov2_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/feature_cache_inr_vitl14/imagenetr_dinov2_train.pt",
+      "size_bytes": 98161501,
+      "mtime": "2026-02-24T16:44:50.346105+00:00",
+      "sha256": "d9b3b6e36d33dbf8a50b07fa30bf18c86b9c279688da3c7b6ee4f424af46d953",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          23918,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 45.56498718261719,
+        "norm_std": 1.0945593118667603,
+        "norm_min": 39.17341613769531,
+        "norm_max": 48.67043685913086
+      },
+      "labels": {
+        "shape": [
+          23918
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 200,
+        "label_min": 0,
+        "label_max": 199,
+        "per_class_min": 40,
+        "per_class_median": 109.0,
+        "per_class_max": 344
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true,
+        "study": "A2 (INR breadth)",
+        "required_class_counts": {
+          "166": 184,
+          "63": 250,
+          "77": 131,
+          "156": 163
+        },
+        "attractor_count": {
+          "134": 232
+        },
+        "study_requirements_met": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "inr_vitl14_test",
+      "tier": "a-track",
+      "path": "feature_cache_inr_vitl14/imagenetr_dinov2_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py",
+        "evaluate_baselines.py"
+      ],
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/feature_cache_inr_vitl14/imagenetr_dinov2_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/feature_cache_inr_vitl14/imagenetr_dinov2_test.pt",
+      "size_bytes": 24962517,
+      "mtime": "2026-02-24T16:44:50.429811+00:00",
+      "sha256": "7d0646af6bdc92ff4a4161ceef57fe8850cedf66bed020cc6c7664e4859d041c",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          6082,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 45.56315231323242,
+        "norm_std": 1.0735745429992676,
+        "norm_min": 40.056087493896484,
+        "norm_max": 48.596858978271484
+      },
+      "labels": {
+        "shape": [
+          6082
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 200,
+        "label_min": 0,
+        "label_max": 199,
+        "per_class_min": 11,
+        "per_class_median": 28.0,
+        "per_class_max": 86
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "vitb14_cifar100_train",
+      "tier": "secondary",
+      "path": "feature_cache_vitb14/cifar100_dinov2_train.pt",
+      "consumers": [
+        "extract_dinov2_vitb14.py (writer)",
+        "benchmarks/benchmark_dynamic_vigilance.py (CIFAR spec on some hosts)"
+      ],
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitb14/cifar100_dinov2_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitb14/cifar100_dinov2_train.pt",
+      "size_bytes": 154002005,
+      "mtime": "2026-02-22T23:51:37.802870+00:00",
+      "sha256": "7d05d5d8c96a7a3881f59fac5425fb54169eea1959356117a8330467d87bf775",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          50000,
+          768
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 47.25040054321289,
+        "norm_std": 1.565891146659851,
+        "norm_min": 37.30308532714844,
+        "norm_max": 50.77281951904297
+      },
+      "labels": {
+        "shape": [
+          50000
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 100,
+        "label_min": 0,
+        "label_max": 99,
+        "per_class_min": 500,
+        "per_class_median": 500.0,
+        "per_class_max": 500
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "vitb14_cifar100_test",
+      "tier": "secondary",
+      "path": "feature_cache_vitb14/cifar100_dinov2_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitb14/cifar100_dinov2_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/feature_cache_vitb14/cifar100_dinov2_test.pt",
+      "size_bytes": 30801997,
+      "mtime": "2026-02-22T23:51:37.868872+00:00",
+      "sha256": "41f41593908ef1089e97cd36b95925359f956e5e4bafb685122a2048e8b0ec8a",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          10000,
+          768
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 47.2420768737793,
+        "norm_std": 1.5763288736343384,
+        "norm_min": 38.42619705200195,
+        "norm_max": 50.91387939453125
+      },
+      "labels": {
+        "shape": [
+          10000
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 100,
+        "label_min": 0,
+        "label_max": 99,
+        "per_class_min": 100,
+        "per_class_median": 100.0,
+        "per_class_max": 100
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "dogs_train",
+      "tier": "adapter",
+      "path": "data/stanford_dogs/stanford_dogs_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/stanford_dogs/stanford_dogs_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/stanford_dogs/stanford_dogs_train.pt",
+      "size_bytes": 49249989,
+      "mtime": "2026-02-24T19:25:00.272483+00:00",
+      "sha256": "b88c752ebc8c27b0373f21b6a6b7d770fb4900d72a008719837f992a3b7c3e4f",
+      "keys": [
+        "features",
+        "labels"
+      ],
+      "feature_key": "features",
+      "features": {
+        "shape": [
+          12000,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.53450012207031,
+        "norm_std": 0.6311897039413452,
+        "norm_min": 41.42952346801758,
+        "norm_max": 48.2251091003418
+      },
+      "labels": {
+        "shape": [
+          12000
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 120,
+        "label_min": 0,
+        "label_max": 119,
+        "per_class_min": 100,
+        "per_class_median": 100.0,
+        "per_class_max": 100
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "dogs_test",
+      "tier": "adapter",
+      "path": "data/stanford_dogs/stanford_dogs_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/stanford_dogs/stanford_dogs_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/stanford_dogs/stanford_dogs_test.pt",
+      "size_bytes": 35214269,
+      "mtime": "2026-02-24T19:25:00.285483+00:00",
+      "sha256": "f5818b967b00b4b5a2340542716076219cf7c2acabcc7e12ea7317d3fb6aae3e",
+      "keys": [
+        "features",
+        "labels"
+      ],
+      "feature_key": "features",
+      "features": {
+        "shape": [
+          8580,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.529598236083984,
+        "norm_std": 0.6466877460479736,
+        "norm_min": 41.78482437133789,
+        "norm_max": 48.43867111206055
+      },
+      "labels": {
+        "shape": [
+          8580
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 120,
+        "label_min": 0,
+        "label_max": 119,
+        "per_class_min": 48,
+        "per_class_median": 59.0,
+        "per_class_max": 152
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "cub200_train",
+      "tier": "adapter",
+      "path": "data/cub200/cub200_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/cub200/cub200_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/cub200/cub200_train.pt",
+      "size_bytes": 24601293,
+      "mtime": "2026-02-24T17:51:12.080365+00:00",
+      "sha256": "fd8f28edb00e7f4439bc87cd4621e3307028e6fe54e6da2bc8c74c4d309246d9",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          5994,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 47.07691955566406,
+        "norm_std": 0.5374310612678528,
+        "norm_min": 43.82881546020508,
+        "norm_max": 49.212249755859375
+      },
+      "labels": {
+        "shape": [
+          5994
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 200,
+        "label_min": 0,
+        "label_max": 199,
+        "per_class_min": 29,
+        "per_class_median": 30.0,
+        "per_class_max": 30
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "cub200_test",
+      "tier": "adapter",
+      "path": "data/cub200/cub200_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/cub200/cub200_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/cub200/cub200_test.pt",
+      "size_bytes": 23780485,
+      "mtime": "2026-02-24T17:51:12.158367+00:00",
+      "sha256": "7d0d886f1be0a1efdc06cfd66b3f4d25bd274b0f1f91067b1b4e53890d37f297",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          5794,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 47.080623626708984,
+        "norm_std": 0.5314719676971436,
+        "norm_min": 44.005069732666016,
+        "norm_max": 48.71642303466797
+      },
+      "labels": {
+        "shape": [
+          5794
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 200,
+        "label_min": 0,
+        "label_max": 199,
+        "per_class_min": 11,
+        "per_class_median": 30.0,
+        "per_class_max": 30
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "cars_train",
+      "tier": "adapter",
+      "path": "data/stanford_cars/stanford_cars_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/stanford_cars/stanford_cars_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/stanford_cars/stanford_cars_train.pt",
+      "size_bytes": 33424965,
+      "mtime": "2026-02-24T17:51:48.025309+00:00",
+      "sha256": "29e2a271a12d6b5c62f947a95e358d44664abd8088c66e47db1d506a22ace0d4",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          8144,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.33743667602539,
+        "norm_std": 0.5909464359283447,
+        "norm_min": 42.37637710571289,
+        "norm_max": 48.004207611083984
+      },
+      "labels": {
+        "shape": [
+          8144
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 196,
+        "label_min": 0,
+        "label_max": 195,
+        "per_class_min": 24,
+        "per_class_median": 42.0,
+        "per_class_max": 68
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "cars_test",
+      "tier": "adapter",
+      "path": "data/stanford_cars/stanford_cars_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/stanford_cars/stanford_cars_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/stanford_cars/stanford_cars_test.pt",
+      "size_bytes": 33002237,
+      "mtime": "2026-02-24T17:51:48.038310+00:00",
+      "sha256": "cc090ce62459f9ad2461b9e598cbf8325f5049e7b2a15bf1be455bd1954bde01",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          8041,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.346221923828125,
+        "norm_std": 0.5777766704559326,
+        "norm_min": 42.86616897583008,
+        "norm_max": 47.94878387451172
+      },
+      "labels": {
+        "shape": [
+          8041
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 196,
+        "label_min": 0,
+        "label_max": 195,
+        "per_class_min": 24,
+        "per_class_median": 42.0,
+        "per_class_max": 68
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "aircraft_train",
+      "tier": "adapter",
+      "path": "data/fgvc_aircraft/fgvc_aircraft_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/fgvc_aircraft/fgvc_aircraft_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/fgvc_aircraft/fgvc_aircraft_train.pt",
+      "size_bytes": 13684677,
+      "mtime": "2026-02-24T17:36:57.580933+00:00",
+      "sha256": "43213c2c05b68621a6f7defb0d5504fd4b22baca95a73ae67239015318a98a70",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          3334,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.78524398803711,
+        "norm_std": 0.41120779514312744,
+        "norm_min": 45.140357971191406,
+        "norm_max": 48.266170501708984
+      },
+      "labels": {
+        "shape": [
+          3334
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 100,
+        "label_min": 0,
+        "label_max": 99,
+        "per_class_min": 33,
+        "per_class_median": 33.0,
+        "per_class_max": 34
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "aircraft_test",
+      "tier": "adapter",
+      "path": "data/fgvc_aircraft/fgvc_aircraft_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/fgvc_aircraft/fgvc_aircraft_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/fgvc_aircraft/fgvc_aircraft_test.pt",
+      "size_bytes": 13680573,
+      "mtime": "2026-02-24T17:36:57.583933+00:00",
+      "sha256": "ec0d825212013f10b06c2adb95252e2c4f5b3af13b0fcf4d50a77e33c53f2350",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          3333,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.78014373779297,
+        "norm_std": 0.41582828760147095,
+        "norm_min": 45.171913146972656,
+        "norm_max": 48.18053436279297
+      },
+      "labels": {
+        "shape": [
+          3333
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 100,
+        "label_min": 0,
+        "label_max": 99,
+        "per_class_min": 33,
+        "per_class_median": 33.0,
+        "per_class_max": 34
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "flowers_train",
+      "tier": "adapter",
+      "path": "data/flowers102/feature_cache/flowers102_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/flowers102/feature_cache/flowers102_train.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/flowers102/feature_cache/flowers102_train.pt",
+      "size_bytes": 8374125,
+      "mtime": "2026-02-24T17:33:32.103598+00:00",
+      "sha256": "cd8ad848adae1d06324d715f181d973157ae2c6f9388e4b5768193ede8fbbfd8",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          2040,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.581390380859375,
+        "norm_std": 0.4416017234325409,
+        "norm_min": 45.04429244995117,
+        "norm_max": 48.152862548828125
+      },
+      "labels": {
+        "shape": [
+          2040
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 102,
+        "label_min": 0,
+        "label_max": 101,
+        "per_class_min": 20,
+        "per_class_median": 20.0,
+        "per_class_max": 20
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    },
+    {
+      "id": "flowers_test",
+      "tier": "adapter",
+      "path": "data/flowers102/feature_cache/flowers102_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "symlink": {
+        "symlink": "data",
+        "target": "/mnt/storage/workspace-archive/fast-associative-memory/data",
+        "target_exists": true
+      },
+      "tried": [
+        "/mnt/data/dev/projects/fast-associative-memory/data/flowers102/feature_cache/flowers102_test.pt"
+      ],
+      "resolved_path": "/mnt/data/dev/projects/fast-associative-memory/data/flowers102/feature_cache/flowers102_test.pt",
+      "size_bytes": 25237413,
+      "mtime": "2026-02-24T17:33:32.119539+00:00",
+      "sha256": "cf78b09f9cbd58923014ebc004ea5335c20955c049f31b2d37d72fb226757523",
+      "keys": [
+        "embeds",
+        "labels"
+      ],
+      "feature_key": "embeds",
+      "features": {
+        "shape": [
+          6149,
+          1024
+        ],
+        "dtype": "torch.float32",
+        "nan_count": 0,
+        "inf_count": 0,
+        "norm_mean": 46.52079772949219,
+        "norm_std": 0.42704448103904724,
+        "norm_min": 44.53880310058594,
+        "norm_max": 47.907066345214844
+      },
+      "labels": {
+        "shape": [
+          6149
+        ],
+        "dtype": "torch.int64",
+        "n_classes_present": 102,
+        "label_min": 0,
+        "label_max": 101,
+        "per_class_min": 20,
+        "per_class_median": 46.0,
+        "per_class_max": 238
+      },
+      "checks": {
+        "rows_match": true,
+        "finite": true
+      },
+      "status": "ok"
+    }
+  ]
+}

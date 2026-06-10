@@ -12,9 +12,12 @@ the same blob format as vitl14_cifar100_train), CPU-only, no GPU, no network:
   2. the contra vision arm end-to-end: schema, label domain, strict=>lenient,
      stale never fires, injections accounted one outcome each, forks occur
      and surface as contradictory-flagged wrong probes;
-  3. stale is refused (PR-2c, not wired);
+  3. the stale vision arm end-to-end (PR-2c): supersession protocol runs both
+     phases, stale labels exist only after supersession, contra labels never
+     fire (STALE stays distinct from CONTRADICTORY), stale-selection
+     accounting in the summary matches the CSV;
   4. byte-identical determinism for a fixed seed (reproducible gentoo runs);
-  5. the summary's per-epoch fork accounting matches the CSV's labels.
+  5. the summary's per-epoch fork/stale accounting matches the CSV's labels.
 """
 import csv
 import sys
@@ -51,13 +54,15 @@ def _make_cache(path: Path, dim=24, n_per=20, noise=0.05, seed=0) -> Path:
     return p
 
 
-def _run(arm, tmp_path, rate=0.5, epochs=5, seed=0, name="out.csv"):
+def _run(arm, tmp_path, rate=0.5, epochs=5, seed=0, name="out.csv",
+         supersede_epoch=3):
     cache = _make_cache(tmp_path)
     out = tmp_path / name
     n, summary = run_vision(
         arm, rate=rate, epochs=epochs, out_path=out, cache_path=str(cache),
         classes=CLASSES, attractor_class=ATTRACTOR, samples_per_class=8,
-        held_out_per_class=8, contraction=0.0, seed=seed)
+        held_out_per_class=8, contraction=0.0, seed=seed,
+        supersede_epoch=supersede_epoch)
     return n, summary, out
 
 
@@ -108,10 +113,64 @@ def test_vision_contra_arm_end_to_end(tmp_path):
                          "surface contradictory-flagged wrong probes"
 
 
-def test_vision_rejects_stale_arm(tmp_path):
+def test_vision_stale_arm_end_to_end(tmp_path):
+    n, summary, out = _run("stale", tmp_path, rate=0.0, epochs=6,
+                           supersede_epoch=3)
+    assert n > 0
+    rows = list(csv.DictReader(open(out)))
+    assert set(rows[0].keys()) == set(OUT_COLS)
+
+    # No contra protocol in this arm: STALE stays distinct from CONTRADICTORY.
+    assert summary["n_injections"] == 0
+    assert summary["injection_outcomes"] == {}
+    # Phase-1 write accounting: 8 A-rows per epoch for 3 pre-flip epochs.
+    assert summary["n_phase1_writes"] == 8 * 3
+    assert summary["supersede_epoch"] == 3
+    assert summary["stale_pre_cache_class"] == CLASSES[0]
+    assert summary["stale_post_cache_class"] == CLASSES[-1]
+
+    allowed = set(MODE_PRECEDENCE) | {"CORRECT"}
+    n_stale = 0
+    for r in rows:
+        assert r["arm"] == "stale"
+        assert r["supersede_epoch"] == "3"
+        assert r["injection_rate"] == "0.0"
+        assert r["failure_mode"] in allowed
+        assert int(r["stale_strict"]) <= int(r["stale_lenient"])
+        assert r["contradictory_lenient"] == "0"  # no contra writes here
+        if r["vote_correct"] == "1":
+            assert r["failure_mode"] == "CORRECT"
+        if int(r["epoch"]) < 3:
+            assert r["stale_lenient"] == "0", \
+                "stale labels must not exist before supersession"
+        n_stale += int(r["stale_lenient"])
+    assert n_stale > 0, "mature K→A support must surface as stale-flagged " \
+                        "wrong probes after the K→B supersession"
+
+    # Stale-selection accounting: pre-flip epochs have no superseded probes;
+    # post-flip epochs track A-key probes and how many still elect A.
+    for e in summary["per_epoch"]:
+        if e["epoch"] < 3:
+            assert e["superseded"] is False
+            assert e["superseded_key_probes"] == 0
+            assert e["stale_strict"] == e["stale_lenient"] == 0
+        else:
+            assert e["superseded"] is True
+            assert e["superseded_key_probes"] > 0
+            assert (e["stale_selected"] + e["updated_selected"]
+                    <= e["superseded_key_probes"])
+
+    # Per-epoch stale counts in the summary reconcile with the CSV labels.
+    for log in summary["per_epoch"]:
+        er = [r for r in rows if int(r["epoch"]) == log["epoch"]]
+        assert sum(int(r["stale_strict"]) for r in er) == log["stale_strict"]
+        assert sum(int(r["stale_lenient"]) for r in er) == log["stale_lenient"]
+
+
+def test_vision_rejects_unknown_arm(tmp_path):
     cache = _make_cache(tmp_path)
-    with pytest.raises(ValueError, match="PR-2c"):
-        run_vision("stale", rate=0.0, epochs=1, out_path=tmp_path / "x.csv",
+    with pytest.raises(ValueError, match="clean/contra"):
+        run_vision("bogus", rate=0.0, epochs=2, out_path=tmp_path / "x.csv",
                    cache_path=str(cache), classes=CLASSES,
                    attractor_class=ATTRACTOR, samples_per_class=8,
                    held_out_per_class=8)
@@ -120,6 +179,13 @@ def test_vision_rejects_stale_arm(tmp_path):
 def test_vision_run_is_deterministic(tmp_path):
     _, s1, out1 = _run("contra", tmp_path, name="a.csv")
     _, s2, out2 = _run("contra", tmp_path, name="b.csv")
+    assert out1.read_bytes() == out2.read_bytes()
+    assert s1 == s2
+
+
+def test_vision_stale_run_is_deterministic(tmp_path):
+    _, s1, out1 = _run("stale", tmp_path, rate=0.0, epochs=6, name="a.csv")
+    _, s2, out2 = _run("stale", tmp_path, rate=0.0, epochs=6, name="b.csv")
     assert out1.read_bytes() == out2.read_bytes()
     assert s1 == s2
 

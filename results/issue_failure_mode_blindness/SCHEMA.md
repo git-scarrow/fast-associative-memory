@@ -1,8 +1,8 @@
 # Failure-mode blindness study — injection driver schema (PR-2a)
 
-**Status: PR-2b contradiction-arm result landed** (gentoo,
-`vitl14_cifar100_train` — see `PR2B_CONTRA_RESULT.md`). The PR-2c stale arm
-has no results yet. Cache-backed runs are gated on
+**Status: PR-2b contradiction-arm and PR-2c stale-arm results landed**
+(gentoo, `vitl14_cifar100_train` — see `PR2B_CONTRA_RESULT.md` and
+`PR2C_STALE_RESULT.md`). Cache-backed runs are gated on
 `tests/test_failure_mode_probe.py` + `tests/test_failure_mode_vision.py`
 passing — the labels below are only meaningful if the fork and supersession
 mechanisms are mechanically valid.

@@ -139,6 +139,11 @@ plus:
 
 ## Planned analysis (PR-3, for pre-registration)
 
+**Executed in PR-3a** (`benchmarks/score_frozen_detector.py`,
+`PR3A_RESULT.md`): both triggers below FIRED on the primary all-rows
+scope (contra AUC 0.454, stale AUC 0.120 — inverted); scope caveats and
+the invariant-audit outcome (PASS) are recorded in the result memo.
+
 Per failure mode: error share; two-axis AUC under the frozen #87 detector;
 error-capture at the frozen operating point; confidently-wrong rate
 (mode-M errors scoring above the median confidence of correct retrievals).

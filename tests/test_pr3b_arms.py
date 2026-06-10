@@ -239,6 +239,6 @@ def test_new_variant_runs_are_deterministic(tmp_path):
             outs.append(out)
         a, b = outs
         assert a.read_bytes() == b.read_bytes()
-        for suffix in (".per_slot.csv", ".fork_events.csv"):
+        for suffix in (".per_slot.csv", ".fork_events.csv", ".topk.csv"):
             assert a.with_suffix(suffix).read_bytes() == \
                 b.with_suffix(suffix).read_bytes()

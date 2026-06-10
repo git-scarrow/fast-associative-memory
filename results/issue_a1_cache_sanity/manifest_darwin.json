@@ -1,0 +1,228 @@
+{
+  "generated_at": "2026-06-10T16:57:39.418076+00:00",
+  "host": "macbook-m4",
+  "platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.5",
+  "torch": "2.10.0",
+  "repo_commit": "c3d87e7a660d948b50826a534b1bfde6ab3f1584",
+  "hashed": false,
+  "summary": {
+    "broken-symlink": 2,
+    "missing": 14
+  },
+  "caches": [
+    {
+      "id": "vitl14_cifar100_train",
+      "tier": "a-track",
+      "path": "feature_cache_vitl14/cifar100_dinov2_train.pt",
+      "consumers": [
+        "benchmarks/probe_contraction.py:VisionDriftStream (A1 #87)",
+        "benchmarks/calibration_probe.py --vision",
+        "benchmark_sleep.py:load_features",
+        "benchmarks/mt15_adaptive_eviction.py"
+      ],
+      "symlink": {
+        "symlink": "feature_cache_vitl14",
+        "target": "/mnt/data/dev/projects/campus-fabric/feature_cache_vitl14",
+        "target_exists": false
+      },
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/feature_cache_vitl14/cifar100_dinov2_train.pt",
+        "/mnt/storage/workspace-archive/campus-fabric/feature_cache_vitl14/cifar100_dinov2_train.pt",
+        "/mnt/data/dev/projects/campus-fabric/feature_cache_vitl14/cifar100_dinov2_train.pt"
+      ],
+      "status": "broken-symlink"
+    },
+    {
+      "id": "vitl14_cifar100_test",
+      "tier": "a-track",
+      "path": "feature_cache_vitl14/cifar100_dinov2_test.pt",
+      "consumers": [
+        "benchmark_sleep.py:load_features",
+        "benchmarks/mt15_adaptive_eviction.py"
+      ],
+      "symlink": {
+        "symlink": "feature_cache_vitl14",
+        "target": "/mnt/data/dev/projects/campus-fabric/feature_cache_vitl14",
+        "target_exists": false
+      },
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/feature_cache_vitl14/cifar100_dinov2_test.pt"
+      ],
+      "status": "broken-symlink"
+    },
+    {
+      "id": "inr_vitl14_train",
+      "tier": "a-track",
+      "path": "feature_cache_inr_vitl14/imagenetr_dinov2_train.pt",
+      "consumers": [
+        "benchmarks/calibration_probe.py --vision-cache (A2 INR breadth)",
+        "benchmarks/benchmark_dynamic_vigilance.py:DATASET_SPECS[ImageNet-R]",
+        "evaluate_baselines.py",
+        "probe_g0g1_reembed.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/feature_cache_inr_vitl14/imagenetr_dinov2_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "inr_vitl14_test",
+      "tier": "a-track",
+      "path": "feature_cache_inr_vitl14/imagenetr_dinov2_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py",
+        "evaluate_baselines.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/feature_cache_inr_vitl14/imagenetr_dinov2_test.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "vitb14_cifar100_train",
+      "tier": "secondary",
+      "path": "feature_cache_vitb14/cifar100_dinov2_train.pt",
+      "consumers": [
+        "extract_dinov2_vitb14.py (writer)",
+        "benchmarks/benchmark_dynamic_vigilance.py (CIFAR spec on some hosts)"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/feature_cache_vitb14/cifar100_dinov2_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "vitb14_cifar100_test",
+      "tier": "secondary",
+      "path": "feature_cache_vitb14/cifar100_dinov2_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/feature_cache_vitb14/cifar100_dinov2_test.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "dogs_train",
+      "tier": "adapter",
+      "path": "data/stanford_dogs/stanford_dogs_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/stanford_dogs/stanford_dogs_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "dogs_test",
+      "tier": "adapter",
+      "path": "data/stanford_dogs/stanford_dogs_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/stanford_dogs/stanford_dogs_test.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "cub200_train",
+      "tier": "adapter",
+      "path": "data/cub200/cub200_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/cub200/cub200_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "cub200_test",
+      "tier": "adapter",
+      "path": "data/cub200/cub200_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/cub200/cub200_test.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "cars_train",
+      "tier": "adapter",
+      "path": "data/stanford_cars/stanford_cars_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/stanford_cars/stanford_cars_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "cars_test",
+      "tier": "adapter",
+      "path": "data/stanford_cars/stanford_cars_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/stanford_cars/stanford_cars_test.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "aircraft_train",
+      "tier": "adapter",
+      "path": "data/fgvc_aircraft/fgvc_aircraft_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/fgvc_aircraft/fgvc_aircraft_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "aircraft_test",
+      "tier": "adapter",
+      "path": "data/fgvc_aircraft/fgvc_aircraft_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/fgvc_aircraft/fgvc_aircraft_test.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "flowers_train",
+      "tier": "adapter",
+      "path": "data/flowers102/feature_cache/flowers102_train.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/flowers102/feature_cache/flowers102_train.pt"
+      ],
+      "status": "missing"
+    },
+    {
+      "id": "flowers_test",
+      "tier": "adapter",
+      "path": "data/flowers102/feature_cache/flowers102_test.pt",
+      "consumers": [
+        "benchmarks/benchmark_dynamic_vigilance.py"
+      ],
+      "tried": [
+        "/Users/samscarrow/projects/fast-associative-memory/data/flowers102/feature_cache/flowers102_test.pt"
+      ],
+      "status": "missing"
+    }
+  ]
+}

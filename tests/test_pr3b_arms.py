@@ -122,11 +122,14 @@ def test_one_shot_tie_regime_persists_to_end_of_run(tmp_path):
     assert summary["n_phase2_writes"] == post[0]["superseded_key_probes"] == 8
     for e in post:
         # exactly one A slot + one B fork per key at identical positions:
-        # the split stays at 0.5/0.5 in EVERY post-boundary epoch and the
-        # stale side keeps being elected by tie-break.
+        # the split stays at 0.5/0.5 in EVERY post-boundary epoch. The
+        # ELECTED side at an exact tie is platform-dependent (last-ulp
+        # differences in the float32 vote sums flip the argmax across BLAS
+        # implementations — observed darwin vs gentoo), so only the tie and
+        # the A/B-only split are pinned, never the direction.
         assert abs(e["stale_weight_median_superseded"] - 0.5) < 1e-4, e
-        assert e["stale_selected"] == e["superseded_key_probes"], e
-        assert e["updated_selected"] == 0, e
+        assert (e["stale_selected"] + e["updated_selected"]
+                == e["superseded_key_probes"]), e
         assert e["live_stale_slots"] == 8
     assert summary["fork_resolution"] == "persistent-tie"
     # exactly one phase-2 event per key, ground-truth class one-shot-ambiguous

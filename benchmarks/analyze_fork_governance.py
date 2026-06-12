@@ -5,6 +5,14 @@ write-time fork-event classifier, and the H3 shadow-governance comparison
 table. Everything here is offline analysis of the logged tables; the
 deployed ``forward()`` is never altered and no engine state is touched.
 
+PR-4 step 3 (PR4_DESIGN.md §8) extends the policy set with the two
+pre-registered guarded variants (`trust-downweight`, `trust-guarded`;
+parameters frozen in the memo) and adds the §3 collateral decomposition:
+per-policy `direct_br` / `collateral_br` columns and a per-slot
+`collateral_exposure` block (registry-scored exposure next to the
+label-free guard proxy). `trust-record` was dropped at gate 1 (memo
+Addendum A.4) — per-record slot composition is not shadow-reconstructable.
+
 Shadow-readout fidelity (§10): the policy-`none` vote is recomputed from
 ``<stem>.topk.csv[.gz]`` with the exact aggregation the driver verified at
 write time (``vote_pred_from_candidates``) and compared to the deployed
@@ -57,6 +65,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import bisect
 import csv
 import gzip
 import json
@@ -81,6 +90,12 @@ TIE_MARGIN = 0.10
 CONFLICT_COS = 0.5
 MERGE_SUSPECT_COS = 0.9
 
+# PR-4 (PR4_DESIGN.md §5) — parameters frozen in the design memo BEFORE any
+# PR-4 cache run; changing either after the first run invalidates the
+# affected variant's pre-registered status (§7 variant garden).
+TRUST_DOWNWEIGHT_LAMBDA = 0.25
+TRUST_GUARD_THETA = 0.8
+
 # Enforced policy-visible allowlists (no registry-derived value may appear).
 POLICY_VISIBLE_TOPK = ("rank", "slot", "sim", "surviving", "weight",
                        "decode")
@@ -101,12 +116,30 @@ H2_TIMELINE_FEATURES = H2_LOCAL_FEATURES + ["subs_old", "subs_new"]
 POLICIES = ["none", "observe-only", "entropy-abstain", "abstain-tie",
             "recency-naive", "quarantine-naive",
             "mode-conditioned-observe", "mode-conditioned-abstain",
-            "mode-conditioned-trust"]
-# mode-conditioned-trust is an EXPLORATORY refinement (not pre-registered):
+            "mode-conditioned-trust", "trust-downweight", "trust-guarded"]
+# mode-conditioned-trust was an EXPLORATORY refinement in PR-3c (post-hoc
+# there; promoted to pre-registered for PR-4 H1, frozen verbatim):
 # instead of the design memo's contradiction -> quarantine-both, it
 # deprecates only the fork side that subsequent traffic did NOT reinforce
 # (quarantining both only when both sides keep being written). The
 # pre-registered quarantine-both variants are reported unchanged alongside.
+#
+# PR-4 guarded variants (PR4_DESIGN.md §5; routing identical to
+# mode-conditioned-trust, only the DEPRECATION action differs — the
+# quarantine-both branch, merge-suspect -> abstain and ambiguous ->
+# observe-only routes are inherited unchanged):
+#   trust-downweight — the deprecated side's vote weight is multiplied by
+#       TRUST_DOWNWEIGHT_LAMBDA instead of excluded (H2-policy branch:
+#       is exclusion-vs-attenuation the collateral driver?).
+#   trust-guarded    — a slot is excluded only if its label-free fork-party
+#       fraction (GuardIndex: share of its surviving top-k appearances, up
+#       to and including the current probe, on probes where a counterpart
+#       slot of one of its routed pairs is also a surviving candidate) is
+#       >= TRUST_GUARD_THETA; otherwise it is downweighted at
+#       TRUST_DOWNWEIGHT_LAMBDA. The proxy reads topk + router output
+#       only — never the registry (§7 guard circularity).
+TRUST_ROUTED = ("mode-conditioned-trust", "trust-downweight",
+                "trust-guarded")
 # Policies whose interventions trigger ONLY on read-time fork topology
 # (the witness window) — the family that is structurally blind to
 # merge-path stale (single merged slot, no co-resident competitor).
@@ -182,10 +215,25 @@ def fork_witness(cands: list[dict]) -> list[dict]:
     return win if len({c["decode"] for c in win}) >= 2 else []
 
 
-def _vote(cands, value_dim, excluded=frozenset()):
-    """(answer, forced_abstain) over the candidate set minus exclusions."""
-    weights = [("0" if c["slot"] in excluded else c["weight"])
-               for c in cands]
+def _vote(cands, value_dim, excluded=frozenset(), scaled=None):
+    """(answer, forced_abstain) over the candidate set minus exclusions.
+
+    ``scaled`` maps slot -> attenuation factor (PR-4 trust-downweight /
+    trust-guarded): the candidate's weight is multiplied in float32 (the
+    vote's accumulation dtype) instead of zeroed. With no exclusions and
+    no scaling the emitted weight TEXT passes through untouched, so the
+    policy-`none` bit-fidelity path is unchanged.
+    """
+    scaled = scaled or {}
+    weights = []
+    for c in cands:
+        if c["slot"] in excluded:
+            weights.append("0")
+        elif c["slot"] in scaled:
+            weights.append(float(np.float32(float(c["weight"]))
+                                 * np.float32(scaled[c["slot"]])))
+        else:
+            weights.append(c["weight"])
     if not any(c["surviving"] and c["slot"] not in excluded for c in cands):
         return None, True
     return vote_pred_from_candidates(
@@ -281,26 +329,94 @@ def router_state(router: dict, epoch: int, trust: bool = False) -> dict:
             "ambiguous": ambiguous, "merge": merge}
 
 
+def pair_counterparts(router: dict) -> dict[int, set[int]]:
+    """Static slot -> {counterpart slots} map over all routed conflict
+    pairs (pair MEMBERSHIP never changes across epochs; only verdicts do)."""
+    cp = defaultdict(set)
+    for p in router["pairs"]:
+        cp[p["I"]].add(p["O"])
+        cp[p["O"]].add(p["I"])
+    return dict(cp)
+
+
+def pair_party_labels(router: dict) -> dict[int, set[int]]:
+    """Slot -> decode classes that are PARTIES to the slot's fork(s)
+    (old_side/new_side of every pair the slot is a member of). Used only
+    for the §3 registry-scored collateral exposure, never by a policy."""
+    party = defaultdict(set)
+    for p in router["pairs"]:
+        for s in (p["I"], p["O"]):
+            party[s] |= {p["old_side"], p["new_side"]}
+    return dict(party)
+
+
+class GuardIndex:
+    """Label-free fork-party appearance index (PR4_DESIGN.md §5).
+
+    For every slot that is a member of a routed conflict pair: the ordered
+    list of its surviving top-k appearances over the shadow log, each
+    flagged fork-party iff a counterpart slot of one of its pairs is also
+    a surviving candidate of the SAME probe (the probe queries the
+    contested key region). ``fork_party_fraction(slot, epoch, probe)`` is
+    the fraction over appearances at probes <= (epoch, probe) — inclusive
+    of the current probe, so the proxy is defined on first appearance.
+
+    Built from topk + the write-time router's pair membership only; no
+    registry column is read (§7 guard circularity — the proxy is validated
+    AGAINST the registry exposure measure, never built from it).
+    """
+
+    def __init__(self, topk: dict, counterpart: dict[int, set[int]]):
+        self._keys = defaultdict(list)    # slot -> [(epoch, probe), ...]
+        self._party = defaultdict(list)   # slot -> prefix fork-party counts
+        for key in sorted(topk):
+            surv = {c["slot"] for c in topk[key] if c["surviving"]}
+            for s in surv:
+                cps = counterpart.get(s)
+                if not cps:
+                    continue
+                ps = self._party[s]
+                self._keys[s].append(key)
+                ps.append((ps[-1] if ps else 0) + int(bool(cps & surv)))
+
+    def fork_party_fraction(self, slot: int, epoch: int,
+                            probe_index: int) -> float | None:
+        ks = self._keys.get(slot)
+        if not ks:
+            return None
+        i = bisect.bisect_right(ks, (epoch, probe_index))
+        return None if i == 0 else self._party[slot][i - 1] / i
+
+    def appearances(self, slot: int) -> list[tuple[int, int]]:
+        return self._keys.get(slot, [])
+
+
 # ---------------------------------------------------------------------------
-# Policies — each returns (answer | None, acted: bool)
+# Policies — each returns (answer | None, acted: bool, detail | None).
+# ``detail`` describes a vote-altering intervention for the §3 collateral
+# decomposition: {"dropped": slots excluded or attenuated, "counterpart":
+# the static pair-counterpart map (None for witness-window policies, whose
+# drops are by construction local to the probe's own key region)}.
 # ---------------------------------------------------------------------------
 def apply_policy(policy: str, cands: list[dict], witness: list[dict],
                  none_answer: int, value_dim: int, epoch: int,
                  slot_obs: dict, frozen_retain: bool,
-                 router: dict | None):
+                 router: dict | None, guard: "GuardIndex | None" = None,
+                 counterpart: dict | None = None, probe_index: int = -1):
     if policy in ("none", "observe-only"):
-        return none_answer, False
+        return none_answer, False, None
     if policy == "entropy-abstain":
-        return (none_answer, False) if frozen_retain else (None, True)
+        return (none_answer, False, None) if frozen_retain \
+            else (None, True, None)
     if policy == "abstain-tie":
         if witness:
             mass = sorted(_class_mass(witness).values(), reverse=True)
             if len(mass) >= 2 and mass[0] - mass[1] < TIE_MARGIN:
-                return None, True
-        return none_answer, False
+                return None, True, None
+        return none_answer, False, None
     if policy == "recency-naive":
         if not witness:
-            return none_answer, False
+            return none_answer, False, None
         rec = defaultdict(lambda: -1)
         for c in witness:
             obs = slot_obs.get((epoch, c["slot"]))
@@ -310,35 +426,50 @@ def apply_policy(policy: str, cands: list[dict], witness: list[dict],
         best = max(rec.values())
         newest = {d for d, r in rec.items() if r == best}
         if len(newest) != 1:
-            return none_answer, False  # recency tie: no basis to act
+            return none_answer, False, None  # recency tie: no basis to act
         drop = {c["slot"] for c in witness if c["decode"] not in newest}
         if not drop:
-            return none_answer, False
+            return none_answer, False, None
         ans, forced = _vote(cands, value_dim, excluded=frozenset(drop))
-        return ans, True
+        return ans, True, {"dropped": frozenset(drop), "counterpart": None}
     if policy == "quarantine-naive":
         if not witness:
-            return none_answer, False
+            return none_answer, False, None
         drop = frozenset(c["slot"] for c in witness)
         ans, forced = _vote(cands, value_dim, excluded=drop)
-        return ans, True
-    if policy.startswith("mode-conditioned"):
-        st = router_state(router, epoch,
-                          trust=policy == "mode-conditioned-trust")
+        return ans, True, {"dropped": drop, "counterpart": None}
+    if policy.startswith("mode-conditioned") or policy in TRUST_ROUTED:
+        st = router_state(router, epoch, trust=policy in TRUST_ROUTED)
         surv = [c for c in cands if c["surviving"]]
         top1 = max(surv, key=lambda c: float(c["weight"]))
         if top1["slot"] in st["merge"]:
-            return None, True  # no fork to elect; abstain is the honest act
-        drop = frozenset((st["quarantine"] | st["deprecate"])
-                         & {c["slot"] for c in surv})
+            # no fork to elect; abstain is the honest act
+            return None, True, None
+        surv_slots = {c["slot"] for c in surv}
+        exclude = set(st["quarantine"] & surv_slots)
+        dep = st["deprecate"] & surv_slots
+        scaled = {}
+        if policy == "trust-downweight":
+            scaled = {s: TRUST_DOWNWEIGHT_LAMBDA for s in dep}
+        elif policy == "trust-guarded":
+            for s in sorted(dep):
+                frac = guard.fork_party_fraction(s, epoch, probe_index)
+                if frac is not None and frac >= TRUST_GUARD_THETA:
+                    exclude.add(s)
+                else:
+                    scaled[s] = TRUST_DOWNWEIGHT_LAMBDA
+        else:
+            exclude |= dep
         if policy == "mode-conditioned-abstain" and any(
                 c["slot"] in st["ambiguous"] for c in surv
-                if c["slot"] not in drop):
-            return None, True
-        if not drop:
-            return none_answer, False
-        ans, forced = _vote(cands, value_dim, excluded=drop)
-        return ans, True
+                if c["slot"] not in exclude):
+            return None, True, None
+        if not exclude and not scaled:
+            return none_answer, False, None
+        ans, forced = _vote(cands, value_dim,
+                            excluded=frozenset(exclude), scaled=scaled)
+        return ans, True, {"dropped": frozenset(exclude) | set(scaled),
+                           "counterpart": counterpart}
     raise ValueError(policy)
 
 
@@ -357,18 +488,22 @@ def score_run(run: dict, det, thr) -> dict:
     probes, topk = run["probes"], run["topk"]
     value_dim, slot_obs = run["value_dim"], run["slot_obs"]
     router = build_writetime_router(run["events"], slot_obs)
+    counterpart = pair_counterparts(router)
+    guard = GuardIndex(topk, counterpart)
     retain = frozen_scores(probes, det, thr)
 
     metrics = {policy: {k: 0 for k in (
         "n", "wrong_none", "acted", "abstained", "abstain_on_correct",
         "abstain_on_wrong", "answered", "answered_correct", "fixed",
-        "broken", "witness_probes",
+        "broken", "direct_br", "collateral_br", "witness_probes",
         "stale_wrong", "stale_wrong_fixed", "stale_wrong_abstained",
         "contra_wrong", "contra_wrong_fixed", "contra_wrong_abstained")}
         for policy in POLICIES}
+    dropped_ever = {policy: set() for policy in POLICIES}
     for i, p in enumerate(probes):
         epoch = int(float(p["epoch"]))
-        cands = topk[(epoch, int(p["probe_index"]))]
+        probe_index = int(p["probe_index"])
+        cands = topk[(epoch, probe_index)]
         truth = int(float(p["true_label"]))
         deployed = int(float(p["vote_pred_label"]))
         none_answer, _ = _vote(cands, value_dim)
@@ -378,15 +513,21 @@ def score_run(run: dict, det, thr) -> dict:
                 f"probe {p['probe_index']}: none={none_answer} "
                 f"deployed={deployed}")
         witness = fork_witness(cands)
+        surv_slots = {c["slot"] for c in cands if c["surviving"]}
+        top1_slot = max((c for c in cands if c["surviving"]),
+                        key=lambda c: float(c["weight"]))["slot"]
         none_correct = deployed == truth
         is_stale_wrong = p["stale_lenient"] == "1" and not none_correct
         is_contra_wrong = (p["contradictory_lenient"] == "1"
                            and not none_correct)
         for policy in POLICIES:
             m = metrics[policy]
-            ans, acted = apply_policy(policy, cands, witness, none_answer,
-                                      value_dim, epoch, slot_obs,
-                                      bool(retain[i]), router)
+            ans, acted, detail = apply_policy(
+                policy, cands, witness, none_answer, value_dim, epoch,
+                slot_obs, bool(retain[i]), router, guard=guard,
+                counterpart=counterpart, probe_index=probe_index)
+            if detail:
+                dropped_ever[policy] |= detail["dropped"]
             m["n"] += 1
             m["wrong_none"] += int(not none_correct)
             m["acted"] += int(acted)
@@ -404,13 +545,58 @@ def score_run(run: dict, det, thr) -> dict:
             ok = ans == truth
             m["answered_correct"] += int(ok)
             m["fixed"] += int(ok and not none_correct)
-            m["broken"] += int(none_correct and not ok)
+            if none_correct and not ok:
+                # §3 decomposition: DIRECT iff the deployed top-1 itself was
+                # dropped AND its fork concerns this probe's key region (a
+                # pair counterpart is a surviving candidate here; witness-
+                # window drops are local by construction). Else COLLATERAL —
+                # the vote change came from deprecating slots whose fork
+                # verdicts concern other keys (the pair-B mechanism).
+                m["broken"] += 1
+                direct = False
+                if detail and top1_slot in detail["dropped"]:
+                    cp = detail["counterpart"]
+                    direct = (True if cp is None else
+                              bool(cp.get(top1_slot, set()) & surv_slots))
+                m["direct_br" if direct else "collateral_br"] += 1
             m["stale_wrong_fixed"] += int(is_stale_wrong and ok)
             m["contra_wrong_fixed"] += int(is_contra_wrong and ok)
+
+    # §3 per-slot collateral exposure, per policy, for every slot the policy
+    # ever excluded/attenuated: the fraction of the slot's surviving top-k
+    # appearances (over the run) on probes whose registry key (true label)
+    # is NOT a party to the slot's fork. Registry is used only here, for
+    # scoring; alongside it the label-free guard proxy's final fork-party
+    # fraction, so the §7 guard-circularity check (proxy validated AGAINST
+    # the registry measure) is a column comparison in the result memo.
+    party_labels = pair_party_labels(router)
+    truth_at = {(int(float(p["epoch"])), int(p["probe_index"])):
+                int(float(p["true_label"])) for p in probes}
     out = {}
     for policy, m in metrics.items():
         m["accuracy_effective"] = round(m["answered_correct"] / m["n"], 6)
         m["read_time_fork_only"] = policy in READ_TIME_FORK_ONLY
+        per_slot, vals = [], []
+        routed = sorted(s for s in dropped_ever[policy] if s in party_labels)
+        for s in routed:
+            apps = guard.appearances(s)
+            if not apps:
+                continue
+            nonparty = sum(1 for key in apps
+                           if truth_at.get(key) not in party_labels[s])
+            x = nonparty / len(apps)
+            proxy = guard.fork_party_fraction(s, *apps[-1])
+            per_slot.append({"slot": s, "n_appearances": len(apps),
+                             "registry_exposure": round(x, 6),
+                             "proxy_fork_party_fraction": round(proxy, 6)})
+            vals.append(x)
+        m["collateral_exposure"] = {
+            "n_slots": len(per_slot),
+            "n_dropped_unrouted": len(dropped_ever[policy]) - len(routed),
+            "mean": round(float(np.mean(vals)), 6) if vals else None,
+            "median": round(float(np.median(vals)), 6) if vals else None,
+            "max": round(float(np.max(vals)), 6) if vals else None,
+            "per_slot": per_slot}
         out[policy] = m
 
     out["_router"] = {
@@ -693,7 +879,9 @@ def main():
            "constants": {"witness_sim_window": WITNESS_SIM_WINDOW,
                          "tie_margin": TIE_MARGIN,
                          "conflict_cos": CONFLICT_COS,
-                         "merge_suspect_cos": MERGE_SUSPECT_COS},
+                         "merge_suspect_cos": MERGE_SUSPECT_COS,
+                         "trust_downweight_lambda": TRUST_DOWNWEIGHT_LAMBDA,
+                         "trust_guard_theta": TRUST_GUARD_THETA},
            "policies": POLICIES,
            "read_time_fork_only": list(READ_TIME_FORK_ONLY),
            "governance": table, "h1": h1, "h2": h2}

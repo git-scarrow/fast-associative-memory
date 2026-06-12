@@ -279,3 +279,93 @@ pair B.
    H1/H2/H3 against §6.
 
 Each step lands on main before the next begins; this memo is step 0.
+
+## Addendum A — gate 1: compression index, pair selection, trust-record feasibility
+
+**Recorded 2026-06-12, before any PR-4 governance/cache run. Steps 1–2 of
+§8. Artifact: `pr4/compression_index.json` (computed on gentoo from the
+existing vitl14 cache, sha256
+`bb2d9fde06147136363f27e50acdb52654de5ee5ae993b07faaed8f0d84ee43e`,
+byte-verified on darwin). Analyzer: `benchmarks/pr4_compression_index.py`,
+hermetic pins in `tests/test_pr4_compression_index.py`.**
+
+### A.1 Index operationalization (primary, fixed now)
+
+For an unordered class pair (i, j): mean cosine over ALL cached row pairs
+of the two classes, on unit-normalized features (the normalization
+`VisionDriftStream` applies — the geometry retrieval actually sees).
+For a 4-class set: the mean of the 6 within-set pair cosines. Static and
+seed-free by construction (full cache rows, not the per-seed 32/64 probe
+subsets). Higher = more compressed. **This set-level index is the primary
+geometry axis for every §2/§6 H2 decision.** Two secondary diagnostics
+are recorded per config, descriptively only (fixed now so they cannot be
+adopted post hoc): the stale-fork pair cosine (classes[0], classes[-1] —
+the supersession locus) and the mean class-to-attractor cosine.
+
+### A.2 §4 validity check: pair A vs pair B
+
+* pair A (0,8,19,33 / attr 71): index **0.082731**
+* pair B (5,27,48,86 / attr 13): index **0.084472**
+
+Pair B scores above pair A — the pre-registered direction holds, so the
+index stands and the geometry axis is NOT rebuilt. Honest caveat,
+recorded before any run: the set-level margin is small (+0.0017, ~2%
+relative), while the stale-fork pair cosine separates more strongly
+(A 0.0698 vs B 0.0841, +20% relative), consistent with PR-3c's pair-B
+collateral concentrating at the supersession locus. No margin threshold
+was pre-registered — direction only — and none is added now. If the §2
+monotonicity prediction comes out ambiguous on the primary index, that
+is reported as ambiguous per §6; the secondary diagnostic does not get
+promoted after the fact.
+
+### A.3 Pair selection (rule fixed in `pr4_compression_index.py`)
+
+Candidates: 256 fixed-seed (seed 0) 4-class+attractor draws over the 90
+classes unused by pairs A/B; candidate index range 0.0455–0.1238.
+Selection by index only, no results consulted:
+
+| config | classes | attr | index | role |
+|---|---|---|---|---|
+| pair A | 0,8,19,33 | 71 | 0.082731 | anchor (leakage-tainted, §7) |
+| pair C | 10,29,42,67 | 69 | 0.082754 | nearest A — H1's new pair-A-like pair |
+| pair D | 10,28,32,95 | 52 | 0.083550 | nearest A/B midpoint |
+| pair B | 5,27,48,86 | 13 | 0.084472 | anchor (leakage-tainted, §7) |
+| pair E | 47,56,61,76 | 1 | 0.123812 | highest-index candidate above B |
+
+Five configs spanning the index, satisfying §4 (≥ 4 pairs; ≥ 1 between A
+and B; ≥ 1 more compressed than B). Caveat: with the A–B gap this small,
+pair D's "between" role is nearly degenerate; pair E carries the real
+compression extension (+47% over B). The realized fork-witness
+co-residency rate per run remains the §4 dynamic check on this static
+index.
+
+### A.4 `trust-record` feasibility: DROPPED
+
+The §5 conditional candidate is **not reconstructable shadow-side** from
+the PR-3c artifacts:
+
+* `topk.csv` logs per candidate (slot, sim, surviving, weight, decode)
+  where `decode` is the slot's argmax decode only — the slot's payload
+  vector and its per-record composition are never logged.
+* `per_slot.csv` logs `n_records` (a count); the `slot_records` record-id
+  lineage is in-memory engine state (`associative_core.py`), not exported.
+* `fork_events.csv` attributes record→slot only for conflict events;
+  clean reinforcement writes — the bulk of a slot's records — have no
+  logged record→slot assignment, and the EMA blend order/coefficients
+  that would apportion `values[slot]` among records are not recoverable
+  from any logged table.
+
+Deprecating "only the fork-attributed records' contribution" would mean
+reconstructing `values[slot]` minus those records, which the logged
+evidence cannot support. Per §5: dropped here, not approximated. The
+PR-4 candidate set is `trust`, `trust-downweight(λ=0.25)`,
+`trust-guarded(θ=0.8, λ=0.25)` plus the §5 baselines.
+
+### A.5 Gate verdict
+
+The §7 index-validity risk is retired (direction confirmed); pair
+selection and the trust-record keep/drop are recorded before any
+governance run. PR-4 is cleared to proceed to §8 step 3 (analyzer
+variants + collateral decomposition, analysis code only) and then step 4
+(the gentoo run matrix over pairs A–E). Pair A and pair B runs remain
+leakage-tainted anchors per §7: no H1/H3 promotion may rest on them.

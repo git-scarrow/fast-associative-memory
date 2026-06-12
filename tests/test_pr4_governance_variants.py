@@ -206,3 +206,21 @@ def test_scoring_remains_deterministic_with_variants(tmp_path):
     _, t1, _ = _score("mixed", tmp_path, "d1.csv")
     _, t2, _ = _score("mixed", tmp_path, "d2.csv")
     assert t1 == t2
+
+
+def test_pr4_geometry_criteria_unit_pins():
+    """§6 evaluator pins (analyze_pr4_geometry): the collateral bar is 1%
+    of none's CORRECT rows, and domination charges abstention-on-correct
+    as harm (else abstain-only baselines are unbeatable by construction)."""
+    from benchmarks.analyze_pr4_geometry import bar_ok, dominates
+    none = {"n": 2500, "wrong_none": 500}
+    assert bar_ok({"broken": 20}, none)        # 20 <= 1% of 2000
+    assert not bar_ok({"broken": 21}, none)
+    cand = {"fixed": 100, "contra_wrong_fixed": 90, "broken": 5,
+            "abstain_on_correct": 0}
+    abstainer = {"fixed": 0, "contra_wrong_fixed": 0, "broken": 0,
+                 "abstain_on_correct": 500}
+    assert dominates(cand, abstainer, "mixed")
+    assert dominates(cand, abstainer, "contra")
+    equal = dict(cand)
+    assert not dominates(cand, equal, "mixed")  # ties are not strict

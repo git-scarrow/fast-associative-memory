@@ -495,7 +495,8 @@ def score_run(run: dict, det, thr) -> dict:
     metrics = {policy: {k: 0 for k in (
         "n", "wrong_none", "acted", "abstained", "abstain_on_correct",
         "abstain_on_wrong", "answered", "answered_correct", "fixed",
-        "broken", "direct_br", "collateral_br", "witness_probes",
+        "broken", "direct_br", "collateral_br", "tie_flips",
+        "witness_probes",
         "stale_wrong", "stale_wrong_fixed", "stale_wrong_abstained",
         "contra_wrong", "contra_wrong_fixed", "contra_wrong_abstained")}
         for policy in POLICIES}
@@ -516,6 +517,12 @@ def score_run(run: dict, det, thr) -> dict:
         surv_slots = {c["slot"] for c in cands if c["surviving"]}
         top1_slot = max((c for c in cands if c["surviving"]),
                         key=lambda c: float(c["weight"]))["slot"]
+        # exact vote tie (the one-shot signature): the §1 side-effect
+        # channel — a policy "fixing" such a row flips a coin-flip
+        # election by fiat, not inference; counted per run as tie_flips.
+        mass = sorted(_class_mass(
+            [c for c in cands if c["surviving"]]).values(), reverse=True)
+        exact_tie = len(mass) >= 2 and abs(mass[0] - mass[1]) < 1e-9
         none_correct = deployed == truth
         is_stale_wrong = p["stale_lenient"] == "1" and not none_correct
         is_contra_wrong = (p["contradictory_lenient"] == "1"
@@ -542,6 +549,7 @@ def score_run(run: dict, det, thr) -> dict:
                 m["contra_wrong_abstained"] += int(is_contra_wrong)
                 continue
             m["answered"] += 1
+            m["tie_flips"] += int(exact_tie and ans != none_answer)
             ok = ans == truth
             m["answered_correct"] += int(ok)
             m["fixed"] += int(ok and not none_correct)

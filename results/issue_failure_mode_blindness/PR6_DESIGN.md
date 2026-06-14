@@ -207,3 +207,50 @@ named for sequencing, not specified here.
 * **Deployed retrieval remains unchanged.** PR-6 contains no mechanism
   that could change it; a deployment proposal must earn its own gates in
   a later PR.
+
+## 6. PR-6 step 1 — empirical-hazard panel scaffold (analysis-only)
+
+Smallest implementable slice of the §4 recommendation. **Scaffold, not the
+panel run:** it assembles the panel *manifest* from committed artifacts and
+names what is missing; it runs no matrix, adds no cache run, and changes no
+engine or retrieval code. The artifact is
+`benchmarks/pr6_hazard_panel.py` → `pr6/panel.json`, pinned by
+`tests/test_pr6_hazard_panel.py`. The analyzer reads exactly one input —
+`pr5/hazard_postmortem.json` — imports no torch, and touches no cache, so it
+reproduces on the canonical (darwin) host and is structurally incapable of
+consulting geometry.
+
+**The five required cell types, and how each is seeded — by *measured*
+frozen-probe hazard, never geometry:**
+
+| cell | harm shape | seeded by | status | label = |
+|--|--|--|--|--|
+| `clean_control` | none | pairA, pairC | seeded | broken_mean 16.0 / 5.33 |
+| `direct_harm` | direct (D-like) | pairD | seeded | broken_mean 271.67 |
+| `collateral_harm` | collateral (B/E-like) | pairB, pairE | seeded | broken_mean 122.0 / 142.33 |
+| `merge_path_stale` | write-time stale-capture | PR-3c artifacts | **required, unseeded** | — |
+| `one_shot_ambiguity` | ambiguous evidence | — | **required, observe-only** | — |
+
+Each seeded label is the frozen `mode-conditioned-trust` probe's broken
+counts copied verbatim from the post-mortem, with **both** the direct and
+collateral components recorded per cell (the §5 "both harm shapes required"
+constraint, made checkable). Harm shape is the §1 mechanistic label carried
+forward; it is recorded, not re-derived, and never gates.
+
+**Additional runs needed.** The direct, collateral, and control cells need
+*none* — they are fully labeled from committed artifacts. `merge_path_stale`
+needs an analysis-only pass over the committed PR-3c stale-arm artifacts to
+extract a per-cell stale-capture label *including its D/E degradation*, with
+a dedicated stale-arm run only if a cell turns out uncovered — deferred, not
+done here. `one_shot_ambiguity` needs no read-time run at all: it stays
+observe-only and could become a pass/fail cell only via write-API
+provenance metadata (path 3 / PR-7). Widening the panel with more
+empirically-screened cells is optional.
+
+**Screening rule for future cells** (recorded in the manifest): admit a
+class set iff its frozen-probe hazard is *measured* and decomposed by true
+class — the broken counts are the label; geometric properties may never
+admit or exclude a cell, and the panel refuses to generalize beyond its
+enumerated cells. This step revives nothing PR-5 closed (no geometry gate,
+no slot-granularity trust, no record-granularity ledger, no write-path
+refusal, no policy tuning) and leaves deployed retrieval untouched.

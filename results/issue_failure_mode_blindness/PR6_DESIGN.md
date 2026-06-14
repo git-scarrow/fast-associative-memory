@@ -254,3 +254,60 @@ admit or exclude a cell, and the panel refuses to generalize beyond its
 enumerated cells. This step revives nothing PR-5 closed (no geometry gate,
 no slot-granularity trust, no record-granularity ledger, no write-path
 refusal, no policy tuning) and leaves deployed retrieval untouched.
+
+## 7. PR-6 step 2 — seeding merge_path_stale from committed PR-3c stale arms
+
+The §6 scaffold left `merge_path_stale` *required, unseeded* with one
+deferred action: an analysis-only pass over the committed PR-3c stale-arm
+artifacts to extract a merge-path stale-capture label *including its D/E
+degradation*, escalating to a dedicated stale-arm run only if a cell turned
+out uncovered. Step 2 runs that pass. The extension lives in
+`benchmarks/pr6_hazard_panel.py` (`read_merge_path_stale_evidence` /
+`build_merge_path_stale_cell`), reads only the committed
+`pr3c/per_probe_stale-soft_s{0,1,2}.{governance,summary}.json`, and is pinned
+by `tests/test_pr6_stale_cell.py`. No cache run was taken.
+
+**What the committed artifacts measure.** The soft-payload ("merge-path")
+stale arm is the PR-3c required benchmark (PR3C_RESULT.md §2; PR3_DESIGN.md
+§5/§8): the phase-2 write is absorbed on the merge path, the mature slot keeps
+decoding A while ground truth is B. The arm is measured across three seeds and
+is now recorded as the cell's `partial_evidence` — the measured frozen
+`mode-conditioned-trust` probe behaviour, copied verbatim, with no geometric
+input:
+
+| seed | class set | stale-wrong (`none`) | frozen-probe stale abstained | broken | merge-suspect events |
+|--|--|--|--|--|--|
+| s0 | pair-A `[0,8,19,33]` | 374 | 374 | 0 | 192 |
+| s1 | pair-A `[0,8,19,33]` | 372 | 368 | 0 | 192 |
+| s2 | pair-A `[0,8,19,33]` | 380 | 380 | 0 | 192 |
+
+The capture is **write-time only**: the probe abstains on (essentially) all
+stale-wrong rows via the merge-suspect trace while breaking nothing
+(`broken=0`), and the read-time fork witness fires on ~4–12 probes, none
+merge-related. This confirms the cell's harm shape (`write-time stale-capture`)
+from measurement, not assertion.
+
+**Why the cell stays unseeded.** The label the §6 panel requires *includes
+D/E degradation*, and that component is **structurally absent** from every
+committed PR-3c artifact. The merge-path arm was run on the pair-A class set
+only; pairs D and E did not exist as geometries in PR-3c — their class sets
+(`pairD {10,28,32,95}`, `pairE {47,56,61,76}`) were constructed later
+(PR-4/PR-5) — so no committed artifact measures merge-path stale on D/E (a test
+pins that no PR-3c arm touches those classes at all; pair-B merge-path was also
+never run). Composing the pair-A merge-path label with the D/E *mixed-arm*
+broken counts would be exactly the cross-geometry generalization the panel
+forbids. The cell therefore keeps `status: required_unseeded` with
+`evidence_status: partial_pairA_only`, carries the measured pair-A evidence,
+and names the single completing action in `missing_evidence`: a dedicated
+soft-payload stale arm on the pairD/pairE class sets, ≥3 seeds, scored by the
+frozen probe — **out of step-2 scope (no new cache runs)**.
+
+This is a measurement-coverage result, never a geometric one: the class set is
+used as provenance ("what was measured on what"), and no cell is admitted or
+excluded by any geometric property. `geometry_used_as_gate` stays `false`,
+`new_cache_runs` stays `0`, and deployed retrieval is untouched.
+`clean_control` remains a *lower-hazard empirical control under the frozen
+probe* (measured broken_mean 16.0 / 5.33 on pairs A/C), not zero-risk clean
+traffic. Path 2 (record-granularity ledger), path 3 (write-path refusal /
+twin-run), and slot-granularity trust all stay closed; the merge-path D/E run
+is sequenced behind whatever future work constructs it, not opened here.

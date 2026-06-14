@@ -1,0 +1,185 @@
+{
+  "additional_runs_summary": {
+    "merge_path_stale": "analysis-only pass over committed PR-3c stale artifacts (a dedicated run only if a cell is uncovered); deferred, not done here.",
+    "one_shot_ambiguity": "no read-time run; needs write-API provenance metadata (path 3 / PR-7), out of scope.",
+    "optional_panel_widening": "additional empirically-screened cells per screening_procedure are optional, not required for the seeded panel.",
+    "seeded_cells": "none \u2014 clean_control, direct_harm, collateral_harm are fully labeled from committed artifacts."
+  },
+  "cell_status_summary": {
+    "observe_only": [
+      "one_shot_ambiguity"
+    ],
+    "required_unseeded": [
+      "merge_path_stale"
+    ],
+    "seeded": [
+      "clean_control",
+      "collateral_harm",
+      "direct_harm"
+    ]
+  },
+  "cells": {
+    "clean_control": {
+      "additional_runs_needed": "none \u2014 measured labels present in the committed artifact",
+      "harm_shape": "none",
+      "harm_shape_source": "PR6_DESIGN.md \u00a71 (mechanistic conclusion carried forward; not derived from geometry)",
+      "required": true,
+      "seed_artifact": "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json",
+      "seeds": [
+        {
+          "broken_by_seed": [
+            1,
+            23,
+            24
+          ],
+          "broken_mean": 16.0,
+          "broken_total_3seed": 48,
+          "collateral_total_3seed": 20,
+          "direct_total_3seed": 28,
+          "pair": "pairA",
+          "probe_policy": "mode-conditioned-trust",
+          "worst_class_is_bystander": true,
+          "worst_class_share": 0.833333,
+          "worst_true_class": 8
+        },
+        {
+          "broken_by_seed": [
+            8,
+            0,
+            8
+          ],
+          "broken_mean": 5.33,
+          "broken_total_3seed": 16,
+          "collateral_total_3seed": 5,
+          "direct_total_3seed": 11,
+          "pair": "pairC",
+          "probe_policy": "mode-conditioned-trust",
+          "worst_class_is_bystander": false,
+          "worst_class_share": 0.5,
+          "worst_true_class": 67
+        }
+      ],
+      "status": "seeded"
+    },
+    "collateral_harm": {
+      "additional_runs_needed": "none \u2014 measured labels present in the committed artifact",
+      "harm_shape": "collateral",
+      "harm_shape_source": "PR6_DESIGN.md \u00a71 (mechanistic conclusion carried forward; not derived from geometry)",
+      "required": true,
+      "seed_artifact": "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json",
+      "seeds": [
+        {
+          "broken_by_seed": [
+            77,
+            144,
+            145
+          ],
+          "broken_mean": 122.0,
+          "broken_total_3seed": 366,
+          "collateral_total_3seed": 166,
+          "direct_total_3seed": 200,
+          "pair": "pairB",
+          "probe_policy": "mode-conditioned-trust",
+          "worst_class_is_bystander": true,
+          "worst_class_share": 0.89071,
+          "worst_true_class": 48
+        },
+        {
+          "broken_by_seed": [
+            163,
+            184,
+            80
+          ],
+          "broken_mean": 142.33,
+          "broken_total_3seed": 427,
+          "collateral_total_3seed": 169,
+          "direct_total_3seed": 258,
+          "pair": "pairE",
+          "probe_policy": "mode-conditioned-trust",
+          "worst_class_is_bystander": true,
+          "worst_class_share": 0.751756,
+          "worst_true_class": 56
+        }
+      ],
+      "status": "seeded"
+    },
+    "direct_harm": {
+      "additional_runs_needed": "none \u2014 measured labels present in the committed artifact",
+      "harm_shape": "direct",
+      "harm_shape_source": "PR6_DESIGN.md \u00a71 (mechanistic conclusion carried forward; not derived from geometry)",
+      "required": true,
+      "seed_artifact": "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json",
+      "seeds": [
+        {
+          "broken_by_seed": [
+            240,
+            330,
+            245
+          ],
+          "broken_mean": 271.67,
+          "broken_total_3seed": 815,
+          "collateral_total_3seed": 282,
+          "direct_total_3seed": 533,
+          "pair": "pairD",
+          "probe_policy": "mode-conditioned-trust",
+          "worst_class_is_bystander": true,
+          "worst_class_share": 0.933742,
+          "worst_true_class": 28
+        }
+      ],
+      "status": "seeded"
+    },
+    "merge_path_stale": {
+      "additional_runs_needed": "an analysis-only pass over the committed PR-3c stale-arm artifacts to extract a per-cell merge-path stale-capture label, INCLUDING its measured degradation on D/E geometry; a dedicated stale-arm run is required only if that pass shows the committed artifacts do not cover a needed cell. Not produced in this scaffold.",
+      "harm_shape": "write-time stale-capture",
+      "harm_shape_source": "PR6_DESIGN.md \u00a72/\u00a75 (PR-3c)",
+      "note": "merge-path stale is write-time-only evidence (PR-3c) and a required benchmark a future policy must not regress, not a solved problem (PR6_DESIGN \u00a72/\u00a75).",
+      "required": true,
+      "seed_artifact": "results/issue_failure_mode_blindness/pr3c",
+      "seeds": [],
+      "status": "required_unseeded"
+    },
+    "one_shot_ambiguity": {
+      "additional_runs_needed": "none at read time \u2014 one-shot ambiguity is certified insufficient evidence and stays observe-only (PR6_DESIGN \u00a75). It becomes a pass/fail cell only via write-API provenance metadata (PR3_DESIGN \u00a710), an engine change reserved to path 3 (PR-7), out of PR-6 scope.",
+      "harm_shape": "ambiguous-evidence (observe-only)",
+      "harm_shape_source": "PR6_DESIGN.md \u00a75",
+      "note": "recorded as a panel cell so it is not silently dropped; it carries no hazard label and must not be scored as pass/fail.",
+      "required": true,
+      "seed_artifact": null,
+      "seeds": [],
+      "status": "observe_only"
+    }
+  },
+  "conclusions_enforced": [
+    "static geometry cannot certify safety (PR-5 step 1)",
+    "both D-like direct and B/E-like collateral harm remain required benchmarks",
+    "one-shot ambiguity stays observe-only",
+    "merge-path stale stays a required benchmark",
+    "slot-granularity trust deprecation stays closed; the frozen probe is only the measurand, never a baseline or deployment candidate",
+    "deployed retrieval remains unchanged"
+  ],
+  "design": "PR6_DESIGN.md \u00a74 step 1 \u2014 empirical-hazard validation panel (scaffold)",
+  "engine_or_retrieval_change": false,
+  "geometry_used_as_gate": false,
+  "inputs_used": [
+    "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json"
+  ],
+  "new_cache_runs": 0,
+  "probe_note": "the frozen hazard probe is the measuring instrument whose damage is the label; it is never a deployment candidate (PR6_DESIGN \u00a75).",
+  "probe_policy": "mode-conditioned-trust",
+  "required_cell_types": [
+    "clean_control",
+    "direct_harm",
+    "collateral_harm",
+    "merge_path_stale",
+    "one_shot_ambiguity"
+  ],
+  "scaffold": true,
+  "screening_procedure": {
+    "admit_cell_iff": "the candidate class set's frozen mode-conditioned-trust hazard is MEASURED (mixed arm, >=3 seeds) and decomposed by true class; the measured broken counts ARE the cell's label.",
+    "both_harm_shapes_required": "any policy validated on the panel must exercise BOTH direct (D-like) and collateral (B/E-like) cells; a policy that fixes one while worsening the other does not pass (PR6_DESIGN \u00a75).",
+    "geometry_forbidden": "a class set may NOT be admitted to or excluded from the panel by any static geometric property (attribution ratio, centroid confusion rate, fork contrast, etc.) \u2014 PR-5 step 1 closed static geometry as a safety predictor.",
+    "scope_statement": "the panel certifies nothing beyond its enumerated cells and must refuse to generalize to unseen geometries (PR6_DESIGN \u00a73 path 1 risk)."
+  },
+  "source_cache_path": "feature_cache_vitl14/cifar100_dinov2_train.pt"
+}

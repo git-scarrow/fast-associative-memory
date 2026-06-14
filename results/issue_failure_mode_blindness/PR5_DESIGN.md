@@ -243,3 +243,104 @@ not part of PR-5.
   only sanctioned use is §4 step 3: a frozen hazard *probe* whose damage
   is the measurand. The family reopens only on evidence that changes the
   unit of action, with the §5 observables in place.
+
+---
+
+## Addendum A — step 1 executed: post-mortem and candidate indices (result: STOP)
+
+**Status: §4 step 1 complete. Zero new cache/governance runs; the five
+spent pairs are training data and were used as nothing else. Analyzer:
+`benchmarks/pr5_hazard_index.py` (promotion rule frozen in code and
+pinned by `tests/test_pr5_hazard_index.py` before any spent-pair value
+was computed). Artifact: `pr5/hazard_postmortem.json`, computed on
+gentoo against the vitl14 cache + committed pr3c/pr4 artifacts,
+sha256-identical on darwin (`139d51f3…`). The class-mean cosines were
+cross-checked against the committed gate-1 `pr4/compression_index.json`
+to 1e-6 inside the script.**
+
+### A.1 Post-mortem: where the frozen probe's harm actually lands
+
+Re-scoring the committed mixed-arm runs with the frozen hazard probe
+(`mode-conditioned-trust`) and decomposing broken rows by TRUE probe
+class (3 seeds summed; reproduces the PR-4 table's per-seed broken
+totals exactly):
+
+| pair | broken total | worst-hit class | share | role | max cos(worst, fork side) |
+|------|------------:|------|------:|------|------:|
+| A | 48 | 8 | 0.83 | bystander | 0.125 (vs 33) |
+| C | 16 | 67 | 0.50 | fork side | 0.107 (—) |
+| D | 815 | **28** | **0.93** | bystander | **0.169 (vs 10)** |
+| B | 366 | 48 | 0.89 | bystander | 0.127 (vs 86) |
+| E | 427 | 56 | 0.75 | bystander | 0.188 (vs 47) |
+
+Sharper than PR-4's §3 framing: in every hazardous pair the harm —
+including the rows §3 counts as *direct* — concentrates on the
+**bystander class most similar to a fork side**. The bystander's
+traffic co-resides with fork-party slots; deprecating a fork side
+breaks the bystander's probes (the counterpart co-survives in their
+window, so the decomposition charges it as direct). Pair C, the only
+diffuse pair, has the weakest bystander–fork coupling in the sweep.
+Pair D combines the strongest bystander pull (cos(10,28)=0.169) with
+the weakest fork contrast (cos(10,95)=0.052) — the side-attribution is
+unstable exactly where the harm has somewhere to land.
+
+### A.2 The three candidates (constructed on, and only on, this evidence)
+
+With fork classes F = {classes[0], classes[-1]} and bystanders Y (full
+definitions in the analyzer docstring; all static, seed-free,
+parameter-free):
+
+1. `attribution_ratio` — max bystander↔fork class-mean cosine over the
+   fork-pair cosine (computable from the committed gate-1 JSON alone).
+2. `confusion_rate` — fraction of set samples whose top within-set
+   centroid cosine is cross-class (sample-level tails that class means
+   hide).
+3. `fork_confusion_rate` — confusion_rate restricted to confusions
+   involving exactly one fork class (the A.1 harm channel).
+
+Admissibility (frozen, §6): pair D strictly worst AND {A, C} strictly
+the two most benign. Promotion: largest D-to-second-worst ratio among
+admissible candidates; none admissible → stop (§7).
+
+### A.3 Spent-pair table (hazard ground truth: D 271.7 ≫ E 142.3 ≈ B 122.0 ≫ A 16.0 ≈ C 5.3 mean broken/run)
+
+| candidate | A | C | D | B | E | order (worst first) | D worst | C/A most benign | admissible |
+|-----------|--:|--:|--:|--:|--:|---------------------|:-:|:-:|:-:|
+| attribution_ratio | 1.790 | 1.591 | **3.234** | 1.509 | 1.379 | D > A > C > B > E | yes | **no** (B/E rank benign) | no |
+| confusion_rate | .0040 | .0115 | **.0635** | .0045 | .0065 | D > C > E > B > A | yes | **no** (C ranks 2nd-worst) | no |
+| fork_confusion_rate | .0025 | .0015 | **.0620** | .0020 | .0045 | D > E > A > B > C | yes | **no** (B below A) | no |
+
+### A.4 Verdict — retrospective gate FAILED; stop before any run
+
+Every candidate orders **pair D strictly worst, by a wide margin**
+(sample-level confusion separates D by an order of magnitude: 127/2000
+confused samples vs 8–23 for all other pairs). No candidate survives
+the benign end: **pairs B and E — empirically ~8× pair A's hazard and
+~25× pair C's — are geometrically indistinguishable from A/C** in every
+candidate
+(non-D values sit within a few samples of each other; B's 366 broken
+rows on class 48 have no static signature at all). This is a failure
+*on training data*: the indices were constructed against these five
+pairs and still cannot reproduce the benign/hazardous split, so
+held-out prediction is unjustified a fortiori.
+
+Reading: static class-set geometry captures only the extreme
+attribution-instability channel (D). The B/E collateral channel —
+slot-sharing under ordinary geometry — is emergent from write dynamics
+(vigilance, slot allocation, EMA absorption) and leaves no usable trace
+in the feature statistics of the class set alone.
+
+**Consequences (per §7, first stop condition, now triggered):**
+
+* **PR-5 does not proceed to step 2.** No index is promoted, no
+  pre-registration, no held-out validation runs, no new compute.
+* Every future governance claim requires **per-class-set empirical
+  validation** — "safe on benign geometry" is not a certifiable claim
+  because benign geometry is not statically recognizable.
+* **PR-6 (path 3, write-path twin-run) must be designed without
+  geometry gating**, and its validation matrix must include
+  D-like *and* B/E-like sets chosen for their empirical, not
+  geometric, hazard.
+* No candidate revision against the spent pairs (§6 honesty rails):
+  these three candidates failed; constructing a fourth against the same
+  five pairs is index-shopping and is not licensed by this memo.

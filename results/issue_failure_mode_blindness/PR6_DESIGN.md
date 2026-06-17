@@ -311,3 +311,49 @@ probe* (measured broken_mean 16.0 / 5.33 on pairs A/C), not zero-risk clean
 traffic. Path 2 (record-granularity ledger), path 3 (write-path refusal /
 twin-run), and slot-granularity trust all stay closed; the merge-path D/E run
 is sequenced behind whatever future work constructs it, not opened here.
+
+## 8. PR-6 step 3 — completing merge_path_stale (D/E + pair-B): run scaffold
+
+Step 2 left `merge_path_stale` `required_unseeded` because the only committed
+merge-path arm (PR-3c soft-payload) was run on pair-A alone. Step 3 is the
+single, scoped cache run that closes it. The runnable matrix is
+`pr6_step3_run_matrix.sh`; **this commit is scaffold only — no cache run is
+taken here.**
+
+**What it measures.** The soft-payload ("merge-path") stale arm on the three
+geometries PR-3c never ran: `pairD {10,28,32,95}` (attractor 52),
+`pairE {47,56,61,76}` (attractor 1) — the D/E component the §6 panel's required
+label demands — and `pairB {5,27,48,86}` (attractor 13), which drains the
+residual pair-B note in `missing_evidence` in the same pass. Three seeds each
+(0,1,2), matching the committed pair-A arms: **9 runs total**.
+
+**Why it is the smallest faithful run, not a governance experiment.** It reuses
+the frozen `mode-conditioned-trust` probe already emitted inside
+`failure_mode_probe.py`'s `governance.json` (top-level `none`,
+`mode-conditioned-trust`, `_router`) — no new policy, no policy sweep, no
+threshold tuning, no new observable, no retrieval change. Protocol/config are
+identical to `pr3c_run_matrix.sh` (`--vision --epochs 12 --supersede-epoch 6`,
+`--arm stale --payload-mode soft`); only the class set / attractor differ —
+which *is* the missing measurement. PR-3c stays byte-for-byte untouched; the new
+arms land in `pr6/stale_de/`. Geometry is provenance only ("what was measured on
+what"), never an admission gate (PR-5 step 1 closed geometry as a predictor);
+`geometry_used_as_gate` stays `false`.
+
+**Seeding wiring (applied once the artifacts exist).** The panel's
+`_stale_soft_seed_label` reader is geometry-agnostic and consumes these arms
+unchanged. `read_merge_path_stale_evidence` is extended to read the D/E + B arms
+from `pr6/stale_de/`; when `covered_class_sets ⊇ {pairA, pairD, pairE}` the cell
+flips to `status: seeded` with `seeds` populated, and `missing_evidence`
+collapses (pair-B included → nulled). Until those artifacts are committed the
+cell stays `required_unseeded` exactly as step 2 left it.
+
+**Acceptance (verify on the Darwin host after copy-back).** (1) Each of the 9
+arms emits `governance.json` with `{none, mode-conditioned-trust, _router}` and
+`_router.n_merge_suspect_events`, and `summary.json` with `arm==stale-soft`,
+`payload_mode==soft`, `classes` == the pair's set — the script's own
+SCHEMA/PROVENANCE self-check. (2) `read_merge_path_stale_evidence` reports
+`de_uncovered == []`. (3) Panel rebuild yields `merge_path_stale.status ==
+"seeded"`. (4) `pytest tests/test_pr6_stale_cell.py tests/test_pr6_hazard_panel.py`
+green; deployed retrieval untouched. Per the host split, the 9 runs execute on
+gentoo (SSH compute, venv active); artifacts are copied back and re-verified on
+Darwin. `new_cache_runs` for *this* scaffold commit stays `0`.

@@ -1,18 +1,21 @@
-"""PR-6 step 2 pins — seeding the merge_path_stale cell from PR-3c stale arms.
+"""PR-6 step 3 pins — seeding merge_path_stale with the measured D/E (+B) arms.
 
-Pins the measured outcome of the analysis-only pass over the committed PR-3c
-soft-payload ("merge-path") stale arms:
+Step 2 left the cell ``required_unseeded`` because the only committed merge-path
+arm (PR-3c soft-payload) was run on pair-A alone. Step 3 measured the dedicated
+soft-payload stale arm on the geometries PR-3c never ran — pairD/pairE (the
+required D/E component) and pairB (the step-2 residual) — 3 seeds each, scored
+by the SAME frozen mode-conditioned-trust probe (committed under
+``pr6/stale_de/``). These pins assert:
 
-  (a) merge-path stale capture is MEASURED on the pair-A class set only, across
-      3 seeds, and copied faithfully (no geometric input) from the committed
-      governance JSON;
-  (b) the frozen mode-conditioned-trust probe captures it via the WRITE-TIME
-      merge-suspect trace, not read-time fork witness (broken=0);
-  (c) pairs D/E never existed as geometries in PR-3c, so no committed artifact
-      measures merge-path stale on D/E — the structural reason the cell cannot
-      be fully seeded;
-  (d) the cell therefore stays required-but-unseeded with a precise
-      missing-evidence note, and no geometry is used to admit or exclude it.
+  (a) the cell is now ``seeded`` with the measured per-geometry labels, copied
+      faithfully (no geometric input) from the committed governance JSON;
+  (b) write-time merge-suspect capture is GEOMETRY-STABLE (192 events/seed on
+      every arm) — the cell's defining write-time-only property;
+  (c) the frozen probe's READ-TIME damage (broken) degrades on D/E — measured,
+      not asserted — while it fixes ~0 stale-wrong rows on any geometry;
+  (d) the residual pair-B note is drained (missing_evidence is None);
+  (e) no geometry is used to admit or exclude the cell, and the analyzer falls
+      back to required_unseeded when the step-3 arms are absent.
 
 Reads only committed artifacts; imports no torch and touches no cache.
 """
@@ -22,18 +25,31 @@ from pathlib import Path
 import pytest
 
 from benchmarks.pr6_hazard_panel import (
-    DE_CLASS_SETS, PROBE_POLICY, STALE_SOFT_ARMS, build_merge_path_stale_cell,
-    build_panel, read_merge_path_stale_evidence)
+    DE_CLASS_SETS, PAIR_A_CLASS_SET, PROBE_POLICY, STALE_DE,
+    STALE_DE_GEOMETRIES, STALE_GEOMETRY_ORDER, build_merge_path_stale_cell,
+    build_panel, read_merge_path_stale_evidence, read_stale_de_evidence)
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results/issue_failure_mode_blindness"
 PR3C = RESULTS / "pr3c"
+STALE_DE_DIR = RESULTS / "pr6/stale_de"
 POST = RESULTS / "pr5/hazard_postmortem.json"
 PANEL = RESULTS / "pr6/panel.json"
 
 PAIR_A = [0, 8, 19, 33]
 _GEOMETRY_TOKENS = ("cos", "ratio", "confusion", "geometry", "centroid",
                     "attribution", "fork_pair")
+
+# Measured frozen-probe read-time damage (broken) per geometry, per seed — the
+# explicit anchor so a silent artifact swap is caught. pairA is the committed
+# PR-3c reference (broken 0); D/E degrade; pairB is benign like pairA.
+BROKEN_BY_SEED = {
+    "pairA": [0, 0, 0],
+    "pairD": [112, 180, 46],
+    "pairE": [74, 40, 24],
+    "pairB": [0, 1, 0],
+}
+STALE_FIXED_TOTAL = {"pairA": 0, "pairD": 0, "pairE": 1, "pairB": 2}
 
 
 @pytest.fixture(autouse=True)
@@ -44,48 +60,104 @@ def _cwd(monkeypatch):
 
 @pytest.fixture
 def cell():
-    # Default (repo-relative) path so the cell's artifact paths match the
-    # committed manifest; cwd is pinned to ROOT by the autouse fixture.
     return build_merge_path_stale_cell()
 
 
-def test_cell_required_but_unseeded(cell):
+def _gov(directory, stem):
+    return json.loads((directory / f"{stem}.governance.json").read_text())
+
+
+def _committed_stem(pair, seed):
+    """The committed governance directory + stem for a (geometry, seed)."""
+    if pair == "pairA":
+        return PR3C, f"per_probe_stale-soft_s{seed}"
+    return STALE_DE_DIR, f"per_probe_stale-soft_s{seed}_{pair}"
+
+
+# --- (a) the cell is seeded -------------------------------------------------
+
+def test_cell_is_seeded(cell):
     assert cell["required"] is True
-    assert cell["status"] == "required_unseeded"
-    assert cell["evidence_status"] == "partial_pairA_only"
-    assert cell["seeds"] == []          # still unseeded: no D/E coverage
+    assert cell["status"] == "seeded"
+    assert cell["evidence_status"] == "measured_pairA_pairD_pairE_pairB"
     assert cell["harm_shape"] == "write-time stale-capture"
+    assert cell["seeds"]                                   # non-empty now
 
 
-def test_partial_evidence_is_pairA_only_three_seeds(cell):
-    pe = cell["partial_evidence"]
-    assert pe["covered_class_sets"] == [PAIR_A]      # pair A only
-    assert pe["n_seeds"] == 3
-    assert [s["seed"] for s in pe["per_seed"]] == [0, 1, 2]
-    assert all(s["class_set"] == PAIR_A for s in pe["per_seed"])
-    assert all(s["probe_policy"] == PROBE_POLICY for s in pe["per_seed"])
+def test_seeds_in_canonical_order_and_cover_DE(cell):
+    pairs = [s["pair"] for s in cell["seeds"]]
+    assert pairs == list(STALE_GEOMETRY_ORDER)            # pairA, D, E, B
+    by_pair = {s["pair"]: s for s in cell["seeds"]}
+    assert by_pair["pairA"]["class_set"] == PAIR_A
+    assert by_pair["pairD"]["class_set"] == DE_CLASS_SETS["pairD"]
+    assert by_pair["pairE"]["class_set"] == DE_CLASS_SETS["pairE"]
+    for s in cell["seeds"]:
+        assert s["n_seeds"] == 3
+        assert s["probe_policy"] == PROBE_POLICY
 
 
-def test_partial_evidence_copies_committed_governance(cell):
-    # The label is exactly the committed PR-3c governance numbers — measured,
-    # not invented, and with no geometric field.
-    for seed, stem in enumerate(STALE_SOFT_ARMS):
-        gov = json.loads((PR3C / f"{stem}.governance.json").read_text())
-        got = cell["partial_evidence"]["per_seed"][seed]
-        assert got["stale_wrong"] == gov["none"]["stale_wrong"]
-        assert got["wrong_total"] == gov["none"]["wrong_none"]
-        mct = gov[PROBE_POLICY]
-        assert got["frozen_probe_stale_abstained"] == mct["stale_wrong_abstained"]
-        assert got["frozen_probe_stale_fixed"] == mct["stale_wrong_fixed"]
-        assert got["frozen_probe_false_abstain"] == mct["abstain_on_correct"]
-        assert got["frozen_probe_broken"] == mct["broken"]
-        assert got["merge_suspect_events"] == gov["_router"]["n_merge_suspect_events"]
-        assert got["read_time_witness_probes"] == mct["witness_probes"]
+# --- (b) write-time capture is geometry-stable ------------------------------
+
+def test_write_time_capture_geometry_stable(cell):
+    # Every geometry, every seed: the merge-suspect (write-time) trace fires 192
+    # events — the capture mechanism is intact regardless of geometry.
+    for s in cell["seeds"]:
+        assert s["merge_suspect_events_by_seed"] == [192, 192, 192], s["pair"]
+        for ps in s["per_seed"]:
+            assert ps["merge_suspect_events"] == 192
+            assert "write-time" in ps["capture_via"]
 
 
-def test_s0_anchor_numbers(cell):
-    # Explicit anchor so a silent artifact swap is caught (PR3C_RESULT.md §2).
-    s0 = cell["partial_evidence"]["per_seed"][0]
+# --- (c) read-time damage degrades on D/E (measured) ------------------------
+
+def test_DE_read_time_degradation_measured(cell):
+    by_pair = {s["pair"]: s for s in cell["seeds"]}
+    for pair, expected in BROKEN_BY_SEED.items():
+        assert by_pair[pair]["frozen_probe_broken_by_seed"] == expected, pair
+        assert by_pair[pair]["frozen_probe_stale_fixed_total"] == \
+            STALE_FIXED_TOTAL[pair], pair
+    # The degradation is real and ordered: D worst, then E, with B/A benign.
+    means = cell["measured_degradation"]["frozen_probe_broken_mean_by_pair"]
+    assert means["pairD"] > means["pairE"] > means["pairB"]
+    assert means["pairA"] == 0.0
+    assert means["pairD"] == 112.67 and means["pairE"] == 46.0
+    # Read-time "fixes" are negligible on every geometry (write-time-only).
+    assert all(v <= 2 for v in
+               cell["measured_degradation"]["frozen_probe_stale_fixed_total_by_pair"].values())
+
+
+def test_measured_degradation_summary_states_the_finding(cell):
+    summ = cell["measured_degradation"]["summary"].lower()
+    assert "write-time" in summ and "read-time" in summ
+    assert "degrade" in summ and "d/e" in summ
+    assert "192" in summ
+
+
+# --- faithfulness: labels are the committed numbers, not invented -----------
+
+def test_seeds_copy_committed_governance(cell):
+    by_pair = {s["pair"]: s for s in cell["seeds"]}
+    for pair in STALE_GEOMETRY_ORDER:
+        group = by_pair[pair]
+        for seed in (0, 1, 2):
+            directory, stem = _committed_stem(pair, seed)
+            gov = _gov(directory, stem)
+            got = group["per_seed"][seed]
+            assert got["stale_wrong"] == gov["none"]["stale_wrong"]
+            assert got["wrong_total"] == gov["none"]["wrong_none"]
+            mct = gov[PROBE_POLICY]
+            assert got["frozen_probe_broken"] == mct["broken"]
+            assert got["frozen_probe_stale_abstained"] == mct["stale_wrong_abstained"]
+            assert got["frozen_probe_stale_fixed"] == mct["stale_wrong_fixed"]
+            assert got["frozen_probe_false_abstain"] == mct["abstain_on_correct"]
+            assert got["read_time_witness_probes"] == mct["witness_probes"]
+            assert got["merge_suspect_events"] == gov["_router"]["n_merge_suspect_events"]
+
+
+def test_pairA_anchor_preserved(cell):
+    # The step-2 pair-A anchor still holds, now inside seeds[pairA] (PR3C_RESULT §2).
+    a = next(s for s in cell["seeds"] if s["pair"] == "pairA")
+    s0 = a["per_seed"][0]
     assert s0["stale_wrong"] == 374
     assert s0["frozen_probe_stale_abstained"] == 374
     assert s0["frozen_probe_stale_fixed"] == 0
@@ -93,45 +165,19 @@ def test_s0_anchor_numbers(cell):
     assert s0["merge_suspect_events"] == 192
 
 
-def test_capture_is_write_time_not_read_time(cell):
-    # Every seed: the frozen probe breaks nothing and fixes nothing at read time;
-    # the merge-suspect (write-time) trace is what fires. This is the cell's
-    # defining property — merge-path stale is write-time-only evidence.
-    for s in cell["partial_evidence"]["per_seed"]:
-        assert s["frozen_probe_broken"] == 0
-        assert s["frozen_probe_stale_fixed"] == 0
-        assert s["merge_suspect_events"] == 192
-        assert "write-time" in s["capture_via"]
+# --- (d) residual pair-B note drained ---------------------------------------
+
+def test_missing_evidence_drained(cell):
+    assert cell["missing_evidence"] is None
+    assert "none" in cell["additional_runs_needed"].lower()
+    assert "pair-b residual drained" in cell["additional_runs_needed"].lower()
 
 
-def test_missing_evidence_names_DE_and_is_out_of_scope(cell):
-    me = cell["missing_evidence"]
-    assert me["uncovered_geometries"] == ["pairD", "pairE"]
-    assert "D/E" in me["needed"]
-    low = me["why_absent"].lower()
-    assert "did not exist" in low and "pr-3c" in low
-    # The completing run is named and explicitly fenced out of step-2 scope.
-    rr = me["required_run"].lower()
-    assert "no new cache runs" in rr or "out of" in rr
-    assert "10" in me["required_run"] and "95" in me["required_run"]  # pairD set
-    assert "47" in me["required_run"] and "76" in me["required_run"]  # pairE set
-
-
-def test_DE_geometry_structurally_absent_from_committed_pr3c():
-    # The empirical backbone of "cannot seed": no committed PR-3c arm touches the
-    # pairD/pairE class sets at all (they were built later, PR-4/PR-5).
-    de = set(DE_CLASS_SETS["pairD"]) | set(DE_CLASS_SETS["pairE"])
-    for f in PR3C.glob("per_probe_*.summary.json"):
-        classes = set(json.loads(f.read_text())["classes"])
-        assert not (classes & de), f.name
-    # And the merge-path (soft) arm exists only on the pair-A class set.
-    ev = read_merge_path_stale_evidence(PR3C)
-    assert ev["covered_class_sets"] == [PAIR_A]
-
+# --- (e) no geometry gate; provenance integrity; graceful fallback ----------
 
 def test_no_geometry_token_in_cell(cell):
-    # No key anywhere in the cell (incl. partial_evidence) may be a geometric
-    # property — the label is measured hazard only, never geometry.
+    # No key anywhere in the cell may be a geometric property — the label is
+    # measured hazard only, never geometry (class_set/pair are provenance).
     bad = []
 
     def scan(obj, path=""):
@@ -148,14 +194,73 @@ def test_no_geometry_token_in_cell(cell):
     assert bad == [], bad
 
 
-def test_panel_invariants_hold_after_step2():
-    panel = build_panel(json.loads(POST.read_text()), pr3c_dir=PR3C)
+def test_DE_geometry_structurally_absent_from_committed_pr3c():
+    # The empirical backbone of step 2: no committed PR-3c arm touches the
+    # pairD/pairE class sets (built later, PR-4/PR-5); the D/E evidence comes
+    # only from the step-3 stale_de arms, never from pr3c.
+    de = set(DE_CLASS_SETS["pairD"]) | set(DE_CLASS_SETS["pairE"])
+    for f in PR3C.glob("per_probe_*.summary.json"):
+        classes = set(json.loads(f.read_text())["classes"])
+        assert not (classes & de), f.name
+    assert read_merge_path_stale_evidence(PR3C)["covered_class_sets"] == [PAIR_A]
+
+
+def test_stale_de_evidence_reads_three_geometries():
+    ev = read_stale_de_evidence(STALE_DE_DIR)
+    assert ev["covered_class_sets"] == [
+        STALE_DE_GEOMETRIES["pairD"],
+        STALE_DE_GEOMETRIES["pairE"],
+        STALE_DE_GEOMETRIES["pairB"],
+    ]
+    assert len(ev["source_artifacts"]) == 9
+    assert set(ev["by_pair"]) == {"pairD", "pairE", "pairB"}
+
+
+def test_stale_de_provenance_guards(tmp_path):
+    # Copy the committed D/E/B arms; the reader accepts them...
+    for pair in ("pairD", "pairE", "pairB"):
+        for seed in (0, 1, 2):
+            stem = f"per_probe_stale-soft_s{seed}_{pair}"
+            for suf in ("governance.json", "summary.json"):
+                (tmp_path / f"{stem}.{suf}").write_text(
+                    (STALE_DE_DIR / f"{stem}.{suf}").read_text())
+    assert len(read_stale_de_evidence(tmp_path)["covered_class_sets"]) == 3
+
+    # ...refuses a non-soft payload (wrong arm cannot silently seed)...
+    s = json.loads((tmp_path / "per_probe_stale-soft_s1_pairD.summary.json").read_text())
+    (tmp_path / "per_probe_stale-soft_s1_pairD.summary.json").write_text(
+        json.dumps(dict(s, payload_mode="hard")))
+    with pytest.raises(RuntimeError):
+        read_stale_de_evidence(tmp_path)
+
+    # ...and refuses a stem whose name disagrees with its measured classes.
+    (tmp_path / "per_probe_stale-soft_s1_pairD.summary.json").write_text(
+        json.dumps(dict(s, classes=[1, 2, 3, 4])))
+    with pytest.raises(RuntimeError):
+        read_stale_de_evidence(tmp_path)
+
+
+def test_unseeded_fallback_when_step3_arms_absent(tmp_path):
+    # With no committed step-3 arms the cell degrades gracefully to the step-2
+    # state: required_unseeded, pair-A partial evidence, D/E named as missing.
+    cell = build_merge_path_stale_cell(stale_de_dir=tmp_path / "nope")
+    assert cell["status"] == "required_unseeded"
+    assert cell["evidence_status"] == "partial_pairA_only"
+    assert cell["seeds"] == []
+    assert cell["partial_evidence"]["covered_class_sets"] == [PAIR_A]
+    assert cell["missing_evidence"]["uncovered_geometries"] == ["pairD", "pairE"]
+
+
+# --- panel-level invariants + manifest pinning ------------------------------
+
+def test_panel_invariants_after_step3():
+    panel = build_panel(json.loads(POST.read_text()))
     assert panel["geometry_used_as_gate"] is False
-    assert panel["new_cache_runs"] == 0
     assert panel["engine_or_retrieval_change"] is False
-    # The cell's status keeps it out of the seeded set.
-    assert panel["cell_status_summary"]["required_unseeded"] == ["merge_path_stale"]
-    assert "merge_path_stale" not in panel["cell_status_summary"]["seeded"]
+    assert panel["new_cache_runs"] == 9            # the committed step-3 arms
+    assert panel["cell_status_summary"]["seeded"] == [
+        "clean_control", "collateral_harm", "direct_harm", "merge_path_stale"]
+    assert "required_unseeded" not in panel["cell_status_summary"]
 
 
 def test_committed_panel_matches_fresh_build():
@@ -165,20 +270,3 @@ def test_committed_panel_matches_fresh_build():
 
 def test_build_is_deterministic():
     assert build_merge_path_stale_cell() == build_merge_path_stale_cell()
-
-
-def test_soft_payload_guard(tmp_path):
-    # The reader refuses any arm that is not the soft merge path, so a wrong
-    # artifact cannot silently seed the cell.
-    gov = json.loads((PR3C / f"{STALE_SOFT_ARMS[0]}.governance.json").read_text())
-    summ = json.loads((PR3C / f"{STALE_SOFT_ARMS[0]}.summary.json").read_text())
-    for stem in STALE_SOFT_ARMS:
-        (tmp_path / f"{stem}.governance.json").write_text(json.dumps(gov))
-        (tmp_path / f"{stem}.summary.json").write_text(json.dumps(summ))
-    # Valid as copied:
-    assert read_merge_path_stale_evidence(tmp_path)["covered_class_sets"] == [PAIR_A]
-    # Tamper one arm to a non-soft payload → refuse.
-    bad = dict(summ, payload_mode="hard")
-    (tmp_path / f"{STALE_SOFT_ARMS[1]}.summary.json").write_text(json.dumps(bad))
-    with pytest.raises(RuntimeError):
-        read_merge_path_stale_evidence(tmp_path)

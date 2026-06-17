@@ -54,6 +54,38 @@ for s in 0 1 2; do
   run pairB "$PAIR_B" "$ATTR_B" "$s"
 done
 
+# --- shadow-governance scoring: emit the per-stem governance.json -------------
+# failure_mode_probe.py emits per_probe/summary/topk only. The per-stem
+# governance.json (the `none` / `mode-conditioned-trust` / `_router` policy
+# table the PR-6 panel reads) is produced by the FROZEN shadow-governance
+# scorer, exactly as PR-3c was. We call that scorer's own per-stem path
+# (reproduce_frozen_detector + load_run + score_run) — byte-identical to
+# analyze_fork_governance.main()'s per-stem write loop (indent=1,
+# sort_keys=True) — and SKIP its cross-run H1/H2 read-time/fork classifier
+# studies, which require a mixed_s0 arm, are undefined for a stale-only dir,
+# and are NOT consumed by the panel. The frozen detector is reproduced from the
+# committed #87 fit set (score_frozen_detector.FIT_CSV/FIT_SUMMARY), NOT from
+# this dir, so per-stem scoring is independent of which arms are present here.
+python - "$OUT" <<'PY'
+import json, sys
+from pathlib import Path
+from benchmarks.analyze_fork_governance import load_run, score_run
+from benchmarks.score_frozen_detector import (
+    FIT_CSV, FIT_SUMMARY, reproduce_frozen_detector)
+
+OUT = Path(sys.argv[1])
+det, thr, prov = reproduce_frozen_detector(Path(FIT_CSV), Path(FIT_SUMMARY))
+print("frozen-detector fit:", json.dumps(prov, sort_keys=True)[:160])
+stems = sorted(p for p in OUT.glob("per_probe_*.csv")
+               if not p.name.endswith((".per_slot.csv", ".fork_events.csv",
+                                       ".topk.csv")))
+for stem in stems:
+    table = score_run(load_run(stem), det, thr)
+    with open(stem.with_suffix(".governance.json"), "w") as f:
+        json.dump(table, f, indent=1, sort_keys=True)
+    print("scored", stem.stem)
+PY
+
 # --- self-check: provenance + schema the PR-6 panel consumes -----------------
 # Mirrors pr3c's byte-identity guard, but these are new geometries with no prior
 # baseline to compare against, so instead we assert each arm emitted exactly the

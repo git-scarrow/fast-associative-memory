@@ -357,3 +357,80 @@ SCHEMA/PROVENANCE self-check. (2) `read_merge_path_stale_evidence` reports
 green; deployed retrieval untouched. Per the host split, the 9 runs execute on
 gentoo (SSH compute, venv active); artifacts are copied back and re-verified on
 Darwin. `new_cache_runs` for *this* scaffold commit stays `0`.
+
+## 9. PR-6 step 3 — completing merge_path_stale (D/E + pair-B): the measured run
+
+The §8 scaffold is now executed. The 9 soft-payload ("merge-path") stale arms —
+`pairD {10,28,32,95}` (attractor 52), `pairE {47,56,61,76}` (attractor 1),
+`pairB {5,27,48,86}` (attractor 13), 3 seeds each — were measured on gentoo with
+the frozen engine and the frozen `mode-conditioned-trust` probe, and committed
+under `pr6/stale_de/`. **`merge_path_stale` is now `status: seeded`.** Deployed
+retrieval is unchanged: the five engine/probe/scorer source files that determine
+the run output were sha256-verified byte-identical between the canonical (Darwin)
+checkout and the gentoo compute host before the run, and no engine, driver, or
+retrieval code was touched — only the class set / attractor differ from the
+committed pair-A arms (PR-4/5/6 are analysis-only; `f1a5cad..HEAD` changes no
+engine file).
+
+**The measured result — the cell's required label, now empirical.** Write-time
+capture is **geometry-stable**: the merge-suspect trace fires exactly **192
+events/seed on every arm** (pairA/D/E/B alike), so the capture *mechanism* is
+intact regardless of geometry. The frozen probe's **read-time damage degrades on
+D/E**, exactly as §2/§5 anticipated but had not measured:
+
+| geometry | `broken` mean (read-time damage) | `stale_wrong_fixed` total | merge-suspect |
+|--|--:|--:|--:|
+| pairA (PR-3c ref) | 0.0 | 0 | 192/seed |
+| pairB | 0.33 | 2 | 192/seed |
+| pairE | 46.0 | 1 | 192/seed |
+| pairD | 112.67 | 0 | 192/seed |
+
+The probe **fixes ~0 stale-wrong rows on any geometry** (`stale_wrong_fixed`
+total 0–2 of ~1100 stale-wrong rows): read-time application cannot repair
+merge-path stale, and on D/E it *only* inflicts collateral damage on correct
+rows. This confirms, from measurement, that merge-path stale is **write-time-only
+evidence whose read-time use degrades on D/E geometry** — a required benchmark a
+future policy must not regress, not a solved problem. pair-B is benign on this
+axis (like pair-A), draining the step-2 residual note in the same pass.
+
+**A protocol gap found and closed.** The §8 scaffold matrix ran only
+`failure_mode_probe.py`, which emits `per_probe`/`summary`/`topk` but **not**
+`governance.json` — the per-stem policy table (`none` / `mode-conditioned-trust`
+/ `_router`) the panel reads is produced by the separate frozen scorer
+`analyze_fork_governance.py`, exactly as PR-3c did. The scaffold's own
+SCHEMA/PROVENANCE self-check would therefore have `FileNotFoundError`'d. Step 3
+adds the missing stage to the matrix: it calls the scorer's **own per-stem path**
+(`reproduce_frozen_detector` + `load_run` + `score_run`, byte-identical to
+`analyze_fork_governance.main()`'s per-stem write loop, `indent=1`,
+`sort_keys=True`) and **skips that scorer's cross-run H1/H2 read-time/fork
+classifier studies**, which require a `mixed_s0` arm, are undefined for a
+stale-only directory, and are not consumed by the panel. The frozen detector is
+reproduced from the committed #87 fit set
+(`score_frozen_detector.FIT_CSV/FIT_SUMMARY`), not from this directory, so the
+per-stem scoring is independent of which arms are present — the measurement is a
+faithful per-geometry extension of the PR-3c stale-soft scoring, not a new
+protocol.
+
+**Seeding wiring (now applied).** `read_stale_de_evidence` reads the D/E + B arms
+from `pr6/stale_de/`, guarded so a stem's name must match its measured `classes`
+(provenance integrity, never a geometric gate) and a non-soft payload is refused.
+`build_merge_path_stale_cell` flips to `seeded` with `seeds` ordered
+pairA→pairD→pairE→pairB, records the measured degradation, and nulls
+`missing_evidence` (pair-B drained). With no committed step-3 arms the analyzer
+falls back to the exact step-2 `required_unseeded` cell, so the change degrades
+gracefully. `pr6_hazard_panel.py` still imports no torch and reads only committed
+JSON; `geometry_used_as_gate` stays `false`; `new_cache_runs` is `9` (the
+committed arms — the panel *build* itself takes none); `engine_or_retrieval_change`
+stays `false`.
+
+**Scope held.** This step revives nothing PR-5/earlier closed: no deployed
+retrieval change, no slot-granularity trust (the frozen probe remains only the
+measurand whose damage *is* the label — never a baseline or deployment
+candidate), no trust-parameter tuning, no static geometry gate, no record-
+granularity ledger (path 2), no write-path refusal / twin-run (path 3), and no
+broad class-pair search. The panel still certifies nothing beyond its enumerated
+cells. Tests: `tests/test_pr6_stale_cell.py` (rewritten to pin the seeded state,
+the geometry-stable write-time capture, the measured D/E degradation, the
+provenance guards, and the unseeded fallback) and `tests/test_pr6_hazard_panel.py`
+(updated for the seeded cell, `new_cache_runs == 9`, and the 13 committed inputs)
+— full suite **556 passed**.

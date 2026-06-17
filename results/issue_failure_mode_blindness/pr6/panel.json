@@ -1,6 +1,6 @@
 {
   "additional_runs_summary": {
-    "merge_path_stale": "analysis-only pass over committed PR-3c stale artifacts (a dedicated run only if a cell is uncovered); deferred, not done here.",
+    "merge_path_stale": "PR-6 step 2 read the committed PR-3c stale-soft arms: pair-A merge-path stale capture is now MEASURED (partial_evidence); the cell stays unseeded pending a D/E-geometry stale-arm run (out of scope, no new cache runs).",
     "one_shot_ambiguity": "no read-time run; needs write-API provenance metadata (path 3 / PR-7), out of scope.",
     "optional_panel_widening": "additional empirically-screened cells per screening_procedure are optional, not required for the seeded panel.",
     "seeded_cells": "none \u2014 clean_control, direct_harm, collateral_harm are fully labeled from committed artifacts."
@@ -130,10 +130,100 @@
       "status": "seeded"
     },
     "merge_path_stale": {
-      "additional_runs_needed": "an analysis-only pass over the committed PR-3c stale-arm artifacts to extract a per-cell merge-path stale-capture label, INCLUDING its measured degradation on D/E geometry; a dedicated stale-arm run is required only if that pass shows the committed artifacts do not cover a needed cell. Not produced in this scaffold.",
+      "additional_runs_needed": "partially resolved: the committed PR-3c stale-soft arms now seed a MEASURED pair-A merge-path stale-capture label (recorded in partial_evidence). The cell stays unseeded because its required label includes D/E degradation, and no committed artifact measures merge-path stale on D/E geometry; completing it needs a dedicated stale-arm run on the D/E class sets (see missing_evidence), out of step-2 scope.",
+      "evidence_status": "partial_pairA_only",
       "harm_shape": "write-time stale-capture",
       "harm_shape_source": "PR6_DESIGN.md \u00a72/\u00a75 (PR-3c)",
+      "missing_evidence": {
+        "needed": "measured merge-path stale capture on D/E geometry",
+        "required_run": "a dedicated soft-payload stale arm on the pairD {10,28,32,95} and pairE {47,56,61,76} class sets, >=3 seeds, scored by the frozen mode-conditioned-trust probe \u2014 OUT OF PR-6 step-2 scope (no new cache runs).",
+        "uncovered_geometries": [
+          "pairD",
+          "pairE"
+        ],
+        "why_absent": "the PR-3c soft-payload (merge-path) stale arm was run only on the pair-A class set [0, 8, 19, 33]; pairs D and E did not exist as geometries in PR-3c (their class sets were constructed later, PR-4/PR-5), so no committed artifact measures merge-path stale on D/E. Pair-B merge-path stale was also never run."
+      },
       "note": "merge-path stale is write-time-only evidence (PR-3c) and a required benchmark a future policy must not regress, not a solved problem (PR6_DESIGN \u00a72/\u00a75).",
+      "partial_evidence": {
+        "covered_class_sets": [
+          [
+            0,
+            8,
+            19,
+            33
+          ]
+        ],
+        "n_seeds": 3,
+        "per_seed": [
+          {
+            "arm": "stale-soft",
+            "capture_via": "write-time merge-suspect trace",
+            "class_set": [
+              0,
+              8,
+              19,
+              33
+            ],
+            "frozen_probe_broken": 0,
+            "frozen_probe_false_abstain": 3,
+            "frozen_probe_stale_abstained": 374,
+            "frozen_probe_stale_fixed": 0,
+            "merge_suspect_events": 192,
+            "probe_policy": "mode-conditioned-trust",
+            "read_time_witness_probes": 12,
+            "seed": 0,
+            "stale_wrong": 374,
+            "wrong_total": 385
+          },
+          {
+            "arm": "stale-soft",
+            "capture_via": "write-time merge-suspect trace",
+            "class_set": [
+              0,
+              8,
+              19,
+              33
+            ],
+            "frozen_probe_broken": 0,
+            "frozen_probe_false_abstain": 3,
+            "frozen_probe_stale_abstained": 368,
+            "frozen_probe_stale_fixed": 0,
+            "merge_suspect_events": 192,
+            "probe_policy": "mode-conditioned-trust",
+            "read_time_witness_probes": 4,
+            "seed": 1,
+            "stale_wrong": 372,
+            "wrong_total": 374
+          },
+          {
+            "arm": "stale-soft",
+            "capture_via": "write-time merge-suspect trace",
+            "class_set": [
+              0,
+              8,
+              19,
+              33
+            ],
+            "frozen_probe_broken": 0,
+            "frozen_probe_false_abstain": 1,
+            "frozen_probe_stale_abstained": 380,
+            "frozen_probe_stale_fixed": 0,
+            "merge_suspect_events": 192,
+            "probe_policy": "mode-conditioned-trust",
+            "read_time_witness_probes": 5,
+            "seed": 2,
+            "stale_wrong": 380,
+            "wrong_total": 389
+          }
+        ],
+        "probe_policy": "mode-conditioned-trust",
+        "source_artifacts": [
+          "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s0.governance.json",
+          "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s1.governance.json",
+          "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s2.governance.json"
+        ],
+        "summary": "merge-path (soft-payload) stale capture is MEASURED on the pair-A class set only (3 seeds): the deployed vote is wrong on ~374 stale rows/seed; the frozen mode-conditioned-trust probe abstains on all of them with broken=0, captured solely by the write-time merge-suspect trace (192 events/seed), not read-time fork witness (PR3C_RESULT.md \u00a72)."
+      },
       "required": true,
       "seed_artifact": "results/issue_failure_mode_blindness/pr3c",
       "seeds": [],
@@ -162,7 +252,10 @@
   "engine_or_retrieval_change": false,
   "geometry_used_as_gate": false,
   "inputs_used": [
-    "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json"
+    "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json",
+    "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s0.governance.json",
+    "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s1.governance.json",
+    "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s2.governance.json"
   ],
   "new_cache_runs": 0,
   "probe_note": "the frozen hazard probe is the measuring instrument whose damage is the label; it is never a deployment candidate (PR6_DESIGN \u00a75).",

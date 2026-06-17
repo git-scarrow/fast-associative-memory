@@ -26,6 +26,13 @@ _GEOMETRY_TOKENS = ("cos", "ratio", "confusion", "geometry", "centroid",
                     "attribution", "fork_pair")
 
 
+@pytest.fixture(autouse=True)
+def _cwd(monkeypatch):
+    # build_panel reads the committed PR-3c stale arms (PR-6 step 2) via repo-
+    # relative paths; pin cwd so the manifest's relative artifact paths match.
+    monkeypatch.chdir(ROOT)
+
+
 @pytest.fixture
 def post():
     return json.loads(POST.read_text())
@@ -129,9 +136,15 @@ def test_screening_forbids_geometry(panel):
     assert "both" in sp["both_harm_shapes_required"].lower()
 
 
-def test_inputs_only_the_committed_postmortem(panel):
+def test_inputs_are_postmortem_plus_pr3c_stale_arms(panel):
+    # Step 1 read only the post-mortem; step 2 also reads the committed PR-3c
+    # soft-payload stale arms for the merge-path cell.
     assert panel["inputs_used"] == [
-        "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json"]
+        "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json",
+        "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s0.governance.json",
+        "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s1.governance.json",
+        "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s2.governance.json",
+    ]
 
 
 def test_probe_policy_guard(post):

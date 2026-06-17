@@ -1,13 +1,13 @@
 """PR-6 step 1 — empirical-hazard validation panel scaffold (analysis-only).
 
-PR6_DESIGN.md §4 step 1 (+ §7 step 2). Assembles the empirical-hazard
+PR6_DESIGN.md §4 step 1 (+ §7 step 2, §9 step 3). Assembles the empirical-hazard
 validation panel the design memo recommends as the smallest next step after
-PR-5 step 1 proved static geometry cannot certify safety. This is a SCAFFOLD,
-not the panel run: it reads the committed PR-5 post-mortem artifact
-(``pr5/hazard_postmortem.json`` — itself built from committed PR-3c/PR-4 runs)
-and, for the merge-path stale cell (PR-6 step 2), the committed PR-3c
-soft-payload stale arms (``pr3c/per_probe_stale-soft_s{0,1,2}.*``), and emits a
-panel manifest that
+PR-5 step 1 proved static geometry cannot certify safety. It reads the committed
+PR-5 post-mortem artifact (``pr5/hazard_postmortem.json`` — itself built from
+committed PR-3c/PR-4 runs); for the merge-path stale cell, the committed PR-3c
+pair-A soft-payload stale arms (``pr3c/per_probe_stale-soft_s{0,1,2}.*``, PR-6
+step 2) and the measured D/E + pair-B arms (``pr6/stale_de/...``, PR-6 step 3),
+which seed that cell; and emits a panel manifest that
 
   * names the benchmark cell types the memo requires — clean control, D-like
     *direct* harm, B/E-like *collateral* harm, merge-path stale, and one-shot
@@ -17,14 +17,17 @@ panel manifest that
   * states, per cell, what additional runs (if any) are still needed;
   * records the rule for screening future cells — by measured hazard only.
 
-Scope (PR-6 step 1 boundaries, all enforced by construction here): no
-full-matrix run, no new cache run, no engine/driver change, no retrieval
-change, no write-path refusal, no record-granularity ledger, no policy
-tuning, and — binding from PR-5 — no static geometry used as a certification
-gate. This module imports no torch and touches no cache; it only reads
-committed JSON. The frozen ``mode-conditioned-trust`` probe is the MEASURING
-INSTRUMENT whose damage is the label; it is never a deployment candidate
-(PR6_DESIGN §5).
+Scope (PR-6 boundaries, all enforced by construction here): no engine/driver
+change, no retrieval change, no write-path refusal, no record-granularity
+ledger, no policy/trust tuning, and — binding from PR-5 — no static geometry
+used as a certification gate. This module imports no torch and touches no
+cache; it only reads committed JSON. The merge-path stale cell's D/E evidence
+(PR-6 step 3) is the committed output of soft-payload stale arms measured
+out-of-band on the FROZEN engine with the frozen probe — the same engine and
+probe that produced the PR-3c arms (no engine/retrieval change); the panel
+build itself takes no cache run. The frozen ``mode-conditioned-trust`` probe is
+the MEASURING INSTRUMENT whose damage is the label; it is never a deployment
+candidate (PR6_DESIGN §5).
 
 The per-cell harm shape (direct vs collateral) is carried forward verbatim
 from PR6_DESIGN §1's mechanistic conclusion. This scaffold RECORDS the
@@ -59,6 +62,24 @@ STALE_SOFT_ARMS = ("per_probe_stale-soft_s0", "per_probe_stale-soft_s1",
 # ONLY to enumerate the missing measurement — never used to admit or exclude a
 # cell by any geometric property (PR-5 step 1 closed geometry as a predictor).
 DE_CLASS_SETS = {"pairD": [10, 28, 32, 95], "pairE": [47, 56, 61, 76]}
+
+# PR-6 step 3: the dedicated soft-payload ("merge-path") stale arms measured on
+# the geometries PR-3c never ran — pairD/pairE (the required D/E component) and
+# pairB (the step-2 residual note), 3 seeds each, scored by the SAME frozen
+# mode-conditioned-trust probe and committed under pr6/stale_de/. These complete
+# the cell. The geometry name is provenance only ("what was measured on what");
+# no class set is admitted or excluded by any geometric property (PR-5 step 1).
+STALE_DE = RESULTS / "pr6" / "stale_de"
+STALE_DE_GEOMETRIES = {**DE_CLASS_SETS, "pairB": [5, 27, 48, 86]}
+STALE_DE_SEEDS = (0, 1, 2)
+# The geometries whose merge-path stale coverage the cell's required label needs
+# (PR6_DESIGN §6/§7: the label "includes its D/E degradation"). pair-B is the
+# step-2 residual note, drained in the same pass whenever it is also present.
+REQUIRED_STALE_GEOMETRIES = ("pairD", "pairE")
+# Canonical order for the seeded cell: the committed pair-A reference first, then
+# the required D/E completion, then the residual pair-B.
+STALE_GEOMETRY_ORDER = ("pairA", "pairD", "pairE", "pairB")
+PAIR_A_CLASS_SET = [0, 8, 19, 33]
 
 # Cell -> the spent pairs that seed it, with the harm shape carried forward
 # from PR6_DESIGN §1/§4. This assignment is the memo's mechanistic conclusion,
@@ -163,22 +184,173 @@ def read_merge_path_stale_evidence(pr3c_dir: Path = PR3C) -> dict:
             "source_artifacts": sources, "n_seeds": len(per_seed)}
 
 
-def build_merge_path_stale_cell(pr3c_dir: Path = PR3C) -> dict:
-    """PR-6 step 2 — seed merge_path_stale from committed PR-3c stale arms if the
-    evidence covers the cell, else leave it required-unseeded with a precise
-    missing-evidence note.
+def read_stale_de_evidence(stale_de_dir: Path = STALE_DE) -> dict:
+    """PR-6 step 3 — analysis-only pass over the committed soft-payload stale
+    arms measured on the geometries PR-3c never ran (pr6/stale_de/).
 
-    Measured result: the committed soft-payload stale arms label merge-path
-    stale capture on the pair-A class set ONLY (3 seeds). Pairs D/E did not exist
-    as geometries in PR-3c (their class sets were constructed later, PR-4/PR-5),
-    so no committed artifact measures merge-path stale on D/E. The cell therefore
-    stays required-unseeded — its required label (step-1: "including its D/E
-    degradation") is structurally not coverable from committed artifacts — but
-    now carries the measured pair-A partial evidence and names the single gated
-    run that would complete it. No new cache run is taken here."""
-    ev = read_merge_path_stale_evidence(pr3c_dir)
-    de_uncovered = sorted(name for name, cs in DE_CLASS_SETS.items()
-                          if cs not in ev["covered_class_sets"])
+    Returns, per covered geometry, the measured per-seed stale-capture labels
+    (the SAME ``_stale_soft_seed_label`` reader the pair-A arms use) plus the
+    coverage audit. Reads committed JSON only; imports no torch, touches no
+    cache. The stem's geometry name must match the measured ``classes`` — a
+    provenance integrity check ("the file is what its name claims"), never a
+    geometric gate. A geometry counts only if all its seeds are present; a
+    missing directory yields empty evidence, so the cell falls back to unseeded
+    on a checkout without the step-3 arms."""
+    by_pair: dict[str, list[dict]] = {}
+    sources: list[str] = []
+    covered: list[list[int]] = []
+    if not stale_de_dir.exists():
+        return {"by_pair": by_pair, "covered_class_sets": covered,
+                "source_artifacts": sources}
+    for pair, class_set in STALE_DE_GEOMETRIES.items():
+        labels: list[dict] = []
+        srcs: list[str] = []
+        for seed in STALE_DE_SEEDS:
+            stem = f"per_probe_stale-soft_s{seed}_{pair}"
+            gpath = stale_de_dir / f"{stem}.governance.json"
+            spath = stale_de_dir / f"{stem}.summary.json"
+            if not (gpath.exists() and spath.exists()):
+                labels = []
+                break
+            gov = json.loads(gpath.read_text())
+            summ = json.loads(spath.read_text())
+            if summ.get("arm") != "stale-soft" or summ.get("payload_mode") != "soft":
+                raise RuntimeError(
+                    f"{stem}: arm/payload {summ.get('arm')!r}/"
+                    f"{summ.get('payload_mode')!r} is not the soft merge path")
+            if summ.get("classes") != class_set:
+                raise RuntimeError(
+                    f"{stem}: measured classes {summ.get('classes')} != "
+                    f"{class_set} claimed by the stem name")
+            labels.append(_stale_soft_seed_label(gov, summ, seed))
+            srcs.append(gpath.as_posix())
+        if labels:
+            by_pair[pair] = labels
+            covered.append(class_set)
+            sources.extend(srcs)
+    return {"by_pair": by_pair, "covered_class_sets": covered,
+            "source_artifacts": sources}
+
+
+def _stale_geometry_group(pair: str, class_set: list, per_seed: list) -> dict:
+    """Aggregate one geometry's measured stale-capture seeds into a seed entry.
+
+    Records the write-time capture signal (merge-suspect events) and the
+    read-time damage (frozen-probe broken) per seed, with no geometric field —
+    every number is the measured frozen-probe label copied verbatim."""
+    broken = [s["frozen_probe_broken"] for s in per_seed]
+    fixed = [s["frozen_probe_stale_fixed"] for s in per_seed]
+    merge = [s["merge_suspect_events"] for s in per_seed]
+    stale_wrong = [s["stale_wrong"] for s in per_seed]
+    return {
+        "pair": pair,
+        "class_set": class_set,
+        "probe_policy": PROBE_POLICY,
+        "n_seeds": len(per_seed),
+        "stale_wrong_by_seed": stale_wrong,
+        "merge_suspect_events_by_seed": merge,
+        "frozen_probe_broken_by_seed": broken,
+        "frozen_probe_broken_mean": round(sum(broken) / len(broken), 2),
+        "frozen_probe_stale_fixed_total": sum(fixed),
+        "capture_via": "write-time merge-suspect trace",
+        "per_seed": per_seed,
+    }
+
+
+def build_merge_path_stale_cell(pr3c_dir: Path = PR3C,
+                                stale_de_dir: Path = STALE_DE) -> dict:
+    """Seed merge_path_stale from the committed soft-payload stale arms.
+
+    Pair-A is read from the committed PR-3c arms; the required D/E (and residual
+    pair-B) geometries are read from the PR-6 step-3 arms (pr6/stale_de/). When
+    the required D/E coverage is present the cell flips to ``status: seeded``
+    with the measured per-geometry labels and the D/E degradation recorded;
+    otherwise it stays ``required_unseeded`` exactly as step 2 left it (the
+    graceful fallback when no step-3 arms are committed). The class set is
+    provenance only — never a geometric gate (PR-5 step 1)."""
+    pair_a = read_merge_path_stale_evidence(pr3c_dir)
+    de = read_stale_de_evidence(stale_de_dir)
+    covered = list(pair_a["covered_class_sets"]) + list(de["covered_class_sets"])
+    de_uncovered = sorted(name for name in REQUIRED_STALE_GEOMETRIES
+                          if STALE_DE_GEOMETRIES[name] not in covered)
+    if de_uncovered:
+        return _unseeded_merge_path_stale_cell(pair_a, pr3c_dir, de_uncovered)
+    return _seeded_merge_path_stale_cell(pair_a, de, pr3c_dir, stale_de_dir)
+
+
+def _seeded_merge_path_stale_cell(pair_a: dict, de: dict, pr3c_dir: Path,
+                                  stale_de_dir: Path) -> dict:
+    """PR-6 step 3 — the cell once the required D/E stale arms are measured.
+
+    The label the §6 panel required ("including its D/E degradation") is now
+    measured, not asserted: write-time merge-suspect capture is geometry-stable
+    while the frozen probe's read-time damage degrades on D/E."""
+    groups = {"pairA": _stale_geometry_group("pairA", PAIR_A_CLASS_SET,
+                                             pair_a["per_seed"])}
+    for pair, per_seed in de["by_pair"].items():
+        groups[pair] = _stale_geometry_group(pair, STALE_DE_GEOMETRIES[pair],
+                                             per_seed)
+    seeds = [groups[p] for p in STALE_GEOMETRY_ORDER if p in groups]
+    order = [g["pair"] for g in seeds]
+    broken_mean = {g["pair"]: g["frozen_probe_broken_mean"] for g in seeds}
+    fixed_total = {g["pair"]: g["frozen_probe_stale_fixed_total"] for g in seeds}
+    merge_by_seed = {g["pair"]: g["merge_suspect_events_by_seed"] for g in seeds}
+    pair_b_covered = "pairB" in groups
+    broken_str = ", ".join(f"{p} {broken_mean[p]}" for p in order)
+    fixed_str = ", ".join(f"{p} {fixed_total[p]}" for p in order)
+
+    return {
+        "harm_shape": "write-time stale-capture",
+        "harm_shape_source":
+            "PR6_DESIGN.md §2/§5 (PR-3c); D/E degradation measured PR-6 step 3 §9",
+        "required": True,
+        "status": "seeded",
+        "evidence_status":
+            "measured_pairA_pairD_pairE" + ("_pairB" if pair_b_covered else ""),
+        "seed_artifact": [pr3c_dir.as_posix(), stale_de_dir.as_posix()],
+        "seeds": seeds,
+        "measured_degradation": {
+            "probe_policy": PROBE_POLICY,
+            "frozen_probe_broken_mean_by_pair": broken_mean,
+            "frozen_probe_stale_fixed_total_by_pair": fixed_total,
+            "merge_suspect_events_by_seed_by_pair": merge_by_seed,
+            "summary": (
+                "MEASURED across " + "/".join(order) + " (3 seeds each). "
+                "Write-time capture is stable across geometry — the merge-suspect "
+                "trace fires 192 events/seed on every arm — while the frozen "
+                "mode-conditioned-trust probe's READ-TIME damage degrades on "
+                "D/E: broken_mean " + broken_str + ". The probe fixes ~0 "
+                "stale-wrong rows on any geometry (stale_wrong_fixed total "
+                + fixed_str + "), so read-time application is all downside on "
+                "D/E. This is the cell's required label — write-time-only "
+                "capture whose read-time use degrades on D/E geometry "
+                "(PR6_DESIGN §2/§5; PR3C_RESULT.md §2) — now measured."),
+        },
+        "missing_evidence": None if pair_b_covered else {
+            "needed": "pair-B merge-path stale (residual step-2 note)",
+            "uncovered_geometries": ["pairB"],
+            "required_run": (
+                "the soft-payload stale arm on pairB {5,27,48,86}, >=3 seeds, "
+                "scored by the frozen mode-conditioned-trust probe."),
+        },
+        "additional_runs_needed": (
+            "none — the required D/E degradation is measured (PR-6 step 3). "
+            + ("pair-B residual drained in the same pass."
+               if pair_b_covered else
+               "pair-B residual note remains (see missing_evidence).")),
+        "note": (
+            "merge-path stale is write-time-only evidence (PR-3c) and a required "
+            "benchmark a future policy must not regress; the measured D/E "
+            "degradation is part of that benchmark, not a solved problem "
+            "(PR6_DESIGN §2/§5/§9)."),
+    }
+
+
+def _unseeded_merge_path_stale_cell(ev: dict, pr3c_dir: Path,
+                                    de_uncovered: list) -> dict:
+    """PR-6 step 2 fallback — required-unseeded with the measured pair-A partial
+    evidence and a precise missing-evidence note. Returned only when the step-3
+    D/E arms are not committed; byte-identical to the step-2 cell."""
     return {
         "harm_shape": "write-time stale-capture",
         "harm_shape_source": "PR6_DESIGN.md §2/§5 (PR-3c)",
@@ -231,16 +403,23 @@ def build_merge_path_stale_cell(pr3c_dir: Path = PR3C) -> dict:
     }
 
 
-def build_panel(post: dict, pr3c_dir: Path = PR3C) -> dict:
+def build_panel(post: dict, pr3c_dir: Path = PR3C,
+                stale_de_dir: Path = STALE_DE) -> dict:
     """Assemble the panel manifest from the loaded post-mortem dict.
 
-    PR-6 step 2: the merge_path_stale cell is now built by
-    ``build_merge_path_stale_cell`` from the committed PR-3c stale arms; its
-    measured source artifacts are added to ``inputs_used``."""
+    PR-6 step 2 built the merge_path_stale cell from the committed PR-3c stale
+    arms (pair-A); PR-6 step 3 adds the measured D/E (+pair-B) arms from
+    ``pr6/stale_de/`` so the cell seeds. Both sets' source artifacts are added to
+    ``inputs_used``; ``new_cache_runs`` counts the committed step-3 arms (the
+    panel BUILD itself still reads only committed JSON and changes no engine or
+    retrieval code)."""
     if post.get("probe_policy") != PROBE_POLICY:
         raise RuntimeError(
             f"post-mortem probe_policy {post.get('probe_policy')!r} != "
             f"frozen hazard probe {PROBE_POLICY!r}; refusing to seed labels")
+
+    pa_ev = read_merge_path_stale_evidence(pr3c_dir)
+    de_ev = read_stale_de_evidence(stale_de_dir)
 
     cells: dict[str, dict] = {}
     for cell, spec in SEEDED_CELLS.items():
@@ -259,7 +438,7 @@ def build_panel(post: dict, pr3c_dir: Path = PR3C) -> dict:
     # stale arms: merge-path stale is now MEASURED on pair-A geometry (recorded
     # as partial_evidence) but D/E geometry is structurally absent from the
     # committed artifacts, so the cell stays required-unseeded.
-    cells["merge_path_stale"] = build_merge_path_stale_cell(pr3c_dir)
+    cells["merge_path_stale"] = build_merge_path_stale_cell(pr3c_dir, stale_de_dir)
 
     # Required as a named cell, but observe-only by conclusion — carries no
     # hazard label and must never be scored pass/fail at read time.
@@ -286,7 +465,7 @@ def build_panel(post: dict, pr3c_dir: Path = PR3C) -> dict:
 
     return {
         "design": "PR6_DESIGN.md §4 step 1 — empirical-hazard validation panel "
-                  "(scaffold)",
+                  "(scaffold); merge_path_stale completed in step 3 (§9)",
         "scaffold": True,
         "probe_policy": PROBE_POLICY,
         "probe_note": (
@@ -294,10 +473,10 @@ def build_panel(post: dict, pr3c_dir: Path = PR3C) -> dict:
             "is the label; it is never a deployment candidate (PR6_DESIGN §5)."),
         "inputs_used": (
             [POSTMORTEM.as_posix()]
-            + cells["merge_path_stale"]["partial_evidence"]["source_artifacts"]),
+            + pa_ev["source_artifacts"] + de_ev["source_artifacts"]),
         "source_cache_path": post.get("cache_path"),
         "geometry_used_as_gate": False,
-        "new_cache_runs": 0,
+        "new_cache_runs": len(de_ev["source_artifacts"]),
         "engine_or_retrieval_change": False,
         "required_cell_types": list(REQUIRED_CELL_TYPES),
         "cells": cells,
@@ -324,11 +503,16 @@ def build_panel(post: dict, pr3c_dir: Path = PR3C) -> dict:
         "additional_runs_summary": {
             "seeded_cells": "none — clean_control, direct_harm, collateral_harm "
                             "are fully labeled from committed artifacts.",
-            "merge_path_stale": "PR-6 step 2 read the committed PR-3c stale-soft "
-                                "arms: pair-A merge-path stale capture is now "
-                                "MEASURED (partial_evidence); the cell stays "
-                                "unseeded pending a D/E-geometry stale-arm run "
-                                "(out of scope, no new cache runs).",
+            "merge_path_stale": (
+                "PR-6 step 3 measured the D/E + pair-B soft-payload stale arms "
+                "(9 arms, 3 seeds, frozen mode-conditioned-trust probe): "
+                "merge_path_stale is now SEEDED. Write-time merge-suspect "
+                "capture is geometry-stable (192 events/seed on every arm); the "
+                "frozen probe's read-time damage degrades on D/E (measured)."
+                if cells["merge_path_stale"]["status"] == "seeded" else
+                "PR-6 step 2 measured pair-A only; the cell stays "
+                "required-unseeded pending the D/E stale-arm run (the step-3 "
+                "arms are not committed on this checkout)."),
             "one_shot_ambiguity": "no read-time run; needs write-API provenance "
                                   "metadata (path 3 / PR-7), out of scope.",
             "optional_panel_widening": "additional empirically-screened cells per "

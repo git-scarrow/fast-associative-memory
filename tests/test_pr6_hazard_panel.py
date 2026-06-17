@@ -98,13 +98,16 @@ def test_both_harm_components_recorded_and_consistent(panel):
                     == s["broken_total_3seed"])
 
 
-def test_merge_path_stale_required_but_unseeded(panel):
+def test_merge_path_stale_seeded_after_step3(panel):
+    # Step 3 measured the D/E (+pair-B) merge-path stale arms; the cell seeds.
     cell = panel["cells"]["merge_path_stale"]
     assert cell["required"] is True
-    assert cell["status"] == "required_unseeded"
-    assert cell["seeds"] == []
-    assert cell["additional_runs_needed"]            # non-empty
-    assert "D/E" in cell["additional_runs_needed"]   # degradation called out
+    assert cell["status"] == "seeded"
+    assert [s["pair"] for s in cell["seeds"]] == ["pairA", "pairD", "pairE", "pairB"]
+    assert cell["missing_evidence"] is None          # residual pair-B drained
+    # The cell's required label — the D/E degradation — is now measured.
+    means = cell["measured_degradation"]["frozen_probe_broken_mean_by_pair"]
+    assert means["pairD"] > means["pairE"] > means["pairA"]
 
 
 def test_one_shot_ambiguity_observe_only(panel):
@@ -118,7 +121,9 @@ def test_one_shot_ambiguity_observe_only(panel):
 
 def test_no_geometry_used_as_gate(panel):
     assert panel["geometry_used_as_gate"] is False
-    assert panel["new_cache_runs"] == 0
+    # Step 3 committed 9 new soft-payload stale arms (the measurand); the panel
+    # BUILD still reads only committed JSON and changes no engine/retrieval code.
+    assert panel["new_cache_runs"] == 9
     assert panel["engine_or_retrieval_change"] is False
     assert panel["scaffold"] is True
     # No seed label may carry a geometric field — the label is hazard only.
@@ -136,14 +141,24 @@ def test_screening_forbids_geometry(panel):
     assert "both" in sp["both_harm_shapes_required"].lower()
 
 
-def test_inputs_are_postmortem_plus_pr3c_stale_arms(panel):
-    # Step 1 read only the post-mortem; step 2 also reads the committed PR-3c
-    # soft-payload stale arms for the merge-path cell.
+def test_inputs_are_postmortem_pr3c_and_stale_de_arms(panel):
+    # Step 1 read only the post-mortem; step 2 added the committed PR-3c pair-A
+    # soft-payload stale arms; step 3 adds the measured D/E + pair-B arms.
+    base = "results/issue_failure_mode_blindness"
     assert panel["inputs_used"] == [
-        "results/issue_failure_mode_blindness/pr5/hazard_postmortem.json",
-        "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s0.governance.json",
-        "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s1.governance.json",
-        "results/issue_failure_mode_blindness/pr3c/per_probe_stale-soft_s2.governance.json",
+        f"{base}/pr5/hazard_postmortem.json",
+        f"{base}/pr3c/per_probe_stale-soft_s0.governance.json",
+        f"{base}/pr3c/per_probe_stale-soft_s1.governance.json",
+        f"{base}/pr3c/per_probe_stale-soft_s2.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s0_pairD.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s1_pairD.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s2_pairD.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s0_pairE.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s1_pairE.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s2_pairE.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s0_pairB.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s1_pairB.governance.json",
+        f"{base}/pr6/stale_de/per_probe_stale-soft_s2_pairB.governance.json",
     ]
 
 

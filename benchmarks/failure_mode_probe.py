@@ -152,6 +152,79 @@ NEW_COLS = ["arm", "injection_rate", "supersede_epoch", "probe_index",
 OUT_COLS = ALL_COLS + NEW_COLS
 
 
+# ---------------------------------------------------------------------------
+# PR-7 step 1: opt-in write-path governance seam (boundary scaffold ONLY).
+# PR7_DESIGN.md §13.1 — add the seam, prove the boundary, change no behavior.
+# ---------------------------------------------------------------------------
+# Write-path governance DECISIONS. Only ALLOW exists in step 1; the acting
+# decisions a later step would add (quarantine to a side region, refuse the
+# allocation) are deliberately NOT implemented here (PR7_DESIGN.md §4, §13.1).
+GOVERN_ALLOW = "allow"
+GOVERN_ACTIONS = ("none", "annotate", "quarantine", "refuse")
+# The only action whose behavior is implemented in step 1 (all are no-ops, so
+# this is the full set of "implemented" actions — i.e., none acts yet).
+GOVERN_IMPLEMENTED_ACTIONS = ("none",)
+
+
+class GovernanceHook:
+    """Opt-in write-path governance seam — PR-7 step 1 (boundary scaffold).
+
+    The PR-7 twin-run harness (PR7_DESIGN.md §5) needs ONE place where the
+    *experimental* writer can act on an already-classified write event before
+    it commits — annotate / quarantine / refuse it. This object is that place,
+    and lives only in this experimental driver: it is **never** constructed or
+    reached by the deployed ``forward()`` / ``learn_local`` retrieval path
+    (PR7_DESIGN.md §4 — "where the action lives is the whole safety
+    argument").
+
+    Step 1 only WIRES the seam. For EVERY action, including the real ones,
+    :meth:`decide` is a recorded no-op that returns :data:`GOVERN_ALLOW`, so
+    the writer makes byte-identical write decisions to the ungoverned baseline
+    (PR7_DESIGN.md §13.1). The hook records which action was requested and the
+    write-time outcomes it observed (write-path provenance only — the path-2
+    ledger PR-6 §3 deferred is NOT opened); it never reads, mutates, or
+    imports engine retrieval state. No governance behavior, write refusal,
+    quarantine, deprecation, trust action, geometry gate, or one-shot
+    classification is implemented here — those are later PR-7 steps and
+    explicitly out of step-1 scope (PR7_DESIGN.md §12).
+    """
+
+    def __init__(self, action: str = "none"):
+        if action not in GOVERN_ACTIONS:
+            raise ValueError(
+                f"--govern must be one of {GOVERN_ACTIONS}; got {action!r}")
+        self.action = action
+        self.events_seen = 0
+        self.outcome_counts: dict = {}
+
+    @property
+    def active(self) -> bool:
+        """True iff a non-baseline action was requested. Step 1 is a no-op
+        even when active; this only gates provenance emission so a baseline
+        (``none``) run stays byte-identical to the pre-seam driver."""
+        return self.action != "none"
+
+    def decide(self, event_class: str, outcome: str) -> str:
+        """Observe one already-classified write event; return its write
+        decision. STEP 1: always :data:`GOVERN_ALLOW`, for every action — a
+        recorded no-op. The write is committed exactly as the baseline would.
+        Acting on a non-ALLOW decision is later-step work."""
+        self.events_seen += 1
+        self.outcome_counts[outcome] = self.outcome_counts.get(outcome, 0) + 1
+        return GOVERN_ALLOW
+
+    def provenance(self) -> dict:
+        """Write-path provenance for the run summary (emitted only when
+        :attr:`active`, so ``none`` stays byte-identical to the old driver)."""
+        return {
+            "action": self.action,
+            "step": "pr7-step1-noop",
+            "implemented_actions": list(GOVERN_IMPLEMENTED_ACTIONS),
+            "events_seen": self.events_seen,
+            "outcome_counts": dict(sorted(self.outcome_counts.items())),
+        }
+
+
 @dataclass
 class StaleGroup:
     """One supersession protocol instance: keys K written K→A, then K→B.
@@ -200,7 +273,8 @@ class FailureModeRegistry:
                               true_labels: torch.Tensor, num_classes: int,
                               rate: float, rng: torch.Generator,
                               eligible: torch.Tensor | None = None,
-                              events: list | None = None, epoch: int = -1):
+                              events: list | None = None, epoch: int = -1,
+                              hook: "GovernanceHook | None" = None):
         """Re-write ``rate`` of the batch rows with permuted-label payloads.
 
         Each injected row keeps its real query (key) but carries a one-hot
@@ -256,6 +330,11 @@ class FailureModeRegistry:
             else:
                 outcome = ABSORBED
             self.contra[rid] = {"label": int(wrong[j]), "outcome": outcome}
+            # PR-7 step-1 seam: route the already-classified write through
+            # governance. The decision is a recorded no-op (always ALLOW), so
+            # the write stands exactly as the baseline made it.
+            if hook is not None:
+                hook.decide(EVENT_CONTRADICTION, outcome)
             if events is not None:
                 events.append(_event_row(
                     epoch, EVENT_CONTRADICTION, rid, outcome, pre, j,
@@ -450,7 +529,7 @@ def _event_row(epoch: int, event_class: str, rid, outcome: str, pre: dict,
 def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
                  queries: torch.Tensor, targets: torch.Tensor,
                  epoch: int, event_class: str, events: list | None,
-                 write_fn) -> list:
+                 write_fn, hook: "GovernanceHook | None" = None) -> list:
     """Wrap one write call with pre-write observables and outcome rows.
 
     ``write_fn(ids_or_none)`` performs the actual write and returns the
@@ -458,10 +537,14 @@ def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
     generating its own (the registry's phase helpers). Outcome
     classification mirrors inject_contradictions: a slot whose record set is
     exactly {rid} is fresh (forked above the threshold, plain-miss below);
-    anything else absorbed; no owner = dropped."""
+    anything else absorbed; no owner = dropped.
+
+    ``hook`` (PR-7 step 1) routes each already-classified write through the
+    governance seam; the step-1 decision is a recorded no-op (always ALLOW),
+    so the write stands exactly as made."""
     pre = _pre_write_observables(mem, queries, targets, registry)
     ids = write_fn()
-    if events is None:
+    if events is None and hook is None:
         return ids
     owners = _owner_slots(mem, ids)
     for j, rid in enumerate(ids):
@@ -475,8 +558,11 @@ def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
                        else PLAIN_MISS)
         else:
             outcome = ABSORBED
-        events.append(_event_row(epoch, event_class, rid, outcome, pre, j,
-                                 slot))
+        if hook is not None:
+            hook.decide(event_class, outcome)
+        if events is not None:
+            events.append(_event_row(epoch, event_class, rid, outcome, pre, j,
+                                     slot))
     return ids
 
 
@@ -811,7 +897,8 @@ def run_epoch_writes(mem: ContinuousCAM, registry: FailureModeRegistry,
                      jitter_gen: torch.Generator | None = None,
                      payload_mode: str = "onehot",
                      events: list | None = None,
-                     clean_rewrite_class: str = EVENT_DUPLICATE):
+                     clean_rewrite_class: str = EVENT_DUPLICATE,
+                     hook: "GovernanceHook | None" = None):
     """All of one epoch's writes for any arm (shared by the synthetic and
     vision runners; behavior for the PR-2 arms is unchanged):
 
@@ -832,7 +919,8 @@ def run_epoch_writes(mem: ContinuousCAM, registry: FailureModeRegistry,
         if epoch < supersede_epoch:
             logged_learn(
                 mem, registry, q[g0], y[g0], epoch, clean_cls, events,
-                lambda: registry.write_phase1(mem, group, q[g0], y[g0]))
+                lambda: registry.write_phase1(mem, group, q[g0], y[g0]),
+                hook=hook)
         else:
             first = not group.superseded
             if first:
@@ -856,7 +944,8 @@ def run_epoch_writes(mem: ContinuousCAM, registry: FailureModeRegistry,
                 ev = EVENT_ONE_SHOT if one_shot else EVENT_SUPERSESSION
                 logged_learn(
                     mem, registry, q2, y2, epoch, ev, events,
-                    lambda: registry.write_phase2(mem, group, q2, y2))
+                    lambda: registry.write_phase2(mem, group, q2, y2),
+                    hook=hook)
         rest = ~g0
         q_c, y_c = q[rest], y[rest]
     else:
@@ -868,13 +957,13 @@ def run_epoch_writes(mem: ContinuousCAM, registry: FailureModeRegistry,
         return ids
 
     logged_learn(mem, registry, q_c, y_c, epoch, clean_cls, events,
-                 _clean_write)
+                 _clean_write, hook=hook)
 
     if arm in ("contra", "mixed"):
         eligible = (lab != group.pre_label) if group is not None else None
         registry.inject_contradictions(mem, q, lab, num_classes, rate, rng,
                                        eligible=eligible, events=events,
-                                       epoch=epoch)
+                                       epoch=epoch, hook=hook)
 
 
 def arm_label_for(arm: str, one_shot: bool, key_jitter: float,
@@ -916,7 +1005,7 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
                   out_path: Path, seed: int = 0, num_classes: int = 4,
                   dim: int = 32, one_shot: bool = False,
                   key_jitter: float = 0.0,
-                  payload_mode: str = "onehot") -> int:
+                  payload_mode: str = "onehot", govern: str = "none") -> int:
     """End-to-end synthetic run for one arm; returns rows written.
 
     clean  — no injections (negative control: no contra/stale labels may fire)
@@ -935,6 +1024,7 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
     rng = torch.Generator().manual_seed(seed + 1)
     jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
+    hook = GovernanceHook(govern)  # PR-7 step-1 seam (no-op for every action)
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes, max_entries=1024,
                         dynamic_vigilance=DynamicVigilance(),
                         retrieval_floor_policy=RetrievalFloorPolicy(),
@@ -963,7 +1053,7 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
                 supersede_epoch=supersede_epoch, one_shot=one_shot,
                 key_jitter=key_jitter, jitter_gen=jitter_gen,
                 payload_mode=payload_mode, events=events,
-                clean_rewrite_class=EVENT_CLEAN_REWRITE)
+                clean_rewrite_class=EVENT_CLEAN_REWRITE, hook=hook)
             if group is not None and group.superseded:
                 truth = torch.where(hlab == group.pre_label,
                                     torch.full_like(hlab, group.post_label),
@@ -1013,7 +1103,8 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                contraction: float = 0.0, max_entries: int = 4096,
                blend_eps: float = 0.10, seed: int = 0,
                supersede_epoch: int = 6, one_shot: bool = False,
-               key_jitter: float = 0.0, payload_mode: str = "onehot"):
+               key_jitter: float = 0.0, payload_mode: str = "onehot",
+               govern: str = "none"):
     """Cache-backed clean/contra/stale arm over the DINOv2 ViT-L/14 manifold.
 
     PR-2b/PR-2c protocol. The stream is the verified ``vitl14_cifar100_train``
@@ -1062,6 +1153,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     rng = torch.Generator().manual_seed(seed + 1)
     jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
+    hook = GovernanceHook(govern)  # PR-7 step-1 seam (no-op for every action)
     group = None
     if arm in ("stale", "mixed"):
         if not (0 < supersede_epoch < epochs):
@@ -1099,7 +1191,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                 supersede_epoch=supersede_epoch, one_shot=one_shot,
                 key_jitter=key_jitter, jitter_gen=jitter_gen,
                 payload_mode=payload_mode, events=events,
-                clean_rewrite_class=EVENT_DUPLICATE)
+                clean_rewrite_class=EVENT_DUPLICATE, hook=hook)
             if group is not None and group.superseded:
                 truth = torch.where(hlab == group.pre_label,
                                     torch.full_like(hlab, group.post_label),
@@ -1214,6 +1306,11 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
             "n_phase2_writes": len(group.phase2_ids),
             "fork_resolution": resolve_fork_outcome(epoch_log),
         })
+    # PR-7 step 1: record the (no-op) governance action only when a non-
+    # baseline action was requested, so a `none`/no-flag run's summary stays
+    # byte-identical to the pre-seam driver (PR7_DESIGN.md §11 test 1).
+    if hook.active:
+        summary["govern"] = hook.provenance()
     return total, summary
 
 
@@ -1262,6 +1359,14 @@ def main():
                          "deliberately stationary (0.0) to decouple "
                          "contradiction from drift/BLENDED")
     ap.add_argument("--max-entries", type=int, default=4096)
+    ap.add_argument("--govern", choices=list(GOVERN_ACTIONS), default="none",
+                    help="PR-7 step-1 write-path governance seam (boundary "
+                         "scaffold). EVERY action is a recorded NO-OP in this "
+                         "step: writes route through the seam but make the "
+                         "exact same decisions as the ungoverned baseline. No "
+                         "governance behavior, write refusal, or quarantine is "
+                         "implemented yet; the deployed retrieval path never "
+                         "reaches this seam (PR7_DESIGN.md §13.1).")
     ap.add_argument("--out", type=str,
                     default="results/issue_failure_mode_blindness/"
                             "per_probe_injected.csv")
@@ -1282,7 +1387,7 @@ def main():
             contraction=args.contraction, max_entries=args.max_entries,
             seed=args.seed, supersede_epoch=args.supersede_epoch,
             one_shot=args.one_shot, key_jitter=args.key_jitter,
-            payload_mode=args.payload_mode)
+            payload_mode=args.payload_mode, govern=args.govern)
         summary_path = Path(args.out).with_suffix(".summary.json")
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
@@ -1292,7 +1397,7 @@ def main():
     n = run_synthetic(args.arm, args.rate, args.epochs, args.supersede_epoch,
                       Path(args.out), seed=args.seed, one_shot=args.one_shot,
                       key_jitter=args.key_jitter,
-                      payload_mode=args.payload_mode)
+                      payload_mode=args.payload_mode, govern=args.govern)
     print(f"[{args.arm}] wrote {n} labeled per-probe rows to {args.out}")
 
 

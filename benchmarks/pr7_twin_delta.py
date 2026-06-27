@@ -116,8 +116,25 @@ PRE_REGISTERED_MARGINS = {
                    "rationale": "acting decision — must drain direct harm with "
                                 "no collateral/clean regression (step 3)"},
     "refuse":     {"improve_min": 1, "worsen_tol": 0,
-                   "rationale": "ceiling action — tested last (step 3)"},
+                   "rationale": "acting arm — scored by readout improvement + "
+                                "collateral (capture_stable is N/A: refuse "
+                                "consumes the merge-suspect event by design); "
+                                "never auto-passed (PR7_DESIGN §8 / step-5 "
+                                "addendum)"},
 }
+
+# Action kinds (PR7_DESIGN §8, step-5 verdict-semantics addendum). A NULL-ACTION
+# FLOOR (annotate; `none` is the baseline) must change nothing it does not act
+# on, so `capture_stable` is a HARD pass/fail guard: it must PRESERVE the
+# merge-suspect capture (192/seed). An ACTING ARM (refuse/quarantine) is DESIGNED
+# to consume/prevent that very capture, so `capture_stable` is NOT a pass/fail
+# criterion for it — applying it would penalize the action for doing its job.
+# Acting arms are instead evaluated by refused-opportunity accounting + readout
+# (broken/stale) improvement + collateral harm, and are never auto-passed (a
+# human-review gate): their verdict is `needs_review` (helps, capture consumed as
+# expected) or `fail` (readout or collateral regressed), never `pass` here.
+NULL_ACTION_FLOORS = ("annotate",)
+ACTING_ARMS = ("refuse", "quarantine")
 
 
 # ---------------------------------------------------------------------------
@@ -217,6 +234,22 @@ def _seed_delta(base: dict, gov: dict) -> dict:
     return {k: base[k] - gov[k] for k in base}
 
 
+def _arm_refused_events(cell: str, govern: str, pair: str,
+                        twin_root: Path = TWIN_ROOT) -> int:
+    """Sum ``refused_events`` across a governed arm's seeds — read from each
+    summary's ``govern`` provenance block (acting-arm accounting only; a
+    null-action floor records none and contributes 0)."""
+    arm_dir = twin_root / cell / govern
+    total = 0
+    for seed in SEEDS:
+        matches = sorted(arm_dir.glob(f"per_probe_*_s{seed}_{pair}.summary.json"))
+        if not matches:
+            continue
+        summ = json.loads(matches[0].read_text())
+        total += summ.get("govern", {}).get("refused_events", 0)
+    return total
+
+
 def score_cell(cell: str, govern: str,
                twin_root: Path = TWIN_ROOT) -> dict:
     """Score one cell's twin: read both arms, compute per-seed deltas, verdict.
@@ -228,9 +261,16 @@ def score_cell(cell: str, govern: str,
     margins = PRE_REGISTERED_MARGINS.get(
         govern, {"improve_min": 1, "worsen_tol": 0, "rationale": "default"})
 
+    is_acting = govern in ACTING_ARMS
+
     per_pair: dict[str, dict] = {}
     broken_delta_total = 0
     capture_delta_total = 0
+    stale_wrong_delta_total = 0
+    collateral_delta_total = 0
+    direct_delta_total = 0
+    opportunity_count = 0       # capturable merge-suspect events in the baseline
+    refused_count = 0           # writes the acting arm actually refused
     any_governed = False
     for pair in spec["pairs"]:
         base = read_arm(cell, BASELINE_GOVERN, pair, twin_root)
@@ -251,14 +291,24 @@ def score_cell(cell: str, govern: str,
                                       for s in seeds)
             capture_delta_total += sum(deltas[s]["merge_suspect_events"]
                                        for s in seeds)
+            stale_wrong_delta_total += sum(deltas[s]["stale_wrong"]
+                                           for s in seeds)
+            collateral_delta_total += sum(
+                deltas[s]["frozen_probe_collateral_br"] for s in seeds)
+            direct_delta_total += sum(deltas[s]["frozen_probe_direct_br"]
+                                      for s in seeds)
+            opportunity_count += sum(base[s]["merge_suspect_events"]
+                                     for s in seeds)
+            refused_count += _arm_refused_events(cell, govern, pair, twin_root)
         elif base is not None:
             entry["baseline_by_seed"] = base
         per_pair[pair] = entry
 
     verdict, improved, regressed, capture_ok = _cell_verdict(
-        spec, margins, broken_delta_total, capture_delta_total, any_governed)
+        spec, margins, broken_delta_total, capture_delta_total, any_governed,
+        is_acting=is_acting, collateral_delta=collateral_delta_total)
 
-    return {
+    result = {
         "harm_shape": spec["harm_shape"],
         "guard": spec["guard"],
         "pairs": spec["pairs"],
@@ -273,15 +323,60 @@ def score_cell(cell: str, govern: str,
         "per_pair": per_pair,
     }
 
+    # Acting-arm accounting (refuse/quarantine) — emitted ONLY for an acting arm
+    # with a scored cell, so a null-action floor (annotate) manifest stays
+    # byte-identical. `capture_stable` above is None (N/A) for an acting arm on a
+    # capture_stable cell: the action is DESIGNED to consume the capture, so it
+    # is scored by the accounting below + readout improvement + collateral, not
+    # by capture preservation (PR7_DESIGN §8 step-5 addendum).
+    if is_acting and any_governed:
+        capture_consumed = (spec["guard"] == "capture_stable")
+        result["action_kind"] = "acting_arm"
+        result["acting_arm_accounting"] = {
+            "action_kind": "acting_arm",
+            "capture_preservation": ("not_applicable_acting_arm"
+                                     if capture_consumed else "n/a"),
+            "opportunity_count": opportunity_count,
+            "refused_count": refused_count,
+            "expected_capture_effect": (
+                "consumed: the acting arm prevents the merge-suspect capture it "
+                "blocks; capture_delta ≈ opportunity_count is INTENDED, not a "
+                "regression"),
+            "capture_delta_total": capture_delta_total,
+            "readout_broken_delta_total": broken_delta_total,
+            "readout_stale_wrong_delta_total": stale_wrong_delta_total,
+            "collateral_delta_total": collateral_delta_total,
+            "direct_delta_total": direct_delta_total,
+        }
+    return result
 
-def _cell_verdict(spec, margins, broken_delta, capture_delta, any_governed):
+
+def _cell_verdict(spec, margins, broken_delta, capture_delta, any_governed,
+                  *, is_acting=False, collateral_delta=0):
     """Per-cell verdict from the aggregated deltas. Returns
-    (verdict, improved, regressed, capture_ok)."""
+    (verdict, improved, regressed, capture_ok).
+
+    ``is_acting`` selects the acting-arm semantics (PR7_DESIGN §8 step-5
+    addendum): on a ``capture_stable`` cell the capture guard is N/A for an
+    acting arm (it is designed to consume the capture), so the cell is scored by
+    readout improvement + collateral harm and is never auto-passed —
+    ``needs_review`` (helps, capture consumed as expected) or ``fail`` (readout
+    or collateral regressed). ``capture_ok`` returns None for that case."""
     if not any_governed:
         return "inconclusive", False, False, None
     improved = broken_delta >= margins["improve_min"] and broken_delta > 0
     regressed = broken_delta < -margins["worsen_tol"]
     capture_ok = None
+    if spec["guard"] == "capture_stable" and is_acting:
+        # capture_stable is N/A for an acting arm. Score by readout + collateral;
+        # never auto-pass (human-review gate). collateral regressed iff governed
+        # collateral exceeded baseline beyond tolerance (delta < -worsen_tol).
+        collateral_regressed = collateral_delta < -margins["worsen_tol"]
+        if regressed or collateral_regressed:
+            verdict = "fail"
+        else:
+            verdict = "needs_review"
+        return verdict, improved, regressed, capture_ok
     if spec["guard"] == "improve":
         verdict = "pass" if improved else "fail"
     elif spec["guard"] == "not_worsen":
@@ -347,13 +442,20 @@ def build_twin_delta(govern: str, twin_root: Path = TWIN_ROOT,
                                if cells[c].get("regressed")})
     both_shapes_ok = not (improved_shapes and regressed_shapes)
 
+    verdicts = {cells[c]["verdict"] for c in scored}
     if not any_governed:
         overall = "baseline_only"
     elif not both_shapes_ok:
         overall = "fail"
-    elif all(cells[c]["verdict"] == "pass" for c in scored):
+    elif "fail" in verdicts:
+        overall = "fail"
+    elif verdicts == {"pass"}:
         overall = "pass"
-    else:
+    elif verdicts <= {"pass", "needs_review"}:
+        # an acting arm that helped (or didn't regress) but isn't certified —
+        # never auto-passed; surfaced for human review (PR7_DESIGN §8 addendum).
+        overall = "needs_review"
+    else:  # pragma: no cover - verdicts are enumerated above
         overall = "fail"
 
     root = repo_root or Path(".")

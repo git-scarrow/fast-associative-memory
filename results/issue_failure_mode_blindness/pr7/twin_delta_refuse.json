@@ -1,0 +1,270 @@
+{
+ "both_shapes_detail": {
+  "improved_harm_shapes": [
+   "write-time-stale-capture"
+  ],
+  "regressed_harm_shapes": [],
+  "rule": "a candidate that improves one harm shape while worsening another fails, full stop (PR7_DESIGN \u00a78.5)."
+ },
+ "both_shapes_ok": true,
+ "cells": {
+  "clean_control": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "not_worsen",
+   "harm_shape": "none",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairA"
+   ],
+   "payload_mode": null,
+   "per_pair": {
+    "pairA": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
+    }
+   },
+   "pre_registered_margin": {
+    "improve_min": 1,
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "collateral_harm": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "not_worsen",
+   "harm_shape": "collateral",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairB",
+    "pairE"
+   ],
+   "payload_mode": null,
+   "per_pair": {},
+   "pre_registered_margin": {
+    "improve_min": 1,
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "direct_harm": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "improve",
+   "harm_shape": "direct",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairD"
+   ],
+   "payload_mode": null,
+   "per_pair": {},
+   "pre_registered_margin": {
+    "improve_min": 1,
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "merge_path_stale": {
+   "acting_arm_accounting": {
+    "action_kind": "acting_arm",
+    "capture_delta_total": 576,
+    "capture_preservation": "not_applicable_acting_arm",
+    "collateral_delta_total": 26,
+    "direct_delta_total": 85,
+    "expected_capture_effect": "consumed: the acting arm prevents the merge-suspect capture it blocks; capture_delta \u2248 opportunity_count is INTENDED, not a regression",
+    "opportunity_count": 576,
+    "readout_broken_delta_total": 111,
+    "readout_stale_wrong_delta_total": 300,
+    "refused_count": 576
+   },
+   "action_kind": "acting_arm",
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 111,
+   "guard": "capture_stable",
+   "harm_shape": "write-time-stale-capture",
+   "improved": true,
+   "merge_suspect_capture_delta_total": 576,
+   "pairs": [
+    "pairA",
+    "pairD",
+    "pairE",
+    "pairB"
+   ],
+   "payload_mode": "soft",
+   "per_pair": {
+    "pairD": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1455,
+       "frozen_probe_broken": 112,
+       "frozen_probe_collateral_br": 50,
+       "frozen_probe_direct_br": 62,
+       "merge_suspect_events": 192,
+       "stale_wrong": 375
+      },
+      "1": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1649,
+       "frozen_probe_broken": 180,
+       "frozen_probe_collateral_br": 54,
+       "frozen_probe_direct_br": 126,
+       "merge_suspect_events": 192,
+       "stale_wrong": 318
+      },
+      "2": {
+       "contradiction_pairs": 23,
+       "frozen_probe_acted": 1318,
+       "frozen_probe_broken": 46,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 46,
+       "merge_suspect_events": 192,
+       "stale_wrong": 326
+      }
+     },
+     "baseline_present": true,
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 206,
+       "frozen_probe_broken": 41,
+       "frozen_probe_collateral_br": 26,
+       "frozen_probe_direct_br": 15,
+       "merge_suspect_events": 192,
+       "stale_wrong": 127
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 205,
+       "frozen_probe_broken": 56,
+       "frozen_probe_collateral_br": 4,
+       "frozen_probe_direct_br": 52,
+       "merge_suspect_events": 192,
+       "stale_wrong": 69
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 198,
+       "frozen_probe_broken": 14,
+       "frozen_probe_collateral_br": -4,
+       "frozen_probe_direct_br": 18,
+       "merge_suspect_events": 192,
+       "stale_wrong": 104
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1249,
+       "frozen_probe_broken": 71,
+       "frozen_probe_collateral_br": 24,
+       "frozen_probe_direct_br": 47,
+       "merge_suspect_events": 0,
+       "stale_wrong": 248
+      },
+      "1": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1444,
+       "frozen_probe_broken": 124,
+       "frozen_probe_collateral_br": 50,
+       "frozen_probe_direct_br": 74,
+       "merge_suspect_events": 0,
+       "stale_wrong": 249
+      },
+      "2": {
+       "contradiction_pairs": 23,
+       "frozen_probe_acted": 1120,
+       "frozen_probe_broken": 32,
+       "frozen_probe_collateral_br": 4,
+       "frozen_probe_direct_br": 28,
+       "merge_suspect_events": 0,
+       "stale_wrong": 222
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
+    }
+   },
+   "pre_registered_margin": {
+    "improve_min": 1,
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "needs_review"
+  },
+  "one_shot_ambiguity": {
+   "guard": null,
+   "harm_shape": "ambiguous-evidence (observe-only)",
+   "note": "certified insufficient evidence; carries no hazard label and must never be scored pass/fail (PR7_DESIGN \u00a712).",
+   "verdict": "observe_only"
+  }
+ },
+ "conclusions_enforced": [
+  "static geometry cannot certify safety (PR-5 step 1)",
+  "both D-like direct and B/E-like collateral harm remain required",
+  "one-shot ambiguity stays observe-only (never scored pass/fail)",
+  "merge-path stale capture must hold 192/seed across geometry",
+  "slot-granularity / read-time trust stays closed; the frozen probe is only the measurand, never a deployment candidate",
+  "deployed retrieval remains unchanged"
+ ],
+ "deployed_engine_sha256_parity": true,
+ "design": "PR7_DESIGN.md \u00a75 \u2014 write-path twin-run",
+ "engine_or_retrieval_change": false,
+ "frozen_detector": {
+  "fit_csv": "results/issue_failure_mode_blindness/pr3/frozen_fit.csv",
+  "fit_summary": "results/issue_failure_mode_blindness/pr3/frozen_fit.summary.json"
+ },
+ "geometry_used_as_gate": false,
+ "govern_action": "refuse",
+ "new_cache_runs": 3,
+ "overall_verdict": "needs_review",
+ "probe_policy": "mode-conditioned-trust",
+ "scope": "certifies nothing beyond the enumerated cells; no generalization to unseen geometry",
+ "scored_cells": [
+  "merge_path_stale"
+ ]
+}

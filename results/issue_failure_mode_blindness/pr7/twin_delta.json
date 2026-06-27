@@ -17,14 +17,111 @@
     "pairA"
    ],
    "payload_mode": null,
-   "per_pair": {},
+   "per_pair": {
+    "pairA": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "baseline_present": true,
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
+    }
+   },
    "pre_registered_margin": {
     "improve_min": 0,
     "rationale": "null-action floor \u2014 must cost exactly nothing (PR7_DESIGN \u00a74/\u00a78.4)",
     "worsen_tol": 0
    },
    "regressed": false,
-   "verdict": "inconclusive"
+   "verdict": "pass"
   },
   "collateral_harm": {
    "capture_stable": null,
@@ -114,9 +211,11 @@
  },
  "geometry_used_as_gate": false,
  "govern_action": "annotate",
- "new_cache_runs": 0,
- "overall_verdict": "baseline_only",
+ "new_cache_runs": 3,
+ "overall_verdict": "pass",
  "probe_policy": "mode-conditioned-trust",
  "scope": "certifies nothing beyond the enumerated cells; no generalization to unseen geometry",
- "scored_cells": []
+ "scored_cells": [
+  "clean_control"
+ ]
 }

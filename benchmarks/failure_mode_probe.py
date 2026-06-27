@@ -160,16 +160,27 @@ OUT_COLS = ALL_COLS + NEW_COLS
 #     ``annotate``: the NULL-ACTION FLOOR. It stamps a write-time merge_suspect
 #     annotation on the supersession event and changes NOTHING at read time, so
 #     every scored artifact stays byte-identical to the ungoverned baseline —
-#     proving the harness itself adds no harm. ``quarantine`` / ``refuse`` are
-#     the acting decisions (side-region allocation, allocation refusal) and stay
-#     recorded no-ops until step 3.
+#     proving the harness itself adds no harm.
+#   step 5 (PR7_DESIGN.md §13, §4) — implement the first ACTING arm, ``refuse``:
+#     it skips the already-classified write-time merge_suspect (supersession)
+#     write BEFORE it commits. Non-suspect writes (clean / contradiction) are
+#     allowed unchanged, so none/annotate stay byte-identical; only the
+#     supersession write path diverges. ``quarantine`` remains a recorded no-op
+#     (allows every write). No read-time / slot-granularity trust, geometry
+#     gate, or one-shot classification is implemented at any step (§12).
 # ---------------------------------------------------------------------------
 GOVERN_ALLOW = "allow"
+GOVERN_REFUSE = "refuse-write"  # pre-write decision: skip this write (≠ action name)
 GOVERN_ACTIONS = ("none", "annotate", "quarantine", "refuse")
 # Actions whose behavior is implemented. Step 2 implements ``annotate`` (the
-# null-action floor — it commits the write exactly as baseline); ``quarantine``
-# and ``refuse`` remain recorded no-ops until step 3.
-GOVERN_IMPLEMENTED_ACTIONS = ("none", "annotate")
+# null-action floor — commits the write exactly as baseline); step 5 implements
+# ``refuse`` (skips the write-time merge_suspect/supersession write before it
+# commits). ``quarantine`` remains a recorded no-op (it allows every write).
+GOVERN_IMPLEMENTED_ACTIONS = ("none", "annotate", "refuse")
+# The already-classified write-event class ``refuse`` acts on: the write-time
+# merge_suspect candidate = the supersession (EMA-merge absorb) write. One-shot
+# ambiguity stays observe-only and is NEVER refused (PR7_DESIGN.md §12).
+GOVERN_REFUSE_EVENT_CLASS = EVENT_SUPERSESSION
 
 
 class GovernanceHook:
@@ -205,6 +216,7 @@ class GovernanceHook:
         self.action = action
         self.events_seen = 0
         self.annotated_events = 0
+        self.refused_events = 0
         self.outcome_counts: dict = {}
 
     @property
@@ -222,11 +234,32 @@ class GovernanceHook:
         no-op held for a later step)."""
         return self.action in GOVERN_IMPLEMENTED_ACTIONS
 
+    def allow_write(self, event_class: str) -> str:
+        """Pre-write decision (PR-7 step 5) — consulted BEFORE the write commits.
+
+        Returns :data:`GOVERN_REFUSE` ONLY for the ``refuse`` action on the
+        write-time merge_suspect class (the supersession write); every other
+        action (``none`` / ``annotate`` / ``quarantine``) and every other event
+        class returns :data:`GOVERN_ALLOW`, so the baseline write path stays
+        byte-for-byte identical. A refused write is recorded via
+        :meth:`record_refusal`; ``decide`` is then never reached for it."""
+        if self.action == "refuse" and event_class == GOVERN_REFUSE_EVENT_CLASS:
+            return GOVERN_REFUSE
+        return GOVERN_ALLOW
+
+    def record_refusal(self, event_class: str, n: int) -> None:
+        """Record ``n`` rows refused (skipped before commit) for one write event
+        (PR-7 step 5). The refused write never reaches :meth:`decide`, so it is
+        counted here: it still contributes to ``events_seen`` (writes the hook
+        observed) and is tallied separately in ``refused_events``."""
+        self.events_seen += n
+        self.refused_events += n
+
     def decide(self, event_class: str, outcome: str) -> str:
-        """Observe one already-classified write event; return its write
-        decision. Returns :data:`GOVERN_ALLOW` for ``none`` and ``annotate``
-        (the write is committed exactly as the baseline) and, until step 3,
-        for ``quarantine`` / ``refuse`` too (recorded no-ops).
+        """Observe one already-classified, ALLOWED write event; return its write
+        decision. Returns :data:`GOVERN_ALLOW` for every action (the pre-write
+        refusal, if any, happened in :meth:`allow_write`, so a write reaching
+        ``decide`` is always committed).
 
         ``annotate`` additionally records a write-time merge_suspect annotation
         on the supersession event — write-path provenance that changes nothing
@@ -241,10 +274,11 @@ class GovernanceHook:
     def provenance(self) -> dict:
         """Write-path provenance for the run summary (emitted only when
         :attr:`active`, so ``none`` stays byte-identical to the old driver)."""
+        step = {"annotate": "pr7-step2-annotate",
+                "refuse": "pr7-step5-refuse"}.get(self.action, "pr7-step1-noop")
         prov = {
             "action": self.action,
-            "step": "pr7-step2-annotate" if self.action == "annotate"
-                    else "pr7-step1-noop",
+            "step": step,
             "implemented": self.implemented,
             "implemented_actions": list(GOVERN_IMPLEMENTED_ACTIONS),
             "events_seen": self.events_seen,
@@ -255,6 +289,14 @@ class GovernanceHook:
             prov["annotation"] = (
                 "write-time merge_suspect stamp on supersession; read-time "
                 "no-op (null-action floor, PR7_DESIGN.md §4)")
+        if self.action == "refuse":
+            prov["refused_events"] = self.refused_events
+            prov["refused_event_class"] = GOVERN_REFUSE_EVENT_CLASS
+            prov["reason"] = (
+                "write-time merge_suspect (supersession) writes skipped before "
+                "commit; non-suspect writes (clean / contradiction) allowed "
+                "unchanged; deployed read-time retrieval path untouched "
+                "(PR7_DESIGN.md §4/§13).")
         return prov
 
 
@@ -576,6 +618,15 @@ def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
     governance seam; the step-1 decision is a recorded no-op (always ALLOW),
     so the write stands exactly as made."""
     pre = _pre_write_observables(mem, queries, targets, registry)
+    # PR-7 step 5: pre-write refuse decision (consulted BEFORE the write
+    # commits). For none/annotate/quarantine this is always ALLOW, so the path
+    # below is byte-identical to the pre-refuse driver; only `refuse` on the
+    # merge_suspect (supersession) class skips the write entirely. A skipped
+    # write commits nothing and emits no fork-event row (no write occurred); it
+    # is recorded only in governance provenance.
+    if hook is not None and hook.allow_write(event_class) == GOVERN_REFUSE:
+        hook.record_refusal(event_class, queries.size(0))
+        return []
     ids = write_fn()
     if events is None and hook is None:
         return ids

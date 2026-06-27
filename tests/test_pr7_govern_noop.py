@@ -7,9 +7,11 @@ the seam and proves it is inert and boundary-safe BEFORE any governed run:
 
   1. no-op identity — `--govern none` (the baseline) is byte-identical to the
      pre-seam driver, and the default invocation is unchanged (§11 test 1);
-  2. extended no-op — EVERY action {none, annotate, quarantine, refuse} is a
-     recorded no-op in step 1, so all four produce byte-identical write
-     decisions (the four emitted CSVs match the baseline exactly);
+  2. byte-identical emitted artifacts — EVERY action {none, annotate,
+     quarantine, refuse} produces byte-identical write decisions, so all four
+     emitted CSVs match the baseline exactly. `annotate` is the step-2
+     null-action floor (it records a provenance annotation but commits the
+     write exactly as baseline); `quarantine`/`refuse` stay recorded no-ops;
   3. engine-frozen boundary — the seam lives ONLY in the experimental driver;
      no deployed engine/retrieval file references it, and the two files that
      determine run output are sha256-unchanged from the PR-6 baseline
@@ -20,13 +22,14 @@ the seam and proves it is inert and boundary-safe BEFORE any governed run:
      a non-baseline action is requested, so `none` stays byte-identical; the
      CLI entry point exposes `--govern` and rejects unknown values (§11 test 6).
 
-Step-1 scope ONLY: no governance behavior, no write refusal, no quarantine,
-no read-time / slot-granularity trust, no geometry gate, no one-shot
-classification (PR7_DESIGN.md §12). The analyzer-level provenance guards
-(stem ↔ classes ↔ govern, non-soft payload refused on the merge-path cell)
-arrive with `pr7_twin_delta.py` in step 2 and are NOT in this file. The
-mechanism regression (§11 test 5) is covered by tests/test_failure_mode_probe.py
-and tests/test_failure_mode_vision.py, run unchanged.
+This file pins the experimental BOUNDARY (the seam is inert on every emitted
+artifact and never leaks into deployed retrieval). No write refusal, quarantine,
+read-time / slot-granularity trust, geometry gate, or one-shot classification is
+implemented (PR7_DESIGN.md §12). The analyzer-level provenance guards (stem ↔
+classes ↔ govern, non-soft payload refused on the merge-path cell) live in
+tests/test_pr7_twin_delta.py with `pr7_twin_delta.py` (step 2). The mechanism
+regression (§11 test 5) is covered by tests/test_failure_mode_probe.py and
+tests/test_failure_mode_vision.py, run unchanged.
 """
 import hashlib
 import json
@@ -200,22 +203,34 @@ def test_governed_run_is_deterministic(tmp_path, action):
 
 
 # ---------------------------------------------------------------------------
-# 5. The hook is a pure no-op for every action; only 'none' is implemented
+# 5. decide() ALLOWs every action (annotate is the null-action floor); only
+#    'none' and 'annotate' are implemented (quarantine/refuse stay no-ops).
 # ---------------------------------------------------------------------------
 def test_every_action_decides_allow_only():
-    """Step 1: decide() returns ALLOW for every action and every outcome — no
-    action acts. 'none' is the only implemented action (PR7_DESIGN.md §13.1)."""
-    assert GOVERN_IMPLEMENTED_ACTIONS == ("none",)
+    """decide() returns ALLOW for every action and every outcome — `annotate`
+    is the null-action floor (it commits the write exactly as baseline), and
+    `quarantine`/`refuse` are still recorded no-ops. Step 2 implements `none`
+    and `annotate` (PR7_DESIGN.md §4/§13.2)."""
+    assert GOVERN_IMPLEMENTED_ACTIONS == ("none", "annotate")
+    expected_step = {"none": "pr7-step1-noop", "annotate": "pr7-step2-annotate",
+                     "quarantine": "pr7-step1-noop", "refuse": "pr7-step1-noop"}
     for action in GOVERN_ACTIONS:
         h = GovernanceHook(action)
         for outcome in ("forked", "plain-miss", "absorbed", "dropped"):
             assert h.decide("contradiction", outcome) == GOVERN_ALLOW
         prov = h.provenance()
         assert prov["action"] == action
-        assert prov["step"] == "pr7-step1-noop"
-        assert prov["implemented_actions"] == ["none"]
+        assert prov["step"] == expected_step[action]
+        assert prov["implemented"] is (action in ("none", "annotate"))
+        assert prov["implemented_actions"] == ["none", "annotate"]
         assert prov["events_seen"] == 4
         assert sum(prov["outcome_counts"].values()) == 4
+    # annotate counts the supersession events it stamps; non-supersession
+    # outcomes above are not annotated, so the floor stays a pure record.
+    h = GovernanceHook("annotate")
+    h.decide("supersession", "absorbed")
+    h.decide("contradiction", "forked")
+    assert h.provenance()["annotated_events"] == 1
 
 
 def test_invalid_govern_action_rejected():
@@ -283,8 +298,9 @@ def test_vision_summary_records_active_govern_but_not_csvs(tmp_path):
 
     gov = s_gov["govern"]
     assert gov["action"] == "annotate"
-    assert gov["step"] == "pr7-step1-noop"
-    assert gov["implemented_actions"] == ["none"]
+    assert gov["step"] == "pr7-step2-annotate"
+    assert gov["implemented"] is True
+    assert gov["implemented_actions"] == ["none", "annotate"]
     assert gov["events_seen"] > 0
 
     # The provenance block is the ONLY summary difference.

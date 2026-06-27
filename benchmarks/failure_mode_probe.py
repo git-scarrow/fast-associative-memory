@@ -165,22 +165,39 @@ OUT_COLS = ALL_COLS + NEW_COLS
 #     it skips the already-classified write-time merge_suspect (supersession)
 #     write BEFORE it commits. Non-suspect writes (clean / contradiction) are
 #     allowed unchanged, so none/annotate stay byte-identical; only the
-#     supersession write path diverges. ``quarantine`` remains a recorded no-op
-#     (allows every write). No read-time / slot-granularity trust, geometry
-#     gate, or one-shot classification is implemented at any step (§12).
+#     supersession write path diverges.
+#   step 6 (PR7_DESIGN.md §13, §4 quarantine row) — implement the second acting
+#     arm, ``quarantine``: it diverts that same already-classified write-time
+#     merge_suspect (supersession) write to a recoverable side LEDGER instead of
+#     committing it to the active memory state. Like refuse, the suspect write is
+#     kept out of the deployed read vote (so non-suspect writes stay byte-identical
+#     to baseline); UNLIKE refuse, the diverted payload is RETAINED and recoverable
+#     in the quarantine ledger — not destroyed (PR7_DESIGN.md §4: "allocate to a
+#     side region excluded from the deployed read vote; the write is retained and
+#     recoverable, not destroyed"). In this engine-frozen harness the "side region"
+#     is the write-path quarantine ledger (provenance only); the active
+#     ContinuousCAM — the substrate the deployed read vote reads — never receives
+#     the quarantined write. No read-time / slot-granularity trust, geometry gate,
+#     or one-shot classification is implemented at any step (§12).
 # ---------------------------------------------------------------------------
 GOVERN_ALLOW = "allow"
 GOVERN_REFUSE = "refuse-write"  # pre-write decision: skip this write (≠ action name)
+GOVERN_QUARANTINE = "quarantine-write"  # pre-write: divert to the recoverable ledger
 GOVERN_ACTIONS = ("none", "annotate", "quarantine", "refuse")
 # Actions whose behavior is implemented. Step 2 implements ``annotate`` (the
 # null-action floor — commits the write exactly as baseline); step 5 implements
 # ``refuse`` (skips the write-time merge_suspect/supersession write before it
-# commits). ``quarantine`` remains a recorded no-op (it allows every write).
-GOVERN_IMPLEMENTED_ACTIONS = ("none", "annotate", "refuse")
-# The already-classified write-event class ``refuse`` acts on: the write-time
-# merge_suspect candidate = the supersession (EMA-merge absorb) write. One-shot
-# ambiguity stays observe-only and is NEVER refused (PR7_DESIGN.md §12).
+# commits); step 6 implements ``quarantine`` (diverts that same write to a
+# recoverable side ledger, excluded from the active memory state / deployed read
+# vote but retained, not destroyed). All four actions are now implemented.
+GOVERN_IMPLEMENTED_ACTIONS = ("none", "annotate", "quarantine", "refuse")
+# The already-classified write-event class the acting arms act on: the write-time
+# merge_suspect candidate = the supersession (EMA-merge absorb) write. ``refuse``
+# skips it; ``quarantine`` diverts it to the recoverable ledger. One-shot
+# ambiguity stays observe-only and is NEVER refused or quarantined
+# (PR7_DESIGN.md §12).
 GOVERN_REFUSE_EVENT_CLASS = EVENT_SUPERSESSION
+GOVERN_QUARANTINE_EVENT_CLASS = EVENT_SUPERSESSION
 
 
 class GovernanceHook:
@@ -203,10 +220,13 @@ class GovernanceHook:
     byte-identical to the ungoverned baseline (PR7_DESIGN.md §4: annotate "must
     cost nothing"). The annotation is write-path provenance only — NOT the
     record-granularity ledger PR-6 §3 deferred (path 2 stays closed), and the
-    hook never reads, mutates, or imports engine retrieval state. ``quarantine``
-    / ``refuse`` (the acting decisions) stay recorded no-ops here and are
-    implemented in step 3; no read-time / slot-granularity trust, geometry gate,
-    or one-shot classification is implemented at any step (PR7_DESIGN.md §12).
+    hook never reads, mutates, or imports engine retrieval state. ``refuse``
+    (step 5) skips the supersession write; ``quarantine`` (step 6) diverts that
+    same write to a recoverable side ledger excluded from the active memory
+    state — both are acting decisions on the write-time merge_suspect class and
+    leave non-suspect writes byte-identical. No read-time / slot-granularity
+    trust, geometry gate, or one-shot classification is implemented at any step
+    (PR7_DESIGN.md §12).
     """
 
     def __init__(self, action: str = "none"):
@@ -217,6 +237,8 @@ class GovernanceHook:
         self.events_seen = 0
         self.annotated_events = 0
         self.refused_events = 0
+        self.quarantined_events = 0
+        self.quarantine_label_counts: dict = {}
         self.outcome_counts: dict = {}
 
     @property
@@ -235,16 +257,21 @@ class GovernanceHook:
         return self.action in GOVERN_IMPLEMENTED_ACTIONS
 
     def allow_write(self, event_class: str) -> str:
-        """Pre-write decision (PR-7 step 5) — consulted BEFORE the write commits.
+        """Pre-write decision (PR-7 step 5/6) — consulted BEFORE the write commits.
 
-        Returns :data:`GOVERN_REFUSE` ONLY for the ``refuse`` action on the
+        Returns :data:`GOVERN_REFUSE` for the ``refuse`` action and
+        :data:`GOVERN_QUARANTINE` for the ``quarantine`` action, ONLY on the
         write-time merge_suspect class (the supersession write); every other
-        action (``none`` / ``annotate`` / ``quarantine``) and every other event
-        class returns :data:`GOVERN_ALLOW`, so the baseline write path stays
-        byte-for-byte identical. A refused write is recorded via
-        :meth:`record_refusal`; ``decide`` is then never reached for it."""
+        action (``none`` / ``annotate``) and every other event class returns
+        :data:`GOVERN_ALLOW`, so the baseline write path stays byte-for-byte
+        identical. A refused write is recorded via :meth:`record_refusal`, a
+        quarantined write via :meth:`record_quarantine`; ``decide`` is then never
+        reached for either (neither commits to the active memory state)."""
         if self.action == "refuse" and event_class == GOVERN_REFUSE_EVENT_CLASS:
             return GOVERN_REFUSE
+        if self.action == "quarantine" \
+                and event_class == GOVERN_QUARANTINE_EVENT_CLASS:
+            return GOVERN_QUARANTINE
         return GOVERN_ALLOW
 
     def record_refusal(self, event_class: str, n: int) -> None:
@@ -254,6 +281,25 @@ class GovernanceHook:
         observed) and is tallied separately in ``refused_events``."""
         self.events_seen += n
         self.refused_events += n
+
+    def record_quarantine(self, event_class: str, labels: list) -> None:
+        """Divert one merge_suspect write event to the recoverable quarantine
+        ledger (PR-7 step 6) instead of committing it to the active memory state.
+
+        The quarantined write is kept OUT of the active ContinuousCAM (the
+        substrate the deployed read vote reads) but its payload is RETAINED and
+        recoverable here — not destroyed (PR7_DESIGN.md §4 quarantine row). Like
+        a refusal it never reaches :meth:`decide`, so it is counted here: it
+        contributes to ``events_seen`` and is tallied in ``quarantined_events``,
+        with a per-label payload-accounting histogram (``labels`` are the
+        argmax-decoded payload labels of the diverted rows — plain ints, so the
+        hook holds no engine/tensor state)."""
+        self.events_seen += len(labels)
+        self.quarantined_events += len(labels)
+        for lab in labels:
+            lab = int(lab)
+            self.quarantine_label_counts[lab] = \
+                self.quarantine_label_counts.get(lab, 0) + 1
 
     def decide(self, event_class: str, outcome: str) -> str:
         """Observe one already-classified, ALLOWED write event; return its write
@@ -275,7 +321,9 @@ class GovernanceHook:
         """Write-path provenance for the run summary (emitted only when
         :attr:`active`, so ``none`` stays byte-identical to the old driver)."""
         step = {"annotate": "pr7-step2-annotate",
-                "refuse": "pr7-step5-refuse"}.get(self.action, "pr7-step1-noop")
+                "refuse": "pr7-step5-refuse",
+                "quarantine": "pr7-step6-quarantine"}.get(
+                    self.action, "pr7-step1-noop")
         prov = {
             "action": self.action,
             "step": step,
@@ -296,6 +344,29 @@ class GovernanceHook:
                 "write-time merge_suspect (supersession) writes skipped before "
                 "commit; non-suspect writes (clean / contradiction) allowed "
                 "unchanged; deployed read-time retrieval path untouched "
+                "(PR7_DESIGN.md §4/§13).")
+        if self.action == "quarantine":
+            prov["quarantined_events"] = self.quarantined_events
+            prov["quarantined_event_class"] = GOVERN_QUARANTINE_EVENT_CLASS
+            prov["quarantine_ledger"] = {
+                "opportunity_count": self.quarantined_events,
+                "quarantined_count": self.quarantined_events,
+                "retained_recoverable": True,
+                "absorbed_into_active_memory": False,
+                "payload_label_histogram":
+                    dict(sorted(self.quarantine_label_counts.items())),
+                "reason": (
+                    "write-time merge_suspect (supersession) writes diverted to "
+                    "this recoverable side ledger BEFORE commit — excluded from "
+                    "the active memory state / deployed read vote, but retained "
+                    "(payload accounting below), not destroyed; non-suspect "
+                    "writes allowed unchanged (PR7_DESIGN.md §4 quarantine row)."),
+            }
+            prov["reason"] = (
+                "write-time merge_suspect (supersession) writes quarantined "
+                "(diverted to the recoverable ledger, kept out of active memory) "
+                "before commit; non-suspect writes (clean / contradiction) "
+                "allowed unchanged; deployed read-time retrieval path untouched "
                 "(PR7_DESIGN.md §4/§13).")
         return prov
 
@@ -618,15 +689,22 @@ def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
     governance seam; the step-1 decision is a recorded no-op (always ALLOW),
     so the write stands exactly as made."""
     pre = _pre_write_observables(mem, queries, targets, registry)
-    # PR-7 step 5: pre-write refuse decision (consulted BEFORE the write
-    # commits). For none/annotate/quarantine this is always ALLOW, so the path
-    # below is byte-identical to the pre-refuse driver; only `refuse` on the
-    # merge_suspect (supersession) class skips the write entirely. A skipped
-    # write commits nothing and emits no fork-event row (no write occurred); it
-    # is recorded only in governance provenance.
-    if hook is not None and hook.allow_write(event_class) == GOVERN_REFUSE:
-        hook.record_refusal(event_class, queries.size(0))
-        return []
+    # PR-7 step 5/6: pre-write acting decision (consulted BEFORE the write
+    # commits). For none/annotate this is always ALLOW, so the path below is
+    # byte-identical to the pre-acting driver; only `refuse` and `quarantine` on
+    # the merge_suspect (supersession) class divert the write. A diverted write
+    # commits nothing to the active memory state and emits no fork-event row (no
+    # write occurred); `refuse` discards it (count only), `quarantine` retains it
+    # recoverable in the governance ledger. Both are recorded only in provenance.
+    if hook is not None:
+        decision = hook.allow_write(event_class)
+        if decision == GOVERN_REFUSE:
+            hook.record_refusal(event_class, queries.size(0))
+            return []
+        if decision == GOVERN_QUARANTINE:
+            labels = targets.argmax(dim=-1).reshape(-1).tolist()
+            hook.record_quarantine(event_class, labels)
+            return []
     ids = write_fn()
     if events is None and hook is None:
         return ids
@@ -1446,13 +1524,15 @@ def main():
                          "contradiction from drift/BLENDED")
     ap.add_argument("--max-entries", type=int, default=4096)
     ap.add_argument("--govern", choices=list(GOVERN_ACTIONS), default="none",
-                    help="PR-7 step-1 write-path governance seam (boundary "
-                         "scaffold). EVERY action is a recorded NO-OP in this "
-                         "step: writes route through the seam but make the "
-                         "exact same decisions as the ungoverned baseline. No "
-                         "governance behavior, write refusal, or quarantine is "
-                         "implemented yet; the deployed retrieval path never "
-                         "reaches this seam (PR7_DESIGN.md §13.1).")
+                    help="PR-7 opt-in write-path governance seam. 'none' "
+                         "(default/baseline) and 'annotate' (null-action floor) "
+                         "make the exact same write decisions as the ungoverned "
+                         "baseline; 'refuse' (step 5) skips the write-time "
+                         "merge_suspect/supersession write, and 'quarantine' "
+                         "(step 6) diverts it to a recoverable side ledger "
+                         "excluded from the active memory state. Non-suspect "
+                         "writes are unchanged and the deployed retrieval path "
+                         "never reaches this seam (PR7_DESIGN.md §4/§13).")
     ap.add_argument("--out", type=str,
                     default="results/issue_failure_mode_blindness/"
                             "per_probe_injected.csv")

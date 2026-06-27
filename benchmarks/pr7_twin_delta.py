@@ -113,8 +113,12 @@ PRE_REGISTERED_MARGINS = {
                    "rationale": "null-action floor — must cost exactly nothing "
                                 "(PR7_DESIGN §4/§8.4)"},
     "quarantine": {"improve_min": 1, "worsen_tol": 0,
-                   "rationale": "acting decision — must drain direct harm with "
-                                "no collateral/clean regression (step 3)"},
+                   "rationale": "acting arm — scored by readout improvement + "
+                                "collateral (capture_stable is N/A: quarantine "
+                                "diverts the merge-suspect event out of the "
+                                "active state by design, but RETAINS it "
+                                "recoverable in the ledger); never auto-passed "
+                                "(PR7_DESIGN §8 / step-5 addendum)"},
     "refuse":     {"improve_min": 1, "worsen_tol": 0,
                    "rationale": "acting arm — scored by readout improvement + "
                                 "collateral (capture_stable is N/A: refuse "
@@ -234,20 +238,47 @@ def _seed_delta(base: dict, gov: dict) -> dict:
     return {k: base[k] - gov[k] for k in base}
 
 
-def _arm_refused_events(cell: str, govern: str, pair: str,
-                        twin_root: Path = TWIN_ROOT) -> int:
-    """Sum ``refused_events`` across a governed arm's seeds — read from each
-    summary's ``govern`` provenance block (acting-arm accounting only; a
-    null-action floor records none and contributes 0)."""
+def _arm_intercepted_events(cell: str, govern: str, pair: str,
+                            twin_root: Path = TWIN_ROOT) -> int:
+    """Sum the acting-arm intercept count across a governed arm's seeds — read
+    from each summary's ``govern`` provenance block: ``refused_events`` (the
+    ``refuse`` arm skips the write) or ``quarantined_events`` (the ``quarantine``
+    arm diverts it to the recoverable ledger). A null-action floor records
+    neither and contributes 0; the two keys are mutually exclusive per arm, so
+    summing them is exact."""
     arm_dir = twin_root / cell / govern
     total = 0
     for seed in SEEDS:
         matches = sorted(arm_dir.glob(f"per_probe_*_s{seed}_{pair}.summary.json"))
         if not matches:
             continue
-        summ = json.loads(matches[0].read_text())
-        total += summ.get("govern", {}).get("refused_events", 0)
+        gov = json.loads(matches[0].read_text()).get("govern", {})
+        total += gov.get("refused_events", 0) + gov.get("quarantined_events", 0)
     return total
+
+
+def _arm_quarantine_ledger(cell: str, govern: str, pair: str,
+                           twin_root: Path = TWIN_ROOT) -> dict:
+    """Aggregate the recoverable quarantine ledger across a ``quarantine`` arm's
+    seeds (opportunity / quarantined counts + merged payload-label histogram),
+    read from each summary's ``govern.quarantine_ledger`` provenance. Empty for
+    any non-quarantine arm."""
+    arm_dir = twin_root / cell / govern
+    opportunity = quarantined = 0
+    histogram: dict = {}
+    for seed in SEEDS:
+        matches = sorted(arm_dir.glob(f"per_probe_*_s{seed}_{pair}.summary.json"))
+        if not matches:
+            continue
+        ledger = json.loads(matches[0].read_text()).get(
+            "govern", {}).get("quarantine_ledger", {})
+        opportunity += ledger.get("opportunity_count", 0)
+        quarantined += ledger.get("quarantined_count", 0)
+        for lab, n in ledger.get("payload_label_histogram", {}).items():
+            histogram[str(lab)] = histogram.get(str(lab), 0) + n
+    return {"opportunity_count": opportunity, "quarantined_count": quarantined,
+            "payload_label_histogram": dict(sorted(histogram.items())),
+            "retained_recoverable": True, "absorbed_into_active_memory": False}
 
 
 def score_cell(cell: str, govern: str,
@@ -299,7 +330,8 @@ def score_cell(cell: str, govern: str,
                                       for s in seeds)
             opportunity_count += sum(base[s]["merge_suspect_events"]
                                      for s in seeds)
-            refused_count += _arm_refused_events(cell, govern, pair, twin_root)
+            refused_count += _arm_intercepted_events(cell, govern, pair,
+                                                     twin_root)
         elif base is not None:
             entry["baseline_by_seed"] = base
         per_pair[pair] = entry
@@ -332,22 +364,57 @@ def score_cell(cell: str, govern: str,
     if is_acting and any_governed:
         capture_consumed = (spec["guard"] == "capture_stable")
         result["action_kind"] = "acting_arm"
-        result["acting_arm_accounting"] = {
+        # refuse DESTROYS the blocked capture; quarantine REMOVES it from the
+        # active memory state but RETAINS it recoverable in the side ledger
+        # (PR7_DESIGN §4 quarantine row). Both leave capture_delta ≈
+        # opportunity_count by design; only the disposition of the blocked write
+        # differs. The refuse string/values are unchanged (committed manifest).
+        if govern == "quarantine":
+            expected_capture_effect = (
+                "retained: the quarantine arm diverts the merge-suspect write to "
+                "a recoverable side ledger excluded from the active memory state "
+                "/ deployed read vote; capture_delta ≈ opportunity_count is "
+                "INTENDED removal from the active state, but the payload is "
+                "retained recoverable in the ledger, not destroyed")
+        else:
+            expected_capture_effect = (
+                "consumed: the acting arm prevents the merge-suspect capture it "
+                "blocks; capture_delta ≈ opportunity_count is INTENDED, not a "
+                "regression")
+        acc = {
             "action_kind": "acting_arm",
             "capture_preservation": ("not_applicable_acting_arm"
                                      if capture_consumed else "n/a"),
             "opportunity_count": opportunity_count,
             "refused_count": refused_count,
-            "expected_capture_effect": (
-                "consumed: the acting arm prevents the merge-suspect capture it "
-                "blocks; capture_delta ≈ opportunity_count is INTENDED, not a "
-                "regression"),
+            "expected_capture_effect": expected_capture_effect,
             "capture_delta_total": capture_delta_total,
             "readout_broken_delta_total": broken_delta_total,
             "readout_stale_wrong_delta_total": stale_wrong_delta_total,
             "collateral_delta_total": collateral_delta_total,
             "direct_delta_total": direct_delta_total,
         }
+        # The recoverable-ledger accounting is the whole point of quarantine vs
+        # refuse: the diverted payloads are RETAINED, not discarded. Emitted only
+        # for the quarantine arm, so the refuse manifest stays value-identical.
+        if govern == "quarantine":
+            ledger = {"opportunity_count": 0, "quarantined_count": 0,
+                      "payload_label_histogram": {}, "retained_recoverable": True,
+                      "absorbed_into_active_memory": False}
+            for pair in spec["pairs"]:
+                if per_pair.get(pair, {}).get("governed_present"):
+                    seed_ledger = _arm_quarantine_ledger(cell, govern, pair,
+                                                         twin_root)
+                    ledger["opportunity_count"] += seed_ledger["opportunity_count"]
+                    ledger["quarantined_count"] += seed_ledger["quarantined_count"]
+                    for lab, n in seed_ledger["payload_label_histogram"].items():
+                        ledger["payload_label_histogram"][lab] = \
+                            ledger["payload_label_histogram"].get(lab, 0) + n
+            ledger["payload_label_histogram"] = dict(
+                sorted(ledger["payload_label_histogram"].items()))
+            acc["quarantine_ledger"] = ledger
+            acc["disposition"] = "retained_recoverable_excluded_from_active_state"
+        result["acting_arm_accounting"] = acc
     return result
 
 

@@ -50,8 +50,12 @@ def _measurands(*, broken, stale_wrong=0, collateral=0, direct=0, acted=0,
 
 
 def _write_arm(twin_root, cell, govern, pair, *, payload_mode=None,
-               classes=None, govern_block=True, **measure):
-    """Lay down all 3 seeds of one (cell, govern, pair) arm as committed JSON."""
+               classes=None, govern_block=True, govern_extra=None, **measure):
+    """Lay down all 3 seeds of one (cell, govern, pair) arm as committed JSON.
+
+    ``govern_extra`` (a dict) is merged into each seed's ``govern`` provenance
+    block — used to inject acting-arm accounting (``refused_events`` /
+    ``quarantined_events`` / ``quarantine_ledger``)."""
     arm = _ARM_NAME[cell]
     classes = PAIR_CLASS_SETS[pair] if classes is None else classes
     d = twin_root / cell / govern
@@ -62,6 +66,8 @@ def _write_arm(twin_root, cell, govern, pair, *, payload_mode=None,
                 "payload_mode": payload_mode}
         if govern != BASELINE_GOVERN and govern_block:
             summ["govern"] = {"action": govern, "step": f"pr7-{govern}"}
+            if govern_extra:
+                summ["govern"].update(govern_extra)
         (d / f"{stem}.summary.json").write_text(json.dumps(summ))
         (d / f"{stem}.governance.json").write_text(
             json.dumps(_measurands(**measure)))
@@ -216,6 +222,58 @@ def test_merge_path_capture_stable_zero_delta_passes(tmp_path):
     cell = d["cells"]["merge_path_stale"]
     assert cell["capture_stable"] is True
     assert cell["verdict"] == "pass"
+
+
+# ---------------------------------------------------------------------------
+# Acting-arm semantics for quarantine on the merge_path_stale cell (step 6):
+# capture_stable is N/A (quarantine diverts the merge-suspect event by design),
+# the cell is scored by readout + collateral and is never auto-passed
+# (needs_review), and the recoverable-ledger accounting is surfaced.
+# ---------------------------------------------------------------------------
+def test_quarantine_acting_arm_accounting_and_ledger(tmp_path):
+    tw = _twin(tmp_path)
+    _write_arm(tw, "merge_path_stale", "none", "pairD",
+               payload_mode="soft", broken=112, merge_suspect=192,
+               stale_wrong=375, direct=62, collateral=50)
+    # quarantine: readout improves (broken 112->71), capture removed from the
+    # active state (192->0) but RETAINED in the recoverable ledger (192/seed).
+    _write_arm(tw, "merge_path_stale", "quarantine", "pairD",
+               payload_mode="soft", broken=71, merge_suspect=0,
+               stale_wrong=248, direct=47, collateral=24,
+               govern_extra={
+                   "quarantined_events": 192,
+                   "quarantined_event_class": "supersession",
+                   "quarantine_ledger": {
+                       "opportunity_count": 192, "quarantined_count": 192,
+                       "payload_label_histogram": {"52": 192},
+                       "retained_recoverable": True,
+                       "absorbed_into_active_memory": False}})
+    d = build_twin_delta("quarantine", tw, repo_root=ROOT)
+    cell = d["cells"]["merge_path_stale"]
+    # acting arm: capture_stable N/A, never auto-passed -> needs_review.
+    assert cell["verdict"] == "needs_review"
+    assert cell["action_kind"] == "acting_arm"
+    assert cell["capture_stable"] is None
+    assert cell["improved"] is True and cell["regressed"] is False
+
+    acc = cell["acting_arm_accounting"]
+    assert acc["opportunity_count"] == 576          # 3 seeds x 192
+    assert acc["refused_count"] == 576              # intercepted (quarantined)
+    assert acc["capture_delta_total"] == 576        # removed from active state
+    assert acc["readout_broken_delta_total"] == 123  # 3 x (112-71)
+    assert "retained" in acc["expected_capture_effect"]
+    assert acc["disposition"].startswith("retained")
+    # the recoverable ledger is the quarantine-vs-refuse distinction: the
+    # diverted payloads are RETAINED (quarantined_count == opportunity), not
+    # discarded, with payload accounting preserved.
+    ledger = acc["quarantine_ledger"]
+    assert ledger["opportunity_count"] == 576
+    assert ledger["quarantined_count"] == 576
+    assert ledger["payload_label_histogram"] == {"52": 576}
+    assert ledger["retained_recoverable"] is True
+    assert ledger["absorbed_into_active_memory"] is False
+    assert d["overall_verdict"] == "needs_review"
+    assert d["scored_cells"] == ["merge_path_stale"]
 
 
 # ---------------------------------------------------------------------------

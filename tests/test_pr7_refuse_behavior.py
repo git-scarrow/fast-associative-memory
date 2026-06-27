@@ -59,8 +59,8 @@ def test_allow_write_refuses_only_merge_suspect():
     for ev in ("initial", "duplicate-rewrite", "clean-rewrite", "contradiction",
                "one-shot-ambiguous"):
         assert refuse.allow_write(ev) == GOVERN_ALLOW
-    # no other action ever refuses, even on the supersession class.
-    for action in ("none", "annotate", "quarantine"):
+    # the null-action actions never divert, even on the supersession class.
+    for action in ("none", "annotate"):
         assert GovernanceHook(action).allow_write(EVENT_SUPERSESSION) \
             == GOVERN_ALLOW
 
@@ -81,13 +81,53 @@ def test_refuse_provenance_records_count_and_reason():
     assert prov["events_seen"] == 9
 
 
-def test_quarantine_stays_noop():
-    # an unimplemented mode: allows every write, records no refusal.
+def test_quarantine_diverts_only_merge_suspect():
+    # quarantine (step 6) is the second acting arm: it diverts the supersession
+    # (merge_suspect) write to the recoverable ledger, and ONLY that class.
+    from benchmarks.failure_mode_probe import (
+        GOVERN_QUARANTINE, GOVERN_QUARANTINE_EVENT_CLASS)
+    assert GOVERN_QUARANTINE_EVENT_CLASS == EVENT_SUPERSESSION
     q = GovernanceHook("quarantine")
-    assert q.allow_write(EVENT_SUPERSESSION) == GOVERN_ALLOW
-    assert q.implemented is False
-    assert q.provenance()["step"] == "pr7-step1-noop"
-    assert "refused_events" not in q.provenance()
+    assert q.allow_write(EVENT_SUPERSESSION) == GOVERN_QUARANTINE
+    assert q.implemented is True
+    assert q.provenance()["step"] == "pr7-step6-quarantine"
+    # every non-suspect class is allowed (incl. one-shot, never quarantined).
+    for ev in ("initial", "duplicate-rewrite", "clean-rewrite", "contradiction",
+               "one-shot-ambiguous"):
+        assert q.allow_write(ev) == GOVERN_ALLOW
+    # refuse never diverts to quarantine, and quarantine never returns the refuse
+    # decision — the two acting arms are distinct dispositions.
+    assert GovernanceHook("refuse").allow_write(EVENT_SUPERSESSION) != \
+        GOVERN_QUARANTINE
+
+
+def test_quarantine_ledger_records_count_reason_and_payload():
+    """The quarantine ledger RETAINS the diverted writes recoverable: it records
+    opportunity/quarantined counts, a reason, and a per-label payload histogram
+    (the accounting that distinguishes quarantine from refuse, which discards)."""
+    h = GovernanceHook("quarantine")
+    h.record_quarantine(EVENT_SUPERSESSION, [3, 3, 7])
+    h.record_quarantine(EVENT_SUPERSESSION, [3])
+    h.decide("clean-rewrite", "forked")  # one allowed (committed) write
+    prov = h.provenance()
+    assert prov["action"] == "quarantine"
+    assert prov["step"] == "pr7-step6-quarantine"
+    assert prov["implemented"] is True
+    assert prov["quarantined_events"] == 4
+    assert prov["quarantined_event_class"] == EVENT_SUPERSESSION
+    assert "merge_suspect" in prov["reason"] and "recoverable" in prov["reason"]
+    ledger = prov["quarantine_ledger"]
+    assert ledger["opportunity_count"] == 4
+    assert ledger["quarantined_count"] == 4
+    assert ledger["retained_recoverable"] is True
+    assert ledger["absorbed_into_active_memory"] is False
+    # payload accounting: per-label histogram of the diverted (retained) rows.
+    assert ledger["payload_label_histogram"] == {3: 3, 7: 1}
+    assert "recoverable" in ledger["reason"]
+    # events_seen counts allowed (decide) + quarantined (diverted) writes.
+    assert prov["events_seen"] == 5
+    # no refusal tally on a quarantine arm (it retains, it does not discard).
+    assert "refused_events" not in prov
 
 
 # ---------------------------------------------------------------------------
@@ -160,3 +200,65 @@ def test_vision_refuse_summary_and_artifacts(tmp_path):
     assert gov["refused_event_class"] == EVENT_SUPERSESSION
     # refuse skipped real writes, so the emitted artifacts diverge from baseline.
     assert _emitted_bytes(tmp_path / "r.csv") != _emitted_bytes(tmp_path / "b.csv")
+
+
+# ---------------------------------------------------------------------------
+# 4. Quarantine (step 6): diverts supersession writes to the recoverable ledger
+# ---------------------------------------------------------------------------
+def test_quarantine_diverts_supersession_events_only(tmp_path):
+    """On the synthetic stale arm, quarantine (like refuse) removes every
+    supersession write event from the emitted artifacts — those writes are kept
+    out of the active memory state — while non-suspect write events remain. The
+    difference from refuse is the recoverable ledger, asserted on the summary."""
+    base_out = tmp_path / "none.csv"
+    q_out = tmp_path / "quarantine.csv"
+    n_base = run_synthetic("stale", rate=0.0, epochs=6, supersede_epoch=3,
+                           out_path=base_out, seed=0, govern="none")
+    n_q = run_synthetic("stale", rate=0.0, epochs=6, supersede_epoch=3,
+                        out_path=q_out, seed=0, govern="quarantine")
+    assert n_base > 0 and n_q > 0
+    base, quar = _emitted_bytes(base_out), _emitted_bytes(q_out)
+
+    base_counts = _event_class_counts(base)
+    q_counts = _event_class_counts(quar)
+    # baseline supersedes; quarantine diverts every one of those writes out of
+    # the active state, so no supersession write event is emitted.
+    assert base_counts.get(EVENT_SUPERSESSION, 0) > 0
+    assert q_counts.get(EVENT_SUPERSESSION, 0) == 0
+    # non-suspect write events are still emitted under quarantine (only the
+    # merge_suspect class is touched).
+    non_suspect = set(base_counts) - {EVENT_SUPERSESSION}
+    assert non_suspect and all(q_counts.get(c, 0) > 0 for c in non_suspect)
+    # the diverted writes changed the run's emitted artifacts.
+    assert quar != base
+
+
+def test_vision_quarantine_summary_and_ledger(tmp_path):
+    """A hermetic merge-path (stale-soft) vision run: quarantine records a
+    non-zero recoverable ledger (opportunity/quarantined counts + payload
+    histogram) in provenance and changes the emitted artifacts vs baseline, while
+    the baseline summary carries no govern block."""
+    cache = _make_cache(tmp_path)
+    common = dict(epochs=6, cache_path=str(cache), classes=_CLASSES,
+                  attractor_class=_ATTRACTOR, samples_per_class=8,
+                  held_out_per_class=8, contraction=0.0, seed=0,
+                  supersede_epoch=3, payload_mode="soft")
+    _, s_base = run_vision("stale", rate=0.0, out_path=tmp_path / "b.csv",
+                           govern="none", **common)
+    _, s_q = run_vision("stale", rate=0.0, out_path=tmp_path / "q.csv",
+                        govern="quarantine", **common)
+    assert "govern" not in s_base
+    gov = s_q["govern"]
+    assert gov["action"] == "quarantine"
+    assert gov["quarantined_events"] > 0
+    assert gov["quarantined_event_class"] == EVENT_SUPERSESSION
+    ledger = gov["quarantine_ledger"]
+    assert ledger["quarantined_count"] == gov["quarantined_events"]
+    assert ledger["opportunity_count"] == gov["quarantined_events"]
+    assert ledger["retained_recoverable"] is True
+    assert ledger["absorbed_into_active_memory"] is False
+    # payload accounting retained: the histogram totals the quarantined rows.
+    assert sum(ledger["payload_label_histogram"].values()) == \
+        gov["quarantined_events"]
+    # quarantine diverted real writes, so artifacts diverge from baseline.
+    assert _emitted_bytes(tmp_path / "q.csv") != _emitted_bytes(tmp_path / "b.csv")

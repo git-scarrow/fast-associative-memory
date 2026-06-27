@@ -122,14 +122,14 @@ def test_default_invocation_unchanged(tmp_path, arm, payload_mode,
 
 
 @pytest.mark.parametrize("arm,payload_mode,supersede_epoch", _ARMS)
-@pytest.mark.parametrize("action", ["annotate", "quarantine"])
+@pytest.mark.parametrize("action", ["annotate"])
 def test_noop_governance_matches_baseline(tmp_path, arm, payload_mode,
                                           supersede_epoch, action):
-    """`annotate` (the null-action floor) and `quarantine` (still a recorded
-    no-op) make byte-identical write decisions to the ungoverned baseline on
-    every arm, so all four emitted artifacts match exactly under a fixed seed
-    (§11 test 1). `refuse` is the step-5 acting arm and is covered separately:
-    a pure no-op only on arms with no merge_suspect (supersession) write."""
+    """`annotate` (the null-action floor) makes byte-identical write decisions to
+    the ungoverned baseline on every arm, so all four emitted artifacts match
+    exactly under a fixed seed (§11 test 1). `refuse` (step 5) and `quarantine`
+    (step 6) are acting arms covered separately: a pure no-op only on arms with
+    no merge_suspect (supersession) write."""
     baseline = _run_synth(tmp_path, arm, "none", name="base.csv",
                           payload_mode=payload_mode,
                           supersede_epoch=supersede_epoch)
@@ -141,27 +141,28 @@ def test_noop_governance_matches_baseline(tmp_path, arm, payload_mode,
         f"it must be a pure no-op")
 
 
-# Arms with NO supersession write: refuse has nothing to skip, so it stays a
-# pure no-op (proving non-suspect traffic is never harmed).
+# Arms with NO supersession write: the acting arms have nothing to skip/divert,
+# so they stay a pure no-op (proving non-suspect traffic is never harmed).
 _NON_SUSPECT_ARMS = [("clean", "onehot", -1), ("contra", "onehot", -1)]
 
 
 @pytest.mark.parametrize("arm,payload_mode,supersede_epoch", _NON_SUSPECT_ARMS)
-def test_refuse_is_noop_on_non_suspect_arms(tmp_path, arm, payload_mode,
-                                            supersede_epoch):
-    """`refuse` acts ONLY on the write-time merge_suspect (supersession) class;
-    on arms that never supersede it skips nothing, so every emitted artifact is
-    byte-identical to the baseline — non-suspect writes are allowed unchanged
-    (PR7_DESIGN.md §4/§13)."""
+@pytest.mark.parametrize("action", ["refuse", "quarantine"])
+def test_acting_arm_is_noop_on_non_suspect_arms(tmp_path, arm, payload_mode,
+                                                supersede_epoch, action):
+    """`refuse` (skip) and `quarantine` (divert) act ONLY on the write-time
+    merge_suspect (supersession) class; on arms that never supersede they touch
+    nothing, so every emitted artifact is byte-identical to the baseline —
+    non-suspect writes are allowed unchanged (PR7_DESIGN.md §4/§13)."""
     baseline = _run_synth(tmp_path, arm, "none", name="base.csv",
                           payload_mode=payload_mode,
                           supersede_epoch=supersede_epoch)
-    refused = _run_synth(tmp_path, arm, "refuse", name="refuse.csv",
-                         payload_mode=payload_mode,
-                         supersede_epoch=supersede_epoch)
-    assert refused == baseline, (
-        f"refuse on non-suspect arm {arm}/{payload_mode} changed an emitted "
-        f"artifact — refuse must touch only merge_suspect writes")
+    governed = _run_synth(tmp_path, arm, action, name=f"{action}.csv",
+                          payload_mode=payload_mode,
+                          supersede_epoch=supersede_epoch)
+    assert governed == baseline, (
+        f"{action} on non-suspect arm {arm}/{payload_mode} changed an emitted "
+        f"artifact — acting arms must touch only merge_suspect writes")
 
 
 def test_deployed_vote_column_identical_under_governance(tmp_path):
@@ -232,25 +233,29 @@ def test_governed_run_is_deterministic(tmp_path, action):
 #    'none' and 'annotate' are implemented (quarantine/refuse stay no-ops).
 # ---------------------------------------------------------------------------
 def test_every_action_decides_allow_only():
-    """decide() returns ALLOW for every action and every outcome — `annotate`
-    is the null-action floor (it commits the write exactly as baseline), and
-    `quarantine`/`refuse` are still recorded no-ops. Step 2 implements `none`
-    and `annotate` (PR7_DESIGN.md §4/§13.2)."""
-    assert GOVERN_IMPLEMENTED_ACTIONS == ("none", "annotate", "refuse")
+    """decide() returns ALLOW for every action and every outcome — it is the
+    POST-write call, so a write reaching it is always committed; the acting arms'
+    diversions (`refuse` skip, `quarantine` divert) happen earlier in
+    allow_write. All four actions are now implemented (PR7_DESIGN.md §4/§13)."""
+    assert GOVERN_IMPLEMENTED_ACTIONS == ("none", "annotate", "quarantine",
+                                          "refuse")
     expected_step = {"none": "pr7-step1-noop", "annotate": "pr7-step2-annotate",
-                     "quarantine": "pr7-step1-noop", "refuse": "pr7-step5-refuse"}
+                     "quarantine": "pr7-step6-quarantine",
+                     "refuse": "pr7-step5-refuse"}
     for action in GOVERN_ACTIONS:
         h = GovernanceHook(action)
         # decide() is the POST-write call: a write reaching it is always
-        # committed (refuse's skip happens earlier, in allow_write). Driving it
-        # with a non-suspect class (contradiction) is allowed for every action.
+        # committed (the acting arms' skip/divert happens earlier, in
+        # allow_write). Driving it with a non-suspect class (contradiction) is
+        # allowed for every action.
         for outcome in ("forked", "plain-miss", "absorbed", "dropped"):
             assert h.decide("contradiction", outcome) == GOVERN_ALLOW
         prov = h.provenance()
         assert prov["action"] == action
         assert prov["step"] == expected_step[action]
-        assert prov["implemented"] is (action in ("none", "annotate", "refuse"))
-        assert prov["implemented_actions"] == ["none", "annotate", "refuse"]
+        assert prov["implemented"] is True
+        assert prov["implemented_actions"] == ["none", "annotate", "quarantine",
+                                               "refuse"]
         assert prov["events_seen"] == 4
         assert sum(prov["outcome_counts"].values()) == 4
     # annotate counts the supersession events it stamps; non-supersession
@@ -328,7 +333,8 @@ def test_vision_summary_records_active_govern_but_not_csvs(tmp_path):
     assert gov["action"] == "annotate"
     assert gov["step"] == "pr7-step2-annotate"
     assert gov["implemented"] is True
-    assert gov["implemented_actions"] == ["none", "annotate", "refuse"]
+    assert gov["implemented_actions"] == ["none", "annotate", "quarantine",
+                                          "refuse"]
     assert gov["events_seen"] > 0
 
     # The provenance block is the ONLY summary difference.

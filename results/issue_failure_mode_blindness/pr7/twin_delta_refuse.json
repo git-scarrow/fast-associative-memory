@@ -56,7 +56,7 @@
    },
    "pre_registered_margin": {
     "improve_min": 1,
-    "rationale": "ceiling action \u2014 tested last (step 3)",
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
     "worsen_tol": 0
    },
    "regressed": false,
@@ -77,7 +77,7 @@
    "per_pair": {},
    "pre_registered_margin": {
     "improve_min": 1,
-    "rationale": "ceiling action \u2014 tested last (step 3)",
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
     "worsen_tol": 0
    },
    "regressed": false,
@@ -97,14 +97,27 @@
    "per_pair": {},
    "pre_registered_margin": {
     "improve_min": 1,
-    "rationale": "ceiling action \u2014 tested last (step 3)",
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
     "worsen_tol": 0
    },
    "regressed": false,
    "verdict": "inconclusive"
   },
   "merge_path_stale": {
-   "capture_stable": false,
+   "acting_arm_accounting": {
+    "action_kind": "acting_arm",
+    "capture_delta_total": 576,
+    "capture_preservation": "not_applicable_acting_arm",
+    "collateral_delta_total": 26,
+    "direct_delta_total": 85,
+    "expected_capture_effect": "consumed: the acting arm prevents the merge-suspect capture it blocks; capture_delta \u2248 opportunity_count is INTENDED, not a regression",
+    "opportunity_count": 576,
+    "readout_broken_delta_total": 111,
+    "readout_stale_wrong_delta_total": 300,
+    "refused_count": 576
+   },
+   "action_kind": "acting_arm",
+   "capture_stable": null,
    "frozen_probe_broken_delta_total": 111,
    "guard": "capture_stable",
    "harm_shape": "write-time-stale-capture",
@@ -217,11 +230,11 @@
    },
    "pre_registered_margin": {
     "improve_min": 1,
-    "rationale": "ceiling action \u2014 tested last (step 3)",
+    "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
     "worsen_tol": 0
    },
    "regressed": false,
-   "verdict": "fail"
+   "verdict": "needs_review"
   },
   "one_shot_ambiguity": {
    "guard": null,
@@ -248,7 +261,7 @@
  "geometry_used_as_gate": false,
  "govern_action": "refuse",
  "new_cache_runs": 3,
- "overall_verdict": "fail",
+ "overall_verdict": "needs_review",
  "probe_policy": "mode-conditioned-trust",
  "scope": "certifies nothing beyond the enumerated cells; no generalization to unseen geometry",
  "scored_cells": [

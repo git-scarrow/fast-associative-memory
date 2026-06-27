@@ -417,3 +417,47 @@ discipline:
 
 This memo plans the line; it implements none of it. Deployed retrieval
 remains unchanged.
+
+## 14. Addendum (step 5) — acting-arm verdict semantics
+
+Implemented after the step-5 refuse run (pairD `merge_path_stale`) exposed a
+flaw in scoring acting arms with the null-action guard.
+
+**The flaw.** `capture_stable` (the `merge_path_stale` guard) requires the
+write-time merge-suspect capture to hold 192/seed. That is the right HARD
+guard for a **null-action floor** (`annotate` must change nothing it does not
+act on, so it must preserve the captured event). It is the WRONG pass/fail
+criterion for an **acting arm** (`refuse` / `quarantine`): refuse is *designed
+to consume/prevent* the merge-suspect write, so capture necessarily drops to
+~0. Scoring refuse with `capture_stable` penalizes it for doing its job and
+reports `fail` even when read-time harm improved.
+
+**The rule.** Actions are split by kind:
+
+* **Null-action floors** (`annotate`; `none` is the baseline) — `capture_stable`
+  stays a HARD guard: capture must be preserved (`capture_delta == 0`), else
+  `fail`. Unchanged; the annotate manifest (`twin_delta.json`) is byte-identical.
+* **Acting arms** (`refuse`, `quarantine`) — on a `capture_stable` cell the
+  capture guard is **not applicable** (`capture_stable: null`); the capture loss
+  is recorded as *intended consumption*, not a regression. The cell is scored by
+  **refused-opportunity accounting** + **readout (broken / stale) improvement**
+  + **collateral harm**, and is **never auto-passed** (a human-review gate).
+
+**Verdict vocabulary.** Adds `needs_review` to `pass | fail | inconclusive |
+observe_only`. An acting arm that does not regress readout or collateral is
+`needs_review` (helps, capture consumed as expected — promising but not
+certified); it is `fail` only if readout or collateral regressed. `pass` is
+reserved for a later, explicit promotion step.
+
+**Accounting block** (`cells.<cell>.acting_arm_accounting`, emitted only for an
+acting arm): `opportunity_count` (capturable merge-suspect events in the
+baseline), `refused_count` (writes the arm actually refused), the intended
+`expected_capture_effect`, `capture_delta_total`, and the readout / collateral /
+direct deltas. For step-5 refuse on pairD: opportunity = refused = capture_delta
+= 576 (every capturable event refused), readout broken −111 and stale_wrong
+−300 (improved), collateral net −26 (not worsened) → `needs_review`.
+
+The refuse result lives in a **sibling per-action manifest**
+(`twin_delta_refuse.json`); `twin_delta.json` keeps the annotate floor verdict
+unchanged. No engine, retrieval, or run-artifact change — verdict semantics,
+result JSON, and tests only.

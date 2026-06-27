@@ -153,21 +153,27 @@ OUT_COLS = ALL_COLS + NEW_COLS
 
 
 # ---------------------------------------------------------------------------
-# PR-7 step 1: opt-in write-path governance seam (boundary scaffold ONLY).
-# PR7_DESIGN.md §13.1 — add the seam, prove the boundary, change no behavior.
+# PR-7 write-path governance seam.
+#   step 1 (PR7_DESIGN.md §13.1) — add the seam, prove the boundary, change no
+#     behavior: every action is a recorded no-op.
+#   step 2 (PR7_DESIGN.md §13.2, §4) — implement the cheapest action,
+#     ``annotate``: the NULL-ACTION FLOOR. It stamps a write-time merge_suspect
+#     annotation on the supersession event and changes NOTHING at read time, so
+#     every scored artifact stays byte-identical to the ungoverned baseline —
+#     proving the harness itself adds no harm. ``quarantine`` / ``refuse`` are
+#     the acting decisions (side-region allocation, allocation refusal) and stay
+#     recorded no-ops until step 3.
 # ---------------------------------------------------------------------------
-# Write-path governance DECISIONS. Only ALLOW exists in step 1; the acting
-# decisions a later step would add (quarantine to a side region, refuse the
-# allocation) are deliberately NOT implemented here (PR7_DESIGN.md §4, §13.1).
 GOVERN_ALLOW = "allow"
 GOVERN_ACTIONS = ("none", "annotate", "quarantine", "refuse")
-# The only action whose behavior is implemented in step 1 (all are no-ops, so
-# this is the full set of "implemented" actions — i.e., none acts yet).
-GOVERN_IMPLEMENTED_ACTIONS = ("none",)
+# Actions whose behavior is implemented. Step 2 implements ``annotate`` (the
+# null-action floor — it commits the write exactly as baseline); ``quarantine``
+# and ``refuse`` remain recorded no-ops until step 3.
+GOVERN_IMPLEMENTED_ACTIONS = ("none", "annotate")
 
 
 class GovernanceHook:
-    """Opt-in write-path governance seam — PR-7 step 1 (boundary scaffold).
+    """Opt-in write-path governance seam — PR-7 (PR7_DESIGN.md §4).
 
     The PR-7 twin-run harness (PR7_DESIGN.md §5) needs ONE place where the
     *experimental* writer can act on an already-classified write event before
@@ -177,16 +183,19 @@ class GovernanceHook:
     (PR7_DESIGN.md §4 — "where the action lives is the whole safety
     argument").
 
-    Step 1 only WIRES the seam. For EVERY action, including the real ones,
-    :meth:`decide` is a recorded no-op that returns :data:`GOVERN_ALLOW`, so
-    the writer makes byte-identical write decisions to the ungoverned baseline
-    (PR7_DESIGN.md §13.1). The hook records which action was requested and the
-    write-time outcomes it observed (write-path provenance only — the path-2
-    ledger PR-6 §3 deferred is NOT opened); it never reads, mutates, or
-    imports engine retrieval state. No governance behavior, write refusal,
-    quarantine, deprecation, trust action, geometry gate, or one-shot
-    classification is implemented here — those are later PR-7 steps and
-    explicitly out of step-1 scope (PR7_DESIGN.md §12).
+    :meth:`decide` returns a write decision for an already-classified event.
+    ``none`` (baseline) and ``annotate`` (step 2) both return
+    :data:`GOVERN_ALLOW`: the write is committed exactly as the baseline would.
+    ``annotate`` is the NULL-ACTION FLOOR — it records a write-time
+    merge_suspect annotation on the supersession (merge-suspect absorb) event
+    but changes nothing the writer does, so every emitted/scored artifact is
+    byte-identical to the ungoverned baseline (PR7_DESIGN.md §4: annotate "must
+    cost nothing"). The annotation is write-path provenance only — NOT the
+    record-granularity ledger PR-6 §3 deferred (path 2 stays closed), and the
+    hook never reads, mutates, or imports engine retrieval state. ``quarantine``
+    / ``refuse`` (the acting decisions) stay recorded no-ops here and are
+    implemented in step 3; no read-time / slot-granularity trust, geometry gate,
+    or one-shot classification is implemented at any step (PR7_DESIGN.md §12).
     """
 
     def __init__(self, action: str = "none"):
@@ -195,34 +204,58 @@ class GovernanceHook:
                 f"--govern must be one of {GOVERN_ACTIONS}; got {action!r}")
         self.action = action
         self.events_seen = 0
+        self.annotated_events = 0
         self.outcome_counts: dict = {}
 
     @property
     def active(self) -> bool:
-        """True iff a non-baseline action was requested. Step 1 is a no-op
-        even when active; this only gates provenance emission so a baseline
-        (``none``) run stays byte-identical to the pre-seam driver."""
+        """True iff a non-baseline action was requested. This only gates
+        provenance emission so a baseline (``none``) run stays byte-identical to
+        the pre-seam driver; ``annotate`` is active but, being the null-action
+        floor, still emits byte-identical scored artifacts (only the summary's
+        ``govern`` provenance block differs)."""
         return self.action != "none"
+
+    @property
+    def implemented(self) -> bool:
+        """True iff this action's behavior is implemented (vs a recorded
+        no-op held for a later step)."""
+        return self.action in GOVERN_IMPLEMENTED_ACTIONS
 
     def decide(self, event_class: str, outcome: str) -> str:
         """Observe one already-classified write event; return its write
-        decision. STEP 1: always :data:`GOVERN_ALLOW`, for every action — a
-        recorded no-op. The write is committed exactly as the baseline would.
-        Acting on a non-ALLOW decision is later-step work."""
+        decision. Returns :data:`GOVERN_ALLOW` for ``none`` and ``annotate``
+        (the write is committed exactly as the baseline) and, until step 3,
+        for ``quarantine`` / ``refuse`` too (recorded no-ops).
+
+        ``annotate`` additionally records a write-time merge_suspect annotation
+        on the supersession event — write-path provenance that changes nothing
+        the writer does, so scored output stays byte-identical (the null-action
+        floor, PR7_DESIGN.md §4)."""
         self.events_seen += 1
         self.outcome_counts[outcome] = self.outcome_counts.get(outcome, 0) + 1
+        if self.action == "annotate" and event_class == EVENT_SUPERSESSION:
+            self.annotated_events += 1
         return GOVERN_ALLOW
 
     def provenance(self) -> dict:
         """Write-path provenance for the run summary (emitted only when
         :attr:`active`, so ``none`` stays byte-identical to the old driver)."""
-        return {
+        prov = {
             "action": self.action,
-            "step": "pr7-step1-noop",
+            "step": "pr7-step2-annotate" if self.action == "annotate"
+                    else "pr7-step1-noop",
+            "implemented": self.implemented,
             "implemented_actions": list(GOVERN_IMPLEMENTED_ACTIONS),
             "events_seen": self.events_seen,
             "outcome_counts": dict(sorted(self.outcome_counts.items())),
         }
+        if self.action == "annotate":
+            prov["annotated_events"] = self.annotated_events
+            prov["annotation"] = (
+                "write-time merge_suspect stamp on supersession; read-time "
+                "no-op (null-action floor, PR7_DESIGN.md §4)")
+        return prov
 
 
 @dataclass
@@ -1024,7 +1057,7 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
     rng = torch.Generator().manual_seed(seed + 1)
     jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
-    hook = GovernanceHook(govern)  # PR-7 step-1 seam (no-op for every action)
+    hook = GovernanceHook(govern)  # PR-7 write-path seam (annotate=floor; q/r no-op)
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes, max_entries=1024,
                         dynamic_vigilance=DynamicVigilance(),
                         retrieval_floor_policy=RetrievalFloorPolicy(),
@@ -1153,7 +1186,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     rng = torch.Generator().manual_seed(seed + 1)
     jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
-    hook = GovernanceHook(govern)  # PR-7 step-1 seam (no-op for every action)
+    hook = GovernanceHook(govern)  # PR-7 write-path seam (annotate=floor; q/r no-op)
     group = None
     if arm in ("stale", "mixed"):
         if not (0 < supersede_epoch < epochs):
@@ -1306,9 +1339,11 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
             "n_phase2_writes": len(group.phase2_ids),
             "fork_resolution": resolve_fork_outcome(epoch_log),
         })
-    # PR-7 step 1: record the (no-op) governance action only when a non-
-    # baseline action was requested, so a `none`/no-flag run's summary stays
-    # byte-identical to the pre-seam driver (PR7_DESIGN.md §11 test 1).
+    # PR-7: record the governance action only when a non-baseline action was
+    # requested, so a `none`/no-flag run's summary stays byte-identical to the
+    # pre-seam driver (PR7_DESIGN.md §11 test 1). `annotate` is active but the
+    # null-action floor, so only this provenance block differs from baseline —
+    # every emitted/scored artifact stays byte-identical (PR7_DESIGN.md §4).
     if hook.active:
         summary["govern"] = hook.provenance()
     return total, summary

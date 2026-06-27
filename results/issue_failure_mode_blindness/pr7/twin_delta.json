@@ -1,0 +1,122 @@
+{
+ "both_shapes_detail": {
+  "improved_harm_shapes": [],
+  "regressed_harm_shapes": [],
+  "rule": "a candidate that improves one harm shape while worsening another fails, full stop (PR7_DESIGN \u00a78.5)."
+ },
+ "both_shapes_ok": true,
+ "cells": {
+  "clean_control": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "not_worsen",
+   "harm_shape": "none",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairA"
+   ],
+   "payload_mode": null,
+   "per_pair": {},
+   "pre_registered_margin": {
+    "improve_min": 0,
+    "rationale": "null-action floor \u2014 must cost exactly nothing (PR7_DESIGN \u00a74/\u00a78.4)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "collateral_harm": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "not_worsen",
+   "harm_shape": "collateral",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairB",
+    "pairE"
+   ],
+   "payload_mode": null,
+   "per_pair": {},
+   "pre_registered_margin": {
+    "improve_min": 0,
+    "rationale": "null-action floor \u2014 must cost exactly nothing (PR7_DESIGN \u00a74/\u00a78.4)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "direct_harm": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "improve",
+   "harm_shape": "direct",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairD"
+   ],
+   "payload_mode": null,
+   "per_pair": {},
+   "pre_registered_margin": {
+    "improve_min": 0,
+    "rationale": "null-action floor \u2014 must cost exactly nothing (PR7_DESIGN \u00a74/\u00a78.4)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "merge_path_stale": {
+   "capture_stable": null,
+   "frozen_probe_broken_delta_total": 0,
+   "guard": "capture_stable",
+   "harm_shape": "write-time-stale-capture",
+   "improved": false,
+   "merge_suspect_capture_delta_total": 0,
+   "pairs": [
+    "pairA",
+    "pairD",
+    "pairE",
+    "pairB"
+   ],
+   "payload_mode": "soft",
+   "per_pair": {},
+   "pre_registered_margin": {
+    "improve_min": 0,
+    "rationale": "null-action floor \u2014 must cost exactly nothing (PR7_DESIGN \u00a74/\u00a78.4)",
+    "worsen_tol": 0
+   },
+   "regressed": false,
+   "verdict": "inconclusive"
+  },
+  "one_shot_ambiguity": {
+   "guard": null,
+   "harm_shape": "ambiguous-evidence (observe-only)",
+   "note": "certified insufficient evidence; carries no hazard label and must never be scored pass/fail (PR7_DESIGN \u00a712).",
+   "verdict": "observe_only"
+  }
+ },
+ "conclusions_enforced": [
+  "static geometry cannot certify safety (PR-5 step 1)",
+  "both D-like direct and B/E-like collateral harm remain required",
+  "one-shot ambiguity stays observe-only (never scored pass/fail)",
+  "merge-path stale capture must hold 192/seed across geometry",
+  "slot-granularity / read-time trust stays closed; the frozen probe is only the measurand, never a deployment candidate",
+  "deployed retrieval remains unchanged"
+ ],
+ "deployed_engine_sha256_parity": true,
+ "design": "PR7_DESIGN.md \u00a75 \u2014 write-path twin-run",
+ "engine_or_retrieval_change": false,
+ "frozen_detector": {
+  "fit_csv": "results/issue_failure_mode_blindness/pr3/frozen_fit.csv",
+  "fit_summary": "results/issue_failure_mode_blindness/pr3/frozen_fit.summary.json"
+ },
+ "geometry_used_as_gate": false,
+ "govern_action": "annotate",
+ "new_cache_runs": 0,
+ "overall_verdict": "baseline_only",
+ "probe_policy": "mode-conditioned-trust",
+ "scope": "certifies nothing beyond the enumerated cells; no generalization to unseen geometry",
+ "scored_cells": []
+}

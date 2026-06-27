@@ -46,9 +46,9 @@ def test_overall_is_zero_delta_pass(delta):
     assert delta["govern_action"] == "annotate"
     assert delta["overall_verdict"] == "pass"
     assert delta["both_shapes_ok"] is True
-    # exactly the 3 governed annotate seeds of the one scored cell.
-    assert delta["new_cache_runs"] == 3
-    assert delta["scored_cells"] == ["clean_control"]
+    # clean_control is one of the scored cells (step 4 adds merge_path_stale;
+    # this test owns only the clean_control contribution).
+    assert "clean_control" in delta["scored_cells"]
 
 
 def test_clean_control_costs_nothing(delta):
@@ -67,9 +67,10 @@ def test_clean_control_costs_nothing(delta):
         assert all(v == 0 for v in seed_delta.values())
 
 
-def test_other_cells_stay_unscored(delta):
-    # only pairA clean-control was run; the hazard cells have no governed arm.
-    for cell in ("direct_harm", "collateral_harm", "merge_path_stale"):
+def test_direct_collateral_stay_unscored(delta):
+    # no acting-arm cells were run (those are quarantine/refuse, a later step);
+    # direct/collateral harm have no governed arm and stay inconclusive.
+    for cell in ("direct_harm", "collateral_harm"):
         assert delta["cells"][cell]["verdict"] == "inconclusive"
     # one-shot ambiguity is never scored pass/fail (PR7_DESIGN §12).
     assert delta["cells"]["one_shot_ambiguity"]["verdict"] == "observe_only"

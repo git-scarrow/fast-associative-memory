@@ -1,6 +1,8 @@
 {
  "both_shapes_detail": {
   "improved_harm_shapes": [
+   "collateral",
+   "direct",
    "write-time-stale-capture"
   ],
   "regressed_harm_shapes": [],
@@ -9,6 +11,27 @@
  "both_shapes_ok": true,
  "cells": {
   "clean_control": {
+   "acting_arm_accounting": {
+    "action_kind": "acting_arm",
+    "capture_delta_total": 0,
+    "capture_preservation": "n/a",
+    "collateral_delta_total": 0,
+    "direct_delta_total": 0,
+    "disposition": "retained_recoverable_excluded_from_active_state",
+    "expected_capture_effect": "retained: the quarantine arm diverts the merge-suspect write to a recoverable side ledger excluded from the active memory state / deployed read vote; capture_delta \u2248 opportunity_count is INTENDED removal from the active state, but the payload is retained recoverable in the ledger, not destroyed",
+    "opportunity_count": 0,
+    "quarantine_ledger": {
+     "absorbed_into_active_memory": false,
+     "opportunity_count": 0,
+     "payload_label_histogram": {},
+     "quarantined_count": 0,
+     "retained_recoverable": true
+    },
+    "readout_broken_delta_total": 0,
+    "readout_stale_wrong_delta_total": 0,
+    "refused_count": 0
+   },
+   "action_kind": "acting_arm",
    "capture_stable": null,
    "frozen_probe_broken_delta_total": 0,
    "guard": "not_worsen",
@@ -51,7 +74,70 @@
       }
      },
      "baseline_present": true,
-     "governed_present": false
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
     }
    },
    "pre_registered_margin": {
@@ -60,48 +146,384 @@
     "worsen_tol": 0
    },
    "regressed": false,
-   "verdict": "inconclusive"
+   "verdict": "pass"
   },
   "collateral_harm": {
+   "acting_arm_accounting": {
+    "action_kind": "acting_arm",
+    "capture_delta_total": 1152,
+    "capture_preservation": "n/a",
+    "collateral_delta_total": 5,
+    "direct_delta_total": 27,
+    "disposition": "retained_recoverable_excluded_from_active_state",
+    "expected_capture_effect": "retained: the quarantine arm diverts the merge-suspect write to a recoverable side ledger excluded from the active memory state / deployed read vote; capture_delta \u2248 opportunity_count is INTENDED removal from the active state, but the payload is retained recoverable in the ledger, not destroyed",
+    "opportunity_count": 1152,
+    "quarantine_ledger": {
+     "absorbed_into_active_memory": false,
+     "opportunity_count": 1152,
+     "payload_label_histogram": {
+      "3": 1152
+     },
+     "quarantined_count": 1152,
+     "retained_recoverable": true
+    },
+    "readout_broken_delta_total": 32,
+    "readout_stale_wrong_delta_total": 207,
+    "refused_count": 1152
+   },
+   "action_kind": "acting_arm",
    "capture_stable": null,
-   "frozen_probe_broken_delta_total": 0,
+   "frozen_probe_broken_delta_total": 32,
    "guard": "not_worsen",
    "harm_shape": "collateral",
-   "improved": false,
-   "merge_suspect_capture_delta_total": 0,
+   "improved": true,
+   "merge_suspect_capture_delta_total": 1152,
    "pairs": [
     "pairB",
     "pairE"
    ],
    "payload_mode": null,
-   "per_pair": {},
+   "per_pair": {
+    "pairB": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 7,
+       "frozen_probe_acted": 1160,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 375
+      },
+      "1": {
+       "contradiction_pairs": 19,
+       "frozen_probe_acted": 1331,
+       "frozen_probe_broken": 1,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 1,
+       "merge_suspect_events": 192,
+       "stale_wrong": 340
+      },
+      "2": {
+       "contradiction_pairs": 12,
+       "frozen_probe_acted": 1332,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 361
+      }
+     },
+     "baseline_present": true,
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 451,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 42
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 598,
+       "frozen_probe_broken": 1,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 1,
+       "merge_suspect_events": 192,
+       "stale_wrong": 72
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 636,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 53
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 7,
+       "frozen_probe_acted": 709,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 333
+      },
+      "1": {
+       "contradiction_pairs": 19,
+       "frozen_probe_acted": 733,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 268
+      },
+      "2": {
+       "contradiction_pairs": 12,
+       "frozen_probe_acted": 696,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 308
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
+    },
+    "pairE": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2045,
+       "frozen_probe_broken": 74,
+       "frozen_probe_collateral_br": 22,
+       "frozen_probe_direct_br": 52,
+       "merge_suspect_events": 192,
+       "stale_wrong": 393
+      },
+      "1": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2261,
+       "frozen_probe_broken": 40,
+       "frozen_probe_collateral_br": 19,
+       "frozen_probe_direct_br": 21,
+       "merge_suspect_events": 192,
+       "stale_wrong": 393
+      },
+      "2": {
+       "contradiction_pairs": 22,
+       "frozen_probe_acted": 2294,
+       "frozen_probe_broken": 24,
+       "frozen_probe_collateral_br": 7,
+       "frozen_probe_direct_br": 17,
+       "merge_suspect_events": 192,
+       "stale_wrong": 378
+      }
+     },
+     "baseline_present": true,
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 139,
+       "frozen_probe_broken": 16,
+       "frozen_probe_collateral_br": 2,
+       "frozen_probe_direct_br": 14,
+       "merge_suspect_events": 192,
+       "stale_wrong": 5
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 225,
+       "frozen_probe_broken": 15,
+       "frozen_probe_collateral_br": 5,
+       "frozen_probe_direct_br": 10,
+       "merge_suspect_events": 192,
+       "stale_wrong": 17
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 298,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": -2,
+       "frozen_probe_direct_br": 2,
+       "merge_suspect_events": 192,
+       "stale_wrong": 18
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 1906,
+       "frozen_probe_broken": 58,
+       "frozen_probe_collateral_br": 20,
+       "frozen_probe_direct_br": 38,
+       "merge_suspect_events": 0,
+       "stale_wrong": 388
+      },
+      "1": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2036,
+       "frozen_probe_broken": 25,
+       "frozen_probe_collateral_br": 14,
+       "frozen_probe_direct_br": 11,
+       "merge_suspect_events": 0,
+       "stale_wrong": 376
+      },
+      "2": {
+       "contradiction_pairs": 22,
+       "frozen_probe_acted": 1996,
+       "frozen_probe_broken": 24,
+       "frozen_probe_collateral_br": 9,
+       "frozen_probe_direct_br": 15,
+       "merge_suspect_events": 0,
+       "stale_wrong": 360
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
+    }
+   },
    "pre_registered_margin": {
     "improve_min": 1,
     "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: quarantine diverts the merge-suspect event out of the active state by design, but RETAINS it recoverable in the ledger); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
     "worsen_tol": 0
    },
    "regressed": false,
-   "verdict": "inconclusive"
+   "verdict": "pass"
   },
   "direct_harm": {
+   "acting_arm_accounting": {
+    "action_kind": "acting_arm",
+    "capture_delta_total": 576,
+    "capture_preservation": "n/a",
+    "collateral_delta_total": 26,
+    "direct_delta_total": 85,
+    "disposition": "retained_recoverable_excluded_from_active_state",
+    "expected_capture_effect": "retained: the quarantine arm diverts the merge-suspect write to a recoverable side ledger excluded from the active memory state / deployed read vote; capture_delta \u2248 opportunity_count is INTENDED removal from the active state, but the payload is retained recoverable in the ledger, not destroyed",
+    "opportunity_count": 576,
+    "quarantine_ledger": {
+     "absorbed_into_active_memory": false,
+     "opportunity_count": 576,
+     "payload_label_histogram": {
+      "3": 576
+     },
+     "quarantined_count": 576,
+     "retained_recoverable": true
+    },
+    "readout_broken_delta_total": 111,
+    "readout_stale_wrong_delta_total": 300,
+    "refused_count": 576
+   },
+   "action_kind": "acting_arm",
    "capture_stable": null,
-   "frozen_probe_broken_delta_total": 0,
+   "frozen_probe_broken_delta_total": 111,
    "guard": "improve",
    "harm_shape": "direct",
-   "improved": false,
-   "merge_suspect_capture_delta_total": 0,
+   "improved": true,
+   "merge_suspect_capture_delta_total": 576,
    "pairs": [
     "pairD"
    ],
    "payload_mode": null,
-   "per_pair": {},
+   "per_pair": {
+    "pairD": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1455,
+       "frozen_probe_broken": 112,
+       "frozen_probe_collateral_br": 50,
+       "frozen_probe_direct_br": 62,
+       "merge_suspect_events": 192,
+       "stale_wrong": 375
+      },
+      "1": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1649,
+       "frozen_probe_broken": 180,
+       "frozen_probe_collateral_br": 54,
+       "frozen_probe_direct_br": 126,
+       "merge_suspect_events": 192,
+       "stale_wrong": 318
+      },
+      "2": {
+       "contradiction_pairs": 23,
+       "frozen_probe_acted": 1318,
+       "frozen_probe_broken": 46,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 46,
+       "merge_suspect_events": 192,
+       "stale_wrong": 326
+      }
+     },
+     "baseline_present": true,
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 206,
+       "frozen_probe_broken": 41,
+       "frozen_probe_collateral_br": 26,
+       "frozen_probe_direct_br": 15,
+       "merge_suspect_events": 192,
+       "stale_wrong": 127
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 205,
+       "frozen_probe_broken": 56,
+       "frozen_probe_collateral_br": 4,
+       "frozen_probe_direct_br": 52,
+       "merge_suspect_events": 192,
+       "stale_wrong": 69
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 198,
+       "frozen_probe_broken": 14,
+       "frozen_probe_collateral_br": -4,
+       "frozen_probe_direct_br": 18,
+       "merge_suspect_events": 192,
+       "stale_wrong": 104
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1249,
+       "frozen_probe_broken": 71,
+       "frozen_probe_collateral_br": 24,
+       "frozen_probe_direct_br": 47,
+       "merge_suspect_events": 0,
+       "stale_wrong": 248
+      },
+      "1": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1444,
+       "frozen_probe_broken": 124,
+       "frozen_probe_collateral_br": 50,
+       "frozen_probe_direct_br": 74,
+       "merge_suspect_events": 0,
+       "stale_wrong": 249
+      },
+      "2": {
+       "contradiction_pairs": 23,
+       "frozen_probe_acted": 1120,
+       "frozen_probe_broken": 32,
+       "frozen_probe_collateral_br": 4,
+       "frozen_probe_direct_br": 28,
+       "merge_suspect_events": 0,
+       "stale_wrong": 222
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
+    }
+   },
    "pre_registered_margin": {
     "improve_min": 1,
     "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: quarantine diverts the merge-suspect event out of the active state by design, but RETAINS it recoverable in the ledger); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
     "worsen_tol": 0
    },
    "regressed": false,
-   "verdict": "inconclusive"
+   "verdict": "pass"
   },
   "merge_path_stale": {
    "acting_arm_accounting": {
@@ -270,11 +692,14 @@
  },
  "geometry_used_as_gate": false,
  "govern_action": "quarantine",
- "new_cache_runs": 3,
+ "new_cache_runs": 15,
  "overall_verdict": "needs_review",
  "probe_policy": "mode-conditioned-trust",
  "scope": "certifies nothing beyond the enumerated cells; no generalization to unseen geometry",
  "scored_cells": [
+  "clean_control",
+  "collateral_harm",
+  "direct_harm",
   "merge_path_stale"
  ]
 }

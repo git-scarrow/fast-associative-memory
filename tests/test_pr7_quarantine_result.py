@@ -63,7 +63,18 @@ def test_quarantine_is_needs_review_not_fail_not_pass(delta):
     # an acting arm that helped and did not regress: surfaced for review, never
     # auto-passed, never discarded as a flat fail.
     assert delta["overall_verdict"] == "needs_review"
-    assert delta["scored_cells"] == ["merge_path_stale"]
+    # PR-7 step 8 (read-time panel) added the quarantine arms for the three
+    # read-time cells, so the panel now scores all four (was merge_path_stale
+    # only at step 6). The overall verdict is still needs_review: the read-time
+    # cells pass on the ordinary improve/not_worsen guards while merge_path_stale
+    # holds at needs_review (acting arm, capture consumed by design), and
+    # verdicts <= {pass, needs_review} -> needs_review. Scorer logic unchanged.
+    assert delta["scored_cells"] == [
+        "clean_control", "collateral_harm", "direct_harm", "merge_path_stale"]
+    assert delta["both_shapes_ok"] is True
+    assert delta["both_shapes_detail"]["regressed_harm_shapes"] == []
+    for c in ("clean_control", "collateral_harm", "direct_harm"):
+        assert delta["cells"][c]["verdict"] == "pass"
     cell = delta["cells"]["merge_path_stale"]
     assert cell["verdict"] == "needs_review"
     assert cell["guard"] == "capture_stable"

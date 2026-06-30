@@ -88,11 +88,12 @@ def test_quarantine_accounting_and_recoverable_ledger(delta):
     acc = delta["cells"]["merge_path_stale"]["acting_arm_accounting"]
     assert acc["action_kind"] == "acting_arm"
     assert acc["capture_preservation"] == "not_applicable_acting_arm"
-    # every merge-suspect event (192/seed × 3) was diverted; the capture delta
-    # equals that opportunity exactly — removal from the active state is intended.
-    assert acc["opportunity_count"] == 576
-    assert acc["refused_count"] == 576          # intercepted (quarantined) count
-    assert acc["capture_delta_total"] == 576
+    # PR-7 G2 completed the cell: all four geometries {A,B,D,E}, 192 merge-suspect
+    # events/seed × 3 seeds × 4 pairs = 2304 diverted; the capture delta equals
+    # that opportunity exactly — removal from the active state is intended.
+    assert acc["opportunity_count"] == 2304
+    assert acc["refused_count"] == 2304         # intercepted (quarantined) count
+    assert acc["capture_delta_total"] == 2304
     # quarantine RETAINS (does not destroy): the expected-capture-effect and the
     # disposition both say retained/recoverable, unlike refuse's "consumed".
     assert "retained" in acc["expected_capture_effect"]
@@ -101,14 +102,17 @@ def test_quarantine_accounting_and_recoverable_ledger(delta):
     # the recoverable ledger — the whole point vs refuse: payloads kept, not
     # discarded, with full per-label accounting.
     ledger = acc["quarantine_ledger"]
-    assert ledger["opportunity_count"] == 576
-    assert ledger["quarantined_count"] == 576
+    assert ledger["opportunity_count"] == 2304
+    assert ledger["quarantined_count"] == 2304
     assert ledger["retained_recoverable"] is True
     assert ledger["absorbed_into_active_memory"] is False
-    assert sum(ledger["payload_label_histogram"].values()) == 576
-    # readout improved (baseline − governed > 0); collateral did not regress.
-    assert acc["readout_broken_delta_total"] == 111
-    assert acc["readout_stale_wrong_delta_total"] == 300
+    assert sum(ledger["payload_label_histogram"].values()) == 2304
+    # readout improved in aggregate (baseline − governed > 0); collateral did not
+    # regress in aggregate. Per-geometry: broken +143 (A 0 / B 1 / D 111 / E 31),
+    # stale_wrong +550, collateral +31. (The one per-seed collateral breach,
+    # pairD s2 −4, is a G4 concern surfaced by the per-seed audit, not here.)
+    assert acc["readout_broken_delta_total"] == 143
+    assert acc["readout_stale_wrong_delta_total"] == 550
     assert acc["collateral_delta_total"] >= 0
     assert acc["direct_delta_total"] >= 0
 
@@ -167,18 +171,25 @@ def test_quarantine_matches_refuse_readout_but_retains_where_refuse_discards(del
     """The comparator point: in this engine-frozen harness quarantine and refuse
     have the SAME active-memory effect, so their read-time deltas are identical;
     quarantine's added value is the recoverable ledger (refuse keeps only a
-    count, with no retention/recoverability)."""
+    count, with no retention/recoverability).
+
+    refuse was only ever run on pairD (step 5); PR-7 G2 completed quarantine
+    across all four geometries {A,B,D,E}, so the aggregate accounting no longer
+    matches (quarantine 2304 vs refuse 576). The equivalence is therefore checked
+    at the **pairD per-pair** level, where both arms have data — that is the
+    geometry the comparator was established on, and the per-seed readout deltas
+    must still be identical (same writes removed from the active state)."""
     refuse = json.loads(REFUSE.read_text())
-    q_acc = delta["cells"]["merge_path_stale"]["acting_arm_accounting"]
-    r_acc = refuse["cells"]["merge_path_stale"]["acting_arm_accounting"]
-    # identical read-time / capture / collateral accounting.
-    for k in ("opportunity_count", "refused_count", "capture_delta_total",
-              "readout_broken_delta_total", "readout_stale_wrong_delta_total",
-              "collateral_delta_total", "direct_delta_total"):
-        assert q_acc[k] == r_acc[k], k
+    q_pairD = delta["cells"]["merge_path_stale"]["per_pair"]["pairD"]
+    r_pairD = refuse["cells"]["merge_path_stale"]["per_pair"]["pairD"]
+    # identical per-seed read-time / capture deltas on the shared geometry.
+    assert q_pairD["delta_by_seed"] == r_pairD["delta_by_seed"]
+    assert q_pairD["governed_by_seed"] == r_pairD["governed_by_seed"]
     # same overall verdict (both acting arms, helped, capture removed as designed).
     assert delta["overall_verdict"] == refuse["overall_verdict"] == "needs_review"
     # but only quarantine retains the diverted writes recoverable.
+    q_acc = delta["cells"]["merge_path_stale"]["acting_arm_accounting"]
+    r_acc = refuse["cells"]["merge_path_stale"]["acting_arm_accounting"]
     assert "quarantine_ledger" in q_acc and "quarantine_ledger" not in r_acc
     assert q_acc["quarantine_ledger"]["retained_recoverable"] is True
     assert q_acc["disposition"] == "retained_recoverable_excluded_from_active_state"

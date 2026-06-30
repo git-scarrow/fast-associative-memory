@@ -55,6 +55,7 @@ import csv
 import gzip
 import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 
 # --- engine constants mirrored here so the harness imports no torch ----------
@@ -65,6 +66,13 @@ SHADOW_ACTION = "shadow"
 SHADOW_STEP = "pr8-9a-shadow-quarantine-audit"
 QUARANTINE_ACTION = "quarantine"
 FLAGGED_DISPOSITION = "flagged_not_diverted"
+
+# The per-event key tuple the §9A flag-set-identity join uses, present on BOTH
+# the committed shadow fork_events.csv (as columns) and the quarantine ledger's
+# diverted_events list. Mirrors failure_mode_probe.QUARANTINE_DIVERTED_JOIN_KEY
+# (pinned equal by tests). A diverted write has no record_seq/owner_slot of its
+# own, so events are bridged by the incumbent identity they supersede.
+JOIN_KEY = ("epoch", "event_class", "incumbent_slot", "incumbent_last_write_seq")
 
 # --- artifact suffixes -------------------------------------------------------
 SUF_PER_PROBE = ".csv"
@@ -155,21 +163,28 @@ def _present_artifacts(stem: Path) -> dict[str, bool]:
     return out
 
 
-def _fork_supersession_keys(sha: ShaLog, fork_csv: Path) -> list[tuple]:
-    """Stable per-event keys for every committed supersession write in a
-    fork_events.csv: ``(record_tag, record_seq, owner_slot)``. record_seq is the
-    write sequence id assigned at write time, so this is a deterministic,
-    replay-stable identity for each event. A *diverted* (quarantined) write emits
-    NO fork_events row, so a quarantine run yields the empty list here — which is
-    exactly why §8-vs-§9A event-level identity is unprovable from committed
-    artifacts (see flag_set_identity)."""
+def _fork_supersession_rows(sha: ShaLog, fork_csv: Path) -> list[dict]:
+    """Full committed supersession rows from a fork_events.csv (one dict per
+    row). Empty for a quarantine run (its supersession writes were diverted and
+    emit no row)."""
     text = sha.text_of(fork_csv)
-    keys = []
-    for r in csv.DictReader(text.splitlines()):
-        if r.get("event_class") == SUPERSESSION_CLASS:
-            keys.append((r.get("record_tag"), r.get("record_seq"),
-                         r.get("owner_slot")))
-    return keys
+    return [r for r in csv.DictReader(text.splitlines())
+            if r.get("event_class") == SUPERSESSION_CLASS]
+
+
+def _join_key(d: dict) -> tuple:
+    """Normalize the JOIN_KEY tuple to strings so a CSV row (str fields) and a
+    JSON ledger event (int fields) compare equal field-by-field."""
+    return tuple(str(d.get(k)) for k in JOIN_KEY)
+
+
+def _mset_diff_to_list(counter: Counter) -> list:
+    """A multiset difference rendered as sorted [{key, count}] records (the
+    JOIN_KEY field names zipped back onto each tuple), for the JSON report."""
+    out = []
+    for key, n in sorted(counter.items()):
+        out.append({"key": dict(zip(JOIN_KEY, key)), "count": n})
+    return out
 
 
 def _summary_minus_govern(summary: dict) -> dict:
@@ -315,22 +330,25 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
     symmetric differences. Certification requires both differences empty AND that
     real per-event keys existed on both sides — equal counts are NOT sufficient.
 
-    Reality of the committed artifacts: a quarantined write is diverted before
-    the fork_events row is emitted, so the §8 side records diverted events ONLY
-    as an aggregate ``payload_label_histogram`` (no record_seq/slot per event).
-    The strongest §8-side key is therefore a per-label multiplicity histogram,
-    which the spec forbids as a basis for certification. So this check reports
-    ``identity-unprovable with current artifacts`` and the verdict cannot pass on
-    identity. It still certifies the *provable adjacent* claim — that the shadow
-    flagged set equals the none-baseline supersession set at full key
-    granularity — and reports histogram/count equality as explicitly
-    NON-certifying supporting evidence.
+    §8-diverted per-event keys come from the quarantine ledger's
+    ``diverted_events`` list (the audit instrumentation). A diverted write never
+    reaches ``write_fn`` so it has no record_seq/owner_slot of its own; both
+    sides are bridged by the incumbent identity each supersession supersedes
+    (:data:`JOIN_KEY`), which the shadow/none fork_events records as columns and
+    the ledger records per diverted event. The two sides are compared as
+    MULTISETS on that key, so equal counts alone never pass — both symmetric
+    differences must be empty. A LEGACY aggregate-only ledger (no
+    ``diverted_events``) yields ``identity-unprovable with current artifacts``.
     """
-    shadow_keys = _fork_supersession_keys(
-        sha, _artifact(shadow_stem, SUF_FORK))
-    none_keys = _fork_supersession_keys(sha, _artifact(none_stem, SUF_FORK))
+    shadow_rows = _fork_supersession_rows(sha, _artifact(shadow_stem, SUF_FORK))
+    none_rows = _fork_supersession_rows(sha, _artifact(none_stem, SUF_FORK))
+    # (record_tag, record_seq, owner_slot) anchors shadow self-consistency and
+    # the provable shadow ≡ baseline sub-claim (shadow's own committed events).
+    def _anchor(r):
+        return (r.get("record_tag"), r.get("record_seq"), r.get("owner_slot"))
+    shadow_keys = [_anchor(r) for r in shadow_rows]
+    none_keys = [_anchor(r) for r in none_rows]
 
-    # shadow ledger flagged_count (self-consistency anchor)
     shadow_gov = (sha.json_of(_artifact(shadow_stem, SUF_SUMMARY))
                   .get("govern") or {})
     shadow_ledger = shadow_gov.get("quarantine_ledger") or {}
@@ -338,11 +356,11 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
     shadow_hist = shadow_ledger.get("payload_label_histogram") or {}
 
     self_consistent = (len(shadow_keys) == shadow_flagged_count)
-    # provable sub-claim: shadow flags exactly the baseline supersession events
     shadow_set, none_set = set(shadow_keys), set(none_keys)
     shadow_equals_baseline = (shadow_set == none_set)
 
     out = {
+        "join_key": list(JOIN_KEY),
         "shadow_flagged_set_size": len(shadow_keys),
         "shadow_flagged_distinct_keys": len(shadow_set),
         "shadow_ledger_flagged_count": shadow_flagged_count,
@@ -352,14 +370,12 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
         "baseline_supersession_set_size": len(none_keys),
     }
 
-    # Attempt §8 quarantine-diverted per-event keys.
-    q_keys = []
+    # §8 quarantine-diverted per-event keys: from the ledger's diverted_events.
+    q_diverted = []
     q_hist = {}
     q_count = None
+    q_join_declared = None
     if quarantine_stem is not None:
-        q_fork = _artifact(quarantine_stem, SUF_FORK)
-        if q_fork.exists():
-            q_keys = _fork_supersession_keys(sha, q_fork)
         q_sum = _artifact(quarantine_stem, SUF_SUMMARY)
         if q_sum.exists():
             q_gov = sha.json_of(q_sum).get("govern") or {}
@@ -367,14 +383,20 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
             q_hist = q_ledger.get("payload_label_histogram") or {}
             q_count = q_gov.get("quarantined_events",
                                 q_ledger.get("quarantined_count"))
+            q_diverted = q_ledger.get("diverted_events") or []
+            q_join_declared = q_ledger.get("diverted_event_join_key")
 
-    diverted_keys_available = len(q_keys) > 0
+    diverted_keys_available = len(q_diverted) > 0
     out["quarantine_diverted_count"] = q_count
     out["quarantine_diverted_keys_available"] = diverted_keys_available
-
-    # Supporting (NON-certifying) evidence.
+    out["quarantine_diverted_event_records"] = len(q_diverted)
+    # Supporting (NON-certifying) evidence — never a basis for pass.
     out["non_certifying_histogram_equal"] = (shadow_hist == q_hist)
     out["non_certifying_count_equal"] = (shadow_flagged_count == q_count)
+    if q_join_declared and list(q_join_declared) != list(JOIN_KEY):
+        out["join_key_warning"] = (
+            f"ledger declares join key {q_join_declared}; harness joins on "
+            f"{list(JOIN_KEY)}")
 
     if not self_consistent:
         return {**out, "status": FAIL, "identity_status": "shadow-self-inconsistent",
@@ -383,12 +405,11 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
                           "record of committed events"}
 
     # Empty-set case (clean cells): nothing flagged on either side -> identity
-    # is the trivial ∅ == ∅, NOT "unprovable". Only a non-empty diverted set
-    # with no per-event key is unprovable.
+    # is the trivial ∅ == ∅, NOT "unprovable".
     if (shadow_flagged_count or 0) == 0:
         out.update({"intersection_size": 0, "diverted_minus_flagged": [],
                     "shadow_flagged_minus_diverted": []})
-        if q_count in (None, 0):
+        if q_count in (None, 0) and not q_diverted:
             return {**out, "status": PASS,
                     "identity_status": "identity-proven-empty"}
         return {**out, "status": FAIL, "identity_status": "identity-violated",
@@ -396,23 +417,33 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
                           f"quarantine ledger reports {q_count} diverted"}
 
     if diverted_keys_available:
-        # Real keys on BOTH sides -> compute the true set relations.
-        q_set = set(q_keys)
-        inter = shadow_set & q_set
-        d_minus_f = sorted(q_set - shadow_set)
-        f_minus_d = sorted(shadow_set - q_set)
+        # Per-event keys on BOTH sides -> true MULTISET relations on JOIN_KEY.
+        shadow_mset = Counter(_join_key(r) for r in shadow_rows)
+        q_mset = Counter(_join_key(e) for e in q_diverted)
+        d_minus_f = q_mset - shadow_mset      # diverted but not flagged
+        f_minus_d = shadow_mset - q_mset      # flagged but not diverted
         proven = (not d_minus_f) and (not f_minus_d)
         out.update({
-            "intersection_size": len(inter),
-            "diverted_minus_flagged": d_minus_f,
-            "shadow_flagged_minus_diverted": f_minus_d,
+            "shadow_join_multiset_size": sum(shadow_mset.values()),
+            "quarantine_join_multiset_size": sum(q_mset.values()),
+            "intersection_size": sum((shadow_mset & q_mset).values()),
+            "diverted_minus_flagged": _mset_diff_to_list(d_minus_f),
+            "shadow_flagged_minus_diverted": _mset_diff_to_list(f_minus_d),
         })
         return {**out,
                 "status": PASS if proven else FAIL,
                 "identity_status": "identity-proven" if proven
-                else "identity-violated"}
+                else "identity-violated",
+                "reason": (
+                    "decided by multiset join on the incumbent-identity key; "
+                    "non-empty symmetric difference means the shadow-flagged and "
+                    "§8-diverted event sets differ (note: incumbent keys are "
+                    "cross-arm stable only up to the first divergence)."
+                    if not proven else
+                    "shadow-flagged set == §8-diverted set on the incumbent "
+                    "key, both symmetric differences empty.")}
 
-    # No per-event key on the §8 side: identity is unprovable, NOT pass.
+    # Legacy aggregate-only ledger: no per-event keys -> unprovable, NOT pass.
     out.update({
         "intersection_size": None,
         "diverted_minus_flagged": None,
@@ -422,16 +453,14 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
             "status": INCOMPLETE,
             "identity_status": "identity-unprovable with current artifacts",
             "reason": (
-                "§8 quarantine diverts each supersession write BEFORE the "
-                "fork_events row is emitted, so the committed §8 artifacts record "
-                "diverted events only as an aggregate payload_label_histogram — "
-                "no record_seq/owner_slot per diverted event. No stable per-event "
-                "key exists on the §8 side to intersect against the shadow flagged "
-                "set, so event-level identity cannot be established from committed "
-                "artifacts (equal counts/histograms are explicitly non-certifying). "
-                "The deterministic record_seq keys exist by construction but are "
-                "not persisted on the §8 side; persisting them per diverted event "
-                "is the concrete unblock (out of scope for §9A).")}
+                "the quarantine ledger has no diverted_events list (a "
+                "pre-instrumentation aggregate-only ledger records diverted "
+                "events only as a payload_label_histogram). No per-event key "
+                "exists on the §8 side to intersect against the shadow flagged "
+                "set, so identity cannot be established (equal counts/histograms "
+                "are explicitly non-certifying). Re-run quarantine with the "
+                "diverted-key instrumentation (QUARANTINE_DIVERTED_JOIN_KEY) to "
+                "make identity decidable.")}
 
 
 # ---------------------------------------------------------------------------

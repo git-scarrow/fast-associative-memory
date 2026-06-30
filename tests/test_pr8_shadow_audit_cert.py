@@ -65,17 +65,31 @@ def _shadow_govern(flagged, hist):
         "reason": "audit-only shadow quarantine"}
 
 
-def _quarantine_govern(quarantined, hist):
+def _diverted_events(seqs, *, epoch=3):
+    """Per-event diverted keys keyed so JOIN_KEY (epoch, event_class,
+    incumbent_slot, incumbent_last_write_seq) matches the shadow fork rows built
+    by `_fork_row` (which set incumbent_slot == incumbent_last_write_seq == seq)."""
+    return [{"event_index": i, "epoch": epoch,
+             "event_class": cert.SUPERSESSION_CLASS, "batch_index": i,
+             "payload_label": 3, "incumbent_slot": s,
+             "incumbent_last_write_seq": s} for i, s in enumerate(seqs)]
+
+
+def _quarantine_govern(quarantined, hist, diverted_events=None):
+    ledger = {
+        "opportunity_count": quarantined, "quarantined_count": quarantined,
+        "retained_recoverable": True, "absorbed_into_active_memory": False,
+        "payload_label_histogram": hist, "reason": "diverted"}
+    if diverted_events is not None:
+        # post-instrumentation ledger: additive per-event keys
+        ledger["diverted_event_join_key"] = list(cert.JOIN_KEY)
+        ledger["diverted_events"] = diverted_events
     return {
         "action": cert.QUARANTINE_ACTION, "step": "pr7-step6-quarantine",
         "implemented": True, "events_seen": 100,
         "quarantined_events": quarantined,
         "quarantined_event_class": cert.SUPERSESSION_CLASS,
-        "quarantine_ledger": {
-            "opportunity_count": quarantined, "quarantined_count": quarantined,
-            "retained_recoverable": True, "absorbed_into_active_memory": False,
-            "payload_label_histogram": hist, "reason": "diverted"},
-        "reason": "quarantine"}
+        "quarantine_ledger": ledger, "reason": "quarantine"}
 
 
 def _write_run(stem: Path, *, fork_super_seqs, govern, base_summary,
@@ -103,23 +117,36 @@ def _write_run(stem: Path, *, fork_super_seqs, govern, base_summary,
         json.dumps(summary, indent=2))
 
 
-def _build_smoke_tree(root: Path, *, q_super_seqs_stale=()):
+def _build_smoke_tree(root: Path, *, quarantine_diverted="none"):
     """One stale (merge_path_stale/pairD) + one clean (clean_control/pairA),
-    seed 0, arms none/shadow/quarantine. By default the quarantine fork has NO
-    supersession rows (the real, key-less §8 case). ``q_super_seqs_stale`` injects
-    keys into the quarantine side to exercise the provable-identity branch."""
+    seed 0, arms none/shadow/quarantine.
+
+    ``quarantine_diverted`` controls the quarantine ledger's per-event keys:
+      * "none"     — legacy aggregate-only ledger (no diverted_events) -> the
+                     harness reports identity-unprovable;
+      * "match"    — diverted_events whose JOIN_KEY matches the shadow flagged
+                     rows -> identity-proven;
+      * "mismatch" — one diverted key differs -> identity-violated.
+    A diverted write emits NO fork_events row, so the quarantine fork is always
+    empty; the per-event keys live only in the ledger (as in the real probe)."""
     base = {"arm": "stale", "n_probes": 1, "readout": "frozen-87"}
     base_clean = {"arm": "clean", "n_probes": 1, "readout": "frozen-87"}
     stale_seqs = [100, 101, 102, 103]
+    if quarantine_diverted == "match":
+        q_div, clean_div = _diverted_events(stale_seqs), []
+    elif quarantine_diverted == "mismatch":
+        q_div, clean_div = _diverted_events([100, 101, 102, 999]), []
+    else:  # "none": pre-instrumentation ledger
+        q_div, clean_div = None, None
     # ----- merge_path_stale / pairD / s0 -----
     d = root / "merge_path_stale"
     _write_run(d / "none" / "stale_s0_pairD", fork_super_seqs=stale_seqs,
                govern=None, base_summary=base)
     _write_run(d / "shadow" / "stale_s0_pairD", fork_super_seqs=stale_seqs,
                govern=_shadow_govern(4, {"3": 4}), base_summary=base)
-    _write_run(d / "quarantine" / "stale_s0_pairD",
-               fork_super_seqs=list(q_super_seqs_stale),
-               govern=_quarantine_govern(4, {"3": 4}), base_summary=base)
+    _write_run(d / "quarantine" / "stale_s0_pairD", fork_super_seqs=[],
+               govern=_quarantine_govern(4, {"3": 4}, diverted_events=q_div),
+               base_summary=base)
     # ----- clean_control / pairA / s0 (clean: zero supersession; gz topk) -----
     c = root / "clean_control"
     _write_run(c / "none" / "clean_s0_pairA", fork_super_seqs=[],
@@ -128,8 +155,8 @@ def _build_smoke_tree(root: Path, *, q_super_seqs_stale=()):
                govern=_shadow_govern(0, {}), base_summary=base_clean,
                arm="clean", topk_gz=True)
     _write_run(c / "quarantine" / "clean_s0_pairA", fork_super_seqs=[],
-               govern=_quarantine_govern(0, {}), base_summary=base_clean,
-               arm="clean", topk_gz=True)
+               govern=_quarantine_govern(0, {}, diverted_events=clean_div),
+               base_summary=base_clean, arm="clean", topk_gz=True)
     return {
         "panel": "pr8-9a", "readout": "frozen-87", "mode": "smoke",
         "artifact_root": str(root), "seeds": [0],
@@ -253,23 +280,28 @@ def test_summary_non_govern_drift_fails_inertness(tmp_path):
 # persists per-event diverted keys: the harness must then certify or refute.
 # ---------------------------------------------------------------------------
 def test_identity_proven_when_quarantine_keys_match(tmp_path):
-    # quarantine side carries the SAME per-event keys shadow flagged -> proven
-    manifest = _build_smoke_tree(tmp_path, q_super_seqs_stale=[100, 101, 102, 103])
+    # ledger diverted_events JOIN_KEY matches the shadow flagged rows -> proven
+    manifest = _build_smoke_tree(tmp_path, quarantine_diverted="match")
     rep = cert.run_certification(manifest)
     fid = rep["runs"][0]["flag_set_identity"]
     assert fid["quarantine_diverted_keys_available"] is True
+    assert fid["quarantine_diverted_event_records"] == 4
     assert fid["identity_status"] == "identity-proven"
+    assert fid["intersection_size"] == 4
     assert fid["diverted_minus_flagged"] == []
     assert fid["shadow_flagged_minus_diverted"] == []
     assert rep["dimensions"]["flag_set_identity"] == cert.PASS
 
 
 def test_identity_violated_when_quarantine_keys_differ(tmp_path):
-    # quarantine diverted a DIFFERENT set than shadow flagged -> violated/fail
-    manifest = _build_smoke_tree(tmp_path, q_super_seqs_stale=[100, 101, 102, 999])
+    # ledger diverted a DIFFERENT incumbent than shadow flagged -> violated/fail
+    manifest = _build_smoke_tree(tmp_path, quarantine_diverted="mismatch")
     rep = cert.run_certification(manifest)
     fid = rep["runs"][0]["flag_set_identity"]
     assert fid["identity_status"] == "identity-violated"
+    assert fid["intersection_size"] == 3            # 3 of 4 keys coincide
+    assert len(fid["diverted_minus_flagged"]) == 1  # the 999 incumbent
+    assert len(fid["shadow_flagged_minus_diverted"]) == 1  # the 103 incumbent
     assert rep["dimensions"]["flag_set_identity"] == cert.FAIL
     assert rep["verdict"] == cert.FAIL
 
@@ -357,17 +389,26 @@ def test_real_probe_vision_smoke(tmp_path, seed):
                 "artifact_root": str(tmp_path), "seeds": [seed], "runs": runs}
     rep = cert.run_certification(manifest)
 
-    # Real artifacts: inertness + ledger + clean all certify; identity unprovable.
+    # Real artifacts: inertness + ledger + clean still certify.
     assert rep["dimensions"]["inertness"] == cert.PASS, rep["runs"][0]["inertness"]
     assert rep["dimensions"]["ledger_coverage"] == cert.PASS
     assert rep["dimensions"]["clean_control"] == cert.PASS
-    assert rep["dimensions"]["flag_set_identity"] == cert.INCOMPLETE
-    assert rep["verdict"] == cert.INCOMPLETE
-    # the stale run actually flagged supersession writes; clean flagged zero
     stale = next(r for r in rep["runs"] if r["cell"] == "merge_path_stale")
     clean = next(r for r in rep["runs"] if r["cell"] == "clean_control")
     assert stale["ledger"]["flagged_events"] > 0
     assert clean["ledger"]["flagged_events"] == 0
+
+    # The instrumentation made identity DECIDABLE on real artifacts: no longer
+    # "unprovable" — the harness now returns a proven/violated decision from the
+    # ledger's per-event keys. (On real divergent runs the incumbent-keyed join
+    # typically REFUTES once shadow commits and quarantine does not — the "or
+    # refute" half of the goal; the fixture tests own the proven case.)
+    fid = stale["flag_set_identity"]
+    assert fid["quarantine_diverted_keys_available"] is True
+    assert fid["quarantine_diverted_event_records"] == stale["ledger"][
+        "flagged_events"]
+    assert fid["identity_status"] in ("identity-proven", "identity-violated")
+    assert fid["intersection_size"] is not None  # a real join ran
 
 
 # ---------------------------------------------------------------------------
@@ -375,8 +416,9 @@ def test_real_probe_vision_smoke(tmp_path, seed):
 # ---------------------------------------------------------------------------
 def test_harness_constants_match_engine():
     from benchmarks.failure_mode_probe import (
-        EVENT_SUPERSESSION, GovernanceHook)
+        EVENT_SUPERSESSION, QUARANTINE_DIVERTED_JOIN_KEY, GovernanceHook)
     assert cert.SUPERSESSION_CLASS == EVENT_SUPERSESSION
+    assert tuple(cert.JOIN_KEY) == tuple(QUARANTINE_DIVERTED_JOIN_KEY)
     prov = GovernanceHook("shadow").provenance()
     assert cert.SHADOW_ACTION == prov["action"]
     assert cert.SHADOW_STEP == prov["step"]

@@ -204,6 +204,19 @@ GOVERN_IMPLEMENTED_ACTIONS = ("none", "annotate", "shadow", "quarantine",
 # (PR7_DESIGN.md §12; PR8 §9A).
 GOVERN_REFUSE_EVENT_CLASS = EVENT_SUPERSESSION
 GOVERN_QUARANTINE_EVENT_CLASS = EVENT_SUPERSESSION
+# The deterministic, write-time observables that identify ONE diverted
+# supersession event in the quarantine ledger's per-event ``diverted_events``
+# list. A diverted write never reaches ``write_fn`` (it returns []) so it has no
+# record_seq/owner_slot of its OWN; these incumbent-identity keys are read from
+# the pre-write observables and are ALSO committed columns in the shadow/none
+# fork_events.csv, so the §9A harness can join the two sides on this exact tuple
+# (the only event-addressable bridge that does not change fork_events schema).
+# NOTE: incumbent_last_write_seq is cross-arm stable only up to the first
+# diversion — afterwards shadow commits the supersession (bumping the incumbent)
+# while quarantine does not — so persisting these keys makes flag-set identity
+# DECIDABLE (proven or refuted), not automatically proven.
+QUARANTINE_DIVERTED_JOIN_KEY = ("epoch", "event_class", "incumbent_slot",
+                                "incumbent_last_write_seq")
 
 
 class GovernanceHook:
@@ -249,6 +262,12 @@ class GovernanceHook:
         self.shadow_label_counts: dict = {}
         self.quarantined_events = 0
         self.quarantine_label_counts: dict = {}
+        # Per-event diverted-write keys (audit instrumentation; aggregate fields
+        # above are unchanged). Populated only when ``record_quarantine`` is
+        # given ``diverted_events``; ``_diverted_seq`` is the run-global
+        # supersession-divert ordinal.
+        self.quarantine_diverted_events: list = []
+        self._diverted_seq = 0
         self.outcome_counts: dict = {}
 
     @property
@@ -300,7 +319,8 @@ class GovernanceHook:
             lab = int(lab)
             counts[lab] = counts.get(lab, 0) + 1
 
-    def record_quarantine(self, event_class: str, labels: list) -> None:
+    def record_quarantine(self, event_class: str, labels: list,
+                          diverted_events: list | None = None) -> None:
         """Divert one merge_suspect write event to the recoverable quarantine
         ledger (PR-7 step 6) instead of committing it to the active memory state.
 
@@ -311,10 +331,24 @@ class GovernanceHook:
         contributes to ``events_seen`` and is tallied in ``quarantined_events``,
         with a per-label payload-accounting histogram (``labels`` are the
         argmax-decoded payload labels of the diverted rows — plain ints, so the
-        hook holds no engine/tensor state)."""
+        hook holds no engine/tensor state).
+
+        ``diverted_events`` (audit instrumentation, optional) is a list of
+        deterministic PRE-WRITE per-event key dicts — one per diverted row —
+        recorded so the diverted set becomes event-addressable (§9A flag-set
+        identity). It is captured from observables already in hand at diversion
+        time and stored verbatim with a run-global ``event_index``; it changes
+        NONE of the aggregate fields, the divert decision, or any emitted
+        retrieval artifact (the keys live only in the summary ledger). Omitting
+        it (the default) reproduces the pre-instrumentation aggregate-only
+        behavior exactly, so existing callers/consumers are unaffected."""
         self.events_seen += len(labels)
         self.quarantined_events += len(labels)
         self._add_label_counts(self.quarantine_label_counts, labels)
+        for ev in (diverted_events or []):
+            self.quarantine_diverted_events.append(
+                {"event_index": self._diverted_seq, **ev})
+            self._diverted_seq += 1
 
     def record_shadow_flag(self, event_class: str, labels: list) -> None:
         """Record quarantine-eligible write rows without diverting them.
@@ -414,6 +448,12 @@ class GovernanceHook:
                     "the active memory state / deployed read vote, but retained "
                     "(payload accounting below), not destroyed; non-suspect "
                     "writes allowed unchanged (PR7_DESIGN.md §4 quarantine row)."),
+                # Audit instrumentation (additive; all fields above unchanged):
+                # per-event diverted keys that make the diverted set
+                # event-addressable for §9A flag-set identity. Empty when the
+                # caller did not supply keys (pre-instrumentation behavior).
+                "diverted_event_join_key": list(QUARANTINE_DIVERTED_JOIN_KEY),
+                "diverted_events": list(self.quarantine_diverted_events),
             }
             prov["reason"] = (
                 "write-time merge_suspect (supersession) writes quarantined "
@@ -757,7 +797,22 @@ def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
             return []
         if decision == GOVERN_QUARANTINE:
             labels = targets.argmax(dim=-1).reshape(-1).tolist()
-            hook.record_quarantine(event_class, labels)
+            # Audit instrumentation: capture deterministic per-event keys for
+            # each diverted row from the PRE-WRITE observables already computed
+            # above (no memory read, no RNG, no write — so every emitted
+            # retrieval artifact is byte-identical to the pre-instrumentation
+            # quarantine arm). The diverted write has no record_seq/owner_slot of
+            # its own (write_fn is never called), so the event is keyed by the
+            # incumbent it supersedes, which the shadow/none fork_events also
+            # records (QUARANTINE_DIVERTED_JOIN_KEY).
+            diverted = [
+                {"epoch": epoch, "event_class": event_class, "batch_index": j,
+                 "payload_label": int(labels[j]),
+                 "incumbent_slot": int(pre["incumbent_slot"][j]),
+                 "incumbent_last_write_seq":
+                     int(pre["incumbent_last_write_seq"][j])}
+                for j in range(len(labels))]
+            hook.record_quarantine(event_class, labels, diverted_events=diverted)
             return []
         if hook.action == "shadow" \
                 and event_class == GOVERN_QUARANTINE_EVENT_CLASS:

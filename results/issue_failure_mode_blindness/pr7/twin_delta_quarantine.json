@@ -1,4 +1,5 @@
 {
+ "aggregate_panel_and_g4_clear": false,
  "both_shapes_detail": {
   "improved_harm_shapes": [
    "collateral",
@@ -39,7 +40,8 @@
    "improved": false,
    "merge_suspect_capture_delta_total": 0,
    "pairs": [
-    "pairA"
+    "pairA",
+    "pairC"
    ],
    "payload_mode": null,
    "per_pair": {
@@ -138,7 +140,109 @@
       1,
       2
      ]
+    },
+    "pairC": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "baseline_present": true,
+     "delta_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "governed_by_seed": {
+      "0": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "1": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      },
+      "2": {
+       "contradiction_pairs": 0,
+       "frozen_probe_acted": 0,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 0,
+       "stale_wrong": 0
+      }
+     },
+     "governed_present": true,
+     "seeds_scored": [
+      0,
+      1,
+      2
+     ]
     }
+   },
+   "per_seed_collateral": {
+    "breaches": [],
+    "g4_ok": true,
+    "tolerance": 3,
+    "worst_seed_collateral_delta": 0
    },
    "pre_registered_margin": {
     "improve_min": 1,
@@ -377,6 +481,12 @@
      ]
     }
    },
+   "per_seed_collateral": {
+    "breaches": [],
+    "g4_ok": true,
+    "tolerance": 3,
+    "worst_seed_collateral_delta": -2
+   },
    "pre_registered_margin": {
     "improve_min": 1,
     "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: quarantine diverts the merge-suspect event out of the active state by design, but RETAINS it recoverable in the ledger); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
@@ -516,6 +626,18 @@
       2
      ]
     }
+   },
+   "per_seed_collateral": {
+    "breaches": [
+     {
+      "collateral_delta": -4,
+      "pair": "pairD",
+      "seed": 2
+     }
+    ],
+    "g4_ok": false,
+    "tolerance": 3,
+    "worst_seed_collateral_delta": -4
    },
    "pre_registered_margin": {
     "improve_min": 1,
@@ -948,6 +1070,18 @@
      ]
     }
    },
+   "per_seed_collateral": {
+    "breaches": [
+     {
+      "collateral_delta": -4,
+      "pair": "pairD",
+      "seed": 2
+     }
+    ],
+    "g4_ok": false,
+    "tolerance": 3,
+    "worst_seed_collateral_delta": -4
+   },
    "pre_registered_margin": {
     "improve_min": 1,
     "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: quarantine diverts the merge-suspect event out of the active state by design, but RETAINS it recoverable in the ledger); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
@@ -978,11 +1112,32 @@
   "fit_csv": "results/issue_failure_mode_blindness/pr3/frozen_fit.csv",
   "fit_summary": "results/issue_failure_mode_blindness/pr3/frozen_fit.summary.json"
  },
+ "g4_per_seed_collateral_breaches": [
+  {
+   "cell": "direct_harm",
+   "collateral_delta": -4,
+   "pair": "pairD",
+   "seed": 2
+  },
+  {
+   "cell": "merge_path_stale",
+   "collateral_delta": -4,
+   "pair": "pairD",
+   "seed": 2
+  }
+ ],
+ "g4_per_seed_collateral_ok": false,
+ "g4_tolerance": 3,
  "geometry_used_as_gate": false,
  "govern_action": "quarantine",
- "new_cache_runs": 24,
+ "new_cache_runs": 27,
  "overall_verdict": "needs_review",
  "probe_policy": "mode-conditioned-trust",
+ "promotion_blockers_this_scorer": [
+  "G4 per-seed collateral breach: direct_harm/pairD/s2 collateral_delta -4 (< -3)",
+  "G4 per-seed collateral breach: merge_path_stale/pairD/s2 collateral_delta -4 (< -3)"
+ ],
+ "promotion_note": "promotion also requires G3 recoverability (separate probe) and full-panel completeness; this scorer asserts only the aggregate panel + G4 per-seed.",
  "scope": "certifies nothing beyond the enumerated cells; no generalization to unseen geometry",
  "scored_cells": [
   "clean_control",

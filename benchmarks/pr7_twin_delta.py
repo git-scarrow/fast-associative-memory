@@ -60,9 +60,17 @@ SEEDS = (0, 1, 2)
 PAIR_CLASS_SETS = {
     "pairA": [0, 8, 19, 33],
     "pairB": [5, 27, 48, 86],
+    "pairC": [10, 29, 42, 67],
     "pairD": [10, 28, 32, 95],
     "pairE": [47, 56, 61, 76],
 }
+
+# Pre-registered per-seed collateral bound (PR7_QUARANTINE_PROMOTION_GATE §4 G4):
+# no seed, in any cell, may have collateral Δ (baseline − governed) < −this, i.e.
+# governed collateral may not exceed baseline by more than this on a single seed.
+# This closes the aggregate-masking gap the pairD-s2 / pairE-s2 upticks exposed.
+# The threshold is frozen by the gate memo; this constant only *implements* it.
+G4_PER_SEED_COLLATERAL_TOL = 3
 
 # The two engine files PR-7 keeps byte-frozen (PR7_DESIGN §1). The analyzer
 # records sha256 parity as an integrity field — it gates nothing, but a drift
@@ -87,7 +95,7 @@ FROZEN_DETECTOR = {
 #   not_worsen    — governed must NOT increase broken beyond tolerance (clean, B/E)
 #   capture_stable— write-time capture must hold (192/seed) and D/E not worsen
 CELL_SPEC = {
-    "clean_control":    {"pairs": ["pairA"],
+    "clean_control":    {"pairs": ["pairA", "pairC"],
                          "harm_shape": "none",       "guard": "not_worsen",
                          "payload_mode": None},
     "direct_harm":      {"pairs": ["pairD"],
@@ -302,6 +310,7 @@ def score_cell(cell: str, govern: str,
     direct_delta_total = 0
     opportunity_count = 0       # capturable merge-suspect events in the baseline
     refused_count = 0           # writes the acting arm actually refused
+    per_seed_collateral: list[dict] = []  # G4 per-seed collateral deltas
     any_governed = False
     for pair in spec["pairs"]:
         base = read_arm(cell, BASELINE_GOVERN, pair, twin_root)
@@ -332,6 +341,10 @@ def score_cell(cell: str, govern: str,
                                      for s in seeds)
             refused_count += _arm_intercepted_events(cell, govern, pair,
                                                      twin_root)
+            for s in seeds:
+                per_seed_collateral.append({
+                    "pair": pair, "seed": s,
+                    "collateral_delta": deltas[s]["frozen_probe_collateral_br"]})
         elif base is not None:
             entry["baseline_by_seed"] = base
         per_pair[pair] = entry
@@ -339,6 +352,23 @@ def score_cell(cell: str, govern: str,
     verdict, improved, regressed, capture_ok = _cell_verdict(
         spec, margins, broken_delta_total, capture_delta_total, any_governed,
         is_acting=is_acting, collateral_delta=collateral_delta_total)
+
+    # G4 per-seed collateral guard (PR7_QUARANTINE_PROMOTION_GATE §4 G4). A breach
+    # is a single seed whose governed collateral exceeds baseline by more than the
+    # frozen tolerance (collateral_delta < −tol). This is a PROMOTION gate, scored
+    # separately from the aggregate cell verdict above — it never changes the
+    # aggregate pass/needs_review verdict (which the committed per-action manifests
+    # pin), it only records whether the per-seed bound holds for promotion.
+    breaches = [d for d in per_seed_collateral
+                if d["collateral_delta"] < -G4_PER_SEED_COLLATERAL_TOL]
+    worst = (min((d["collateral_delta"] for d in per_seed_collateral), default=0)
+             if per_seed_collateral else 0)
+    per_seed_collateral_block = {
+        "tolerance": G4_PER_SEED_COLLATERAL_TOL,
+        "worst_seed_collateral_delta": worst,
+        "breaches": sorted(breaches, key=lambda d: (d["pair"], d["seed"])),
+        "g4_ok": not breaches,
+    }
 
     result = {
         "harm_shape": spec["harm_shape"],
@@ -352,6 +382,7 @@ def score_cell(cell: str, govern: str,
         "regressed": regressed,
         "capture_stable": capture_ok,
         "verdict": verdict,
+        "per_seed_collateral": per_seed_collateral_block,
         "per_pair": per_pair,
     }
 
@@ -509,6 +540,15 @@ def build_twin_delta(govern: str, twin_root: Path = TWIN_ROOT,
                                if cells[c].get("regressed")})
     both_shapes_ok = not (improved_shapes and regressed_shapes)
 
+    # G4 per-seed collateral guard, aggregated across scored cells (a PROMOTION
+    # gate, separate from the aggregate panel verdict). Promotion is unavailable
+    # while any breach stands; the breaches are surfaced, never tuned away.
+    g4_breaches = []
+    for c in scored:
+        for b in cells[c].get("per_seed_collateral", {}).get("breaches", []):
+            g4_breaches.append({"cell": c, **b})
+    g4_per_seed_ok = not g4_breaches
+
     verdicts = {cells[c]["verdict"] for c in scored}
     if not any_governed:
         overall = "baseline_only"
@@ -545,6 +585,20 @@ def build_twin_delta(govern: str, twin_root: Path = TWIN_ROOT,
                      "another fails, full stop (PR7_DESIGN §8.5)."),
         },
         "overall_verdict": overall,
+        "g4_per_seed_collateral_ok": g4_per_seed_ok,
+        "g4_per_seed_collateral_breaches": g4_breaches,
+        "g4_tolerance": G4_PER_SEED_COLLATERAL_TOL,
+        # The blockers THIS scorer can see (aggregate panel + both-shapes + G4
+        # per-seed). It is necessary-not-sufficient: G3 recoverability (a separate
+        # probe) and full-panel completeness are NOT represented here, so an empty
+        # list does NOT mean "promote" — only that this scorer found no blocker.
+        "promotion_blockers_this_scorer": _promotion_blockers(
+            overall, both_shapes_ok, g4_breaches),
+        "aggregate_panel_and_g4_clear": (overall in ("pass", "needs_review")
+                                         and both_shapes_ok and g4_per_seed_ok),
+        "promotion_note": ("promotion also requires G3 recoverability "
+                           "(separate probe) and full-panel completeness; this "
+                           "scorer asserts only the aggregate panel + G4 per-seed."),
         "conclusions_enforced": [
             "static geometry cannot certify safety (PR-5 step 1)",
             "both D-like direct and B/E-like collateral harm remain required",
@@ -557,6 +611,24 @@ def build_twin_delta(govern: str, twin_root: Path = TWIN_ROOT,
         "scope": ("certifies nothing beyond the enumerated cells; no "
                   "generalization to unseen geometry"),
     }
+
+
+def _promotion_blockers(overall: str, both_shapes_ok: bool,
+                        g4_breaches: list) -> list:
+    """The promotion blockers this scorer can detect — the aggregate panel
+    verdict, the both-shapes rule, and the G4 per-seed collateral bound. Each is
+    a frozen gate condition; a breach is recorded, never tuned away (G7)."""
+    blockers = []
+    if overall == "fail":
+        blockers.append("aggregate panel verdict is fail")
+    if not both_shapes_ok:
+        blockers.append("both-shapes rule violated (one shape improved, another "
+                        "regressed)")
+    for b in g4_breaches:
+        blockers.append(
+            f"G4 per-seed collateral breach: {b['cell']}/{b['pair']}/s{b['seed']} "
+            f"collateral_delta {b['collateral_delta']:+d} (< -{G4_PER_SEED_COLLATERAL_TOL})")
+    return blockers
 
 
 def _count_governed_arms(cells: dict) -> int:

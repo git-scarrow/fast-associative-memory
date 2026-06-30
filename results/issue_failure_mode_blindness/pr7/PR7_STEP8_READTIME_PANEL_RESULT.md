@@ -47,13 +47,15 @@ Compute on gentoo (cache `feature_cache_vitl14/`), verified on darwin.
 | `merge_path_stale` | capture_stable→acting | +111 | +300 | +26 | 576→0 | needs_review |
 
 `both_shapes_ok = True` — quarantine improves `direct`, `collateral`, and
-write-capture and **regresses no shape**. Overall verdict `needs_review`
+write-capture; **no aggregate cell regresses; one per-seed collateral regression
+breaches G4** (direct_harm s2, below). Overall verdict `needs_review`
 (merge_path_stale acting arm holds the verdict; read-time cells pass).
 
-**Answer:** quarantine is **not** stale-merge-only. It generalizes to the
-read-time direct and collateral harm shapes (drains broken +111 / +32 and
-stale_wrong +300 / +207 with no shape regressed) and is provably inert on clean
-traffic. In aggregate it is beneficial and non-destructive across the panel.
+**Answer:** quarantine is **not** stale-merge-only. **Quarantine generalizes
+under the frozen aggregate read-time scorer** to the direct and collateral harm
+shapes (drains broken +111 / +32 and stale_wrong +300 / +207, no aggregate cell
+worse) and is provably inert on clean traffic. In aggregate it is a useful
+read-time signal; the per-seed view (G4) carries a documented blocker.
 
 ## G4 per-seed collateral audit (pre-registered: no seed, any cell, collΔ < −3)
 
@@ -76,12 +78,14 @@ read-time cells.
 ## Conclusion (documented negative — not tuned)
 
 * Under the **existing aggregate scorer**, the full panel passes
-  (`needs_review` overall, both-shapes holds). Quarantine generalizes beyond
-  stale-merge and does not corrupt default retrieval.
+  (`needs_review` overall, both-shapes holds). **Quarantine generalizes under the
+  frozen aggregate read-time scorer** beyond stale-merge and does not corrupt
+  default retrieval.
 * Against the **pre-registered promotion gate G4** (per-seed collateral bound
   −3), the panel **fails on one seed** (`direct_harm` s2, −4 < −3). Per gate §6
   / G7, **promotion is unavailable** and this is recorded as a documented
-  negative on G4. The margin is **not** moved to manufacture a pass.
+  negative on G4. The margin is **not** moved to manufacture a pass. Quarantine
+  **is not promotable as-is on this registered panel and frozen G4 bound.**
 
 Quarantine therefore remains at its earned status — **`needs_review`**, a
 documented manual-review success — and is **not promoted**. The per-seed guard

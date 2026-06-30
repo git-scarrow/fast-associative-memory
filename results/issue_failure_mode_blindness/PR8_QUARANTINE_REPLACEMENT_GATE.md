@@ -230,3 +230,29 @@ governance**; no §8 re-opening or re-scoring; no movement of the −3 bound; no
 casing; **no implementation in this branch** — §9A's mechanism, gate, and
 verdict semantics are specified here, not written; §9B/§9C/§9D are named, not
 registered.
+
+## 8. Instrumentation note — identity-key semantics (post-registration)
+
+*Added with the diverted-key instrumentation PR (probe + §9A harness, no §9A
+certification). Records a known limitation a future certification attempt must
+heed; it does not move any registered gate, margin, or boundary.*
+
+Persisted diverted-event keys close the observability gap but do not by
+themselves prove logical event identity across divergent runs. The current
+strongest committed common key is incumbent-state-based; because shadow commits
+flagged writes and quarantine diverts them, incumbent state diverges after the
+first diversion. Therefore real-run identity may be decidable as violated even
+when detector eligibility is logically similar. A future certification attempt
+must either accept this as a refutation or pre-register a write-event-intrinsic
+identity key that is present in both shadow and quarantine artifacts without
+breaking shadow byte-inertness.
+
+Empirically (hermetic smoke, supersede_epoch 3 / 6 epochs): the incumbent join
+key matches 8/24 events (the first supersession epoch, before divergence) and
+differs on 16/24 (epochs 4–5), so the harness reports `identity-violated`. This
+is the "or refute" half of *decide identity* — a valid finding, not a defect.
+The fixture tests retain the controlled `identity-proven` case; the join key is
+`QUARANTINE_DIVERTED_JOIN_KEY = (epoch, event_class, incumbent_slot,
+incumbent_last_write_seq)`, the strongest key common to both committed artifacts
+that does not add a `fork_events` column (which the byte-inertness invariant
+forbids).

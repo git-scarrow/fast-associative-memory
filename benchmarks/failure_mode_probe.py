@@ -218,6 +218,31 @@ GOVERN_QUARANTINE_EVENT_CLASS = EVENT_SUPERSESSION
 QUARANTINE_DIVERTED_JOIN_KEY = ("epoch", "event_class", "incumbent_slot",
                                 "incumbent_last_write_seq")
 
+# ---------------------------------------------------------------------------
+# PR-10 step 1 — read-time abstention seam (PR10_READTIME_ABSTENTION_GATE.md
+# §1). Opt-in via ``--read-govern {none, merge-abstain}``; consulted AFTER the
+# deployed ``forward()`` vote is computed and scored (``label_probes``) and
+# BEFORE the per-probe row is emitted (``append_rows``). The eligibility rule
+# is byte-for-byte the frozen scorer's ``merge-abstain`` policy
+# (benchmarks/analyze_fork_governance.py): abstain iff the surviving top-1
+# slot of the deployed vote is in the write-time router's merge-suspect set —
+# no tie trigger, no confidence term, no exclusion, no vote recomputation, no
+# parameters. The seam never touches the write path, the RNG, the registry,
+# or any engine state: it only READS the run's already-emitted-shape event
+# rows and top-k candidate rows, so every write-stream artifact
+# (fork_events / per_slot / topk) is byte-identical to a ``none`` run and the
+# deployed retrieval path never reaches it.
+# ---------------------------------------------------------------------------
+READ_GOVERN_ACTIONS = ("none", "merge-abstain")
+# Served-outcome encoding (additive schema; gate memo §1): the governed arm's
+# per-probe CSV appends exactly these two columns and preserves every
+# pre-existing column's value on every row. A ``none`` arm's schema is
+# unchanged (the deployment-bit-identity invariant).
+READ_GOVERN_COLS = ["served_outcome", "abstain_reason"]
+SERVED_ANSWER = "answer"
+SERVED_ABSTAIN = "abstain"
+ABSTAIN_REASON_MERGE_LED = "merge_suspect_led"
+
 
 class GovernanceHook:
     """Opt-in write-path governance seam — PR-7 (PR7_DESIGN.md §4).
@@ -462,6 +487,119 @@ class GovernanceHook:
                 "allowed unchanged; deployed read-time retrieval path untouched "
                 "(PR7_DESIGN.md §4/§13).")
         return prov
+
+
+class ReadGovernanceHook:
+    """Opt-in read-time abstention seam — PR-10 step 1 (gate memo §1).
+
+    Serves the frozen scorer's ``merge-abstain`` policy as a reader-facing
+    outcome: per emitted probe row, ``served_outcome`` is ``abstain`` (with
+    ``abstain_reason == merge_suspect_led``) iff the surviving top-1 slot of
+    the deployed vote is in the write-time router's merge-suspect set at the
+    probe's epoch; otherwise ``answer`` (the deployed answer, unchanged — the
+    deployed vote stays recorded in every pre-existing column either way).
+
+    Anti-drift construction: the M set is computed by the frozen scorer's OWN
+    router functions (``build_writetime_router`` / ``router_state`` from
+    benchmarks/analyze_fork_governance.py, imported lazily to avoid a module
+    cycle) over the driver's live event rows — the exact dicts that become
+    ``fork_events.csv`` — and the top-1 check runs on the exact rank-ordered
+    candidate dicts that become ``topk.csv`` (weights at float32 round-trip
+    text, compared via ``float()`` like the scorer), so the served decision is
+    byte-for-byte the scorer's merge-abstain rule, not a reimplementation.
+    ``router_state``'s merge set depends only on absorbed-conflict events
+    (never on slot snapshots), so the router is built with an empty slot table;
+    the conflict-pair branch it also computes is unused by this policy.
+
+    Boundary: like :class:`GovernanceHook` this lives only in the experimental
+    driver and is never constructed or reached by the deployed ``forward()`` /
+    ``learn_local`` path. It holds no engine/tensor state, performs no write,
+    and consumes no RNG, so a governed run's write-stream artifacts are
+    byte-identical to the ``none`` twin (gate G1) and a ``none`` run is
+    byte-identical to the pre-seam driver on every artifact.
+    """
+
+    def __init__(self, action: str = "none"):
+        if action not in READ_GOVERN_ACTIONS:
+            raise ValueError(
+                f"--read-govern must be one of {READ_GOVERN_ACTIONS}; "
+                f"got {action!r}")
+        self.action = action
+        self.probes_seen = 0
+        self.answered = 0
+        self.abstained = 0
+        self.reason_counts: dict = {}
+
+    @property
+    def active(self) -> bool:
+        """True iff a non-baseline action was requested. Gates the additive
+        schema and the summary block, so a ``none`` run stays byte-identical
+        to the pre-seam driver."""
+        return self.action != "none"
+
+    @staticmethod
+    def merge_suspect_slots(events: list, epoch: int) -> set:
+        """The write-time router's merge-suspect set at ``epoch`` — computed
+        by the frozen scorer's own functions over the driver's live event
+        rows (no duplicated router logic; the policy-invariant M set)."""
+        from benchmarks.analyze_fork_governance import (  # local: avoid cycle
+            build_writetime_router, router_state)
+        return router_state(build_writetime_router(events, {}), epoch)["merge"]
+
+    def decide(self, cands: list[dict], merge_slots: set) -> tuple[str, str]:
+        """Served outcome for ONE probe's rank-ordered top-k candidate rows.
+
+        Mirrors ``apply_policy('merge-abstain', ...)`` verbatim: surviving
+        candidates only, top-1 by ``float(weight)`` with first-rank tie-break,
+        abstain iff that slot is merge-suspect. No tie trigger, no confidence
+        term, no exclusion, no vote recomputation, no parameters."""
+        self.probes_seen += 1
+        surv = [c for c in cands if c["surviving"]]
+        top1 = max(surv, key=lambda c: float(c["weight"]))
+        if top1["slot"] in merge_slots:
+            self.abstained += 1
+            self.reason_counts[ABSTAIN_REASON_MERGE_LED] = \
+                self.reason_counts.get(ABSTAIN_REASON_MERGE_LED, 0) + 1
+            return SERVED_ABSTAIN, ABSTAIN_REASON_MERGE_LED
+        self.answered += 1
+        return SERVED_ANSWER, ""
+
+    def serve_epoch(self, epoch_topk_rows: list[dict], events: list,
+                    epoch: int) -> list[tuple[str, str]]:
+        """Per-probe served outcomes for one probe epoch, in emission order.
+
+        ``epoch_topk_rows`` are the rows ``topk_table_rows`` just produced for
+        this epoch (the exact text-precision candidates the scorer will read);
+        ``events`` is the run's accumulated write-event list (all epochs <=
+        ``epoch`` exist at probe time; the router's own ``e <= epoch`` cutoff
+        makes the probe-time set identical to the analysis-time set)."""
+        merge_slots = self.merge_suspect_slots(events, epoch)
+        by_probe: dict = {}
+        for row in epoch_topk_rows:
+            by_probe.setdefault(row["probe_index"], []).append(row)
+        return [self.decide(cands, merge_slots)
+                for cands in by_probe.values()]
+
+    def provenance(self) -> dict:
+        """The summary ``read_govern`` block (action, abstention counts,
+        reason histogram) — emitted only when :attr:`active`, so a ``none``
+        run's summary stays byte-identical to the pre-seam driver."""
+        return {
+            "action": self.action,
+            "step": "pr10-step1-read-seam",
+            "eligibility": (
+                "abstain iff the surviving top-1 slot of the deployed vote "
+                "is in the write-time router's merge-suspect set (the frozen "
+                "scorer's merge-abstain M set, analyze_fork_governance); no "
+                "tie trigger, no confidence term, no exclusion, no vote "
+                "recomputation, no parameters "
+                "(PR10_READTIME_ABSTENTION_GATE.md §1)."),
+            "probes_seen": self.probes_seen,
+            "answered": self.answered,
+            "abstained": self.abstained,
+            "abstain_reason_histogram": dict(sorted(
+                self.reason_counts.items())),
+        }
 
 
 @dataclass
@@ -1129,8 +1267,16 @@ def label_probes(mem: ContinuousCAM, probe_queries: torch.Tensor,
     }
 
 
-def append_rows(writer: csv.DictWriter, ctx: dict, labeled: dict) -> int:
-    """Write one CSV row per labeled voting probe (schema: OUT_COLS)."""
+def append_rows(writer: csv.DictWriter, ctx: dict, labeled: dict,
+                served: list | None = None) -> int:
+    """Write one CSV row per labeled voting probe (schema: OUT_COLS).
+
+    ``served`` (PR-10 read seam) is the per-row list of
+    ``(served_outcome, abstain_reason)`` decisions an active
+    :class:`ReadGovernanceHook` made for this epoch — appended as the two
+    ``READ_GOVERN_COLS`` while every pre-existing column's value is written
+    exactly as before. ``None`` (a ``none``/pre-seam run) emits the
+    unchanged OUT_COLS schema byte-for-byte."""
     V = labeled["n_rows"]
     if V == 0:
         return 0
@@ -1149,6 +1295,8 @@ def append_rows(writer: csv.DictWriter, ctx: dict, labeled: dict) -> int:
         row["n_stale_topk"] = int(labeled["n_stale_topk"][i])
         row["contra_vote_weight"] = round(float(labeled["contra_vote_weight"][i]), 6)
         row["stale_vote_weight"] = round(float(labeled["stale_vote_weight"][i]), 6)
+        if served is not None:
+            row["served_outcome"], row["abstain_reason"] = served[i]
         writer.writerow(row)
     return V
 
@@ -1281,7 +1429,8 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
                   out_path: Path, seed: int = 0, num_classes: int = 4,
                   dim: int = 32, one_shot: bool = False,
                   key_jitter: float = 0.0,
-                  payload_mode: str = "onehot", govern: str = "none") -> int:
+                  payload_mode: str = "onehot", govern: str = "none",
+                  read_govern: str = "none") -> int:
     """End-to-end synthetic run for one arm; returns rows written.
 
     clean  — no injections (negative control: no contra/stale labels may fire)
@@ -1301,6 +1450,7 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
     jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
     hook = GovernanceHook(govern)  # opt-in write-path governance/audit seam
+    read_hook = ReadGovernanceHook(read_govern)  # opt-in PR-10 read seam
     mem = ContinuousCAM(key_dim=dim, value_dim=num_classes, max_entries=1024,
                         dynamic_vigilance=DynamicVigilance(),
                         retrieval_floor_policy=RetrievalFloorPolicy(),
@@ -1317,8 +1467,11 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     total = 0
+    # PR-10: the two READ_GOVERN_COLS are appended ONLY when the read seam is
+    # active, so a `none` run's schema/bytes are exactly the pre-seam driver's.
+    out_cols = OUT_COLS + (READ_GOVERN_COLS if read_hook.active else [])
     with open(out_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=OUT_COLS)
+        writer = csv.DictWriter(f, fieldnames=out_cols)
         writer.writeheader()
         for epoch, (q, y, lab) in enumerate(batches):
             mem.reset_dynamic_vigilance_stats()
@@ -1357,9 +1510,16 @@ def run_synthetic(arm: str, rate: float, epochs: int, supersede_epoch: int,
                 "injection_rate": rate if arm in ("contra", "mixed") else 0.0,
                 "supersede_epoch": supersede_epoch if group is not None else -1,
             }
-            total += append_rows(writer, ctx, labeled)
+            # PR-10 read seam: consulted AFTER the deployed vote is computed
+            # and scored (label_probes above), BEFORE the per-probe row is
+            # emitted. The decision reads the epoch's text-precision top-k
+            # rows + the accumulated write events only — no write, no RNG.
+            epoch_topk = topk_table_rows(labeled, epoch)
+            served = (read_hook.serve_epoch(epoch_topk, events, epoch)
+                      if read_hook.active else None)
+            total += append_rows(writer, ctx, labeled, served=served)
             slot_rows += slot_table_rows(mem, registry, epoch)
-            topk_rows += topk_table_rows(labeled, epoch)
+            topk_rows += epoch_topk
     _write_side_table(out_path.with_suffix(".per_slot.csv"),
                       SLOT_COLS, slot_rows, label)
     _write_side_table(out_path.with_suffix(".fork_events.csv"),
@@ -1380,7 +1540,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                blend_eps: float = 0.10, seed: int = 0,
                supersede_epoch: int = 6, one_shot: bool = False,
                key_jitter: float = 0.0, payload_mode: str = "onehot",
-               govern: str = "none"):
+               govern: str = "none", read_govern: str = "none"):
     """Cache-backed clean/contra/stale arm over the DINOv2 ViT-L/14 manifold.
 
     PR-2b/PR-2c protocol. The stream is the verified ``vitl14_cifar100_train``
@@ -1430,6 +1590,7 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     jitter_gen = torch.Generator().manual_seed(seed + 2)
     registry = FailureModeRegistry()
     hook = GovernanceHook(govern)  # opt-in write-path governance/audit seam
+    read_hook = ReadGovernanceHook(read_govern)  # opt-in PR-10 read seam
     group = None
     if arm in ("stale", "mixed"):
         if not (0 < supersede_epoch < epochs):
@@ -1455,8 +1616,11 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     out_path.parent.mkdir(parents=True, exist_ok=True)
     total = 0
     epoch_log = []
+    # PR-10: the two READ_GOVERN_COLS are appended ONLY when the read seam is
+    # active, so a `none` run's schema/bytes are exactly the pre-seam driver's.
+    out_cols = OUT_COLS + (READ_GOVERN_COLS if read_hook.active else [])
     with open(out_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=OUT_COLS)
+        writer = csv.DictWriter(f, fieldnames=out_cols)
         writer.writeheader()
         for epoch in range(epochs):
             mem.reset_dynamic_vigilance_stats()
@@ -1496,9 +1660,16 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
                 "injection_rate": rate if arm in ("contra", "mixed") else 0.0,
                 "supersede_epoch": supersede_epoch if group is not None else -1,
             }
-            total += append_rows(writer, ctx, labeled)
+            # PR-10 read seam: consulted AFTER the deployed vote is computed
+            # and scored (label_probes above), BEFORE the per-probe row is
+            # emitted. The decision reads the epoch's text-precision top-k
+            # rows + the accumulated write events only — no write, no RNG.
+            epoch_topk = topk_table_rows(labeled, epoch)
+            served = (read_hook.serve_epoch(epoch_topk, events, epoch)
+                      if read_hook.active else None)
+            total += append_rows(writer, ctx, labeled, served=served)
             slot_rows += slot_table_rows(mem, registry, epoch)
-            topk_rows += topk_table_rows(labeled, epoch)
+            topk_rows += epoch_topk
             V = labeled["n_rows"]
             wrong = (V - int(labeled["per_probe"]["vote_correct"].sum())
                      if V else 0)
@@ -1589,6 +1760,11 @@ def run_vision(arm: str, rate: float, epochs: int, out_path: Path, *,
     # every emitted/scored artifact stays byte-identical (PR7_DESIGN.md §4).
     if hook.active:
         summary["govern"] = hook.provenance()
+    # PR-10: the read seam's provenance block is emitted only when the seam is
+    # active, so a `none` run's summary stays byte-identical to the pre-seam
+    # driver and no other artifact changes shape (gate memo §1).
+    if read_hook.active:
+        summary["read_govern"] = read_hook.provenance()
     return total, summary
 
 
@@ -1649,6 +1825,19 @@ def main():
                          "from the active memory state. Non-suspect writes are "
                          "unchanged and the deployed retrieval path never "
                          "reaches this seam (PR7_DESIGN.md §4/§13; PR8 §9A).")
+    ap.add_argument("--read-govern", choices=list(READ_GOVERN_ACTIONS),
+                    default="none",
+                    help="PR-10 opt-in read-time abstention seam, consulted "
+                         "AFTER the deployed forward() vote is computed and "
+                         "scored, BEFORE the per-probe row is emitted. "
+                         "'merge-abstain' serves the frozen scorer's "
+                         "merge-abstain policy (abstain iff the surviving "
+                         "top-1 slot of the deployed vote is merge-suspect; "
+                         "no tie trigger, no parameters) as two additive CSV "
+                         "columns; 'none' (default) leaves every artifact "
+                         "byte-identical to the pre-seam driver. The write "
+                         "path and deployed retrieval are untouched either "
+                         "way (PR10_READTIME_ABSTENTION_GATE.md §1).")
     ap.add_argument("--out", type=str,
                     default="results/issue_failure_mode_blindness/"
                             "per_probe_injected.csv")
@@ -1669,7 +1858,8 @@ def main():
             contraction=args.contraction, max_entries=args.max_entries,
             seed=args.seed, supersede_epoch=args.supersede_epoch,
             one_shot=args.one_shot, key_jitter=args.key_jitter,
-            payload_mode=args.payload_mode, govern=args.govern)
+            payload_mode=args.payload_mode, govern=args.govern,
+            read_govern=args.read_govern)
         summary_path = Path(args.out).with_suffix(".summary.json")
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
@@ -1679,7 +1869,8 @@ def main():
     n = run_synthetic(args.arm, args.rate, args.epochs, args.supersede_epoch,
                       Path(args.out), seed=args.seed, one_shot=args.one_shot,
                       key_jitter=args.key_jitter,
-                      payload_mode=args.payload_mode, govern=args.govern)
+                      payload_mode=args.payload_mode, govern=args.govern,
+                      read_govern=args.read_govern)
     print(f"[{args.arm}] wrote {n} labeled per-probe rows to {args.out}")
 
 

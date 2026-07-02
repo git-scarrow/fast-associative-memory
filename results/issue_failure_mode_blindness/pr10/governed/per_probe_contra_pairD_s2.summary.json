@@ -1,0 +1,148 @@
+{
+  "arm": "contra",
+  "base_arm": "contra",
+  "one_shot": false,
+  "key_jitter": 0.0,
+  "payload_mode": "onehot",
+  "cache_path": "feature_cache_vitl14/cifar100_dinov2_train.pt",
+  "classes": [
+    10,
+    28,
+    32,
+    95
+  ],
+  "attractor_class": 52,
+  "samples_per_class": 32,
+  "held_out_per_class": 64,
+  "contraction": 0.0,
+  "injection_rate": 0.15,
+  "epochs": 12,
+  "seed": 2,
+  "max_entries": 4096,
+  "dim": 1024,
+  "n_injections": 228,
+  "injection_outcomes": {
+    "forked": 226,
+    "absorbed": 2
+  },
+  "rows_written": 2712,
+  "per_epoch": [
+    {
+      "epoch": 0,
+      "probes": 222,
+      "wrong": 4,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 1,
+      "live_fork_slots": 19,
+      "acc_epoch": 0.96875
+    },
+    {
+      "epoch": 1,
+      "probes": 226,
+      "wrong": 5,
+      "contradictory_strict": 3,
+      "contradictory_lenient": 3,
+      "live_fork_slots": 38,
+      "acc_epoch": 0.957031
+    },
+    {
+      "epoch": 2,
+      "probes": 231,
+      "wrong": 9,
+      "contradictory_strict": 3,
+      "contradictory_lenient": 6,
+      "live_fork_slots": 57,
+      "acc_epoch": 0.949219
+    },
+    {
+      "epoch": 3,
+      "probes": 232,
+      "wrong": 11,
+      "contradictory_strict": 3,
+      "contradictory_lenient": 8,
+      "live_fork_slots": 76,
+      "acc_epoch": 0.941406
+    },
+    {
+      "epoch": 4,
+      "probes": 231,
+      "wrong": 16,
+      "contradictory_strict": 8,
+      "contradictory_lenient": 13,
+      "live_fork_slots": 94,
+      "acc_epoch": 0.917969
+    },
+    {
+      "epoch": 5,
+      "probes": 228,
+      "wrong": 20,
+      "contradictory_strict": 11,
+      "contradictory_lenient": 17,
+      "live_fork_slots": 113,
+      "acc_epoch": 0.902344
+    },
+    {
+      "epoch": 6,
+      "probes": 226,
+      "wrong": 27,
+      "contradictory_strict": 10,
+      "contradictory_lenient": 25,
+      "live_fork_slots": 132,
+      "acc_epoch": 0.875
+    },
+    {
+      "epoch": 7,
+      "probes": 226,
+      "wrong": 33,
+      "contradictory_strict": 16,
+      "contradictory_lenient": 33,
+      "live_fork_slots": 151,
+      "acc_epoch": 0.855469
+    },
+    {
+      "epoch": 8,
+      "probes": 225,
+      "wrong": 45,
+      "contradictory_strict": 31,
+      "contradictory_lenient": 45,
+      "live_fork_slots": 170,
+      "acc_epoch": 0.789062
+    },
+    {
+      "epoch": 9,
+      "probes": 222,
+      "wrong": 59,
+      "contradictory_strict": 34,
+      "contradictory_lenient": 59,
+      "live_fork_slots": 189,
+      "acc_epoch": 0.738281
+    },
+    {
+      "epoch": 10,
+      "probes": 222,
+      "wrong": 56,
+      "contradictory_strict": 40,
+      "contradictory_lenient": 56,
+      "live_fork_slots": 207,
+      "acc_epoch": 0.734375
+    },
+    {
+      "epoch": 11,
+      "probes": 221,
+      "wrong": 63,
+      "contradictory_strict": 40,
+      "contradictory_lenient": 63,
+      "live_fork_slots": 226,
+      "acc_epoch": 0.703125
+    }
+  ],
+  "read_govern": {
+    "action": "merge-abstain",
+    "step": "pr10-step1-read-seam",
+    "eligibility": "abstain iff the surviving top-1 slot of the deployed vote is in the write-time router's merge-suspect set (the frozen scorer's merge-abstain M set, analyze_fork_governance); no tie trigger, no confidence term, no exclusion, no vote recomputation, no parameters (PR10_READTIME_ABSTENTION_GATE.md \u00a71).",
+    "probes_seen": 2712,
+    "answered": 2712,
+    "abstained": 0,
+    "abstain_reason_histogram": {}
+  }
+}

@@ -1,0 +1,6529 @@
+{
+ "cells": {
+  "pairA/clean/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_clean_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2534
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "daf1e202eeb136a50442d9a1879a8246feec503f8ef3a205f0f349877f2d09e8",
+       ".fork_events.csv": "676e40e45a1c792522ef27dbbce803bf8ae73d903a3d92f366f10682f6a14bc9",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "29a065819767ddb1163025995dc97c1c5be04cc4c16b32a24f87b2f1f75dfc31",
+       ".topk.csv": "2c8df988dfe05f3c849f5825c7bd46b3e5463e0957bd56cf63e226d0350ad885"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/clean/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_clean_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2510
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d9590b48811022c69ca62f25bb74905c7f023852d0f705f906e6556cbcd7179f",
+       ".fork_events.csv": "301d74e568eb35a2ae35360542613553eaace8aa3f298df3fd080ca91d530fa6",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "200b07fb231093254d3108bc6a00431edd7d92dfcab292e0d4bf583f12034562",
+       ".topk.csv": "4aab2a9543ef019ce5a728bc88cd4e8d81fe6ac76337c6ee3924333f9e7f442c"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairA_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/clean/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_clean_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2690
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d573bc845da4e1e8fb42b82c25142b97814973d395c669cbf269c14b864f27af",
+       ".fork_events.csv": "4bd1865f14d5836af59aba1d3f4106179ce48311fbf4a521d5536b8485f45fc1",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "70d4341a082b31f7719e9e721baab82bd28715719acd54244a21a03baab13061",
+       ".topk.csv": "18bbcd0fcc3a6b1ec95edd5c68fc83941a7eacb75eb9a0b1ea43fcdf71d539c8"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairA_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/contra/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_contra_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2824
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "78bc88cbef592efcd2df58f3ef124712d0c7861e5d75ca518604090bb1239f80",
+       ".fork_events.csv": "872264d0eb84c187bdc27e3e0fef778ca2c121d94078b6c1f070229fe1b093da",
+       ".per_slot.csv": "b2c2c96c7e5a938b941fa4432dadc534518d4e64655e5367cda0290e109acaa1",
+       ".summary.json": "7fcf8df9ea89a70cb27a5e7b89a981038f55ec6d3815e5f810617f6097402e3c",
+       ".topk.csv": "ff920573695338d37b13a4390b4595ffe4828ff6ee893aa7ca71f22f3a39fe29"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/contra/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_contra_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2760
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "8bdc25149c50e18aa612607327c6c91feb931cbcee4305960569493eab84e2de",
+       ".fork_events.csv": "1ebb241c37f631ecf1e13d318c4706ff6506018e1e9cf431e91b101b75995dab",
+       ".per_slot.csv": "1fd6aedd7893511b6855a7e7a0defbf46efff361e77d1501c46386aa0788ad9a",
+       ".summary.json": "3353f4e940a74a7a43f490759c232c93955097b35cbcf040037c75a876bceba0",
+       ".topk.csv": "db7ba73b257566f83f38922de4e25ee686bae5d2eb59da39408228ac7adf11f5"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairA_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/contra/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_contra_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2862
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "f620ba47b4be36eef06aae9e4e61e6cf32e47d25e1eb0bb6ea16fc543808e26a",
+       ".fork_events.csv": "22a08be7957b684b2e625de52752cf38f8c6e209cbccbd35f58aa08ad081831f",
+       ".per_slot.csv": "e53d25a54b24ed17519b34d1ae46bc4542a8c2323a207d35df5f25bf682ab1f4",
+       ".summary.json": "9b79ae3704b5c2b98dce3005abbc8f8d3996badfde34f8012b78fde209b3ed70",
+       ".topk.csv": "85a0471a90200d2b48766a99b223345df9467466f258f47e194a552fcc320fa3"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairA_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/jitter0.05/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-jitter0.05_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2197
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "780413b7a49df8988decbfdee72ee2881da06568b07b0b3a6674f67dac08fa3d",
+       ".fork_events.csv": "92f185bf2d42bdb8b2dbdc54165c2e3ac6702360afcb979e810bb8700ab8fa50",
+       ".per_slot.csv": "1b6dc036a239ad863ae6be0045cb7b2beeb59ec28f177f93600d7a3ef5c1c9b3",
+       ".summary.json": "630ba5dcd0c30cd64e11b27dd5a78bc9e8692272cfbc1fd0b6504c62113d103f",
+       ".topk.csv": "1343b6b0ccb90153962ae9b5e1ac373ea52ba5429e720c123bd6211134d31589"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-jitter0.05_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/jitter0.15/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-jitter0.15_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2206
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "27d54476a87fe339bf9a933e37d699ed3205dd2c35a3452defde2762b163e2ef",
+       ".fork_events.csv": "1970b9e6c109847937571bdff3b36d2f548f91080db7c9c22f21ce8fca5128b9",
+       ".per_slot.csv": "0bfbf92488c6bfb4c7358fc882deca1419e7d7cd88952b14b1923ae8870af20c",
+       ".summary.json": "f5af3007acc8428fd3623a84739d9925ead0c9a1c3fac911a2cfc344f5ea38b6",
+       ".topk.csv": "74eb6bc6ef7f964d6eb43f2d174aebe9776c093156120401d290413da9c23069"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-jitter0.15_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/mixed/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_mixed_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2532
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "f0e1eadae775928572b746266b3729bcc820b03fb5713439b1703c80b030cc04",
+       ".fork_events.csv": "e55b00a3b44fc3ed435816d5f054370c8b3ced1569ad12f76e38ce7dcf14896f",
+       ".per_slot.csv": "9886580036b10e0385593b42c593ebbc3b0e35f01819dcf1072b1e99bb4db83d",
+       ".summary.json": "0686fd401b2c476865c4e4474e629ca31ca453fc2e449c564acb14be23e1f2ca",
+       ".topk.csv": "53048ca8a93f53c371abf337522cdb975873528fed399f5fb4cb06761863ac48"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/mixed/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_mixed_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2481
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "373cc04803b74d826cb576e3eb224b3a7c1c376ed86e77be2b92b438b846294a",
+       ".fork_events.csv": "c45710199d6f4fa2446cf30380b91ea84d13e981ce9c2514816894b170339f50",
+       ".per_slot.csv": "c1ff8360e6e3f9498c47e6c8f5a18131fa8b516b211c0c9e2cf98c5778396413",
+       ".summary.json": "73f8441d00796aa4ff77acabc582ceeda862a79d19145dfd3f7eddbc9dea746c",
+       ".topk.csv": "6ca275183da6bb33691712a6969b932de48d04890050f00b60ce4d8c20f665d4"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairA_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/mixed/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_mixed_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2640
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "22de5450d97e53c1f4d3a4d5363c49ff9b13be8fdd35afc148d3d6b3c4e52f80",
+       ".fork_events.csv": "d315156c50b2c20856f3b17113d6f854411b6be3703c2d7dfdf66c273ddaadc8",
+       ".per_slot.csv": "c20ac768891ed0e8e5c28ddcb7818b2b14a50f112fcff01e839d1fd53aee6e4c",
+       ".summary.json": "69f8f0d023bec053baaef99b3baeb884a4437b85940dbd3848107eed42f5f79b",
+       ".topk.csv": "4be2d7b78ea31f531db613b197f95ad19dbbe4e1f87880da4eac0c3f785207f7"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairA_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/oneshot/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-oneshot_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2339
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "3994521ef55fdc6a8c42da04c1d33840bc4313955a55c162a09cf5428a9849ef",
+       ".fork_events.csv": "0d9cb819684ae1288a1d9da5a17ca51c1134e1c212e46a71d68283a2aa4148c0",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "db4dde5a5fd0f5bb7dac67b23d3dd5203ba60f05e4656b00bd90849487fd1660",
+       ".topk.csv": "c553950a3669576217e60533921c029e5b9cd07d4253793de374c12c45a7c42e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/oneshot/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-oneshot_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2287
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "7a327d5822ba8f62fb46384706f3d02993bdc175df114564d67f499968536b02",
+       ".fork_events.csv": "07e38d9024b8b1fc19ef2d4b51e68def6fc05f0697c755f704bd82ea4a5e97a3",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "12e9362b076017626dcc15a1e9b2416bccdc1ddb10aa01856002a5cde6942577",
+       ".topk.csv": "e3bad48c7e7629ebb0a90c3d1ed172fc29aa597a976d0cc8d3fe48e009d85d3f"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairA_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/oneshot/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-oneshot_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2451
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "20a56d43403baabacb22f9912459d2742fa763324cf08218a3ea31e2cae70e92",
+       ".fork_events.csv": "42b8f326ebd7424c574e24b62d41e81b93a4d9b657987b24dea682f592ccb67b",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "c18a269a902d9a6efb70ef5dbecfcbcddac202e7f52127837410802b49563894",
+       ".topk.csv": "302fab166fea005de0ca098dcd6679547d56073b788c8d3aa490bfa7fb629d9e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairA_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/soft/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-soft_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2465
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 374,
+      "merge_led_rows_recomputed": 374,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "210be0155e14f6baf6700fed0754f837b6c84daccac99b0847744a3a740cbdd3",
+       ".fork_events.csv": "16e2d22dc1f32197ece2825d005042785f11942d65c66f74ae9f622c0c114363",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "a384c50343cb6f1767b54d1ed865acd6f7662564c9eef9e56ffd2d4fe9a5f5eb",
+       ".topk.csv": "b226b9b1237c2d12a0088473eb8906760ae007a9432580db0014dc696eb58a56"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairA_s0",
+   "pass": true,
+   "soft": true
+  },
+  "pairA/soft/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-soft_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2414
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 368,
+      "merge_led_rows_recomputed": 368,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "ff36fe898464cc5602e6d32480205f2cccf3ab8ec978b8262978596801ff4538",
+       ".fork_events.csv": "94f5b22a07bdc5552d47e6c69b7268f7c6c53991a0130d455817cf36eb1f44fe",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "b7f466718c3c2f24d837b7f3b6a7cc770b0dede3f6a86106930a2b21b8d924ad",
+       ".topk.csv": "87cd9c66873c6342265ff8151d3d517fc48031345d65ef439545ec5c7ced9dd7"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairA_s1",
+   "pass": true,
+   "soft": true
+  },
+  "pairA/soft/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale-soft_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2550
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 380,
+      "merge_led_rows_recomputed": 380,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "f17063b1065191a012c047088113964a1f5f0f500af66340d94f3eab9c50a9c5",
+       ".fork_events.csv": "4cca604ceee874d70eaff834f97b892d437603aef9bd6b2d92137856f13c3cbc",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "ce51621859a4dc07ec51958e1d8a01e43b687f98dff315228fda4e67f94cd057",
+       ".topk.csv": "b6dee2738868f279c955f4452de5d5c9de69d61078fc658ddb52afbc0455d7c2"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairA_s2",
+   "pass": true,
+   "soft": true
+  },
+  "pairA/stale/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2194
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "8b5acdab793a2601b5f1916ed582100e0dd4ee13bebf3551610745acea0e52e8",
+       ".fork_events.csv": "50828c7096c3d37c3e43a87cda0819e59357ed5bfcdcc0a90db649767726f3e5",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "61eee2fa49a0bf4f9c7344727ab766fcbf5f34c19670493d570c7a6b9bb91ded",
+       ".topk.csv": "a3448abaa3f09aec5515db73d174a0d0cbcb1a28db5a7210d66454082e216b32"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairA_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/stale/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2118
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "4adf11894740f10333d55cafcea482dfffa02e40a5348cd5f290d50c083d8e44",
+       ".fork_events.csv": "87f8491c36fc2bfcade703523168379e1ecf2dd496c105dbf398be8ea74b67c2",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "0865bc9b883ee9aee36db0e2897ce7e34b6a92c18787b4e18f743637ffd6b468",
+       ".topk.csv": "c93852a75db97e1f9b1524fdd40d307e36c0ab422289b5caaa0721e5af402b4e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairA_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairA/stale/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2270
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "9a4ed1426162d956340d1a664b1d98d8f6c4b02fdc0c0248444a8c3d767a6ed8",
+       ".fork_events.csv": "a9c9a80ebc9434f1b76951ca3382fe87e944ecb622e79879e21cc99d8882acb5",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "0d8ae9fa188c98d1ee909aa3292951bf8555f99876524734a0e3233f5ee6b8d6",
+       ".topk.csv": "3956d238f7a5bcf283b803182bb3adcc4a5102a3c4ea1af4fd79981a8485601d"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairA_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/clean/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_clean_s0_pairB",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2570
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "687727778dcc6b6344f7427e3ab9f0ea4f882c381ce31e6d5df6d45e0726ce2b",
+       ".fork_events.csv": "85bd1ca5bd772d3ada5d1dd82788001f62338cf8d842985ad2c92751a7aa22d4",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "5181a7258f9af410142eada856a66501c335dac55f75b191383a78ed9f0cc85b",
+       ".topk.csv": "05be0541ad1078d351e0e7856f743a66608163f58cb084ea6e22f2b7ec2c943c"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairB_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/clean/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairB_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2366
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "29434822650871dd4274a497c52bab74585a4b4f0ed18c5cf4ff5fa19f940504",
+       ".fork_events.csv": "4e2b2435b5c128113c363e028bdc8ccc8a28c5c2274723879617645a509aa465",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "487fab3197453d3b68e64b88fa9efabcc6707050346813e56b8eebf0ea1400e3",
+       ".topk.csv": "171b48860735b4d58a9f208770301114003e478240fe80fc1580251b8ab65b09"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairB_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/clean/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairB_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2570
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "2704f84283398358df0674dcf33a2bfd9523ecbc66411ce80d1e3c637e000381",
+       ".fork_events.csv": "0c252033629f7dce238f9b6027c0cb87c218cd3a660feb62b63e659d098cb37f",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "a538771922adf345bdf264c0e4f5809772c6052ae378573c10921ba9c782e520",
+       ".topk.csv": "76cbcfa8043423a39ac7870c7697a606fc52690732ad9d79089f95324297cc79"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairB_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/contra/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_contra_s0_pairB",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2826
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d77522c9f875ac0a4170ada7e62b3b636472019960e34010f4385a856d55ea8d",
+       ".fork_events.csv": "a3c0cb8ffead779f0fb7c28abc784c47472290ed26c0f47e80552da0ebd795ae",
+       ".per_slot.csv": "f2d31e9a979d20bf0e4fad8ab13ff9b58a4ee3f41bba9ab2c08fe27f76bee3d1",
+       ".summary.json": "dca6371d50a5c3a8c3eb8bb77ce7e80f50288f1cea4f9fbf0251b28e2b295204",
+       ".topk.csv": "5bbacadd8587132892874c597ccf021efc34153a63134c37f644d6980c2eb951"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairB_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/contra/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairB_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2583
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "62df5efc0ab8008cf1e9dc8f19d87ae0c61e38ee197137ea9346ba4ecddf261b",
+       ".fork_events.csv": "ec02d2a6dd95c0c496b5ed9ab78fa00bbc8a13b785c255e70dbfbdab681a2c7f",
+       ".per_slot.csv": "e1a7576a669a8f4ffe2e1619bb3c25857994af47c081a5fd87b22d1cd06f68c0",
+       ".summary.json": "13be3f95fe9ee03d09030559b0eaaa1d819e01b2f44461e86db0cb8952bc170a",
+       ".topk.csv": "1605fa4add20828ecd49aacb53b6ac414d46cab831cef1ae40cee548c194fc1d"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairB_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/contra/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairB_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2833
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "725be80bc5e3862f2729df30e49bbd2d97e5bb55ad065a7b09186c45447ad15f",
+       ".fork_events.csv": "401445857ab2c861e0313123294a619d47f3b84405df301db81c5c79b0ca7d9d",
+       ".per_slot.csv": "5a7da845255104832687972f0679827987a4550b4d5df96915e428c1362d74ea",
+       ".summary.json": "725ae493840e820c27a3ad6a8735983a0b87cdcfe5674332c26e303fd099adf4",
+       ".topk.csv": "6200b05f3b01584178d125bae2e18fd296d89665576def2f63b336c789a97748"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairB_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/mixed/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_mixed_s0_pairB",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2704
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "426c6c8e9a91c9c5a2ad36727d7d4b141c0d32dcb72e27b32b023f108977ec26",
+       ".fork_events.csv": "2a198f4c7cd02d7ac48bf983bfdd51ecb737d4c7f77da025575737d96fa52718",
+       ".per_slot.csv": "ccddb3fd3edecd1250dc9090a87358447acbc1038f611aef0175a78899ed9f86",
+       ".summary.json": "b5a7761f21a0225ad632aa9bc3dd663b1237818d90c27eaa06fe528e4c074b66",
+       ".topk.csv": "69654f2f38f942c17a9934f1ffc7335eef070ee38978ee7125275d3822ac8763"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairB_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/mixed/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairB_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2405
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "ed299a91e8fbcc1e71914d6707b8a9a46ea8339d31bcf57d2c2c205956d1e5d8",
+       ".fork_events.csv": "f1217233248ba0d4fc8a390903ec80fe4252d392801518962061fcec116fe5fc",
+       ".per_slot.csv": "ef5b9c164d1eb0297ea59875034d3c9cd74e724acf361c13d8a52adefb1c31b9",
+       ".summary.json": "3820231aedbcf8f1f7a0c66574e26d1ac1f5c3584a2cdf848bb2fea555ecb953",
+       ".topk.csv": "11432ecfaac0429260a4ba3e65fcde0bdc064d17641d6b30a1249904df8c4194"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairB_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/mixed/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairB_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2705
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "8d772d9bf180e7cd8b9b9e801b6c97bebcd9753f4a21302461dcb00e3626cbf6",
+       ".fork_events.csv": "6b0284bee354020bc49dd9156c6c2ef563396d335403ad38f1f3aeed2e3ab5c0",
+       ".per_slot.csv": "acbe489527aab8d997524b2e830a75aa9ee7dfb8e2601e5a7a84a445f264a481",
+       ".summary.json": "19cd4cf833b0d66a122a8f285afe275776fdc3a9cb85b96817f85807ee62babb",
+       ".topk.csv": "e4ee3f02b717362c17ea0b1554f50a1c62ba81a4055cd543bd9ace92dd84ecac"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairB_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/oneshot/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairB_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2708
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "5a1339f790fdf7dbbb155a5508ec45baf0da5916e3a81673d06574048107d477",
+       ".fork_events.csv": "48eeae4207a8d1bb054fe97fac9d7a2d2535552ebec9ff3d2c8a28f6991a1fbd",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "9a7f03c8b8cbddd92f57183131d692ca96c61c1b7401ef4948f1cf6abd840849",
+       ".topk.csv": "a25b8e26b863d4ec179e1a777b727b4736c254690b1141aaaa288ca87bbfb884"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairB_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/oneshot/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairB_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2339
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "85a2ee3c48afdc2843ff3892d77349a36c5b3f28cd96ce9e712243c32ec7239b",
+       ".fork_events.csv": "8ba9c9e7d37f118956a22834834b7aab40014bdbdf00a47aa22a754e27b533f6",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "e4030b6f49b89203c9fad876b29c16ffd26341d9636d541f3de8ca53266aa70a",
+       ".topk.csv": "24e60222843016e623ee45f3e52939ede3774bd9a7316a74df553471dde1ccf2"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairB_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/oneshot/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairB_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2567
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "80382f4fc53f4eafb3f81a09f6f60e40fba465c10cce8ab7039c32fdf7aff8b7",
+       ".fork_events.csv": "46bdf49b5cf8a92db290ae83f3462023b061fc5e26785c66246cc50c227e1b9c",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "c432da64a3e5aff24d38b7b83eba9ab0afb64829a430e47a0c9a0a2076f6b2a8",
+       ".topk.csv": "23cfe0fbc1a030944c204dd8487983f69cae7adb5802666d4df62cbf0c572c20"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairB_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/soft/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairB_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2777
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 373,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 373
+      },
+      "merge_led_rows_recomputed": 373,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "2d1712e47224e2239ba4524d72e857d50f3fc33ed2937c79604db7cc7e1cef05",
+       ".fork_events.csv": "7185e0bb2a7579c0fc78cfeee5434ff4fff5b437879ed757ad213967d7df4071",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "258bd632af1739b30d9bd3d20fe10ba74fa5b8636f6ae5470dff40dfe05f194b",
+       ".topk.csv": "ad3ac6a064e6100aa6cd8c8af7d248cc5234331ef639a118b343bbeee5abf49e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairB_s0",
+   "pass": true,
+   "soft": true
+  },
+  "pairB/soft/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairB_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2477
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 340,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 340
+      },
+      "merge_led_rows_recomputed": 340,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "1e316e694a1cc589f84431bbde35d0c2a7e631ab843059dc762f283bbc77daac",
+       ".fork_events.csv": "08b542774f0ca839d0d50d2245c0d65fb42ee3b4ce5cdf35f824366dd22f9eb9",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "3bac0532d569487071da3698179afee82d1bc0347aecc284da818e443ccdfa8e",
+       ".topk.csv": "b7d196e3ce058ecbd618137ed0097a7a29e44548f4e79dc73212c0ad462e543e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairB_s1",
+   "pass": true,
+   "soft": true
+  },
+  "pairB/soft/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairB_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2656
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 361,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 361
+      },
+      "merge_led_rows_recomputed": 361,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "7af0ab4b4ed8ac744659ccf3e62c04a43316fa9c827ef5fc15a1d3f5ec6f78b6",
+       ".fork_events.csv": "6258cf77d00c451dea2a92956cd73ff43f62d23c07b9a48cb15ce1ba935655a8",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "2f0f241073596a63402339a9bb2c98b25505b4b8b1939a5f17a64e3b44211992",
+       ".topk.csv": "6e38ca51a75246e6109088601c8bcc06c1bbc727ae42bc3d7138db7f69b491a5"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairB_s2",
+   "pass": true,
+   "soft": true
+  },
+  "pairB/stale/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr3c/per_probe_stale_s0_pairB",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2604
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "40cc070ad18dec5e5f31b55c56cf550d6fa6bed6cc82d6754e5a6adec80e8c9f",
+       ".fork_events.csv": "f5c133c1afba3f5f5ec83790b67f005b4c58774fe97248382ed6e1e6f4bded7f",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "d3e7fe71032859be2d84a243379f10a901bab617ec9f5ec5a6f818bc0a861635",
+       ".topk.csv": "1953dfde627d1dce4b52c7463b49e6ef301970b9ffada8b7b236fc297733c98e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairB_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/stale/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairB_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2232
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "5d6cdf223820f07d863aaac42fecf0ac5495be5a88fc1d1670c5988193bdd0bb",
+       ".fork_events.csv": "a7d2ceb96fcfe40788f1a075264220582ae6dc1270b65616b214fff2c2914a25",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "baa343073ce11a5f6e424bce62156a9ff672e7f16560514b66b6c42aed0bea49",
+       ".topk.csv": "552001cbe421aa83b6370c350c7fe1300463b976358e53764764bc4f4082770a"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairB_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairB/stale/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairB_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2452
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "70b01c0003ac0ab069ea78d01a5a90cac8f24a1ef298e956961b97339c059839",
+       ".fork_events.csv": "754fa064fc0fe4f2ede74c4fa4000bd5cb9023f254177ab8fc886c1e26c265dd",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "3955a162cb8aa523e2fb6f7ff17ccf650e88cb8f8c71123526525493cfc4603c",
+       ".topk.csv": "eb0b9d0394fc0b586ad9b45b2e0fbd007e93f539d18111a4ca98fc648345521b"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairB_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/clean/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairC_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2354
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "5347d51f4d4b0e6cc6fb35c4f04ef5a89fd04a33acad95fb24cf022ac12d2cc7",
+       ".fork_events.csv": "2d077561822d8b3e68ea58bb55a89a376ce977434b86fbd76e4b2cd88f2d3f2b",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "298fb1d74280b6ccd32bbe4b7661394f0c0b07af946a5d5fad0f6b4e2d9466a5",
+       ".topk.csv": "d7912949b740ce25a24a631bd604a2eaf22ae036bd2eedc6c897c427a60d81fe"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairC_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/clean/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairC_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2246
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "9450518f80a41ab228fbe530f5e8635d6ae632b11d843093a800b8c36d8db76c",
+       ".fork_events.csv": "d762fb43858f638d8edda657b253695b7f42567486e74e3f71e030733737a974",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "a5af0283a0b6804d1f810facffabf77541e463ddd068b3d0ae2c6a467497935f",
+       ".topk.csv": "359196acf04847bbeeb8f54d54091657e7b025323dbd9e2a64c6f93ad77130e1"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairC_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/clean/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairC_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2294
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d41f3d90af809511e3c5127a32777a15b5eafe4875e4e4f2de3c815555feb3c5",
+       ".fork_events.csv": "6105f96708870189a5678f6f0cadca1341429293c242c6f1ea9067dba45adf1a",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "23a9ee8a216e3b7a2a8c9a2293add4a3857e0130ef7fa0d7877b8c1c80749b40",
+       ".topk.csv": "c6bc062e8d0618fa5c747ae199dded1a7b78995b10f714eca8f73095c66732eb"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairC_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/contra/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairC_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2600
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "a6ab3eb6a36075e4f346badb34a6a18e939c711252e22641d337d771f215f3ea",
+       ".fork_events.csv": "91dc4003d7c24bd542dfcd4934560e7f9f8424e4c74a63982ae5a5906c689d4f",
+       ".per_slot.csv": "d324b53928d9a76aaa37d4b904bfb74b17e973de533c7d5a99cce98a28dff001",
+       ".summary.json": "13e1d6ad3da6ea423016c391a1911565507b20a578f898972f8f34d20f5206e1",
+       ".topk.csv": "1c49b6f938d08ad86e03ba0ceb11577b9f6b444da01118dabcc9e4176463269e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairC_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/contra/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairC_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2490
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "359172cdce8b13060af6a9d9a8b10c7865834684a00c20cdd2306cb3c510480f",
+       ".fork_events.csv": "ea1c46a1f4b9bd856088d99f4ee18c5f06da08f582b3ac9da934c61df1eaeae7",
+       ".per_slot.csv": "6b00a7b1ede2601863b7dec6b5e5a564085654efe87756cd639a825de67f2b69",
+       ".summary.json": "a0d90de5b161aae776077fddff5e56946872c022578c63aeef641d2dc556d373",
+       ".topk.csv": "c5c433e66995f1f855355bc8588a7b73b9c69eae796147bafde5ce6c22b35ef2"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairC_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/contra/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairC_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2553
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "0ac570f1bcc9281f721eef5b0fa9ac9c465c8da6c7cfcee799a161fc6e643732",
+       ".fork_events.csv": "4dab9d74b720397e1c20216ddd4124c75c3f5ba7d2903be764446ead607ca00d",
+       ".per_slot.csv": "36bd8f49231dff3aaac75944a027d3a7a22b1999d59c284f4260d307159caece",
+       ".summary.json": "6738923d6dd32493967766b2efb97e97cb1052b734990d7486114e5cca86fc18",
+       ".topk.csv": "863ca5ebd29554c5892c34d5f52f1c699f89014f8e404219fc44877a41889505"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairC_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/mixed/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairC_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2611
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "94c2eb14d11b7b5e6d25201964c25736d9e5a4fbb464c75f02ada462e5a165e1",
+       ".fork_events.csv": "ce47779aee28bf38fe69f1147769c150388f4a255d867b80595daefa99aeb13d",
+       ".per_slot.csv": "04c2a3bd3471a0f847cc74fc41f6394a2c511fa722c4f9eef009e6e6a784114b",
+       ".summary.json": "67d4cfc5349cc7a5c2cd63a39954094df615911d2d29b944d46a92b72276009b",
+       ".topk.csv": "2b8f7317ef7496dbfa03fcded109911bd9f96310d8a644b372c6a3fa637223ea"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairC_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/mixed/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairC_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2559
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "a91a59b12fd52eac38174cbf326df5b9f455835a98225c17e1febb5fed674678",
+       ".fork_events.csv": "d93cb08f0c5de3cf3eb4fc9326b37e323a50299d2f392d0fd94431a72a16fea7",
+       ".per_slot.csv": "cab7581a1f2347d99b766cf438196fe9206d21134fe7afe904207f49ae014e61",
+       ".summary.json": "be9bcfdb1a7b38f35aa28f840aae7eac07f3b1e4c4376c60a973c334af43705a",
+       ".topk.csv": "fd7a73b5fa4b8b4b5ddaee21f8d7e210d0eb4d523325570e9588de97339adb86"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairC_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/mixed/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairC_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2528
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "e2881ec8f02705b73342679d0c254bb59c0af6495a9b4ec0194d9c4bcd3bb981",
+       ".fork_events.csv": "acbe465ec6588e93c6ed914c1d371478968dcd976928030d7562d189902492e8",
+       ".per_slot.csv": "759b0b26532a84fb20f23cd9794c202d4f55028cddf09d044dfd5e6539a705ef",
+       ".summary.json": "e862ba340245ce91516cebac0e6de926cafe7b47b0b894d26218d4a6eec19a47",
+       ".topk.csv": "4439cf623e57ef9ab0c0b7e84ba12494f8f1f554d3b381b155832121d038cbb7"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairC_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/oneshot/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairC_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2744
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "1dbb0c4d78317663202f425b748ab46b74dafa787a7d8cd72de6ec25331a44fe",
+       ".fork_events.csv": "38aaa2b0b2fa082b343fab91145e172118120ad9c329c88e98c8983d27ea85b5",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "67e4183d8e209e1769a44c674ac3eeabbe2bc7cd027e6e1e2914d0b81dc6782e",
+       ".topk.csv": "600b5cdeb3442d1e2ff5ba17eb211da0659a7af1ad38f8e23fe6d460e2adfa34"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairC_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/oneshot/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairC_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2759
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "e663dd321ea18e93a2fe682cdc4974ac8251e5f18039ace1e74742b6e6a2d175",
+       ".fork_events.csv": "ddbd456b9ea1da01d9bc2c410e0a57f1516ee6c6c4123c93cc5c6442bd129250",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "fc429b90f1325f115a3d29d726d97db39642a618d7120e0a26613207fd743dc3",
+       ".topk.csv": "907a97acd16ee39790c32e213b32ac224fa241e1a6fd53b0518cb24de19b6270"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairC_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/oneshot/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairC_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2656
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "2f1186dbda5dc641bc7f6fd3b44f2d9ed453489139a41eb8b3577ed1689374e1",
+       ".fork_events.csv": "b15cea2975e677add913ed5c27130a07f110dd44cf9185d21617b961ba1af167",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "672cc449e086afaef3e5b67dd9f552d0f6cda3bd12ada989ab2a32e27208ba57",
+       ".topk.csv": "720d006cc97125802e1efd8d8c05490da66d89d679c64566531fb0c1858503e1"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairC_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/soft/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairC_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2865
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 304,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 304
+      },
+      "merge_led_rows_recomputed": 304,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "a4e5d54f656bc37dfa1566c942cc4476b5d0eebf3644b1eaca8697cfc889b057",
+       ".fork_events.csv": "a044a94747b47eabd2e7b7d63acdd97e3e0db7c317409fb53908085e28a8516c",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "4547a60f2f03fe68d3625e37a26fcb5580c1a1f6308154c9bb2a05990c14ac5d",
+       ".topk.csv": "b19ca8b4d703e2884291ba7f50fe7ec8532a4e3e1b33250c13e14f6240dede02"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairC_s0",
+   "pass": true,
+   "soft": true
+  },
+  "pairC/soft/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairC_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2876
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 299,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 299
+      },
+      "merge_led_rows_recomputed": 299,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "b3b2f2f8913712cd73c2810712fcad8ee175602a7af66afac57886f4e793070a",
+       ".fork_events.csv": "ff6f976b0290c4da893b86d4ef5b47ca025446952b1332d6789f8b4230f33b02",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "e84729f0cb7dcaa3377f4062d513bdc663251ada71c60ce546a75fedaa551c97",
+       ".topk.csv": "fcd084c44bbb896877be006f23e28e5a53ccead26c4713505ac6e6b4fc20dcf7"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairC_s1",
+   "pass": true,
+   "soft": true
+  },
+  "pairC/soft/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairC_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2773
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 285,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 285
+      },
+      "merge_led_rows_recomputed": 285,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "8e15e016f1fa4cbac1c7fa54eca70df95451fde61b306f59a20a31e0735ba2c9",
+       ".fork_events.csv": "ec21d348467b59e8d54cd6e5cdbc6a8717ee9b302fd44b08e39082ad684c4b69",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "dce62e1d83ef7adab07b582d6440a5e254cf27a85da83814f076f3dea1bb61e8",
+       ".topk.csv": "3f28f64aabe27c971db966b8c742f924adedea9d638f5dcbbb2451ceabf7223b"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairC_s2",
+   "pass": true,
+   "soft": true
+  },
+  "pairC/stale/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairC_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2636
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "e241f2b6a500b27da9aafae16d51d613ca2bf40d1b658e331a8436a63009fc77",
+       ".fork_events.csv": "067f368af36da41e37a56a642f33ca276522bc60af70b117f74e4c4a2f61886b",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "1b9a4387c32db083c3130aa787454517c846bcca643878a190e21c9857291847",
+       ".topk.csv": "4ddeef54d5f7ebfbc2ddf25b6d2652143f374d6e8298b8402ae4a70934e13504"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairC_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/stale/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairC_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2638
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "adef0773708cc4df48e89a4f310492f69a44d8dd0761374c110aa4876bb1a216",
+       ".fork_events.csv": "b41b1b7e39ef489068618adad0a66a4fc3ae6de371be9beea1dbdecfdfd4e5a0",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "5b285320c655991c3751aabb005fcef8dc103632a5b8dc34fa6696b504d3ba87",
+       ".topk.csv": "64465d3639077034b5179b5bfc6df8cb8511b265c56728b482a3880c9626a798"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairC_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairC/stale/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairC_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2546
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "7a2180bd4fc62e138fd66dec047108d173ac1a1a574d17032b12cb30ff1388f0",
+       ".fork_events.csv": "2e8481c946760e1de6741d6f404da374170077bb74b5656e547a1e39340bfaa5",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "5f028249c97ffb156148a320ad56c72a696d34de5d72ab53e0c11eee56d7f6e2",
+       ".topk.csv": "9c1b12cccb23430206970a4b0f64e5f4e9d40f6ee869fbfdb2f6e534b0f98a6f"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairC_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/clean/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairD_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2486
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "2f92f922f3faa310b1bc04ec22719cd2156a507cdc2a3e3225dcaaad2ddda477",
+       ".fork_events.csv": "67f23a88ab4bbe7fa5057f535801723c7fef1cf1fbd19a045a577fe1c5849963",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "b1cf77a402f11c4acceea22bdec8bd17ad53b15f02f04bf8349db9586f016026",
+       ".topk.csv": "a6c2f4723b7f16c390299f3d9f454bfcec9916ce10ebccdb0855b680df912b58"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairD_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/clean/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairD_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2558
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "1df8c9781fe9b5269b0128187a7c60a2db63124b2f6ea86ee7e255ecc37a2f9c",
+       ".fork_events.csv": "d5d6af7903287795a57a041d88219ea7d910507052eb2e532285ff91d1f7f7f8",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "3be189e988ace58cf56b41a6440b59ec2c9a7378cefba42c176672ee0de063bf",
+       ".topk.csv": "ec554beb1f4ec01b61d50e1d90a4dcda739847fbe320a845c1990cabf142de18"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairD_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/clean/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairD_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2450
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "69a2e9b702693ab652a6fa675fdf13f5e8829f83252cbdd5248513a607922cbb",
+       ".fork_events.csv": "842269b71e0af70be8b0673276f12b958463461132349e1c948db24d874b0b39",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "073e4a090d6afe6f505bb5abfc1bbb91b7029200c7d0e3ab2ed9b06150ddc3dc",
+       ".topk.csv": "4c85554ab0d70a042c68a6a681c5e8a0a142b2dc7d22d92c42c60edc789273a1"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairD_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/contra/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairD_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2749
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "c92ac5b16b2115a0476cc63dee303dda277c35d90f4b709db713044eea0c9240",
+       ".fork_events.csv": "63df8169787040c8426624462843981ac4fe6d43c980ed79ed36c4eeaefe82a0",
+       ".per_slot.csv": "84e735a9b58b194560551ed9870357c203da1082a7525af96f0d9f71e48ed37c",
+       ".summary.json": "178276332ccd3c4a3f4316f174cad4e05542c6f0962ffcfd5b8cf6230bc22ff2",
+       ".topk.csv": "c361674cf18036683880c2645a87551a5a443bfbdf459e3d2429e61f7c9f8905"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairD_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/contra/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairD_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2744
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "dea9de80263ffe78b8cf8827311a31053bf4aee11ea7d15beed50efd3337ccfa",
+       ".fork_events.csv": "cd17c07cd7a6c96e51a297eca58e100111533a8753a6dc03e08ae6a7576a9527",
+       ".per_slot.csv": "dcee4b7f64b038a0d46fa0f8c8e8c480e0ed0f64510cb4db731c3d3387626f31",
+       ".summary.json": "6f81472cc65e957361a7d01d582550b7a8b189c278659bbc75d30de96ec88e6e",
+       ".topk.csv": "d49e50a1999e71c48e429be6404113523ee5ba2a5e7e855c8e8ca0ab4d81e913"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairD_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/contra/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairD_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2714
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d354220f48665af04d70f1e06dc339b604fe26978449a2026467f0f394b27e04",
+       ".fork_events.csv": "7b81440b4110bcf6f3995d90d73188ce09a42e9f73d1c2c6e8dd26f50a595501",
+       ".per_slot.csv": "49c3badcb18e69a8b77e77c72f914efc14c775570e1f947c8e20d35fc52d9a7d",
+       ".summary.json": "0f2bd2e9850e5ea8b0330620864dce78d33359c5ae0cf15c2b7b8f65b0e189d4",
+       ".topk.csv": "65483b5e33dad051b910b03cf8b3906a9c94f327869ec4bbc96d4203af072d9b"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairD_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/mixed/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairD_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2693
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "ca8e88aa61de054724e9e5166cb904ac3b5c2c2bf415d4e472f42c919b7ed52d",
+       ".fork_events.csv": "5847979cf2cf9937ee5e8eaac6f534a6e20452b329cf99c0d636180daf55a978",
+       ".per_slot.csv": "f2ff74ec4d37648188399d7241cec56f0ea9f90470f23ff553cd134300bbf3a3",
+       ".summary.json": "6036b6641b205506699e0633da191e37b419c2036f604348f3e8921a4f236fc1",
+       ".topk.csv": "b2d44815b7eae0c37e796f87377f74993b61569725dee79cda163f2aadfc92ba"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairD_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/mixed/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairD_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2721
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "0efdad11b8011212c3efb3ca289397a7be1738768757822c75b8bf3242d6376d",
+       ".fork_events.csv": "5d0386a291558d433448f84cede6829fd2e62a60c497ce98ee7476bb361bc9af",
+       ".per_slot.csv": "8edda4760b05ba36c0182e2c4221355c5a485e4762407b60aeae26c7646d7ef0",
+       ".summary.json": "daeda529b30b09366e9e320c231f8eb8508a0786ca2740aec01d02db2769f775",
+       ".topk.csv": "b434f17ee6da06060092d1ee4f8a18f226a5a1431bd8446630d49e96f451b48e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairD_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/mixed/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairD_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2622
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "72bdd7743bdf0be8219ba35dc4cc8759b41fdfb92dfda76a80e25ab4f0861dc3",
+       ".fork_events.csv": "97cc2db7b93d073bd879a9af4f335bb7e017e6ab15964073e534dd9bb0ac0d4a",
+       ".per_slot.csv": "5af4d19bce7551d25a2a40feb8532f6fe4eeb5683bd38c10777cebbc62142efe",
+       ".summary.json": "55b8c157c09a06d70b80377b0cd48d42ba0a002a0ed6651cfd659083ca232f09",
+       ".topk.csv": "dcad21e75046ae73df38d5b88b3171f568e40b09acec9253375be9af824dce24"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairD_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/oneshot/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairD_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2841
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "1b5588680f7cb3eabb1f7d75f3b2da9c8371a0817de5ee16e265e2192d45894d",
+       ".fork_events.csv": "b7083626d43e492fbbb76fe8c075661e761e67553fe66ebbbea4b5122fe7c3bf",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "bc98d24536d2797e297aa462a77dfa13e6fc23f6e43cb2043094735be8d8cfca",
+       ".topk.csv": "51d24530ade5b8fdb28855683dc7bb918a8be85103e93ca7ec86324c057deee5"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairD_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/oneshot/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairD_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2859
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d8a1a6fc8a567337da8e765e71f38d2ff5cae723cd5e870b13fc178f15579810",
+       ".fork_events.csv": "2e8389b50944058f47f87bc0cb4c3d3f270b2f9863ea6ab122d013609502aa66",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "c3652b51c8517de4979db857dd914076df9b4f9994686879c7bb6e1875d0b52c",
+       ".topk.csv": "1df526633707a140cd1618c8e8ac2d5f6c749ccc58bb21373def0cdfe6b95b9d"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairD_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/oneshot/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairD_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2736
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "99a1cc1b25c88927e301a7c261ba594e058bf13feed274dac7d7d56a60b0ffc7",
+       ".fork_events.csv": "dc0923597f4d3ffd9f58780ce7e790bd045615aacfb11d9e86583f055fed59fb",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "ff52362a64c5bf7bd7e9345ab25ab92285c9908ac8b609a411cf8405294936ff",
+       ".topk.csv": "d523d4dcf78900cbc2229d3041232766737bcf94bb46084f6df28c793a22acf9"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairD_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/soft/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairD_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2941
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 300,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 300
+      },
+      "merge_led_rows_recomputed": 300,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "001a18ed46eea0f6016a908658426573db874ae843f171162521f1ec5b4a5924",
+       ".fork_events.csv": "a681996ea4759b563b7b40250c96f1e194efa026e05589f2fc2e1c3c865cff10",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "37eea94d9337d123bc44ce5f0544f6075752522a7f39e5994e645f7ec1126849",
+       ".topk.csv": "99f98ecd2a6827a56d9f86b325d583baf8fcf07949a441888858f5e3036bcd05"
+      },
+      "twin": {
+       "byte_identical": true,
+       "stem": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_g5twin_stale-soft_pairD_s0"
+      }
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairD_s0",
+   "pass": true,
+   "soft": true
+  },
+  "pairD/soft/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairD_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2944
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 280,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 280
+      },
+      "merge_led_rows_recomputed": 280,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "1bf1c0db33af34391f459a4bc485be5b2c04acdb6a6c87ffe632e5b52cbcfa83",
+       ".fork_events.csv": "a211628a0810d66e19a43e66d9c292d4912f293e509453ff8336916781d67d6a",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "275ac9990e7820482e99e59a1c13c71f2e1b9d642ec89bcedf5467dd545b11fe",
+       ".topk.csv": "b8a139bdadcc7b584a62f459c584c8baf390ea00662b0d5784e1bbbda5fe8f7b"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairD_s1",
+   "pass": true,
+   "soft": true
+  },
+  "pairD/soft/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairD_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2830
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 296,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 296
+      },
+      "merge_led_rows_recomputed": 296,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d7d9126e55bbbf0955aff7afe6547a71b1966ffa145700de0fc07170bb29e756",
+       ".fork_events.csv": "9006ed04cb57e646bd2fb3b21012ff76eed347c75270961efd6564ea7207ee03",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "182812332c038cade46596ed7eda0b84f05f120b2d7227e2ec24eb6a928f42de",
+       ".topk.csv": "6f087587bc8d0608a4c5f55bd62ecba5d986ae5fce8506d0cd9d89539e6af131"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairD_s2",
+   "pass": true,
+   "soft": true
+  },
+  "pairD/stale/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairD_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2682
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "05bb289b2d3753262d00ff85e367bd332948c01ef232ae43bb8f84e7f1d30d6f",
+       ".fork_events.csv": "0d8a236c816d81af63b2a3064885e694edb0e408dd69ad8203ce1b39f8cd1015",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "0e3924094064500220c93bb7b42a479c5c2640a287e390c977076bfe5f80a066",
+       ".topk.csv": "e4c216e325ee259eba096e56775ca62b5bc6fe2ac428dfb98d298dc6c5b11f0e"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairD_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/stale/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairD_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2726
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "6eefe8ff2fc32b1ab16f5e102bb69f73094d21475d4114bdd360eb88ab8d2aa4",
+       ".fork_events.csv": "530f6711a1ed11cbfddddcaa7b0f69934e1f7c469d764cdd67571cdf88f9c576",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "c71bc9993c194ae1a9f181a0039f25c8ea2b9df750a56020142c1cfc211b283e",
+       ".topk.csv": "f08df3faf9574e0d25f2cc9731ce8bf57fcfb06470d7fff5838bf2c497281e56"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairD_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairD/stale/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairD_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2588
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "4ce612c757ea0339efb3f582c50ae973499dd1a0ca4b8b23e8118829423c9117",
+       ".fork_events.csv": "172fc817084febc7c5100294dab75916f2bcfe1b91e7d8d37fcd210338bd1a65",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "f449f0903ae4f2028ea7cbc31d90d355eae69904f68c9266a5eb410ead01cf5b",
+       ".topk.csv": "d6895b2d68a6df0259b06af576e7b003dd105306098dcd056629b215956b48d7"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairD_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/clean/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairE_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2846
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "3cc66f6e1d63c09cc2b086be703de71866e08e36aafe623c52c8b804509156a6",
+       ".fork_events.csv": "57b61337812c957ef09625ae2ad23b3ed0ff7fa7ffc8134860dd9c21786f074a",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "80fe641ad92a776dd58b750efbadcb68a5a1db2c06080443d3d510903fb9d4e2",
+       ".topk.csv": "590dbdf68bb075be9a63452f6d8fb65f0de98aac7b6c03d04b53ebb1fd4c74a4"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairE_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/clean/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairE_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2726
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "8ab10fdf1d8c48000539f7ff0c6d5ce090ca47e8e3f9cf4f147b0cf9bd0f9bab",
+       ".fork_events.csv": "e617d3c87ef6d60cbd167c485c0706716a43643ad6a77480ec12d85bb7d75788",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "6ecdd1976cfa10fb1c883d60a8b1047e0475644375ea0ca285a4ed4666f4d191",
+       ".topk.csv": "1543c4bcf7f3bd7870f9e0edf9e0878bed957bdb6db8c8e081e1e079cf33b78f"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairE_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/clean/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_clean_pairE_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2810
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "1e45d35038c0ca4125dceb87bc0e7cdd4817aca3ab29e8b93d42374fa5928254",
+       ".fork_events.csv": "e7a06056789c331f297d92a76c2546bb7907337e3677efb7894d43b1b9c2884a",
+       ".per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+       ".summary.json": "2f4687ca5fd5e7da104ba565ac8c5c5ea548c9288810806f850edde150027647",
+       ".topk.csv": "50ec2f657db62781f4431f314e449c4dab07e021f320a14feb2835f3fb4cc913"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_clean_pairE_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/contra/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairE_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2979
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "13bc7cdfd7ac39314af2336000c036feaa92133c5cbe43d3009c9108abdff20c",
+       ".fork_events.csv": "d07220bfe9effb09bde0273267761ae538a2d62bb4ccd8fb96a4c6abe4a8256e",
+       ".per_slot.csv": "787a774f74c1c26c010171d243f6674f7232c76e59c6ab987958bdb375d15431",
+       ".summary.json": "354cdd3dffc046489369bdab7b679488f337700ababfdbd1dec04a6958b67b7f",
+       ".topk.csv": "a977b79897ccde9a06bc04da8e16f062897efc4f40cfb27c1bcfe1186badbf96"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairE_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/contra/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairE_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2904
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "7faba28a6286b9b73bb1f0cfd1fdaa6fb50f87efc7246015608e2c1c9d883efd",
+       ".fork_events.csv": "d3c01b006cb70e2111bb04e3e8af8567016b174d6361422c45038251622d545f",
+       ".per_slot.csv": "4ce9ea40fe84774ce507baf883eb344d377978f68d73613a03139b1620d6f7c4",
+       ".summary.json": "03465e8665edef2a64b9fd4d5f86dd89d06d7f712c9c70675671a6a69c8f03ee",
+       ".topk.csv": "85a00b9dfebe3304794ca10460d07a3a6950eca11aea5cd3a738d34b6024193d"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairE_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/contra/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_contra_pairE_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2958
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "d858750e9570efae0f0cd8803653798718ebb2c20a9d53937fc9a98ec528862e",
+       ".fork_events.csv": "41d25123e42a3e4fb56df5b9771ca4ecd4154092073a8adc02dd7d6a02166e75",
+       ".per_slot.csv": "1d7578ba5b0d8193905969c9e3433a0b9aba8484a542f9f10e28566e4fc6eed4",
+       ".summary.json": "e6c30ad3456aeb29099db382789f4cb9e6bb14a601e66a377733e5520e7fe557",
+       ".topk.csv": "afb4b2c1fcc46f2c0975192e2dbc9c97ec83d5ffb34850e99965857121e58aab"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_contra_pairE_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/mixed/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairE_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2836
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "7ff7028a15c7edfc2024c1856be34cc8952efcb5d79479c875e400b54903782a",
+       ".fork_events.csv": "dfcc7ac16968bdd63696a5b50bcda4ee5c3942da90385e58671725f621331ebd",
+       ".per_slot.csv": "850fee675e377bdccf4a4c5d6e648f33826272355822144686233bf61557ac4e",
+       ".summary.json": "a77cdb4b1b5ce43dc9d66b72ef2bcf10af0f36cbb56f92f03df7a473849c769c",
+       ".topk.csv": "71a8f3e65ed0a7b6906d4895850edf68d858fc174287b26d25e29ac72175744d"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairE_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/mixed/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairE_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2717
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "a75b4ef0f6e909e6cf6d8e82203db3c8559201c01a441e89619fddeaad2bb3ce",
+       ".fork_events.csv": "bcf1954e521b809ad769f53b15b4efd93bb29704cb9389b3252f69b5b7e0464d",
+       ".per_slot.csv": "528a22156ad0152078a2559807b7e755187a3ac17a1b45fca998e1add567ec27",
+       ".summary.json": "b87400f8df7e6b3d1c6463c702e416df4b5223215ca0b109f3d150784dc4ecef",
+       ".topk.csv": "8c906514456560638794b4512abf68d2d6e74e19b05e194e1303de25b5ca664f"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairE_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/mixed/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_mixed_pairE_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2820
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "c432c7c9b7a354a89f175e94f8968c894e2e95cfdad78035b212008463c0a98c",
+       ".fork_events.csv": "4bc1c0f7bb6016d25da371b8f3bcc5200a5440881d11f13011ad73717d6b8730",
+       ".per_slot.csv": "ce7bd7997c8b41371528092422e9c496b8949936300b710983de31bd13cfbba8",
+       ".summary.json": "287b66aa06ad116f760c20d7dff5c8ca69cc956f7c8df1f12df2d884da56562d",
+       ".topk.csv": "003e07e5990c9600f2a519bb45a405df6e537ed6dd6c5b35735cb06e19a2dcff"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_mixed_pairE_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/oneshot/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairE_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2826
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "6dceb2cc26efe862ea67cd9b83db6a979e9d35f5bbce9507667e5c6725f2854e",
+       ".fork_events.csv": "0de4c6f87224ae135a6f9fe2ead5e498f17bcdd8b87e74eaa7be6a9377fa8cd2",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "991ca8d13bca88ee917b6d90d14a56cca8a2c614d8f578efe627e2aaa98487df",
+       ".topk.csv": "fb07395d1658053e98345ae63694eb5c18b1f5a2c965cd9058847339e6d5c3e9"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairE_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/oneshot/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairE_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2648
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "c1d8fb5ed8abaceaf02cd42c60e2db4fd124f5dea25403c01da1a79955de4115",
+       ".fork_events.csv": "d1d83141eaf25956d90703bb65b0058181a6d64884885e9ed2b64ebd768335c4",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "b88f9c23cf33da1068e7a9bbef37a1572c92a49baaeb2ad326f5180943467713",
+       ".topk.csv": "d6d9f36f2cd2dccc95390d281f01079cd1f0db673c307e2be0c8463ea6dd22c0"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairE_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/oneshot/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-oneshot_pairE_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2799
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "11393f22eb05323861fc8410121e285e6c870bc4b5f52215584b16e334e2665d",
+       ".fork_events.csv": "4d33d3b9b2d1f756ded69071fca82a82a1edd827d359157bbdc87507936aa4fb",
+       ".per_slot.csv": "cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd",
+       ".summary.json": "acb3479aea69f53bae4f51281fe677024f8f38a7fe91b0aa136202c3e9ca91b6",
+       ".topk.csv": "f1261f57b812d62133832698a87aae45169f7b19e8073132f6417023a69256f5"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-oneshot_pairE_s2",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/soft/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairE_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2862
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 387,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 387
+      },
+      "merge_led_rows_recomputed": 387,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "750668693dd659d70f3dfc5950010b6eb80e24f823aebbf361db3f3a73b40277",
+       ".fork_events.csv": "97cc698114e44b6df6ade4ac1cc82aff41d25378da15e9b0e79ce219b77e98f1",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "65017ac0bc8cf045305db448aeca17c3c4d9bb53cdb8f446fd18a87bdf94ac3d",
+       ".topk.csv": "c39690c2d3b04ba86e05533c5b1015bdb0b7f8ac7200dcefd9d49188ef51bba2"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairE_s0",
+   "pass": true,
+   "soft": true
+  },
+  "pairE/soft/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairE_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2747
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 394,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 394
+      },
+      "merge_led_rows_recomputed": 394,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "718af3ac7ef02290d3dba8d3c4fb588f1af58056dd569d47b4107aefa0b8c622",
+       ".fork_events.csv": "55f92896a4a623d98f05050fa44bec470ef03680de379ac217f276cb808745d7",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "ce6a328556d31d17109137253386f1f53ad8dec9b4dc8690ed8f7be42d0ad2e7",
+       ".topk.csv": "0e190a9724b82c959be6b2acba54afef21f8aac6eae0138e3db3124735438ff7"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairE_s1",
+   "pass": true,
+   "soft": true
+  },
+  "pairE/soft/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale-soft_pairE_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2853
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 377,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 377
+      },
+      "merge_led_rows_recomputed": 377,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "9e1759bb337192ce5465bf2ed823c5e1258dabf2c657bf3ea505a5383c6566e4",
+       ".fork_events.csv": "d1d3b6329d507eba521bc8f1a151d4313c82ba0276e51e3a9a39ecbc931d231c",
+       ".per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+       ".summary.json": "fb50f3463d99b67725d5742b16b383aeee5cef93ef5832e8d740224327c576df",
+       ".topk.csv": "822e87345a6d3b3b856b4096f631f2491986bc702b6965b461eccfc9092ad2bd"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale-soft_pairE_s2",
+   "pass": true,
+   "soft": true
+  },
+  "pairE/stale/s0": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairE_s0",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2680
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "43d568144fd5d917792ebe1a062f6586bfc7edbb05e5f486985b49578bc1d2ce",
+       ".fork_events.csv": "17c1ad38726318c64f124c2b7e9fbbb8373ba93aefcb5dfd0b8e3367e8052e3f",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "9edff0cb9ac56fabb043242ac4433622d96b9fcf36fc37f5f6537272d6886dba",
+       ".topk.csv": "a28b46639c2d8c96e55a789f21bdbb42b00fc76fec812ef8f9537987c7d622c9"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairE_s0",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/stale/s1": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairE_s1",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2507
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "6de8428146b3e35f293dd2588d3a9dad169844636bcf8cdc5f8f8acec8b176b5",
+       ".fork_events.csv": "45b9a17228da55abe0b34263995c2cff5df1dbe279a67852e03972f252c6682a",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "2677f877357b8c540ceaafe2bf084fa092cb7bedc0c29a4067c6daa08ae321bc",
+       ".topk.csv": "edbcf7b323608eba27d4988f491d3b9bdd04f8cc9d38c080e23dea83063b14e3"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairE_s1",
+   "pass": true,
+   "soft": false
+  },
+  "pairE/stale/s2": {
+   "baseline": "results/issue_failure_mode_blindness/pr10/../pr4/per_probe_stale_pairE_s2",
+   "gates": {
+    "G1_write_stream_byte_identity": {
+     "detail": {
+      ".fork_events.csv": "byte-identical",
+      ".per_slot.csv": "byte-identical",
+      ".summary.json": {
+       "governed_has_read_govern_block": true,
+       "identical_after_removing_read_govern": true
+      },
+      ".topk.csv": {
+       "baseline_form": "gz",
+       "content_identical": true,
+       "governed_form": "gz"
+      }
+     },
+     "pass": true
+    },
+    "G2_answered_stream_byte_identity": {
+     "detail": {
+      "appended_cols": [
+       "served_outcome",
+       "abstain_reason"
+      ],
+      "first_mismatched_lines": [],
+      "lines": 2626
+     },
+     "pass": true
+    },
+    "G3_abstention_set_exactness": {
+     "detail": {
+      "abstained": 0,
+      "envelope_count": {
+       "equal": true,
+       "expected_abstained_merge": 0
+      },
+      "merge_led_rows_recomputed": 0,
+      "non_soft_zero": true,
+      "set_equal": true
+     },
+     "pass": true
+    },
+    "G4_trigger_purity": {
+     "detail": {
+      "first_impure_lines": [],
+      "header_cols_ok": true,
+      "reason_vocabulary": [
+       "",
+       "merge_suspect_led"
+      ]
+     },
+     "pass": true
+    },
+    "G5_determinism": {
+     "detail": {
+      "governed_sha256": {
+       ".csv": "50d921cf871dbc67afc19299212511cf949ccccc24abde6996805383c4338809",
+       ".fork_events.csv": "b71d590f798de252aa964fb8499d86b5b6a246d14b92cbf71389f1ef79f560f0",
+       ".per_slot.csv": "e44fb7c604bca5135522030427bd03c6a18a0ce7fe4b612af4c6eca4ff5636c4",
+       ".summary.json": "5e22d629541916a932193780ee45e791f5b69c454eda586f75bc79a09b670974",
+       ".topk.csv": "f12f1c04e4a4b5e9416763c11cd7c61b416887a2df57e0bfc42af757603f1161"
+      },
+      "twin": "no same-seed twin in manifest; sha256 recorded for the cross-host comparison"
+     },
+     "pass": true
+    }
+   },
+   "governed": "results/issue_failure_mode_blindness/pr10/../pr10/governed/per_probe_stale_pairE_s2",
+   "pass": true,
+   "soft": false
+  }
+ },
+ "design": "PR10_READTIME_ABSTENTION_GATE.md \u00a73 \u2014 exactness gates G1\u2013G5; verdict readout-certified iff ALL hold on EVERY cell, else fail; no needs_review tier",
+ "envelope": {
+  "path": "results/issue_failure_mode_blindness/pr10/../pr9/abstention_envelope.json",
+  "sha256": "356b37af7cd2457e47abc7962b7232662f72ee84ecf0e8514282d50caa7ef251"
+ },
+ "merge_suspect_cos": 0.9,
+ "n_cells": 92,
+ "read_govern_action": "merge-abstain",
+ "verdict": "readout-certified"
+}

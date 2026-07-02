@@ -1,0 +1,417 @@
+{
+ "cell": "merge_path_stale",
+ "design": "PR7_QUARANTINE_PROMOTION_GATE.md \u00a74 G3 \u2014 recoverability re-injection probe (analysis-only)",
+ "engine_or_retrieval_change": false,
+ "g3_verdict": "provenance_recoverable_not_harm_free",
+ "imports_torch": false,
+ "interpretation": "The quarantine ledger is a complete, lossless, REVERSIBLE record of the diverted writes (reconstruction faithful on every arm: ledger count == baseline supersession capture == absorbed-count decomposition == label total) \u2014 this is the provenance value quarantine adds over refuse, and it holds on every geometry. Reinstatement (= the none baseline, verified by the absorbed-count decomposition) restores capture to 192/seed with broken/stale not EXCEEDING the ungoverned baseline (the frozen numeric G3 bound is met). BUT harm-free recovery FAILS on every geometry (['pairA', 'pairB', 'pairD', 'pairE']): the diverted writes are the stale supersessions, so reinstating them re-introduces the stale_wrong quarantine drained on all four pairs (and, on the hazardous D/E, the broken harm as well) \u2014 capture and harm are the SAME writes. Restoring capture therefore re-introduces the harm quarantine removed (gate \u00a73 prose falsifier). Recoverability is validated as PROVENANCE/auditability \u2014 a faithful, reversible record a reviewer can audit \u2014 NOT as harm-free reinstatement into active memory; per gate \u00a73 the ledger is provenance-only and G3 does NOT clear quarantine for promotion. This is the correct shape for a quarantine: a safe one-way diversion with a complete audit trail, not a reverse-without-cost store.",
+ "per_pair": {
+  "pairA": {
+   "by_seed": {
+    "0": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 0,
+      "baseline_stale": 374,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 0,
+      "reinstated_stale": 374,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 0,
+      "delta_stale_reintroduced": 14,
+      "harm_free": false,
+      "quarantine_broken": 0,
+      "quarantine_stale": 360
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "1": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 0,
+      "baseline_stale": 372,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 0,
+      "reinstated_stale": 372,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 0,
+      "delta_stale_reintroduced": 15,
+      "harm_free": false,
+      "quarantine_broken": 0,
+      "quarantine_stale": 357
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "2": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 0,
+      "baseline_stale": 380,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 0,
+      "reinstated_stale": 380,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 0,
+      "delta_stale_reintroduced": 14,
+      "harm_free": false,
+      "quarantine_broken": 0,
+      "quarantine_stale": 366
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    }
+   },
+   "harm_free_all_seeds": false
+  },
+  "pairB": {
+   "by_seed": {
+    "0": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 0,
+      "baseline_stale": 375,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 0,
+      "reinstated_stale": 375,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 0,
+      "delta_stale_reintroduced": 42,
+      "harm_free": false,
+      "quarantine_broken": 0,
+      "quarantine_stale": 333
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "1": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 1,
+      "baseline_stale": 340,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 1,
+      "reinstated_stale": 340,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 1,
+      "delta_stale_reintroduced": 72,
+      "harm_free": false,
+      "quarantine_broken": 0,
+      "quarantine_stale": 268
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "2": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 0,
+      "baseline_stale": 361,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 0,
+      "reinstated_stale": 361,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 0,
+      "delta_stale_reintroduced": 53,
+      "harm_free": false,
+      "quarantine_broken": 0,
+      "quarantine_stale": 308
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    }
+   },
+   "harm_free_all_seeds": false
+  },
+  "pairD": {
+   "by_seed": {
+    "0": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 112,
+      "baseline_stale": 375,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 112,
+      "reinstated_stale": 375,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 41,
+      "delta_stale_reintroduced": 127,
+      "harm_free": false,
+      "quarantine_broken": 71,
+      "quarantine_stale": 248
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "1": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 180,
+      "baseline_stale": 318,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 180,
+      "reinstated_stale": 318,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 56,
+      "delta_stale_reintroduced": 69,
+      "harm_free": false,
+      "quarantine_broken": 124,
+      "quarantine_stale": 249
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "2": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 46,
+      "baseline_stale": 326,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 46,
+      "reinstated_stale": 326,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 14,
+      "delta_stale_reintroduced": 104,
+      "harm_free": false,
+      "quarantine_broken": 32,
+      "quarantine_stale": 222
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    }
+   },
+   "harm_free_all_seeds": false
+  },
+  "pairE": {
+   "by_seed": {
+    "0": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 74,
+      "baseline_stale": 393,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 74,
+      "reinstated_stale": 393,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 16,
+      "delta_stale_reintroduced": 5,
+      "harm_free": false,
+      "quarantine_broken": 58,
+      "quarantine_stale": 388
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "1": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 40,
+      "baseline_stale": 393,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 40,
+      "reinstated_stale": 393,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 15,
+      "delta_stale_reintroduced": 17,
+      "harm_free": false,
+      "quarantine_broken": 25,
+      "quarantine_stale": 376
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    },
+    "2": {
+     "capture": {
+      "baseline": 192,
+      "quarantine_active": 0,
+      "reinstated": 192
+     },
+     "capture_restoration": {
+      "baseline_broken": 24,
+      "baseline_stale": 378,
+      "broken_not_beyond_baseline": true,
+      "capture_restored": true,
+      "reinstated_broken": 24,
+      "reinstated_stale": 378,
+      "stale_not_beyond_baseline": true
+     },
+     "harm_free_recovery": {
+      "delta_broken_reintroduced": 0,
+      "delta_stale_reintroduced": 18,
+      "harm_free": false,
+      "quarantine_broken": 24,
+      "quarantine_stale": 360
+     },
+     "reconstruction": {
+      "absorbed_count_decomposition": 192,
+      "baseline_fork_events_supersession": 192,
+      "baseline_router_merge_suspect": 192,
+      "faithful": true,
+      "ledger_label_total": 192,
+      "ledger_quarantined_count": 192
+     }
+    }
+   },
+   "harm_free_all_seeds": false
+  }
+ },
+ "probe_policy": "mode-conditioned-trust",
+ "reads_only_committed_artifacts": true,
+ "scope": "certifies nothing beyond the enumerated cell; no margin tuning",
+ "summary": {
+  "capture_harm_coupled_geometries": [
+   "pairA",
+   "pairB",
+   "pairD",
+   "pairE"
+  ],
+  "capture_restorable_within_bound": true,
+  "g3_harm_free_clears": false,
+  "harm_free_recovery_geometries": [],
+  "provenance_recoverable": true
+ }
+}

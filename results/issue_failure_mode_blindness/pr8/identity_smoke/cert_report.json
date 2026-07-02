@@ -1,0 +1,421 @@
+{
+  "panel": "pr8-9a",
+  "readout": "frozen-87",
+  "mode": "smoke",
+  "verdict": "fail",
+  "certifies": null,
+  "dimensions": {
+    "inertness": "pass",
+    "ledger_coverage": "pass",
+    "flag_set_identity": "fail",
+    "clean_control": "incomplete",
+    "panel_coverage": "incomplete",
+    "cross_host_determinism": "incomplete"
+  },
+  "flag_set_identity_status": "identity-violated",
+  "artifact_roots": {
+    "darwin": ".",
+    "gentoo": null
+  },
+  "missing_artifacts": [],
+  "panel_coverage": {
+    "status": "incomplete",
+    "mode": "smoke",
+    "missing_cells": [
+      "direct_harm/pairD/s0",
+      "collateral_harm/pairB/s0",
+      "collateral_harm/pairE/s0",
+      "clean_control/pairA/s0",
+      "clean_control/pairC/s0",
+      "merge_path_stale/pairA/s0",
+      "merge_path_stale/pairB/s0",
+      "merge_path_stale/pairD/s0",
+      "merge_path_stale/pairE/s0"
+    ],
+    "missing_artifacts": []
+  },
+  "cross_host_determinism": {
+    "status": "incomplete",
+    "reason": "single host: cross-host sha256 determinism not verified (required before final certification)"
+  },
+  "runs": [
+    {
+      "cell": "merge_path_stale",
+      "pair": "hermetic",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "absent",
+            "reason": "governance readout not present (needs the frozen scorer pass)"
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 24,
+        "payload_label_histogram": {
+          "1": 24
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 24,
+        "shadow_flagged_distinct_keys": 24,
+        "shadow_ledger_flagged_count": 24,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 24,
+        "quarantine_diverted_count": 24,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 24,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "shadow_join_multiset_size": 24,
+        "quarantine_join_multiset_size": 24,
+        "intersection_size": 8,
+        "diverted_minus_flagged": [
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "0",
+              "incumbent_last_write_seq": "32"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "1",
+              "incumbent_last_write_seq": "33"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "2",
+              "incumbent_last_write_seq": "34"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "3",
+              "incumbent_last_write_seq": "35"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "4",
+              "incumbent_last_write_seq": "36"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "5",
+              "incumbent_last_write_seq": "37"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "6",
+              "incumbent_last_write_seq": "38"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "7",
+              "incumbent_last_write_seq": "39"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "0",
+              "incumbent_last_write_seq": "32"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "1",
+              "incumbent_last_write_seq": "33"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "2",
+              "incumbent_last_write_seq": "34"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "3",
+              "incumbent_last_write_seq": "35"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "4",
+              "incumbent_last_write_seq": "36"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "5",
+              "incumbent_last_write_seq": "37"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "6",
+              "incumbent_last_write_seq": "38"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "7",
+              "incumbent_last_write_seq": "39"
+            },
+            "count": 1
+          }
+        ],
+        "shadow_flagged_minus_diverted": [
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "0",
+              "incumbent_last_write_seq": "48"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "1",
+              "incumbent_last_write_seq": "49"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "2",
+              "incumbent_last_write_seq": "50"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "3",
+              "incumbent_last_write_seq": "51"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "4",
+              "incumbent_last_write_seq": "52"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "5",
+              "incumbent_last_write_seq": "53"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "6",
+              "incumbent_last_write_seq": "54"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "4",
+              "event_class": "supersession",
+              "incumbent_slot": "7",
+              "incumbent_last_write_seq": "55"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "0",
+              "incumbent_last_write_seq": "64"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "1",
+              "incumbent_last_write_seq": "65"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "2",
+              "incumbent_last_write_seq": "66"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "3",
+              "incumbent_last_write_seq": "67"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "4",
+              "incumbent_last_write_seq": "68"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "5",
+              "incumbent_last_write_seq": "69"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "6",
+              "incumbent_last_write_seq": "70"
+            },
+            "count": 1
+          },
+          {
+            "key": {
+              "epoch": "5",
+              "event_class": "supersession",
+              "incumbent_slot": "7",
+              "incumbent_last_write_seq": "71"
+            },
+            "count": 1
+          }
+        ],
+        "status": "fail",
+        "identity_status": "identity-violated",
+        "reason": "decided by multiset join on the incumbent-identity key; non-empty symmetric difference means the shadow-flagged and \u00a78-diverted event sets differ (note: incumbent keys are cross-arm stable only up to the first divergence)."
+      },
+      "clean_control": null
+    }
+  ],
+  "commands": {
+    "regenerate_panel": "for arm in none shadow quarantine; do python benchmarks/failure_mode_probe.py --vision --vision-cache <#87-cache> --arm <arm> --govern $arm --seed <seed> --out <root>/<cell>/$arm/<stem>.csv; done",
+    "run_harness": "python benchmarks/pr8_shadow_audit_cert.py --manifest ./manifest.json --out-json <report.json> --out-md <report.md>"
+  },
+  "sha256_manifest": {
+    "./per_probe_stale_s0_none.csv": "af581598be3befc64714db037f8104138ca76943211b4a74c251929c4619da4c",
+    "./per_probe_stale_s0_shadow.csv": "af581598be3befc64714db037f8104138ca76943211b4a74c251929c4619da4c",
+    "./per_probe_stale_s0_none.per_slot.csv": "b50e63413b6b5ebc065792b8d05858258a714aee84c94d718c28b17f4b91501c",
+    "./per_probe_stale_s0_shadow.per_slot.csv": "b50e63413b6b5ebc065792b8d05858258a714aee84c94d718c28b17f4b91501c",
+    "./per_probe_stale_s0_none.fork_events.csv": "3b0ff6bc4dafe0546a1014705c05ed045f607f3aed1517adb523f7cadda2298a",
+    "./per_probe_stale_s0_shadow.fork_events.csv": "3b0ff6bc4dafe0546a1014705c05ed045f607f3aed1517adb523f7cadda2298a",
+    "./per_probe_stale_s0_none.topk.csv": "1fbbe7c6a85fca45b59969e4dad9f1606384b44f731a70c969858d19c28af2d0",
+    "./per_probe_stale_s0_shadow.topk.csv": "1fbbe7c6a85fca45b59969e4dad9f1606384b44f731a70c969858d19c28af2d0",
+    "./per_probe_stale_s0_none.summary.json": "961329751bc85a8716ff015f4cf61e53576c2edb8bca7bfb513832c981423631",
+    "./per_probe_stale_s0_shadow.summary.json": "591701de6569bb53b9533eab6a0228c9772ef4e3e5431f91dbc14108d5b7e7e0",
+    "./per_probe_stale_s0_quarantine.summary.json": "a2a3bce1a235ebc8c0509562f8d07bb3fd74c5f7dd49be527aca74feecfceeae"
+  }
+}

@@ -226,6 +226,39 @@
       1,
       2
      ]
+    },
+    "pairE": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2045,
+       "frozen_probe_broken": 74,
+       "frozen_probe_collateral_br": 22,
+       "frozen_probe_direct_br": 52,
+       "merge_suspect_events": 192,
+       "stale_wrong": 393
+      },
+      "1": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2261,
+       "frozen_probe_broken": 40,
+       "frozen_probe_collateral_br": 19,
+       "frozen_probe_direct_br": 21,
+       "merge_suspect_events": 192,
+       "stale_wrong": 393
+      },
+      "2": {
+       "contradiction_pairs": 22,
+       "frozen_probe_acted": 2294,
+       "frozen_probe_broken": 24,
+       "frozen_probe_collateral_br": 7,
+       "frozen_probe_direct_br": 17,
+       "merge_suspect_events": 192,
+       "stale_wrong": 378
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
     }
    },
    "pre_registered_margin": {

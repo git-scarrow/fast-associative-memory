@@ -7,11 +7,11 @@ the seam and proves it is inert and boundary-safe BEFORE any governed run:
 
   1. no-op identity — `--govern none` (the baseline) is byte-identical to the
      pre-seam driver, and the default invocation is unchanged (§11 test 1);
-  2. byte-identical emitted artifacts — EVERY action {none, annotate,
-     quarantine, refuse} produces byte-identical write decisions, so all four
-     emitted CSVs match the baseline exactly. `annotate` is the step-2
-     null-action floor (it records a provenance annotation but commits the
-     write exactly as baseline); `quarantine`/`refuse` stay recorded no-ops;
+  2. byte-identical emitted artifacts — `annotate` and PR-8 §9A `shadow`
+     produce byte-identical write decisions to baseline, so all emitted CSVs
+     match exactly. `annotate` is the step-2 null-action floor; `shadow` records
+     quarantine-eligible events but diverts nothing. `quarantine`/`refuse` are
+     acting arms covered separately;
   3. engine-frozen boundary — the seam lives ONLY in the experimental driver;
      no deployed engine/retrieval file references it, and the two files that
      determine run output are sha256-unchanged from the PR-6 baseline
@@ -22,10 +22,10 @@ the seam and proves it is inert and boundary-safe BEFORE any governed run:
      a non-baseline action is requested, so `none` stays byte-identical; the
      CLI entry point exposes `--govern` and rejects unknown values (§11 test 6).
 
-This file pins the experimental BOUNDARY (the seam is inert on every emitted
-artifact and never leaks into deployed retrieval). No write refusal, quarantine,
-read-time / slot-granularity trust, geometry gate, or one-shot classification is
-implemented (PR7_DESIGN.md §12). The analyzer-level provenance guards (stem ↔
+This file pins the experimental BOUNDARY (the non-acting seam is inert on every
+emitted artifact and never leaks into deployed retrieval). No read-time /
+slot-granularity trust, geometry gate, or one-shot classification is implemented
+(PR7_DESIGN.md §12). The analyzer-level provenance guards (stem ↔
 classes ↔ govern, non-soft payload refused on the merge-path cell) live in
 tests/test_pr7_twin_delta.py with `pr7_twin_delta.py` (step 2). The mechanism
 regression (§11 test 5) is covered by tests/test_failure_mode_probe.py and
@@ -122,14 +122,13 @@ def test_default_invocation_unchanged(tmp_path, arm, payload_mode,
 
 
 @pytest.mark.parametrize("arm,payload_mode,supersede_epoch", _ARMS)
-@pytest.mark.parametrize("action", ["annotate"])
+@pytest.mark.parametrize("action", ["annotate", "shadow"])
 def test_noop_governance_matches_baseline(tmp_path, arm, payload_mode,
                                           supersede_epoch, action):
-    """`annotate` (the null-action floor) makes byte-identical write decisions to
-    the ungoverned baseline on every arm, so all four emitted artifacts match
-    exactly under a fixed seed (§11 test 1). `refuse` (step 5) and `quarantine`
-    (step 6) are acting arms covered separately: a pure no-op only on arms with
-    no merge_suspect (supersession) write."""
+    """`annotate` (the null-action floor) and `shadow` (PR-8 §9A audit-only)
+    make byte-identical write decisions to the ungoverned baseline on every arm,
+    so all four emitted artifacts match exactly under a fixed seed. `refuse`
+    (step 5) and `quarantine` (step 6) are acting arms covered separately."""
     baseline = _run_synth(tmp_path, arm, "none", name="base.csv",
                           payload_mode=payload_mode,
                           supersede_epoch=supersede_epoch)
@@ -219,7 +218,8 @@ def test_seam_does_not_import_engine_retrieval():
 # ---------------------------------------------------------------------------
 # 4. Determinism
 # ---------------------------------------------------------------------------
-@pytest.mark.parametrize("action", ["none", "annotate", "quarantine", "refuse"])
+@pytest.mark.parametrize("action", ["none", "annotate", "shadow", "quarantine",
+                                    "refuse"])
 def test_governed_run_is_deterministic(tmp_path, action):
     """A governed run is reproducible: same seed → identical artifacts on
     re-run (determinism is a PR-7 precondition — §11 test 3)."""
@@ -229,17 +229,18 @@ def test_governed_run_is_deterministic(tmp_path, action):
 
 
 # ---------------------------------------------------------------------------
-# 5. decide() ALLOWs every action (annotate is the null-action floor); only
-#    'none' and 'annotate' are implemented (quarantine/refuse stay no-ops).
+# 5. decide() ALLOWs every action (annotate is the null-action floor); acting
+#    arms divert/skip only through allow_write before decide().
 # ---------------------------------------------------------------------------
 def test_every_action_decides_allow_only():
     """decide() returns ALLOW for every action and every outcome — it is the
     POST-write call, so a write reaching it is always committed; the acting arms'
     diversions (`refuse` skip, `quarantine` divert) happen earlier in
-    allow_write. All four actions are now implemented (PR7_DESIGN.md §4/§13)."""
-    assert GOVERN_IMPLEMENTED_ACTIONS == ("none", "annotate", "quarantine",
-                                          "refuse")
+    allow_write. All five actions are now implemented."""
+    assert GOVERN_IMPLEMENTED_ACTIONS == ("none", "annotate", "shadow",
+                                          "quarantine", "refuse")
     expected_step = {"none": "pr7-step1-noop", "annotate": "pr7-step2-annotate",
+                     "shadow": "pr8-9a-shadow-quarantine-audit",
                      "quarantine": "pr7-step6-quarantine",
                      "refuse": "pr7-step5-refuse"}
     for action in GOVERN_ACTIONS:
@@ -254,8 +255,8 @@ def test_every_action_decides_allow_only():
         assert prov["action"] == action
         assert prov["step"] == expected_step[action]
         assert prov["implemented"] is True
-        assert prov["implemented_actions"] == ["none", "annotate", "quarantine",
-                                               "refuse"]
+        assert prov["implemented_actions"] == ["none", "annotate", "shadow",
+                                               "quarantine", "refuse"]
         assert prov["events_seen"] == 4
         assert sum(prov["outcome_counts"].values()) == 4
     # annotate counts the supersession events it stamps; non-supersession
@@ -333,8 +334,8 @@ def test_vision_summary_records_active_govern_but_not_csvs(tmp_path):
     assert gov["action"] == "annotate"
     assert gov["step"] == "pr7-step2-annotate"
     assert gov["implemented"] is True
-    assert gov["implemented_actions"] == ["none", "annotate", "quarantine",
-                                          "refuse"]
+    assert gov["implemented_actions"] == ["none", "annotate", "shadow",
+                                          "quarantine", "refuse"]
     assert gov["events_seen"] > 0
 
     # The provenance block is the ONLY summary difference.
@@ -361,11 +362,14 @@ def test_cli_govern_flag_default_and_noop(tmp_path):
     p_default, out_default = _cli(tmp_path, "d.csv", [])
     p_none, out_none = _cli(tmp_path, "n.csv", ["--govern", "none"])
     p_ann, out_ann = _cli(tmp_path, "a.csv", ["--govern", "annotate"])
+    p_shadow, out_shadow = _cli(tmp_path, "s.csv", ["--govern", "shadow"])
     assert p_default.returncode == 0, p_default.stderr
     assert p_none.returncode == 0, p_none.stderr
     assert p_ann.returncode == 0, p_ann.stderr
+    assert p_shadow.returncode == 0, p_shadow.stderr
     assert _emitted_bytes(out_default) == _emitted_bytes(out_none)
     assert _emitted_bytes(out_ann) == _emitted_bytes(out_none)
+    assert _emitted_bytes(out_shadow) == _emitted_bytes(out_none)
 
 
 def test_cli_rejects_unknown_govern(tmp_path):

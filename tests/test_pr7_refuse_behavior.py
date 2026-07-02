@@ -59,8 +59,9 @@ def test_allow_write_refuses_only_merge_suspect():
     for ev in ("initial", "duplicate-rewrite", "clean-rewrite", "contradiction",
                "one-shot-ambiguous"):
         assert refuse.allow_write(ev) == GOVERN_ALLOW
-    # the null-action actions never divert, even on the supersession class.
-    for action in ("none", "annotate"):
+    # the null-action/audit-only actions never divert, even on the supersession
+    # class.
+    for action in ("none", "annotate", "shadow"):
         assert GovernanceHook(action).allow_write(EVENT_SUPERSESSION) \
             == GOVERN_ALLOW
 
@@ -128,6 +129,34 @@ def test_quarantine_ledger_records_count_reason_and_payload():
     assert prov["events_seen"] == 5
     # no refusal tally on a quarantine arm (it retains, it does not discard).
     assert "refused_events" not in prov
+
+
+def test_shadow_ledger_records_flags_without_diversion():
+    """PR-8 §9A: shadow uses the same supersession eligibility as quarantine
+    but records an audit ledger only. No write is refused or quarantined."""
+    h = GovernanceHook("shadow")
+    assert h.allow_write(EVENT_SUPERSESSION) == GOVERN_ALLOW
+    h.record_shadow_flag(EVENT_SUPERSESSION, [3, 3, 7])
+    h.decide(EVENT_SUPERSESSION, "absorbed")
+    prov = h.provenance()
+    assert prov["action"] == "shadow"
+    assert prov["step"] == "pr8-9a-shadow-quarantine-audit"
+    assert prov["implemented"] is True
+    assert prov["flagged_events"] == 3
+    assert prov["flagged_event_class"] == EVENT_SUPERSESSION
+    assert "quarantined_events" not in prov
+    assert "refused_events" not in prov
+    ledger = prov["quarantine_ledger"]
+    assert ledger["opportunity_count"] == 3
+    assert ledger["flagged_count"] == 3
+    assert ledger["quarantined_count"] == 0
+    assert ledger["disposition"] == "flagged_not_diverted"
+    assert ledger["absorbed_into_active_memory"] is True
+    assert ledger["retained_recoverable"] is False
+    assert ledger["payload_label_histogram"] == {3: 2, 7: 1}
+    # events_seen counts committed writes only under shadow; flagging is not a
+    # diversion side effect.
+    assert prov["events_seen"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -262,3 +291,46 @@ def test_vision_quarantine_summary_and_ledger(tmp_path):
         gov["quarantined_events"]
     # quarantine diverted real writes, so artifacts diverge from baseline.
     assert _emitted_bytes(tmp_path / "q.csv") != _emitted_bytes(tmp_path / "b.csv")
+
+
+# ---------------------------------------------------------------------------
+# 5. Shadow (PR-8 §9A): audit-only quarantine ledger, no diversion
+# ---------------------------------------------------------------------------
+def test_vision_shadow_summary_ledger_and_artifacts(tmp_path):
+    """A hermetic merge-path stale run under shadow flags supersession rows in
+    the quarantine-ledger shape but keeps all emitted artifacts byte-identical to
+    baseline. A clean-control run emits the same ledger shape with zero flags."""
+    cache = _make_cache(tmp_path)
+    common = dict(epochs=6, cache_path=str(cache), classes=_CLASSES,
+                  attractor_class=_ATTRACTOR, samples_per_class=8,
+                  held_out_per_class=8, contraction=0.0, seed=0,
+                  supersede_epoch=3, payload_mode="soft")
+    _, s_base = run_vision("stale", rate=0.0, out_path=tmp_path / "b.csv",
+                           govern="none", **common)
+    _, s_shadow = run_vision("stale", rate=0.0, out_path=tmp_path / "s.csv",
+                             govern="shadow", **common)
+    assert {k: v for k, v in s_shadow.items() if k != "govern"} == s_base
+    assert _emitted_bytes(tmp_path / "s.csv") == _emitted_bytes(tmp_path / "b.csv")
+
+    gov = s_shadow["govern"]
+    assert gov["action"] == "shadow"
+    assert gov["flagged_events"] > 0
+    assert gov["flagged_event_class"] == EVENT_SUPERSESSION
+    assert "quarantined_events" not in gov
+    assert "refused_events" not in gov
+    ledger = gov["quarantine_ledger"]
+    assert ledger["opportunity_count"] == gov["flagged_events"]
+    assert ledger["flagged_count"] == gov["flagged_events"]
+    assert ledger["quarantined_count"] == 0
+    assert ledger["disposition"] == "flagged_not_diverted"
+    assert ledger["absorbed_into_active_memory"] is True
+    assert sum(ledger["payload_label_histogram"].values()) == gov["flagged_events"]
+
+    _, s_clean = run_vision("clean", rate=0.0, out_path=tmp_path / "clean.csv",
+                            govern="shadow", **common)
+    clean_ledger = s_clean["govern"]["quarantine_ledger"]
+    assert clean_ledger["opportunity_count"] == 0
+    assert clean_ledger["flagged_count"] == 0
+    assert clean_ledger["quarantined_count"] == 0
+    assert clean_ledger["payload_label_histogram"] == {}
+    assert clean_ledger["disposition"] == "flagged_not_diverted"

@@ -74,7 +74,74 @@
     "pairE"
    ],
    "payload_mode": null,
-   "per_pair": {},
+   "per_pair": {
+    "pairB": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 7,
+       "frozen_probe_acted": 1160,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 375
+      },
+      "1": {
+       "contradiction_pairs": 19,
+       "frozen_probe_acted": 1331,
+       "frozen_probe_broken": 1,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 1,
+       "merge_suspect_events": 192,
+       "stale_wrong": 340
+      },
+      "2": {
+       "contradiction_pairs": 12,
+       "frozen_probe_acted": 1332,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 361
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
+    },
+    "pairE": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2045,
+       "frozen_probe_broken": 74,
+       "frozen_probe_collateral_br": 22,
+       "frozen_probe_direct_br": 52,
+       "merge_suspect_events": 192,
+       "stale_wrong": 393
+      },
+      "1": {
+       "contradiction_pairs": 27,
+       "frozen_probe_acted": 2261,
+       "frozen_probe_broken": 40,
+       "frozen_probe_collateral_br": 19,
+       "frozen_probe_direct_br": 21,
+       "merge_suspect_events": 192,
+       "stale_wrong": 393
+      },
+      "2": {
+       "contradiction_pairs": 22,
+       "frozen_probe_acted": 2294,
+       "frozen_probe_broken": 24,
+       "frozen_probe_collateral_br": 7,
+       "frozen_probe_direct_br": 17,
+       "merge_suspect_events": 192,
+       "stale_wrong": 378
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
+    }
+   },
    "pre_registered_margin": {
     "improve_min": 1,
     "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
@@ -94,7 +161,41 @@
     "pairD"
    ],
    "payload_mode": null,
-   "per_pair": {},
+   "per_pair": {
+    "pairD": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1455,
+       "frozen_probe_broken": 112,
+       "frozen_probe_collateral_br": 50,
+       "frozen_probe_direct_br": 62,
+       "merge_suspect_events": 192,
+       "stale_wrong": 375
+      },
+      "1": {
+       "contradiction_pairs": 28,
+       "frozen_probe_acted": 1649,
+       "frozen_probe_broken": 180,
+       "frozen_probe_collateral_br": 54,
+       "frozen_probe_direct_br": 126,
+       "merge_suspect_events": 192,
+       "stale_wrong": 318
+      },
+      "2": {
+       "contradiction_pairs": 23,
+       "frozen_probe_acted": 1318,
+       "frozen_probe_broken": 46,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 46,
+       "merge_suspect_events": 192,
+       "stale_wrong": 326
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
+    }
+   },
    "pre_registered_margin": {
     "improve_min": 1,
     "rationale": "acting arm \u2014 scored by readout improvement + collateral (capture_stable is N/A: refuse consumes the merge-suspect event by design); never auto-passed (PR7_DESIGN \u00a78 / step-5 addendum)",
@@ -131,6 +232,72 @@
    ],
    "payload_mode": "soft",
    "per_pair": {
+    "pairA": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 3,
+       "frozen_probe_acted": 1034,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 374
+      },
+      "1": {
+       "contradiction_pairs": 7,
+       "frozen_probe_acted": 1110,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 372
+      },
+      "2": {
+       "contradiction_pairs": 5,
+       "frozen_probe_acted": 1005,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 380
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
+    },
+    "pairB": {
+     "baseline_by_seed": {
+      "0": {
+       "contradiction_pairs": 7,
+       "frozen_probe_acted": 1160,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 375
+      },
+      "1": {
+       "contradiction_pairs": 19,
+       "frozen_probe_acted": 1331,
+       "frozen_probe_broken": 1,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 1,
+       "merge_suspect_events": 192,
+       "stale_wrong": 340
+      },
+      "2": {
+       "contradiction_pairs": 12,
+       "frozen_probe_acted": 1332,
+       "frozen_probe_broken": 0,
+       "frozen_probe_collateral_br": 0,
+       "frozen_probe_direct_br": 0,
+       "merge_suspect_events": 192,
+       "stale_wrong": 361
+      }
+     },
+     "baseline_present": true,
+     "governed_present": false
+    },
     "pairD": {
      "baseline_by_seed": {
       "0": {

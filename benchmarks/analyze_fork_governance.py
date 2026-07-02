@@ -13,6 +13,19 @@ per-policy `direct_br` / `collateral_br` columns and a per-slot
 label-free guard proxy). `trust-record` was dropped at gate 1 (memo
 Addendum A.4) — per-record slot composition is not shadow-reconstructable.
 
+PR-9.1(b) (PR9_ENVELOPE_DESK_CHECK.md §3.2, registered scorer change)
+adds `merge-abstain` — merge-suspect abstention ALONE: abstain iff the
+deployed vote's surviving top-1 slot is merge-suspect, otherwise the
+`none` answer unchanged. No exclusions, no vote recomputation, no tie
+trigger, no parameters — exactly the merge-suspect-led check the
+mode-conditioned family already evaluates FIRST on the unmodified
+candidate set, promoted to a standalone policy. It also records what the
+desk check proved was discarded: the `forced` flag from ``_vote`` (a
+probe whose entire surviving candidate set was excluded) and per-trigger
+abstention counters (`abstained_merge`, `abstained_forced`) as ADDITIVE
+columns on every policy row. No pre-existing field is renamed, removed,
+or recomputed.
+
 Shadow-readout fidelity (§10): the policy-`none` vote is recomputed from
 ``<stem>.topk.csv[.gz]`` with the exact aggregation the driver verified at
 write time (``vote_pred_from_candidates``) and compared to the deployed
@@ -116,7 +129,8 @@ H2_TIMELINE_FEATURES = H2_LOCAL_FEATURES + ["subs_old", "subs_new"]
 POLICIES = ["none", "observe-only", "entropy-abstain", "abstain-tie",
             "recency-naive", "quarantine-naive",
             "mode-conditioned-observe", "mode-conditioned-abstain",
-            "mode-conditioned-trust", "trust-downweight", "trust-guarded"]
+            "mode-conditioned-trust", "trust-downweight", "trust-guarded",
+            "merge-abstain"]
 # mode-conditioned-trust was an EXPLORATORY refinement in PR-3c (post-hoc
 # there; promoted to pre-registered for PR-4 H1, frozen verbatim):
 # instead of the design memo's contradiction -> quarantine-both, it
@@ -397,6 +411,11 @@ class GuardIndex:
 # decomposition: {"dropped": slots excluded or attenuated, "counterpart":
 # the static pair-counterpart map (None for witness-window policies, whose
 # drops are by construction local to the probe's own key region)}.
+# PR-9.1(b): ``detail`` may additionally carry a "trigger" key naming the
+# abstention/intervention trigger — "merge" for a merge-suspect-led
+# abstention, "forced" when ``_vote`` abstained because the entire
+# surviving candidate set was excluded (the flag this scorer previously
+# discarded). Absent/None for every other outcome.
 # ---------------------------------------------------------------------------
 def apply_policy(policy: str, cands: list[dict], witness: list[dict],
                  none_answer: int, value_dim: int, epoch: int,
@@ -431,20 +450,33 @@ def apply_policy(policy: str, cands: list[dict], witness: list[dict],
         if not drop:
             return none_answer, False, None
         ans, forced = _vote(cands, value_dim, excluded=frozenset(drop))
-        return ans, True, {"dropped": frozenset(drop), "counterpart": None}
+        return ans, True, {"dropped": frozenset(drop), "counterpart": None,
+                           "trigger": "forced" if forced else None}
     if policy == "quarantine-naive":
         if not witness:
             return none_answer, False, None
         drop = frozenset(c["slot"] for c in witness)
         ans, forced = _vote(cands, value_dim, excluded=drop)
-        return ans, True, {"dropped": drop, "counterpart": None}
+        return ans, True, {"dropped": drop, "counterpart": None,
+                           "trigger": "forced" if forced else None}
+    if policy == "merge-abstain":
+        # PR-9.1(b): merge-suspect abstention ALONE. Same deployed-vote
+        # check the mode-conditioned family runs FIRST on the unmodified
+        # candidate set (the abstain row set M is policy-invariant);
+        # everywhere else the `none` answer passes through untouched.
+        st = router_state(router, epoch)
+        surv = [c for c in cands if c["surviving"]]
+        top1 = max(surv, key=lambda c: float(c["weight"]))
+        if top1["slot"] in st["merge"]:
+            return None, True, {"trigger": "merge"}
+        return none_answer, False, None
     if policy.startswith("mode-conditioned") or policy in TRUST_ROUTED:
         st = router_state(router, epoch, trust=policy in TRUST_ROUTED)
         surv = [c for c in cands if c["surviving"]]
         top1 = max(surv, key=lambda c: float(c["weight"]))
         if top1["slot"] in st["merge"]:
             # no fork to elect; abstain is the honest act
-            return None, True, None
+            return None, True, {"trigger": "merge"}
         surv_slots = {c["slot"] for c in surv}
         exclude = set(st["quarantine"] & surv_slots)
         dep = st["deprecate"] & surv_slots
@@ -469,7 +501,8 @@ def apply_policy(policy: str, cands: list[dict], witness: list[dict],
         ans, forced = _vote(cands, value_dim,
                             excluded=frozenset(exclude), scaled=scaled)
         return ans, True, {"dropped": frozenset(exclude) | set(scaled),
-                           "counterpart": counterpart}
+                           "counterpart": counterpart,
+                           "trigger": "forced" if forced else None}
     raise ValueError(policy)
 
 
@@ -494,7 +527,8 @@ def score_run(run: dict, det, thr) -> dict:
 
     metrics = {policy: {k: 0 for k in (
         "n", "wrong_none", "acted", "abstained", "abstain_on_correct",
-        "abstain_on_wrong", "answered", "answered_correct", "fixed",
+        "abstain_on_wrong", "abstained_merge", "abstained_forced",
+        "answered", "answered_correct", "fixed",
         "broken", "direct_br", "collateral_br", "tie_flips",
         "witness_probes",
         "stale_wrong", "stale_wrong_fixed", "stale_wrong_abstained",
@@ -534,7 +568,8 @@ def score_run(run: dict, det, thr) -> dict:
                 slot_obs, bool(retain[i]), router, guard=guard,
                 counterpart=counterpart, probe_index=probe_index)
             if detail:
-                dropped_ever[policy] |= detail["dropped"]
+                dropped_ever[policy] |= detail.get("dropped", frozenset())
+            trigger = detail.get("trigger") if detail else None
             m["n"] += 1
             m["wrong_none"] += int(not none_correct)
             m["acted"] += int(acted)
@@ -543,6 +578,8 @@ def score_run(run: dict, det, thr) -> dict:
             m["contra_wrong"] += int(is_contra_wrong)
             if ans is None:
                 m["abstained"] += 1
+                m["abstained_merge"] += int(trigger == "merge")
+                m["abstained_forced"] += int(trigger == "forced")
                 m["abstain_on_correct"] += int(none_correct)
                 m["abstain_on_wrong"] += int(not none_correct)
                 m["stale_wrong_abstained"] += int(is_stale_wrong)

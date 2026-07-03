@@ -343,3 +343,67 @@ readers.
 > threshold motion, no change to any committed baseline. This is a
 > simulator, not a production system: stop after the two cells and the
 > test; do not add live ingest, deletion, or agent integration.
+
+## 8. Prototype findings / errata (post-merge appendix)
+
+*Appended 2026-07-03 after the §5 prototype merged (design memo
+`ca79d4c`, prototype `ec62381` + `3ca3d07`, merges `66147f9`/`b8cab28`).
+§§1–7 above are the pre-registration snapshot and are unmodified. This
+appendix records what the prototype run falsified, corrected, or
+measured. No FAM-core change, no new observable, no policy-semantics
+change, and no promotion claim is made here.*
+
+**Failed / corrected design assumptions (three).**
+
+* **Missing `.governance.json` sibling.** §5 assumed each pr10 governed
+  run has a `.governance.json` sibling; none exists under
+  `pr10/governed/`. The committed hazard evidence for the same
+  (pair, arm, seed) lives in the pr6 panel (`pr6/stale_de/`) and the
+  pr3c baseline family; the prototype consumes those, justifies the
+  cross-run join by PR-10 G1 write-stream byte-identity, and
+  cross-checks it numerically (192 merge-suspect events / 28 conflict
+  pairs / 375 stale-wrong all match). Recorded in
+  `harness/harness_policy.json`.
+* **`core_certified_abstention` naming, caught by the memo's own grep
+  invariant.** The prototype's first run failed §6 criterion 7: the
+  harness-chosen reason-code name itself contained the string
+  "certified", leaking into 300 audit records. Resolved by renaming the
+  vocabulary term to `core_abstention_passthrough`, keeping the grep
+  invariant maximally strict rather than widening its exemptions. This
+  is the certification-laundering guard working as designed.
+* **`per_slot.is_merge_candidate` oracle-hygiene substitution.** §§3–4
+  cite the per_slot flag as mechanism (a) evidence, but the frozen
+  scorer never loads the per_slot `is_*` diagnostic flags (its
+  policy-visible allowlist excludes them). The prototype derives every
+  state from the label-free write-time router instead and reports
+  per_slot-flag agreement as a diagnostic: **1536/1536 (epoch, slot)
+  cells agree on both cells**, so the memo's evidence-pointer wording
+  holds empirically but is downgraded to corroboration, not basis.
+
+**Committed prototype results (both cells re-verifiable byte-exactly via
+`python3 harness/harness_boundary_sim.py --check`).**
+
+* **clean/pairA/s0 control: zero adverse states** — 2,532 probes, all
+  `agent-readable`/`shown`, zero abstentions, zero router state.
+* **pairD/stale-soft/s0: exactly 375 adverse stale-wrong rows covered**
+  — 292 certified-abstained (pass-through, `core-certified`) + 83
+  residual merge-support-flagged, zero escapes: the PR-11.1 P2
+  mechanism reproduced from committed artifacts alone. G3-exactness
+  self-check: the certified abstain set equals the merge-led set
+  row-for-row.
+* **Caveat economics: 1.35% of correct traffic** (33 caveats on correct
+  answers / 2,449 correct-traffic denominator `n − wrong_none`; 46
+  caveats total). Mechanism (a)'s cost is trivial at this cell.
+* **Suppressive-disposition economics: 30.7% of correct traffic** (743
+  escalated + 8 withheld-superseded on correct / 2,449). Mechanism (c)
+  as prototyped replaces the answer with an unresolved-notice —
+  suppression in effect — and PR-11.1's granularity problem reappears
+  at the harness as escalation volume.
+
+**Consequence, stated explicitly: mechanism (c) is not promotion-ready
+under the proposed 5% suppression ceiling** (the program-precedent gate,
+suppressive dispositions on correct traffic ≤ 0.05 per cell). At 30.7%
+it fails by 6×. Any re-shaping (e.g. contradiction-caveat instead of
+escalation) is a disposition change within the existing policy
+semantics and requires its own pre-registered gate before any promotion
+claim; nothing in this appendix promotes anything.

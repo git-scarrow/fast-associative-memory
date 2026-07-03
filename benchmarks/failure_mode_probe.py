@@ -217,6 +217,22 @@ GOVERN_QUARANTINE_EVENT_CLASS = EVENT_SUPERSESSION
 # DECIDABLE (proven or refuted), not automatically proven.
 QUARANTINE_DIVERTED_JOIN_KEY = ("epoch", "event_class", "incumbent_slot",
                                 "incumbent_last_write_seq")
+# PR-9.2: the write-event-INTRINSIC identity key (the pre-registration the gate
+# memo §8 requires). Every component is protocol-determined for a given
+# (seed, arm): ``epoch`` and ``event_class`` come from the protocol schedule,
+# ``batch_index`` is the row's position inside its write call's batch — none
+# depends on memory state, RNG draws, or whether any EARLIER eligible write was
+# committed (shadow) or diverted (quarantine), so the tuple is identical across
+# none/shadow/quarantine arms by construction. It is claimed UNIQUE per run
+# (one eligible batch per epoch in every committed protocol); the §9A harness
+# treats a duplicate as a stop condition, not a joinable multiset.
+# ``payload_label`` rides along as a consistency-check field (also intrinsic:
+# argmax of the incoming payload). The incumbent fields remain in the record
+# for diagnostics but are STATE-CONTAMINATED past the first diversion — the
+# recorded §8 finding (identity smoke: 8/24 on the incumbent key, divergence
+# entirely in incumbent_last_write_seq).
+PR92_INTRINSIC_JOIN_KEY = ("epoch", "event_class", "batch_index")
+PR92_INTRINSIC_CHECK_FIELDS = ("payload_label",)
 
 # ---------------------------------------------------------------------------
 # PR-10 step 1 — read-time abstention seam (PR10_READTIME_ABSTENTION_GATE.md
@@ -293,6 +309,13 @@ class GovernanceHook:
         # supersession-divert ordinal.
         self.quarantine_diverted_events: list = []
         self._diverted_seq = 0
+        # PR-9.2: per-event flagged-write keys for the shadow arm — the exact
+        # mirror of ``quarantine_diverted_events`` (same fields, same pre-write
+        # capture point), so the §9A flag-set-identity join has explicit
+        # per-event records on BOTH sides. Populated only when
+        # ``record_shadow_flag`` is given ``flagged_events``.
+        self.shadow_flagged_event_records: list = []
+        self._flagged_seq = 0
         self.outcome_counts: dict = {}
 
     @property
@@ -375,7 +398,8 @@ class GovernanceHook:
                 {"event_index": self._diverted_seq, **ev})
             self._diverted_seq += 1
 
-    def record_shadow_flag(self, event_class: str, labels: list) -> None:
+    def record_shadow_flag(self, event_class: str, labels: list,
+                           flagged_events: list | None = None) -> None:
         """Record quarantine-eligible write rows without diverting them.
 
         PR-8 §9A deliberately reuses the committed §8 quarantine eligibility
@@ -383,9 +407,22 @@ class GovernanceHook:
         normal write still commits and later reaches :meth:`decide`, so this
         method does not increment ``events_seen``; it only records the flagged
         denominator and payload-label histogram for the summary ledger.
-        """
+
+        ``flagged_events`` (PR-9.2 audit instrumentation, optional) is the
+        exact shadow-side mirror of ``record_quarantine``'s
+        ``diverted_events``: one deterministic PRE-WRITE per-event key dict per
+        flagged row, captured from observables already in hand, stored verbatim
+        with a run-global ``event_index``. It changes NONE of the aggregate
+        fields, the write itself (which commits as always), or any emitted
+        retrieval artifact — the records live only in the summary ledger.
+        Omitting it (the default) reproduces the aggregate-only behavior
+        exactly."""
         self.shadow_flagged_events += len(labels)
         self._add_label_counts(self.shadow_label_counts, labels)
+        for ev in (flagged_events or []):
+            self.shadow_flagged_event_records.append(
+                {"event_index": self._flagged_seq, **ev})
+            self._flagged_seq += 1
 
     def decide(self, event_class: str, outcome: str) -> str:
         """Observe one already-classified, ALLOWED write event; return its write
@@ -451,6 +488,16 @@ class GovernanceHook:
                     "but not diverted; the write commits to active memory "
                     "unchanged, so retrieval/readout artifacts are identical "
                     "to --govern none (PR-8 §9A)."),
+                # PR-9.2 audit instrumentation (additive; all fields above
+                # unchanged): per-event flagged keys mirroring the quarantine
+                # ledger's diverted_events, plus the pre-registered
+                # write-event-intrinsic join key the §9A identity check uses.
+                # Empty when the caller did not supply keys.
+                "flagged_event_join_key": list(PR92_INTRINSIC_JOIN_KEY),
+                "flagged_event_check_fields":
+                    list(PR92_INTRINSIC_CHECK_FIELDS),
+                "flagged_event_records":
+                    list(self.shadow_flagged_event_records),
             }
             prov["reason"] = (
                 "audit-only shadow quarantine: quarantine-eligible "
@@ -955,9 +1002,24 @@ def logged_learn(mem: ContinuousCAM, registry: FailureModeRegistry,
         if hook.action == "shadow" \
                 and event_class == GOVERN_QUARANTINE_EVENT_CLASS:
             shadow_labels = targets.argmax(dim=-1).reshape(-1).tolist()
+            # PR-9.2: capture the same deterministic PRE-WRITE per-event keys
+            # the quarantine branch captures for its diverted rows — same
+            # fields, same observables (`pre`, already computed above), same
+            # capture point in the write path — so the §9A flag-set-identity
+            # join has explicit records on both sides. No memory read, no RNG,
+            # no write: every emitted retrieval artifact stays byte-identical
+            # to the pre-instrumentation shadow arm (and to --govern none).
+            shadow_flagged = [
+                {"epoch": epoch, "event_class": event_class, "batch_index": j,
+                 "payload_label": int(shadow_labels[j]),
+                 "incumbent_slot": int(pre["incumbent_slot"][j]),
+                 "incumbent_last_write_seq":
+                     int(pre["incumbent_last_write_seq"][j])}
+                for j in range(len(shadow_labels))]
     ids = write_fn()
     if shadow_labels is not None:
-        hook.record_shadow_flag(event_class, shadow_labels)
+        hook.record_shadow_flag(event_class, shadow_labels,
+                                flagged_events=shadow_flagged)
     if events is None and hook is None:
         return ids
     owners = _owner_slots(mem, ids)

@@ -1,0 +1,2011 @@
+{
+  "arm": "stale-soft",
+  "base_arm": "stale",
+  "one_shot": false,
+  "key_jitter": 0.0,
+  "payload_mode": "soft",
+  "cache_path": "feature_cache_vitl14/cifar100_dinov2_train.pt",
+  "classes": [
+    5,
+    27,
+    48,
+    86
+  ],
+  "attractor_class": 13,
+  "samples_per_class": 32,
+  "held_out_per_class": 64,
+  "contraction": 0.0,
+  "injection_rate": 0.15,
+  "epochs": 12,
+  "seed": 0,
+  "max_entries": 4096,
+  "dim": 1024,
+  "n_injections": 0,
+  "injection_outcomes": {},
+  "rows_written": 2775,
+  "per_epoch": [
+    {
+      "epoch": 0,
+      "probes": 224,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.988281,
+      "stale_strict": 0,
+      "stale_lenient": 0,
+      "live_stale_slots": 0,
+      "superseded": false,
+      "superseded_key_probes": 0,
+      "stale_selected": 0,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": null
+    },
+    {
+      "epoch": 1,
+      "probes": 224,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.988281,
+      "stale_strict": 0,
+      "stale_lenient": 0,
+      "live_stale_slots": 0,
+      "superseded": false,
+      "superseded_key_probes": 0,
+      "stale_selected": 0,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": null
+    },
+    {
+      "epoch": 2,
+      "probes": 223,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.988281,
+      "stale_strict": 0,
+      "stale_lenient": 0,
+      "live_stale_slots": 0,
+      "superseded": false,
+      "superseded_key_probes": 0,
+      "stale_selected": 0,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": null
+    },
+    {
+      "epoch": 3,
+      "probes": 222,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.988281,
+      "stale_strict": 0,
+      "stale_lenient": 0,
+      "live_stale_slots": 0,
+      "superseded": false,
+      "superseded_key_probes": 0,
+      "stale_selected": 0,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": null
+    },
+    {
+      "epoch": 4,
+      "probes": 222,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.988281,
+      "stale_strict": 0,
+      "stale_lenient": 0,
+      "live_stale_slots": 0,
+      "superseded": false,
+      "superseded_key_probes": 0,
+      "stale_selected": 0,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": null
+    },
+    {
+      "epoch": 5,
+      "probes": 221,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.988281,
+      "stale_strict": 0,
+      "stale_lenient": 0,
+      "live_stale_slots": 0,
+      "superseded": false,
+      "superseded_key_probes": 0,
+      "stale_selected": 0,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": null
+    },
+    {
+      "epoch": 6,
+      "probes": 231,
+      "wrong": 60,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.738281,
+      "stale_strict": 60,
+      "stale_lenient": 60,
+      "live_stale_slots": 32,
+      "superseded": true,
+      "superseded_key_probes": 60,
+      "stale_selected": 60,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": 1.0
+    },
+    {
+      "epoch": 7,
+      "probes": 236,
+      "wrong": 63,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.734375,
+      "stale_strict": 62,
+      "stale_lenient": 62,
+      "live_stale_slots": 32,
+      "superseded": true,
+      "superseded_key_probes": 62,
+      "stale_selected": 62,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": 1.0
+    },
+    {
+      "epoch": 8,
+      "probes": 240,
+      "wrong": 63,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.734375,
+      "stale_strict": 62,
+      "stale_lenient": 62,
+      "live_stale_slots": 32,
+      "superseded": true,
+      "superseded_key_probes": 62,
+      "stale_selected": 62,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": 1.0
+    },
+    {
+      "epoch": 9,
+      "probes": 242,
+      "wrong": 64,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.734375,
+      "stale_strict": 63,
+      "stale_lenient": 63,
+      "live_stale_slots": 32,
+      "superseded": true,
+      "superseded_key_probes": 63,
+      "stale_selected": 63,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": 1.0
+    },
+    {
+      "epoch": 10,
+      "probes": 244,
+      "wrong": 65,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.734375,
+      "stale_strict": 63,
+      "stale_lenient": 64,
+      "live_stale_slots": 32,
+      "superseded": true,
+      "superseded_key_probes": 63,
+      "stale_selected": 63,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": 1.0
+    },
+    {
+      "epoch": 11,
+      "probes": 246,
+      "wrong": 66,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.734375,
+      "stale_strict": 63,
+      "stale_lenient": 64,
+      "live_stale_slots": 32,
+      "superseded": true,
+      "superseded_key_probes": 63,
+      "stale_selected": 63,
+      "updated_selected": 0,
+      "stale_weight_median_superseded": 1.0
+    }
+  ],
+  "supersede_epoch": 6,
+  "stale_pre_label": 0,
+  "stale_post_label": 3,
+  "stale_pre_cache_class": 5,
+  "stale_post_cache_class": 86,
+  "n_phase1_writes": 192,
+  "n_phase2_writes": 192,
+  "fork_resolution": "old-persists",
+  "govern": {
+    "action": "shadow",
+    "step": "pr8-9a-shadow-quarantine-audit",
+    "implemented": true,
+    "implemented_actions": [
+      "none",
+      "annotate",
+      "shadow",
+      "quarantine",
+      "refuse"
+    ],
+    "events_seen": 1536,
+    "outcome_counts": {
+      "absorbed": 1408,
+      "forked": 7,
+      "plain-miss": 121
+    },
+    "flagged_events": 192,
+    "flagged_event_class": "supersession",
+    "quarantine_ledger": {
+      "opportunity_count": 192,
+      "flagged_count": 192,
+      "quarantined_count": 0,
+      "retained_recoverable": false,
+      "absorbed_into_active_memory": true,
+      "payload_label_histogram": {
+        "3": 192
+      },
+      "disposition": "flagged_not_diverted",
+      "reason": "write-time merge_suspect (supersession) writes flagged with the same eligibility rule as PR-7/\u00a78 quarantine, but not diverted; the write commits to active memory unchanged, so retrieval/readout artifacts are identical to --govern none (PR-8 \u00a79A).",
+      "flagged_event_join_key": [
+        "epoch",
+        "event_class",
+        "batch_index"
+      ],
+      "flagged_event_check_fields": [
+        "payload_label"
+      ],
+      "flagged_event_records": [
+        {
+          "event_index": 0,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 0,
+          "payload_label": 3,
+          "incumbent_slot": 0,
+          "incumbent_last_write_seq": 640
+        },
+        {
+          "event_index": 1,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 1,
+          "payload_label": 3,
+          "incumbent_slot": 1,
+          "incumbent_last_write_seq": 641
+        },
+        {
+          "event_index": 2,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 2,
+          "payload_label": 3,
+          "incumbent_slot": 2,
+          "incumbent_last_write_seq": 642
+        },
+        {
+          "event_index": 3,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 3,
+          "payload_label": 3,
+          "incumbent_slot": 3,
+          "incumbent_last_write_seq": 643
+        },
+        {
+          "event_index": 4,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 4,
+          "payload_label": 3,
+          "incumbent_slot": 4,
+          "incumbent_last_write_seq": 644
+        },
+        {
+          "event_index": 5,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 5,
+          "payload_label": 3,
+          "incumbent_slot": 5,
+          "incumbent_last_write_seq": 645
+        },
+        {
+          "event_index": 6,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 6,
+          "payload_label": 3,
+          "incumbent_slot": 6,
+          "incumbent_last_write_seq": 646
+        },
+        {
+          "event_index": 7,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 7,
+          "payload_label": 3,
+          "incumbent_slot": 7,
+          "incumbent_last_write_seq": 647
+        },
+        {
+          "event_index": 8,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 8,
+          "payload_label": 3,
+          "incumbent_slot": 8,
+          "incumbent_last_write_seq": 648
+        },
+        {
+          "event_index": 9,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 9,
+          "payload_label": 3,
+          "incumbent_slot": 9,
+          "incumbent_last_write_seq": 649
+        },
+        {
+          "event_index": 10,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 10,
+          "payload_label": 3,
+          "incumbent_slot": 10,
+          "incumbent_last_write_seq": 650
+        },
+        {
+          "event_index": 11,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 11,
+          "payload_label": 3,
+          "incumbent_slot": 11,
+          "incumbent_last_write_seq": 651
+        },
+        {
+          "event_index": 12,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 12,
+          "payload_label": 3,
+          "incumbent_slot": 12,
+          "incumbent_last_write_seq": 652
+        },
+        {
+          "event_index": 13,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 13,
+          "payload_label": 3,
+          "incumbent_slot": 13,
+          "incumbent_last_write_seq": 653
+        },
+        {
+          "event_index": 14,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 14,
+          "payload_label": 3,
+          "incumbent_slot": 14,
+          "incumbent_last_write_seq": 654
+        },
+        {
+          "event_index": 15,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 15,
+          "payload_label": 3,
+          "incumbent_slot": 15,
+          "incumbent_last_write_seq": 655
+        },
+        {
+          "event_index": 16,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 16,
+          "payload_label": 3,
+          "incumbent_slot": 16,
+          "incumbent_last_write_seq": 656
+        },
+        {
+          "event_index": 17,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 17,
+          "payload_label": 3,
+          "incumbent_slot": 17,
+          "incumbent_last_write_seq": 657
+        },
+        {
+          "event_index": 18,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 18,
+          "payload_label": 3,
+          "incumbent_slot": 18,
+          "incumbent_last_write_seq": 658
+        },
+        {
+          "event_index": 19,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 19,
+          "payload_label": 3,
+          "incumbent_slot": 19,
+          "incumbent_last_write_seq": 659
+        },
+        {
+          "event_index": 20,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 20,
+          "payload_label": 3,
+          "incumbent_slot": 20,
+          "incumbent_last_write_seq": 660
+        },
+        {
+          "event_index": 21,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 21,
+          "payload_label": 3,
+          "incumbent_slot": 21,
+          "incumbent_last_write_seq": 661
+        },
+        {
+          "event_index": 22,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 22,
+          "payload_label": 3,
+          "incumbent_slot": 22,
+          "incumbent_last_write_seq": 662
+        },
+        {
+          "event_index": 23,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 23,
+          "payload_label": 3,
+          "incumbent_slot": 23,
+          "incumbent_last_write_seq": 663
+        },
+        {
+          "event_index": 24,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 24,
+          "payload_label": 3,
+          "incumbent_slot": 24,
+          "incumbent_last_write_seq": 664
+        },
+        {
+          "event_index": 25,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 25,
+          "payload_label": 3,
+          "incumbent_slot": 25,
+          "incumbent_last_write_seq": 665
+        },
+        {
+          "event_index": 26,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 26,
+          "payload_label": 3,
+          "incumbent_slot": 26,
+          "incumbent_last_write_seq": 666
+        },
+        {
+          "event_index": 27,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 27,
+          "payload_label": 3,
+          "incumbent_slot": 27,
+          "incumbent_last_write_seq": 667
+        },
+        {
+          "event_index": 28,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 28,
+          "payload_label": 3,
+          "incumbent_slot": 28,
+          "incumbent_last_write_seq": 668
+        },
+        {
+          "event_index": 29,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 29,
+          "payload_label": 3,
+          "incumbent_slot": 29,
+          "incumbent_last_write_seq": 669
+        },
+        {
+          "event_index": 30,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 30,
+          "payload_label": 3,
+          "incumbent_slot": 30,
+          "incumbent_last_write_seq": 670
+        },
+        {
+          "event_index": 31,
+          "epoch": 6,
+          "event_class": "supersession",
+          "batch_index": 31,
+          "payload_label": 3,
+          "incumbent_slot": 31,
+          "incumbent_last_write_seq": 671
+        },
+        {
+          "event_index": 32,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 0,
+          "payload_label": 3,
+          "incumbent_slot": 0,
+          "incumbent_last_write_seq": 768
+        },
+        {
+          "event_index": 33,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 1,
+          "payload_label": 3,
+          "incumbent_slot": 1,
+          "incumbent_last_write_seq": 769
+        },
+        {
+          "event_index": 34,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 2,
+          "payload_label": 3,
+          "incumbent_slot": 2,
+          "incumbent_last_write_seq": 770
+        },
+        {
+          "event_index": 35,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 3,
+          "payload_label": 3,
+          "incumbent_slot": 3,
+          "incumbent_last_write_seq": 771
+        },
+        {
+          "event_index": 36,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 4,
+          "payload_label": 3,
+          "incumbent_slot": 4,
+          "incumbent_last_write_seq": 772
+        },
+        {
+          "event_index": 37,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 5,
+          "payload_label": 3,
+          "incumbent_slot": 5,
+          "incumbent_last_write_seq": 773
+        },
+        {
+          "event_index": 38,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 6,
+          "payload_label": 3,
+          "incumbent_slot": 6,
+          "incumbent_last_write_seq": 774
+        },
+        {
+          "event_index": 39,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 7,
+          "payload_label": 3,
+          "incumbent_slot": 7,
+          "incumbent_last_write_seq": 775
+        },
+        {
+          "event_index": 40,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 8,
+          "payload_label": 3,
+          "incumbent_slot": 8,
+          "incumbent_last_write_seq": 776
+        },
+        {
+          "event_index": 41,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 9,
+          "payload_label": 3,
+          "incumbent_slot": 9,
+          "incumbent_last_write_seq": 777
+        },
+        {
+          "event_index": 42,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 10,
+          "payload_label": 3,
+          "incumbent_slot": 10,
+          "incumbent_last_write_seq": 778
+        },
+        {
+          "event_index": 43,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 11,
+          "payload_label": 3,
+          "incumbent_slot": 11,
+          "incumbent_last_write_seq": 779
+        },
+        {
+          "event_index": 44,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 12,
+          "payload_label": 3,
+          "incumbent_slot": 12,
+          "incumbent_last_write_seq": 780
+        },
+        {
+          "event_index": 45,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 13,
+          "payload_label": 3,
+          "incumbent_slot": 13,
+          "incumbent_last_write_seq": 781
+        },
+        {
+          "event_index": 46,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 14,
+          "payload_label": 3,
+          "incumbent_slot": 14,
+          "incumbent_last_write_seq": 782
+        },
+        {
+          "event_index": 47,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 15,
+          "payload_label": 3,
+          "incumbent_slot": 15,
+          "incumbent_last_write_seq": 783
+        },
+        {
+          "event_index": 48,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 16,
+          "payload_label": 3,
+          "incumbent_slot": 16,
+          "incumbent_last_write_seq": 784
+        },
+        {
+          "event_index": 49,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 17,
+          "payload_label": 3,
+          "incumbent_slot": 17,
+          "incumbent_last_write_seq": 785
+        },
+        {
+          "event_index": 50,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 18,
+          "payload_label": 3,
+          "incumbent_slot": 18,
+          "incumbent_last_write_seq": 786
+        },
+        {
+          "event_index": 51,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 19,
+          "payload_label": 3,
+          "incumbent_slot": 19,
+          "incumbent_last_write_seq": 787
+        },
+        {
+          "event_index": 52,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 20,
+          "payload_label": 3,
+          "incumbent_slot": 20,
+          "incumbent_last_write_seq": 788
+        },
+        {
+          "event_index": 53,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 21,
+          "payload_label": 3,
+          "incumbent_slot": 21,
+          "incumbent_last_write_seq": 789
+        },
+        {
+          "event_index": 54,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 22,
+          "payload_label": 3,
+          "incumbent_slot": 22,
+          "incumbent_last_write_seq": 790
+        },
+        {
+          "event_index": 55,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 23,
+          "payload_label": 3,
+          "incumbent_slot": 23,
+          "incumbent_last_write_seq": 791
+        },
+        {
+          "event_index": 56,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 24,
+          "payload_label": 3,
+          "incumbent_slot": 24,
+          "incumbent_last_write_seq": 792
+        },
+        {
+          "event_index": 57,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 25,
+          "payload_label": 3,
+          "incumbent_slot": 25,
+          "incumbent_last_write_seq": 793
+        },
+        {
+          "event_index": 58,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 26,
+          "payload_label": 3,
+          "incumbent_slot": 26,
+          "incumbent_last_write_seq": 794
+        },
+        {
+          "event_index": 59,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 27,
+          "payload_label": 3,
+          "incumbent_slot": 27,
+          "incumbent_last_write_seq": 795
+        },
+        {
+          "event_index": 60,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 28,
+          "payload_label": 3,
+          "incumbent_slot": 28,
+          "incumbent_last_write_seq": 796
+        },
+        {
+          "event_index": 61,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 29,
+          "payload_label": 3,
+          "incumbent_slot": 29,
+          "incumbent_last_write_seq": 797
+        },
+        {
+          "event_index": 62,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 30,
+          "payload_label": 3,
+          "incumbent_slot": 30,
+          "incumbent_last_write_seq": 798
+        },
+        {
+          "event_index": 63,
+          "epoch": 7,
+          "event_class": "supersession",
+          "batch_index": 31,
+          "payload_label": 3,
+          "incumbent_slot": 31,
+          "incumbent_last_write_seq": 799
+        },
+        {
+          "event_index": 64,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 0,
+          "payload_label": 3,
+          "incumbent_slot": 0,
+          "incumbent_last_write_seq": 896
+        },
+        {
+          "event_index": 65,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 1,
+          "payload_label": 3,
+          "incumbent_slot": 1,
+          "incumbent_last_write_seq": 897
+        },
+        {
+          "event_index": 66,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 2,
+          "payload_label": 3,
+          "incumbent_slot": 2,
+          "incumbent_last_write_seq": 898
+        },
+        {
+          "event_index": 67,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 3,
+          "payload_label": 3,
+          "incumbent_slot": 3,
+          "incumbent_last_write_seq": 899
+        },
+        {
+          "event_index": 68,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 4,
+          "payload_label": 3,
+          "incumbent_slot": 4,
+          "incumbent_last_write_seq": 900
+        },
+        {
+          "event_index": 69,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 5,
+          "payload_label": 3,
+          "incumbent_slot": 5,
+          "incumbent_last_write_seq": 901
+        },
+        {
+          "event_index": 70,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 6,
+          "payload_label": 3,
+          "incumbent_slot": 6,
+          "incumbent_last_write_seq": 902
+        },
+        {
+          "event_index": 71,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 7,
+          "payload_label": 3,
+          "incumbent_slot": 7,
+          "incumbent_last_write_seq": 903
+        },
+        {
+          "event_index": 72,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 8,
+          "payload_label": 3,
+          "incumbent_slot": 8,
+          "incumbent_last_write_seq": 904
+        },
+        {
+          "event_index": 73,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 9,
+          "payload_label": 3,
+          "incumbent_slot": 9,
+          "incumbent_last_write_seq": 905
+        },
+        {
+          "event_index": 74,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 10,
+          "payload_label": 3,
+          "incumbent_slot": 10,
+          "incumbent_last_write_seq": 906
+        },
+        {
+          "event_index": 75,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 11,
+          "payload_label": 3,
+          "incumbent_slot": 11,
+          "incumbent_last_write_seq": 907
+        },
+        {
+          "event_index": 76,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 12,
+          "payload_label": 3,
+          "incumbent_slot": 12,
+          "incumbent_last_write_seq": 908
+        },
+        {
+          "event_index": 77,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 13,
+          "payload_label": 3,
+          "incumbent_slot": 13,
+          "incumbent_last_write_seq": 909
+        },
+        {
+          "event_index": 78,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 14,
+          "payload_label": 3,
+          "incumbent_slot": 14,
+          "incumbent_last_write_seq": 910
+        },
+        {
+          "event_index": 79,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 15,
+          "payload_label": 3,
+          "incumbent_slot": 15,
+          "incumbent_last_write_seq": 911
+        },
+        {
+          "event_index": 80,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 16,
+          "payload_label": 3,
+          "incumbent_slot": 16,
+          "incumbent_last_write_seq": 912
+        },
+        {
+          "event_index": 81,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 17,
+          "payload_label": 3,
+          "incumbent_slot": 17,
+          "incumbent_last_write_seq": 913
+        },
+        {
+          "event_index": 82,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 18,
+          "payload_label": 3,
+          "incumbent_slot": 18,
+          "incumbent_last_write_seq": 914
+        },
+        {
+          "event_index": 83,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 19,
+          "payload_label": 3,
+          "incumbent_slot": 19,
+          "incumbent_last_write_seq": 915
+        },
+        {
+          "event_index": 84,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 20,
+          "payload_label": 3,
+          "incumbent_slot": 20,
+          "incumbent_last_write_seq": 916
+        },
+        {
+          "event_index": 85,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 21,
+          "payload_label": 3,
+          "incumbent_slot": 21,
+          "incumbent_last_write_seq": 917
+        },
+        {
+          "event_index": 86,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 22,
+          "payload_label": 3,
+          "incumbent_slot": 22,
+          "incumbent_last_write_seq": 918
+        },
+        {
+          "event_index": 87,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 23,
+          "payload_label": 3,
+          "incumbent_slot": 23,
+          "incumbent_last_write_seq": 919
+        },
+        {
+          "event_index": 88,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 24,
+          "payload_label": 3,
+          "incumbent_slot": 24,
+          "incumbent_last_write_seq": 920
+        },
+        {
+          "event_index": 89,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 25,
+          "payload_label": 3,
+          "incumbent_slot": 25,
+          "incumbent_last_write_seq": 921
+        },
+        {
+          "event_index": 90,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 26,
+          "payload_label": 3,
+          "incumbent_slot": 26,
+          "incumbent_last_write_seq": 922
+        },
+        {
+          "event_index": 91,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 27,
+          "payload_label": 3,
+          "incumbent_slot": 27,
+          "incumbent_last_write_seq": 923
+        },
+        {
+          "event_index": 92,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 28,
+          "payload_label": 3,
+          "incumbent_slot": 28,
+          "incumbent_last_write_seq": 924
+        },
+        {
+          "event_index": 93,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 29,
+          "payload_label": 3,
+          "incumbent_slot": 29,
+          "incumbent_last_write_seq": 925
+        },
+        {
+          "event_index": 94,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 30,
+          "payload_label": 3,
+          "incumbent_slot": 30,
+          "incumbent_last_write_seq": 926
+        },
+        {
+          "event_index": 95,
+          "epoch": 8,
+          "event_class": "supersession",
+          "batch_index": 31,
+          "payload_label": 3,
+          "incumbent_slot": 31,
+          "incumbent_last_write_seq": 927
+        },
+        {
+          "event_index": 96,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 0,
+          "payload_label": 3,
+          "incumbent_slot": 0,
+          "incumbent_last_write_seq": 1024
+        },
+        {
+          "event_index": 97,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 1,
+          "payload_label": 3,
+          "incumbent_slot": 1,
+          "incumbent_last_write_seq": 1025
+        },
+        {
+          "event_index": 98,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 2,
+          "payload_label": 3,
+          "incumbent_slot": 2,
+          "incumbent_last_write_seq": 1026
+        },
+        {
+          "event_index": 99,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 3,
+          "payload_label": 3,
+          "incumbent_slot": 3,
+          "incumbent_last_write_seq": 1027
+        },
+        {
+          "event_index": 100,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 4,
+          "payload_label": 3,
+          "incumbent_slot": 4,
+          "incumbent_last_write_seq": 1028
+        },
+        {
+          "event_index": 101,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 5,
+          "payload_label": 3,
+          "incumbent_slot": 5,
+          "incumbent_last_write_seq": 1029
+        },
+        {
+          "event_index": 102,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 6,
+          "payload_label": 3,
+          "incumbent_slot": 6,
+          "incumbent_last_write_seq": 1030
+        },
+        {
+          "event_index": 103,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 7,
+          "payload_label": 3,
+          "incumbent_slot": 7,
+          "incumbent_last_write_seq": 1031
+        },
+        {
+          "event_index": 104,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 8,
+          "payload_label": 3,
+          "incumbent_slot": 8,
+          "incumbent_last_write_seq": 1032
+        },
+        {
+          "event_index": 105,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 9,
+          "payload_label": 3,
+          "incumbent_slot": 9,
+          "incumbent_last_write_seq": 1033
+        },
+        {
+          "event_index": 106,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 10,
+          "payload_label": 3,
+          "incumbent_slot": 10,
+          "incumbent_last_write_seq": 1034
+        },
+        {
+          "event_index": 107,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 11,
+          "payload_label": 3,
+          "incumbent_slot": 11,
+          "incumbent_last_write_seq": 1035
+        },
+        {
+          "event_index": 108,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 12,
+          "payload_label": 3,
+          "incumbent_slot": 12,
+          "incumbent_last_write_seq": 1036
+        },
+        {
+          "event_index": 109,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 13,
+          "payload_label": 3,
+          "incumbent_slot": 13,
+          "incumbent_last_write_seq": 1037
+        },
+        {
+          "event_index": 110,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 14,
+          "payload_label": 3,
+          "incumbent_slot": 14,
+          "incumbent_last_write_seq": 1038
+        },
+        {
+          "event_index": 111,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 15,
+          "payload_label": 3,
+          "incumbent_slot": 15,
+          "incumbent_last_write_seq": 1039
+        },
+        {
+          "event_index": 112,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 16,
+          "payload_label": 3,
+          "incumbent_slot": 16,
+          "incumbent_last_write_seq": 1040
+        },
+        {
+          "event_index": 113,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 17,
+          "payload_label": 3,
+          "incumbent_slot": 17,
+          "incumbent_last_write_seq": 1041
+        },
+        {
+          "event_index": 114,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 18,
+          "payload_label": 3,
+          "incumbent_slot": 18,
+          "incumbent_last_write_seq": 1042
+        },
+        {
+          "event_index": 115,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 19,
+          "payload_label": 3,
+          "incumbent_slot": 19,
+          "incumbent_last_write_seq": 1043
+        },
+        {
+          "event_index": 116,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 20,
+          "payload_label": 3,
+          "incumbent_slot": 20,
+          "incumbent_last_write_seq": 1044
+        },
+        {
+          "event_index": 117,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 21,
+          "payload_label": 3,
+          "incumbent_slot": 21,
+          "incumbent_last_write_seq": 1045
+        },
+        {
+          "event_index": 118,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 22,
+          "payload_label": 3,
+          "incumbent_slot": 22,
+          "incumbent_last_write_seq": 1046
+        },
+        {
+          "event_index": 119,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 23,
+          "payload_label": 3,
+          "incumbent_slot": 23,
+          "incumbent_last_write_seq": 1047
+        },
+        {
+          "event_index": 120,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 24,
+          "payload_label": 3,
+          "incumbent_slot": 24,
+          "incumbent_last_write_seq": 1048
+        },
+        {
+          "event_index": 121,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 25,
+          "payload_label": 3,
+          "incumbent_slot": 25,
+          "incumbent_last_write_seq": 1049
+        },
+        {
+          "event_index": 122,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 26,
+          "payload_label": 3,
+          "incumbent_slot": 26,
+          "incumbent_last_write_seq": 1050
+        },
+        {
+          "event_index": 123,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 27,
+          "payload_label": 3,
+          "incumbent_slot": 27,
+          "incumbent_last_write_seq": 1051
+        },
+        {
+          "event_index": 124,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 28,
+          "payload_label": 3,
+          "incumbent_slot": 28,
+          "incumbent_last_write_seq": 1052
+        },
+        {
+          "event_index": 125,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 29,
+          "payload_label": 3,
+          "incumbent_slot": 29,
+          "incumbent_last_write_seq": 1053
+        },
+        {
+          "event_index": 126,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 30,
+          "payload_label": 3,
+          "incumbent_slot": 30,
+          "incumbent_last_write_seq": 1054
+        },
+        {
+          "event_index": 127,
+          "epoch": 9,
+          "event_class": "supersession",
+          "batch_index": 31,
+          "payload_label": 3,
+          "incumbent_slot": 31,
+          "incumbent_last_write_seq": 1055
+        },
+        {
+          "event_index": 128,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 0,
+          "payload_label": 3,
+          "incumbent_slot": 0,
+          "incumbent_last_write_seq": 1152
+        },
+        {
+          "event_index": 129,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 1,
+          "payload_label": 3,
+          "incumbent_slot": 1,
+          "incumbent_last_write_seq": 1153
+        },
+        {
+          "event_index": 130,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 2,
+          "payload_label": 3,
+          "incumbent_slot": 2,
+          "incumbent_last_write_seq": 1154
+        },
+        {
+          "event_index": 131,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 3,
+          "payload_label": 3,
+          "incumbent_slot": 3,
+          "incumbent_last_write_seq": 1155
+        },
+        {
+          "event_index": 132,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 4,
+          "payload_label": 3,
+          "incumbent_slot": 4,
+          "incumbent_last_write_seq": 1156
+        },
+        {
+          "event_index": 133,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 5,
+          "payload_label": 3,
+          "incumbent_slot": 5,
+          "incumbent_last_write_seq": 1157
+        },
+        {
+          "event_index": 134,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 6,
+          "payload_label": 3,
+          "incumbent_slot": 6,
+          "incumbent_last_write_seq": 1158
+        },
+        {
+          "event_index": 135,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 7,
+          "payload_label": 3,
+          "incumbent_slot": 7,
+          "incumbent_last_write_seq": 1159
+        },
+        {
+          "event_index": 136,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 8,
+          "payload_label": 3,
+          "incumbent_slot": 8,
+          "incumbent_last_write_seq": 1160
+        },
+        {
+          "event_index": 137,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 9,
+          "payload_label": 3,
+          "incumbent_slot": 9,
+          "incumbent_last_write_seq": 1161
+        },
+        {
+          "event_index": 138,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 10,
+          "payload_label": 3,
+          "incumbent_slot": 10,
+          "incumbent_last_write_seq": 1162
+        },
+        {
+          "event_index": 139,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 11,
+          "payload_label": 3,
+          "incumbent_slot": 11,
+          "incumbent_last_write_seq": 1163
+        },
+        {
+          "event_index": 140,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 12,
+          "payload_label": 3,
+          "incumbent_slot": 12,
+          "incumbent_last_write_seq": 1164
+        },
+        {
+          "event_index": 141,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 13,
+          "payload_label": 3,
+          "incumbent_slot": 13,
+          "incumbent_last_write_seq": 1165
+        },
+        {
+          "event_index": 142,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 14,
+          "payload_label": 3,
+          "incumbent_slot": 14,
+          "incumbent_last_write_seq": 1166
+        },
+        {
+          "event_index": 143,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 15,
+          "payload_label": 3,
+          "incumbent_slot": 15,
+          "incumbent_last_write_seq": 1167
+        },
+        {
+          "event_index": 144,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 16,
+          "payload_label": 3,
+          "incumbent_slot": 16,
+          "incumbent_last_write_seq": 1168
+        },
+        {
+          "event_index": 145,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 17,
+          "payload_label": 3,
+          "incumbent_slot": 17,
+          "incumbent_last_write_seq": 1169
+        },
+        {
+          "event_index": 146,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 18,
+          "payload_label": 3,
+          "incumbent_slot": 18,
+          "incumbent_last_write_seq": 1170
+        },
+        {
+          "event_index": 147,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 19,
+          "payload_label": 3,
+          "incumbent_slot": 19,
+          "incumbent_last_write_seq": 1171
+        },
+        {
+          "event_index": 148,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 20,
+          "payload_label": 3,
+          "incumbent_slot": 20,
+          "incumbent_last_write_seq": 1172
+        },
+        {
+          "event_index": 149,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 21,
+          "payload_label": 3,
+          "incumbent_slot": 21,
+          "incumbent_last_write_seq": 1173
+        },
+        {
+          "event_index": 150,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 22,
+          "payload_label": 3,
+          "incumbent_slot": 22,
+          "incumbent_last_write_seq": 1174
+        },
+        {
+          "event_index": 151,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 23,
+          "payload_label": 3,
+          "incumbent_slot": 23,
+          "incumbent_last_write_seq": 1175
+        },
+        {
+          "event_index": 152,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 24,
+          "payload_label": 3,
+          "incumbent_slot": 24,
+          "incumbent_last_write_seq": 1176
+        },
+        {
+          "event_index": 153,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 25,
+          "payload_label": 3,
+          "incumbent_slot": 25,
+          "incumbent_last_write_seq": 1177
+        },
+        {
+          "event_index": 154,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 26,
+          "payload_label": 3,
+          "incumbent_slot": 26,
+          "incumbent_last_write_seq": 1178
+        },
+        {
+          "event_index": 155,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 27,
+          "payload_label": 3,
+          "incumbent_slot": 27,
+          "incumbent_last_write_seq": 1179
+        },
+        {
+          "event_index": 156,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 28,
+          "payload_label": 3,
+          "incumbent_slot": 28,
+          "incumbent_last_write_seq": 1180
+        },
+        {
+          "event_index": 157,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 29,
+          "payload_label": 3,
+          "incumbent_slot": 29,
+          "incumbent_last_write_seq": 1181
+        },
+        {
+          "event_index": 158,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 30,
+          "payload_label": 3,
+          "incumbent_slot": 30,
+          "incumbent_last_write_seq": 1182
+        },
+        {
+          "event_index": 159,
+          "epoch": 10,
+          "event_class": "supersession",
+          "batch_index": 31,
+          "payload_label": 3,
+          "incumbent_slot": 31,
+          "incumbent_last_write_seq": 1183
+        },
+        {
+          "event_index": 160,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 0,
+          "payload_label": 3,
+          "incumbent_slot": 0,
+          "incumbent_last_write_seq": 1280
+        },
+        {
+          "event_index": 161,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 1,
+          "payload_label": 3,
+          "incumbent_slot": 1,
+          "incumbent_last_write_seq": 1281
+        },
+        {
+          "event_index": 162,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 2,
+          "payload_label": 3,
+          "incumbent_slot": 2,
+          "incumbent_last_write_seq": 1282
+        },
+        {
+          "event_index": 163,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 3,
+          "payload_label": 3,
+          "incumbent_slot": 3,
+          "incumbent_last_write_seq": 1283
+        },
+        {
+          "event_index": 164,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 4,
+          "payload_label": 3,
+          "incumbent_slot": 4,
+          "incumbent_last_write_seq": 1284
+        },
+        {
+          "event_index": 165,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 5,
+          "payload_label": 3,
+          "incumbent_slot": 5,
+          "incumbent_last_write_seq": 1285
+        },
+        {
+          "event_index": 166,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 6,
+          "payload_label": 3,
+          "incumbent_slot": 6,
+          "incumbent_last_write_seq": 1286
+        },
+        {
+          "event_index": 167,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 7,
+          "payload_label": 3,
+          "incumbent_slot": 7,
+          "incumbent_last_write_seq": 1287
+        },
+        {
+          "event_index": 168,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 8,
+          "payload_label": 3,
+          "incumbent_slot": 8,
+          "incumbent_last_write_seq": 1288
+        },
+        {
+          "event_index": 169,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 9,
+          "payload_label": 3,
+          "incumbent_slot": 9,
+          "incumbent_last_write_seq": 1289
+        },
+        {
+          "event_index": 170,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 10,
+          "payload_label": 3,
+          "incumbent_slot": 10,
+          "incumbent_last_write_seq": 1290
+        },
+        {
+          "event_index": 171,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 11,
+          "payload_label": 3,
+          "incumbent_slot": 11,
+          "incumbent_last_write_seq": 1291
+        },
+        {
+          "event_index": 172,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 12,
+          "payload_label": 3,
+          "incumbent_slot": 12,
+          "incumbent_last_write_seq": 1292
+        },
+        {
+          "event_index": 173,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 13,
+          "payload_label": 3,
+          "incumbent_slot": 13,
+          "incumbent_last_write_seq": 1293
+        },
+        {
+          "event_index": 174,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 14,
+          "payload_label": 3,
+          "incumbent_slot": 14,
+          "incumbent_last_write_seq": 1294
+        },
+        {
+          "event_index": 175,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 15,
+          "payload_label": 3,
+          "incumbent_slot": 15,
+          "incumbent_last_write_seq": 1295
+        },
+        {
+          "event_index": 176,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 16,
+          "payload_label": 3,
+          "incumbent_slot": 16,
+          "incumbent_last_write_seq": 1296
+        },
+        {
+          "event_index": 177,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 17,
+          "payload_label": 3,
+          "incumbent_slot": 17,
+          "incumbent_last_write_seq": 1297
+        },
+        {
+          "event_index": 178,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 18,
+          "payload_label": 3,
+          "incumbent_slot": 18,
+          "incumbent_last_write_seq": 1298
+        },
+        {
+          "event_index": 179,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 19,
+          "payload_label": 3,
+          "incumbent_slot": 19,
+          "incumbent_last_write_seq": 1299
+        },
+        {
+          "event_index": 180,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 20,
+          "payload_label": 3,
+          "incumbent_slot": 20,
+          "incumbent_last_write_seq": 1300
+        },
+        {
+          "event_index": 181,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 21,
+          "payload_label": 3,
+          "incumbent_slot": 21,
+          "incumbent_last_write_seq": 1301
+        },
+        {
+          "event_index": 182,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 22,
+          "payload_label": 3,
+          "incumbent_slot": 22,
+          "incumbent_last_write_seq": 1302
+        },
+        {
+          "event_index": 183,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 23,
+          "payload_label": 3,
+          "incumbent_slot": 23,
+          "incumbent_last_write_seq": 1303
+        },
+        {
+          "event_index": 184,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 24,
+          "payload_label": 3,
+          "incumbent_slot": 24,
+          "incumbent_last_write_seq": 1304
+        },
+        {
+          "event_index": 185,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 25,
+          "payload_label": 3,
+          "incumbent_slot": 25,
+          "incumbent_last_write_seq": 1305
+        },
+        {
+          "event_index": 186,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 26,
+          "payload_label": 3,
+          "incumbent_slot": 26,
+          "incumbent_last_write_seq": 1306
+        },
+        {
+          "event_index": 187,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 27,
+          "payload_label": 3,
+          "incumbent_slot": 27,
+          "incumbent_last_write_seq": 1307
+        },
+        {
+          "event_index": 188,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 28,
+          "payload_label": 3,
+          "incumbent_slot": 28,
+          "incumbent_last_write_seq": 1308
+        },
+        {
+          "event_index": 189,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 29,
+          "payload_label": 3,
+          "incumbent_slot": 29,
+          "incumbent_last_write_seq": 1309
+        },
+        {
+          "event_index": 190,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 30,
+          "payload_label": 3,
+          "incumbent_slot": 30,
+          "incumbent_last_write_seq": 1310
+        },
+        {
+          "event_index": 191,
+          "epoch": 11,
+          "event_class": "supersession",
+          "batch_index": 31,
+          "payload_label": 3,
+          "incumbent_slot": 31,
+          "incumbent_last_write_seq": 1311
+        }
+      ]
+    },
+    "reason": "audit-only shadow quarantine: quarantine-eligible supersession writes are flagged and ledgered, but not quarantined, refused, suppressed, or recovered; deployed read-time retrieval path untouched (PR-8 \u00a79A)."
+  }
+}

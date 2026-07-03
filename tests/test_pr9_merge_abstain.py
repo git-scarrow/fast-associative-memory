@@ -46,7 +46,10 @@ def _apply_merge(cands, router, epoch=0):
 
 
 def test_merge_abstain_is_registered_additively():
-    assert POLICIES[-1] == "merge-abstain"  # appended, never reordered
+    # appended in PR-9.1(b) at the end of the then-registry, never
+    # reordered since (PR-11.1 appended three further policies after it;
+    # the full prefix order is pinned by test_pr11_adjudication.py)
+    assert POLICIES[11] == "merge-abstain"
     assert "merge-abstain" not in TRUST_ROUTED
     assert "merge-abstain" not in READ_TIME_FORK_ONLY
 

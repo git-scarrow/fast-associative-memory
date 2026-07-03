@@ -1,0 +1,3468 @@
+{
+  "panel": "pr8-9a",
+  "readout": "frozen-87",
+  "mode": "panel",
+  "verdict": "pass",
+  "certifies": "promoted-audit (detector/forensic role only; NOT read-time remediation, recovery, or governance promotion)",
+  "dimensions": {
+    "inertness": "pass",
+    "ledger_coverage": "pass",
+    "flag_set_identity": "pass",
+    "clean_control": "pass",
+    "panel_coverage": "pass",
+    "cross_host_determinism": "pass",
+    "quarantine_rerun_fidelity": "pass"
+  },
+  "flag_set_identity_status": "identity-proven",
+  "artifact_roots": {
+    "darwin": "results/issue_failure_mode_blindness/pr9_2/panel",
+    "gentoo": null
+  },
+  "missing_artifacts": [],
+  "panel_coverage": {
+    "status": "pass",
+    "mode": "panel",
+    "missing_cells": [],
+    "missing_artifacts": []
+  },
+  "cross_host_determinism": {
+    "status": "pass",
+    "method": "gentoo-sha-manifest",
+    "artifacts_checked": 447,
+    "mismatches": []
+  },
+  "runs": [
+    {
+      "cell": "direct_harm",
+      "pair": "pairD",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "collateral_harm",
+      "pair": "pairB",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "collateral_harm",
+      "pair": "pairE",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairA",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairB",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairD",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairE",
+      "seed": 0,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "clean_control",
+      "pair": "pairA",
+      "seed": 0,
+      "is_clean": true,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 0,
+        "payload_label_histogram": {},
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 0,
+        "shadow_flagged_distinct_keys": 0,
+        "shadow_ledger_flagged_count": 0,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 0,
+        "quarantine_diverted_count": 0,
+        "quarantine_diverted_keys_available": false,
+        "quarantine_diverted_event_records": 0,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intersection_size": 0,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "status": "pass",
+        "identity_status": "identity-proven-empty"
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": {
+        "status": "pass",
+        "flagged_events": 0,
+        "byte_inert": true,
+        "flagged_zero": true
+      }
+    },
+    {
+      "cell": "clean_control",
+      "pair": "pairC",
+      "seed": 0,
+      "is_clean": true,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 0,
+        "payload_label_histogram": {},
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 0,
+        "shadow_flagged_distinct_keys": 0,
+        "shadow_ledger_flagged_count": 0,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 0,
+        "quarantine_diverted_count": 0,
+        "quarantine_diverted_keys_available": false,
+        "quarantine_diverted_event_records": 0,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intersection_size": 0,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "status": "pass",
+        "identity_status": "identity-proven-empty"
+      },
+      "quarantine_rerun_fidelity": null,
+      "clean_control": {
+        "status": "pass",
+        "flagged_events": 0,
+        "byte_inert": true,
+        "flagged_zero": true
+      }
+    },
+    {
+      "cell": "direct_harm",
+      "pair": "pairD",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "collateral_harm",
+      "pair": "pairB",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "collateral_harm",
+      "pair": "pairE",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairA",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairB",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairD",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairE",
+      "seed": 1,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "clean_control",
+      "pair": "pairA",
+      "seed": 1,
+      "is_clean": true,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 0,
+        "payload_label_histogram": {},
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 0,
+        "shadow_flagged_distinct_keys": 0,
+        "shadow_ledger_flagged_count": 0,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 0,
+        "quarantine_diverted_count": 0,
+        "quarantine_diverted_keys_available": false,
+        "quarantine_diverted_event_records": 0,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intersection_size": 0,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "status": "pass",
+        "identity_status": "identity-proven-empty"
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": {
+        "status": "pass",
+        "flagged_events": 0,
+        "byte_inert": true,
+        "flagged_zero": true
+      }
+    },
+    {
+      "cell": "clean_control",
+      "pair": "pairC",
+      "seed": 1,
+      "is_clean": true,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 0,
+        "payload_label_histogram": {},
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 0,
+        "shadow_flagged_distinct_keys": 0,
+        "shadow_ledger_flagged_count": 0,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 0,
+        "quarantine_diverted_count": 0,
+        "quarantine_diverted_keys_available": false,
+        "quarantine_diverted_event_records": 0,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intersection_size": 0,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "status": "pass",
+        "identity_status": "identity-proven-empty"
+      },
+      "quarantine_rerun_fidelity": null,
+      "clean_control": {
+        "status": "pass",
+        "flagged_events": 0,
+        "byte_inert": true,
+        "flagged_zero": true
+      }
+    },
+    {
+      "cell": "direct_harm",
+      "pair": "pairD",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "collateral_harm",
+      "pair": "pairB",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "collateral_harm",
+      "pair": "pairE",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairA",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairB",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairD",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "merge_path_stale",
+      "pair": "pairE",
+      "seed": 2,
+      "is_clean": false,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 192,
+        "payload_label_histogram": {
+          "3": 192
+        },
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 192,
+        "shadow_flagged_distinct_keys": 192,
+        "shadow_ledger_flagged_count": 192,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 192,
+        "quarantine_diverted_count": 192,
+        "quarantine_diverted_keys_available": true,
+        "quarantine_diverted_event_records": 192,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intrinsic_join_key": [
+          "epoch",
+          "event_class",
+          "batch_index"
+        ],
+        "intrinsic_check_fields": [
+          "payload_label"
+        ],
+        "shadow_record_count": 192,
+        "quarantine_record_count": 192,
+        "intersection_size": 192,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "check_field_mismatches": [],
+        "shadow_ledger_fork_events_link_ok": true,
+        "diagnostic_incumbent_key_agreement": {
+          "agree": 32,
+          "joined": 192,
+          "note": "state-contaminated legacy key; expected < joined past the first diversion on acting pairs \u2014 recorded, not gating"
+        },
+        "status": "pass",
+        "identity_status": "identity-proven",
+        "reason": "shadow-flagged set == \u00a78-diverted set on the write-event-intrinsic key; every joined pair agrees on the check fields; ledger anchored to committed fork_events."
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": null
+    },
+    {
+      "cell": "clean_control",
+      "pair": "pairA",
+      "seed": 2,
+      "is_clean": true,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 0,
+        "payload_label_histogram": {},
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 0,
+        "shadow_flagged_distinct_keys": 0,
+        "shadow_ledger_flagged_count": 0,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 0,
+        "quarantine_diverted_count": 0,
+        "quarantine_diverted_keys_available": false,
+        "quarantine_diverted_event_records": 0,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intersection_size": 0,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "status": "pass",
+        "identity_status": "identity-proven-empty"
+      },
+      "quarantine_rerun_fidelity": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "body_identical_except_govern": true,
+            "govern_identical_minus_additive_keys": true
+          }
+        }
+      },
+      "clean_control": {
+        "status": "pass",
+        "flagged_events": 0,
+        "byte_inert": true,
+        "flagged_zero": true
+      }
+    },
+    {
+      "cell": "clean_control",
+      "pair": "pairC",
+      "seed": 2,
+      "is_clean": true,
+      "inertness": {
+        "status": "pass",
+        "artifacts": {
+          ".csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".per_slot.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".fork_events.csv": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          "topk": {
+            "status": "pass",
+            "content_identical": true
+          },
+          ".governance.json": {
+            "status": "pass",
+            "byte_identical": true
+          },
+          ".summary.json": {
+            "status": "pass",
+            "identical_except_govern": true
+          }
+        }
+      },
+      "ledger": {
+        "status": "pass",
+        "flagged_events": 0,
+        "payload_label_histogram": {},
+        "problems": []
+      },
+      "flag_set_identity": {
+        "join_key": [
+          "epoch",
+          "event_class",
+          "incumbent_slot",
+          "incumbent_last_write_seq"
+        ],
+        "shadow_flagged_set_size": 0,
+        "shadow_flagged_distinct_keys": 0,
+        "shadow_ledger_flagged_count": 0,
+        "shadow_self_consistent": true,
+        "provable_subclaim_shadow_equals_baseline_supersession": true,
+        "baseline_supersession_set_size": 0,
+        "quarantine_diverted_count": 0,
+        "quarantine_diverted_keys_available": false,
+        "quarantine_diverted_event_records": 0,
+        "non_certifying_histogram_equal": true,
+        "non_certifying_count_equal": true,
+        "intersection_size": 0,
+        "diverted_minus_flagged": [],
+        "shadow_flagged_minus_diverted": [],
+        "status": "pass",
+        "identity_status": "identity-proven-empty"
+      },
+      "quarantine_rerun_fidelity": null,
+      "clean_control": {
+        "status": "pass",
+        "flagged_events": 0,
+        "byte_inert": true,
+        "flagged_zero": true
+      }
+    }
+  ],
+  "commands": {
+    "regenerate_panel": "for arm in none shadow quarantine; do python benchmarks/failure_mode_probe.py --vision --vision-cache <#87-cache> --arm <arm> --govern $arm --seed <seed> --out <root>/<cell>/$arm/<stem>.csv; done",
+    "run_harness": "python benchmarks/pr8_shadow_audit_cert.py --manifest results/issue_failure_mode_blindness/pr9_2/panel_manifest.json --out-json <report.json> --out-md <report.md>"
+  },
+  "sha256_manifest": {
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s0_pairD.csv": "b5031c2ff4a515b417186fcd7b1d8c6284460beeee613f2663d5584155b947a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s0_pairD.csv": "b5031c2ff4a515b417186fcd7b1d8c6284460beeee613f2663d5584155b947a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s0_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s0_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s0_pairD.fork_events.csv": "a681996ea4759b563b7b40250c96f1e194efa026e05589f2fc2e1c3c865cff10",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s0_pairD.fork_events.csv": "a681996ea4759b563b7b40250c96f1e194efa026e05589f2fc2e1c3c865cff10",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s0_pairD.topk.csv.gz": "838edcc19b8c9e6404403239bda95cbe0eddaad69dedc433c781ec8354f659d0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s0_pairD.topk.csv": "99f98ecd2a6827a56d9f86b325d583baf8fcf07949a441888858f5e3036bcd05",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s0_pairD.governance.json": "b7a068feb0a141b69ba44fa7147bebdf0b82aa17dd8cb37625e5f2cd2c1d3f31",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s0_pairD.governance.json": "b7a068feb0a141b69ba44fa7147bebdf0b82aa17dd8cb37625e5f2cd2c1d3f31",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s0_pairD.summary.json": "bd98f1f97ae9cd5d5fa1c3b68e72cafe31fa71de2ee937bc8ee1ef4a56d0223e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s0_pairD.summary.json": "f4afa235a5955646358f011f86bf22bd5523a51077cebdb2af7c4f53334bf52d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.summary.json": "177faa9f46ea992c21d0a4fffcbb184772660144656d806c77b4066f24315771",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.csv": "5743ac45fbefb7fc299ea3427e5cfb86faa53be3fb9fac56246e2522dd209a9d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.csv": "5743ac45fbefb7fc299ea3427e5cfb86faa53be3fb9fac56246e2522dd209a9d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.fork_events.csv": "0a84c913570f07b054805b91447a833ae612f282290f430c88d9092406bd4ed3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.fork_events.csv": "0a84c913570f07b054805b91447a833ae612f282290f430c88d9092406bd4ed3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.topk.csv": "85aa3f44571c034b9f88828018619f8a9db8a64f42a821ccfcd0c734e5c52388",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.topk.csv.gz": "f04211664cf935879bb21dd0664faebf02e5af37df28c2c21b0b5b9bc78a761c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s0_pairD.summary.json": "c75ba839220874b5ad036f6ada1f52c70f51429f90c782540019b940b29a7474",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairB.csv": "ca7b92596e3486489adf4b52f10e84fa9f2350bf08ff335b8c28d55b8cc030bb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairB.csv": "ca7b92596e3486489adf4b52f10e84fa9f2350bf08ff335b8c28d55b8cc030bb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairB.fork_events.csv": "7185e0bb2a7579c0fc78cfeee5434ff4fff5b437879ed757ad213967d7df4071",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairB.fork_events.csv": "7185e0bb2a7579c0fc78cfeee5434ff4fff5b437879ed757ad213967d7df4071",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairB.topk.csv.gz": "e96fce47b23f2ba897bb9415bde7c3573d55f68ccd7968aa8e89966bd2361232",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairB.topk.csv": "ad3ac6a064e6100aa6cd8c8af7d248cc5234331ef639a118b343bbeee5abf49e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairB.governance.json": "95d86147dcf57b0e0fad0e2147b12db8e1210a116c2944ed86af121f84ab7a7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairB.governance.json": "95d86147dcf57b0e0fad0e2147b12db8e1210a116c2944ed86af121f84ab7a7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairB.summary.json": "058012734cc5b9c46a8b2a90431c9067d40cbd46b09793778a9d3645641b475b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairB.summary.json": "bf277ae2c72b1670056ab157d9b9d65f81b0bf01d5d3cd2a280151b48ff64450",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.summary.json": "1399d126ceabff8dca23f42c5aa085b320bc5926aca246c90568411a9ea872a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.csv": "320749360949509b9b7bdb1397a55e09b901762f683ada5edfd4d7c7a72bdd78",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.csv": "320749360949509b9b7bdb1397a55e09b901762f683ada5edfd4d7c7a72bdd78",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.fork_events.csv": "dc7f798938e6783b2b3536fb71b38fa35054383c9f7d489a67d03ac8adb49f62",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.fork_events.csv": "dc7f798938e6783b2b3536fb71b38fa35054383c9f7d489a67d03ac8adb49f62",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.topk.csv": "5843005715bcc830b94303ff3c0e54d2679019a9c4bde21ebb6e4d42e3118343",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.topk.csv.gz": "e8f3a3fe19999e81413adec6419d5d6ecc08bec5c717f7612858ff6bef580436",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB.summary.json": "641a2c796ae51f33e5402717652e6dd9cd22ddde9cd78a8e520f67282e06c80e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairE.csv": "73b0d7e39cd4dc9fcc374c60fc7d29eda4f93c2c0fac0e99c00af958bc3160e3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairE.csv": "73b0d7e39cd4dc9fcc374c60fc7d29eda4f93c2c0fac0e99c00af958bc3160e3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairE.fork_events.csv": "97cc698114e44b6df6ade4ac1cc82aff41d25378da15e9b0e79ce219b77e98f1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairE.fork_events.csv": "97cc698114e44b6df6ade4ac1cc82aff41d25378da15e9b0e79ce219b77e98f1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairE.topk.csv.gz": "77084c7449b439e7ecc1a39e415c1ced875605736f4e7f42b553e3e46d95d5d1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairE.topk.csv": "c39690c2d3b04ba86e05533c5b1015bdb0b7f8ac7200dcefd9d49188ef51bba2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairE.governance.json": "663974110bfcaab926975ebdd2fc9aa9f196f52045fd8131fa2252997e8922d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairE.governance.json": "663974110bfcaab926975ebdd2fc9aa9f196f52045fd8131fa2252997e8922d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s0_pairE.summary.json": "af3517a72b062d44c08accce3a7780d46790943c5feab20f7d17b694ab3b4ce4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s0_pairE.summary.json": "8fa852037e960c4310249ee63bca64156d9ae4fa22dea95fc328ec3c7d2596ac",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.summary.json": "f14003be2f2a1c241e91c2ca55be72cc25c6a220848aa395b77505e1ebf7962a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.csv": "93bc5024484fa233d455c4ca907af5fe49175c6d3c562083cc3cd22b19fec02d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.csv": "93bc5024484fa233d455c4ca907af5fe49175c6d3c562083cc3cd22b19fec02d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.fork_events.csv": "e9d63b817519e8c2e104f769195cefe9b75c913e7fc18b686ef4f891ea51a205",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.fork_events.csv": "e9d63b817519e8c2e104f769195cefe9b75c913e7fc18b686ef4f891ea51a205",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.topk.csv": "c3141399fe186b4e510834ef092e247a8b9dcdeeb0245ac1aae3a69bfee918a3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.topk.csv.gz": "47d1c3babbf247214b3630d0ac79f35c484a233272c3148c5d17d85cd12daed6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE.summary.json": "8edaad6e871d7fa47fbc4c49a3832ae55b4b1671a1e49fc56e1863303d199823",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairA.csv": "cdf9edb78a8368a04dcc8822baff89ae37de02d6e536ebd1a5ba2e7b2510dac5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairA.csv": "cdf9edb78a8368a04dcc8822baff89ae37de02d6e536ebd1a5ba2e7b2510dac5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairA.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairA.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairA.fork_events.csv": "16e2d22dc1f32197ece2825d005042785f11942d65c66f74ae9f622c0c114363",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairA.fork_events.csv": "16e2d22dc1f32197ece2825d005042785f11942d65c66f74ae9f622c0c114363",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairA.topk.csv.gz": "6b0d260bb36af4298e82f92d4ed541d9c1d7e04a84b645f81abc99a76ccf8b4a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairA.topk.csv": "b226b9b1237c2d12a0088473eb8906760ae007a9432580db0014dc696eb58a56",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairA.governance.json": "b238d6b5d1604eb0ebbf1d5054cf11a41136b11066b8dc0ac85458397ec3306c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairA.governance.json": "b238d6b5d1604eb0ebbf1d5054cf11a41136b11066b8dc0ac85458397ec3306c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairA.summary.json": "6da87064a6bd274b31c3d9becd6e8d880abfebec15815b6697a359befad9e9a8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairA.summary.json": "61dc5c589a1bb7ed9adba724e0a1521ce54bc2d5cfa46a359d7217aede667ecc",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.summary.json": "8265bfb8a20bf4291a12d129c573ce29a681dd120586b139b35008aceccd21ed",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.csv": "d751a03498a96b1c09721370111766e77db6e7bc4a240426fc4dec389c784939",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.csv": "d751a03498a96b1c09721370111766e77db6e7bc4a240426fc4dec389c784939",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.fork_events.csv": "3841656b6348538307095d6278e70adec97e617abcfc0a7c3af32e8ad114d824",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.fork_events.csv": "3841656b6348538307095d6278e70adec97e617abcfc0a7c3af32e8ad114d824",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.topk.csv": "96d703e3ebd00de66d58dec8984bbfd9562e60d1852969f10c4ac567d90bd1d4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.topk.csv.gz": "eb0eab174284ff0e71402d24573802361f13cd52df11b95190c01c93d99795a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA.summary.json": "4cc9c794567b7db67d23a2e1ace6e1d13ca08b62e6ca3d60c64295435c76419e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairB.csv": "ca7b92596e3486489adf4b52f10e84fa9f2350bf08ff335b8c28d55b8cc030bb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairB.csv": "ca7b92596e3486489adf4b52f10e84fa9f2350bf08ff335b8c28d55b8cc030bb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairB.fork_events.csv": "7185e0bb2a7579c0fc78cfeee5434ff4fff5b437879ed757ad213967d7df4071",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairB.fork_events.csv": "7185e0bb2a7579c0fc78cfeee5434ff4fff5b437879ed757ad213967d7df4071",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairB.topk.csv.gz": "e96fce47b23f2ba897bb9415bde7c3573d55f68ccd7968aa8e89966bd2361232",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairB.topk.csv": "ad3ac6a064e6100aa6cd8c8af7d248cc5234331ef639a118b343bbeee5abf49e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairB.governance.json": "95d86147dcf57b0e0fad0e2147b12db8e1210a116c2944ed86af121f84ab7a7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairB.governance.json": "95d86147dcf57b0e0fad0e2147b12db8e1210a116c2944ed86af121f84ab7a7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairB.summary.json": "058012734cc5b9c46a8b2a90431c9067d40cbd46b09793778a9d3645641b475b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairB.summary.json": "bf277ae2c72b1670056ab157d9b9d65f81b0bf01d5d3cd2a280151b48ff64450",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.summary.json": "1399d126ceabff8dca23f42c5aa085b320bc5926aca246c90568411a9ea872a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.csv": "320749360949509b9b7bdb1397a55e09b901762f683ada5edfd4d7c7a72bdd78",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.csv": "320749360949509b9b7bdb1397a55e09b901762f683ada5edfd4d7c7a72bdd78",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.fork_events.csv": "dc7f798938e6783b2b3536fb71b38fa35054383c9f7d489a67d03ac8adb49f62",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.fork_events.csv": "dc7f798938e6783b2b3536fb71b38fa35054383c9f7d489a67d03ac8adb49f62",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.topk.csv": "5843005715bcc830b94303ff3c0e54d2679019a9c4bde21ebb6e4d42e3118343",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.topk.csv.gz": "e8f3a3fe19999e81413adec6419d5d6ecc08bec5c717f7612858ff6bef580436",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB.summary.json": "641a2c796ae51f33e5402717652e6dd9cd22ddde9cd78a8e520f67282e06c80e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairD.csv": "b5031c2ff4a515b417186fcd7b1d8c6284460beeee613f2663d5584155b947a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairD.csv": "b5031c2ff4a515b417186fcd7b1d8c6284460beeee613f2663d5584155b947a0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairD.fork_events.csv": "a681996ea4759b563b7b40250c96f1e194efa026e05589f2fc2e1c3c865cff10",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairD.fork_events.csv": "a681996ea4759b563b7b40250c96f1e194efa026e05589f2fc2e1c3c865cff10",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairD.topk.csv.gz": "37026cac939e23869a1fec7a9866c5973dbeeb947aa414c3bd4bd84f9fd69a35",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairD.topk.csv": "99f98ecd2a6827a56d9f86b325d583baf8fcf07949a441888858f5e3036bcd05",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairD.governance.json": "b7a068feb0a141b69ba44fa7147bebdf0b82aa17dd8cb37625e5f2cd2c1d3f31",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairD.governance.json": "b7a068feb0a141b69ba44fa7147bebdf0b82aa17dd8cb37625e5f2cd2c1d3f31",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairD.summary.json": "bd98f1f97ae9cd5d5fa1c3b68e72cafe31fa71de2ee937bc8ee1ef4a56d0223e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairD.summary.json": "f4afa235a5955646358f011f86bf22bd5523a51077cebdb2af7c4f53334bf52d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.summary.json": "177faa9f46ea992c21d0a4fffcbb184772660144656d806c77b4066f24315771",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.csv": "5743ac45fbefb7fc299ea3427e5cfb86faa53be3fb9fac56246e2522dd209a9d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.csv": "5743ac45fbefb7fc299ea3427e5cfb86faa53be3fb9fac56246e2522dd209a9d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.fork_events.csv": "0a84c913570f07b054805b91447a833ae612f282290f430c88d9092406bd4ed3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.fork_events.csv": "0a84c913570f07b054805b91447a833ae612f282290f430c88d9092406bd4ed3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.topk.csv": "85aa3f44571c034b9f88828018619f8a9db8a64f42a821ccfcd0c734e5c52388",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.topk.csv.gz": "9b5e3a94216232f0292a529fb7e7ead370de8ab90a14b90b5f8817aa89906291",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD.summary.json": "c75ba839220874b5ad036f6ada1f52c70f51429f90c782540019b940b29a7474",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairE.csv": "73b0d7e39cd4dc9fcc374c60fc7d29eda4f93c2c0fac0e99c00af958bc3160e3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairE.csv": "73b0d7e39cd4dc9fcc374c60fc7d29eda4f93c2c0fac0e99c00af958bc3160e3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairE.fork_events.csv": "97cc698114e44b6df6ade4ac1cc82aff41d25378da15e9b0e79ce219b77e98f1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairE.fork_events.csv": "97cc698114e44b6df6ade4ac1cc82aff41d25378da15e9b0e79ce219b77e98f1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairE.topk.csv.gz": "77084c7449b439e7ecc1a39e415c1ced875605736f4e7f42b553e3e46d95d5d1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairE.topk.csv": "c39690c2d3b04ba86e05533c5b1015bdb0b7f8ac7200dcefd9d49188ef51bba2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairE.governance.json": "663974110bfcaab926975ebdd2fc9aa9f196f52045fd8131fa2252997e8922d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairE.governance.json": "663974110bfcaab926975ebdd2fc9aa9f196f52045fd8131fa2252997e8922d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s0_pairE.summary.json": "af3517a72b062d44c08accce3a7780d46790943c5feab20f7d17b694ab3b4ce4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s0_pairE.summary.json": "8fa852037e960c4310249ee63bca64156d9ae4fa22dea95fc328ec3c7d2596ac",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.summary.json": "f14003be2f2a1c241e91c2ca55be72cc25c6a220848aa395b77505e1ebf7962a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.csv": "93bc5024484fa233d455c4ca907af5fe49175c6d3c562083cc3cd22b19fec02d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.csv": "93bc5024484fa233d455c4ca907af5fe49175c6d3c562083cc3cd22b19fec02d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.fork_events.csv": "e9d63b817519e8c2e104f769195cefe9b75c913e7fc18b686ef4f891ea51a205",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.fork_events.csv": "e9d63b817519e8c2e104f769195cefe9b75c913e7fc18b686ef4f891ea51a205",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.topk.csv": "c3141399fe186b4e510834ef092e247a8b9dcdeeb0245ac1aae3a69bfee918a3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.topk.csv.gz": "47d1c3babbf247214b3630d0ac79f35c484a233272c3148c5d17d85cd12daed6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE.summary.json": "8edaad6e871d7fa47fbc4c49a3832ae55b4b1671a1e49fc56e1863303d199823",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s0_pairA.csv": "b6f2f95ef95553ab6c64cfd39b18957a74dcb42c521134eb44505c4629f8f3ad",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s0_pairA.csv": "b6f2f95ef95553ab6c64cfd39b18957a74dcb42c521134eb44505c4629f8f3ad",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s0_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s0_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s0_pairA.fork_events.csv": "676e40e45a1c792522ef27dbbce803bf8ae73d903a3d92f366f10682f6a14bc9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s0_pairA.fork_events.csv": "676e40e45a1c792522ef27dbbce803bf8ae73d903a3d92f366f10682f6a14bc9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s0_pairA.topk.csv.gz": "b4aeed66bba08752859cfe321e12e21fa13f77eef65bc0496487a957bcabeb46",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s0_pairA.topk.csv": "2c8df988dfe05f3c849f5825c7bd46b3e5463e0957bd56cf63e226d0350ad885",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s0_pairA.governance.json": "298f1b754e1e694da9733751ff6db9265c032dbe4362d33b33243ce42d7ecab3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s0_pairA.governance.json": "298f1b754e1e694da9733751ff6db9265c032dbe4362d33b33243ce42d7ecab3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s0_pairA.summary.json": "bc3a6e32719df53365efc7157180303202fd89d30fc880e645aa04a7a1376e1e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s0_pairA.summary.json": "2a025457528a691a0fae2e06290fff645646dd7a87df7acda496a9d0e963829d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s0_pairA.summary.json": "2d92266f91790221eccf310fe93365f9222432b6d954d985c83f39ae7d4dc674",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s0_pairA.csv": "b6f2f95ef95553ab6c64cfd39b18957a74dcb42c521134eb44505c4629f8f3ad",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s0_pairA.csv": "b6f2f95ef95553ab6c64cfd39b18957a74dcb42c521134eb44505c4629f8f3ad",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s0_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s0_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s0_pairA.fork_events.csv": "676e40e45a1c792522ef27dbbce803bf8ae73d903a3d92f366f10682f6a14bc9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s0_pairA.fork_events.csv": "676e40e45a1c792522ef27dbbce803bf8ae73d903a3d92f366f10682f6a14bc9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s0_pairA.topk.csv": "2c8df988dfe05f3c849f5825c7bd46b3e5463e0957bd56cf63e226d0350ad885",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s0_pairA.topk.csv.gz": "1be949df898dc5bc5b388ba98411ef0d890eb0f4e3bd4f33e53bfcd356ed71a5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s0_pairA.summary.json": "5b5d95d9cafee98ad744b4d32085af2ad778372518935fa605fb8dac072c5124",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s0.csv": "d8c20928b066e9d898233095f7b222b23d5f730fbfc021d975a4df73bfbd7fc9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s0.csv": "d8c20928b066e9d898233095f7b222b23d5f730fbfc021d975a4df73bfbd7fc9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s0.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s0.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s0.fork_events.csv": "2d077561822d8b3e68ea58bb55a89a376ce977434b86fbd76e4b2cd88f2d3f2b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s0.fork_events.csv": "2d077561822d8b3e68ea58bb55a89a376ce977434b86fbd76e4b2cd88f2d3f2b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s0.topk.csv.gz": "c8a1f46c7f5313c55e11d447c94e84df3ea1f4877ffdb93fbff64df174d3f72d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s0.topk.csv": "d7912949b740ce25a24a631bd604a2eaf22ae036bd2eedc6c897c427a60d81fe",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s0.governance.json": "8c30de6706953545041c00a6afdf7dad25ca176c1258a1fd5245d7ebf031a742",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s0.governance.json": "8c30de6706953545041c00a6afdf7dad25ca176c1258a1fd5245d7ebf031a742",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s0.summary.json": "9302d8e268f06e2ba050199801afe209fb18f8eba7a285dc5ea514ead68340f4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s0.summary.json": "2df78cb451a9b9b2b657837bd73479cd80d4b6c44ab684759fec5f1cb587b112",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_pairC_s0.summary.json": "21e2483082f660ef3fe7cf73250e34d99cf78646f6f71ea2f55a6cb682e39ec8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s1_pairD.csv": "e4997e3ecdfca93a14078379e5c61be0eee2a1bcf157dc949f004391d8ae6328",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s1_pairD.csv": "e4997e3ecdfca93a14078379e5c61be0eee2a1bcf157dc949f004391d8ae6328",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s1_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s1_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s1_pairD.fork_events.csv": "a211628a0810d66e19a43e66d9c292d4912f293e509453ff8336916781d67d6a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s1_pairD.fork_events.csv": "a211628a0810d66e19a43e66d9c292d4912f293e509453ff8336916781d67d6a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s1_pairD.topk.csv.gz": "34be5ec01d25ed61288ea662eda453d9e828fb30419030a639bc3961bdc19916",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s1_pairD.topk.csv": "b8a139bdadcc7b584a62f459c584c8baf390ea00662b0d5784e1bbbda5fe8f7b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s1_pairD.governance.json": "a2388c2d72f416aba991f898c1cddb10cd181756026264f6e629c07ed67be6b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s1_pairD.governance.json": "a2388c2d72f416aba991f898c1cddb10cd181756026264f6e629c07ed67be6b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s1_pairD.summary.json": "0ba6c440bf180c5b84a11b56dd9f8c865261709f2f0145baa4a0c4f77be64cd6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s1_pairD.summary.json": "262a61c938303f1ba11978b66df2e1620eb6da5c1a3c429998cb2a97104c1fe9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.summary.json": "706b0aa1ee79ff69c6b7a9e67c347a65f79d5f79fdf89e419d2ea10b6285723f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.csv": "e8bc82fe2f2235ac143ba5ddbecfaf14ff1647b0d397c24a46e6781cbc7adfd4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.csv": "e8bc82fe2f2235ac143ba5ddbecfaf14ff1647b0d397c24a46e6781cbc7adfd4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.fork_events.csv": "0485f77c6901fe3ec3c6f7d5b984bbd351506b47f0d313aa9d3df2942294edc5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.fork_events.csv": "0485f77c6901fe3ec3c6f7d5b984bbd351506b47f0d313aa9d3df2942294edc5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.topk.csv": "5813a3a0d8a55692da4c931d6242d7de257f1269282f93bd66cf46f2e2db05b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.topk.csv.gz": "364cdcc8288960692488a94da48f34302ae96647e6bdac342bbc160f3bbcf349",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s1_pairD.summary.json": "d63728cbfe5d48b492c47bb1661285052661f2b092388a72cc873e268b559b34",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairB.csv": "7ccf5fb3b47b54b2068bf3f1bd070307c39d0ac3ce7447083fca7f7a6456ff1b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairB.csv": "7ccf5fb3b47b54b2068bf3f1bd070307c39d0ac3ce7447083fca7f7a6456ff1b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairB.fork_events.csv": "08b542774f0ca839d0d50d2245c0d65fb42ee3b4ce5cdf35f824366dd22f9eb9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairB.fork_events.csv": "08b542774f0ca839d0d50d2245c0d65fb42ee3b4ce5cdf35f824366dd22f9eb9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairB.topk.csv.gz": "1de1518d69020d35385f9630e53ebac0fb1f1c5117ce671f0e4f56575d2e4840",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairB.topk.csv": "b7d196e3ce058ecbd618137ed0097a7a29e44548f4e79dc73212c0ad462e543e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairB.governance.json": "ac5f5261487b16b7c6f1207cb41da29b14258769f688e99536f54811ae194d34",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairB.governance.json": "ac5f5261487b16b7c6f1207cb41da29b14258769f688e99536f54811ae194d34",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairB.summary.json": "efc7722ca1c237d957a4d2ef09017f20b4edc8643848844828bfe7e873b555b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairB.summary.json": "92cd2788807735b356547d9dab1c7ede3dec2dac89cfc51b25bbf4a4d5e7b330",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.summary.json": "806f27a8c3c2ca9b17b50234632575ded8a7482ac18e96937b0453a6979bc033",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.csv": "a52ee1284110a9e59da720a1e9ba43aa951cd0de4debfc669880019076c5b30c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.csv": "a52ee1284110a9e59da720a1e9ba43aa951cd0de4debfc669880019076c5b30c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.fork_events.csv": "ecc6ffe14cc4b51bc1115e679f2e38f305e49238299faf9e5f022b855ef285e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.fork_events.csv": "ecc6ffe14cc4b51bc1115e679f2e38f305e49238299faf9e5f022b855ef285e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.topk.csv": "d6d9880983649f14b5d0155c6d77b77375bf7919cdb26f9b7100aced1b14d707",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.topk.csv.gz": "792d89a733c2649926f740565ba797225d8e2c2a34dcb759c9c70a565e322f5f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB.summary.json": "9d88164c33cd324a931eb5f5eaa2d8b381f57b8ca1fcb3f1f95e05514f8643ab",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairE.csv": "b90abf52854433972095446f18cd2b40c6197e927e592d511f582590885a33f3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairE.csv": "b90abf52854433972095446f18cd2b40c6197e927e592d511f582590885a33f3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairE.fork_events.csv": "55f92896a4a623d98f05050fa44bec470ef03680de379ac217f276cb808745d7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairE.fork_events.csv": "55f92896a4a623d98f05050fa44bec470ef03680de379ac217f276cb808745d7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairE.topk.csv.gz": "2a951848d6fe718009fe6aa7d3b11d8e6e3defd828d21cf5e2c9380e0fa03fe8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairE.topk.csv": "0e190a9724b82c959be6b2acba54afef21f8aac6eae0138e3db3124735438ff7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairE.governance.json": "c7ae72fe01c9817be545dae4625a39c06e693df4bd7e75467c92fe9c48561c5b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairE.governance.json": "c7ae72fe01c9817be545dae4625a39c06e693df4bd7e75467c92fe9c48561c5b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s1_pairE.summary.json": "81843349f618c2d79deed88a5adeed88c0135d3ab0b9b265784d79c1b053e292",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s1_pairE.summary.json": "9d315ea6bf9bc90ca5c08e507923488d9676acef8e212fb8ef277c2cd5c9f6b2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.summary.json": "0cb9349e27322b9290dc379e77b750348da79d2565b39419bfa09a7952e3daad",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.csv": "9cc5561fdc1db0df2ba5268e50461c5c15a6c51987741fc42f51eb5fb8f5e4e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.csv": "9cc5561fdc1db0df2ba5268e50461c5c15a6c51987741fc42f51eb5fb8f5e4e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.fork_events.csv": "14d857c224479317378cd9ec0fc08b152b450af006b829a0344fb332daab0f44",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.fork_events.csv": "14d857c224479317378cd9ec0fc08b152b450af006b829a0344fb332daab0f44",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.topk.csv": "83f1f996eec4c7417860e38a5310b8f139fc1217a7a0f24003680f0efa854fa8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.topk.csv.gz": "79febc6aa084b09c4b373aade5b1e1ce75e9bbc25afbe3b0dae1013717cf3a6a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE.summary.json": "24958f61ef1259f6252cba162d55d65d48aac96e2a73262b55529262a0f3f3b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairA.csv": "5df16571a25913e2724df60b089d686c1124692a396c5fa5628da34478a6ebed",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairA.csv": "5df16571a25913e2724df60b089d686c1124692a396c5fa5628da34478a6ebed",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairA.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairA.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairA.fork_events.csv": "94f5b22a07bdc5552d47e6c69b7268f7c6c53991a0130d455817cf36eb1f44fe",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairA.fork_events.csv": "94f5b22a07bdc5552d47e6c69b7268f7c6c53991a0130d455817cf36eb1f44fe",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairA.topk.csv.gz": "6e6f2e601760fccd8de9b27baaf6a4e67c1f8139f6e83c2e6638ff79efba4e9b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairA.topk.csv": "87cd9c66873c6342265ff8151d3d517fc48031345d65ef439545ec5c7ced9dd7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairA.governance.json": "98f1083799e8c1d75ec0c8a4d14b8f9b69fdf4469500fb05c36709d64ae3d835",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairA.governance.json": "98f1083799e8c1d75ec0c8a4d14b8f9b69fdf4469500fb05c36709d64ae3d835",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairA.summary.json": "b2e6b770b6f4c177cdec4283dddb3d112b77245ccbae74bbde5dd44600c0b9fc",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairA.summary.json": "586c5f7e5401e9e006de272e350768c6a18705e8c76fb968688dd583e5102b57",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.summary.json": "4fc2eb3b2f26a23783ffb49d21fdd1ef4e494a63c45dc025346cad23ebdd96d8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.csv": "84a57aed05560fd7073a96797402ad7ea734941e6ff0e869b7022fe2aff5de6d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.csv": "84a57aed05560fd7073a96797402ad7ea734941e6ff0e869b7022fe2aff5de6d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.fork_events.csv": "2614f78bce222ae75d157fea59dfd5a68118f51add92b85acb31adff4d7bd543",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.fork_events.csv": "2614f78bce222ae75d157fea59dfd5a68118f51add92b85acb31adff4d7bd543",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.topk.csv": "d633f459deb0885afe378f54d0d26c0be4e71cd5a15fe5d0abf7eb8880ec36ec",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.topk.csv.gz": "f75ed475a6562fb65bd468e87097df27ebc5851eea6f0013b0b6222fec8f123a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA.summary.json": "08531091c2cdf5b14c65dcb302c74e5a39bce9ec2d1e8d62da46a8994d2a7cfc",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairB.csv": "7ccf5fb3b47b54b2068bf3f1bd070307c39d0ac3ce7447083fca7f7a6456ff1b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairB.csv": "7ccf5fb3b47b54b2068bf3f1bd070307c39d0ac3ce7447083fca7f7a6456ff1b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairB.fork_events.csv": "08b542774f0ca839d0d50d2245c0d65fb42ee3b4ce5cdf35f824366dd22f9eb9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairB.fork_events.csv": "08b542774f0ca839d0d50d2245c0d65fb42ee3b4ce5cdf35f824366dd22f9eb9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairB.topk.csv.gz": "1de1518d69020d35385f9630e53ebac0fb1f1c5117ce671f0e4f56575d2e4840",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairB.topk.csv": "b7d196e3ce058ecbd618137ed0097a7a29e44548f4e79dc73212c0ad462e543e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairB.governance.json": "ac5f5261487b16b7c6f1207cb41da29b14258769f688e99536f54811ae194d34",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairB.governance.json": "ac5f5261487b16b7c6f1207cb41da29b14258769f688e99536f54811ae194d34",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairB.summary.json": "efc7722ca1c237d957a4d2ef09017f20b4edc8643848844828bfe7e873b555b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairB.summary.json": "92cd2788807735b356547d9dab1c7ede3dec2dac89cfc51b25bbf4a4d5e7b330",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.summary.json": "806f27a8c3c2ca9b17b50234632575ded8a7482ac18e96937b0453a6979bc033",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.csv": "a52ee1284110a9e59da720a1e9ba43aa951cd0de4debfc669880019076c5b30c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.csv": "a52ee1284110a9e59da720a1e9ba43aa951cd0de4debfc669880019076c5b30c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.fork_events.csv": "ecc6ffe14cc4b51bc1115e679f2e38f305e49238299faf9e5f022b855ef285e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.fork_events.csv": "ecc6ffe14cc4b51bc1115e679f2e38f305e49238299faf9e5f022b855ef285e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.topk.csv": "d6d9880983649f14b5d0155c6d77b77375bf7919cdb26f9b7100aced1b14d707",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.topk.csv.gz": "792d89a733c2649926f740565ba797225d8e2c2a34dcb759c9c70a565e322f5f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB.summary.json": "9d88164c33cd324a931eb5f5eaa2d8b381f57b8ca1fcb3f1f95e05514f8643ab",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairD.csv": "e4997e3ecdfca93a14078379e5c61be0eee2a1bcf157dc949f004391d8ae6328",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairD.csv": "e4997e3ecdfca93a14078379e5c61be0eee2a1bcf157dc949f004391d8ae6328",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairD.fork_events.csv": "a211628a0810d66e19a43e66d9c292d4912f293e509453ff8336916781d67d6a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairD.fork_events.csv": "a211628a0810d66e19a43e66d9c292d4912f293e509453ff8336916781d67d6a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairD.topk.csv.gz": "c0c8cc926fd6df1ff5fb665cddd625854f1a087357037c6c103fed165a87eadd",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairD.topk.csv": "b8a139bdadcc7b584a62f459c584c8baf390ea00662b0d5784e1bbbda5fe8f7b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairD.governance.json": "a2388c2d72f416aba991f898c1cddb10cd181756026264f6e629c07ed67be6b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairD.governance.json": "a2388c2d72f416aba991f898c1cddb10cd181756026264f6e629c07ed67be6b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairD.summary.json": "0ba6c440bf180c5b84a11b56dd9f8c865261709f2f0145baa4a0c4f77be64cd6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairD.summary.json": "262a61c938303f1ba11978b66df2e1620eb6da5c1a3c429998cb2a97104c1fe9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.summary.json": "706b0aa1ee79ff69c6b7a9e67c347a65f79d5f79fdf89e419d2ea10b6285723f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.csv": "e8bc82fe2f2235ac143ba5ddbecfaf14ff1647b0d397c24a46e6781cbc7adfd4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.csv": "e8bc82fe2f2235ac143ba5ddbecfaf14ff1647b0d397c24a46e6781cbc7adfd4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.fork_events.csv": "0485f77c6901fe3ec3c6f7d5b984bbd351506b47f0d313aa9d3df2942294edc5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.fork_events.csv": "0485f77c6901fe3ec3c6f7d5b984bbd351506b47f0d313aa9d3df2942294edc5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.topk.csv": "5813a3a0d8a55692da4c931d6242d7de257f1269282f93bd66cf46f2e2db05b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.topk.csv.gz": "5253e265aba7ea669065c180159665c2310ca62f271a0e21e2ef875fb85386a3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD.summary.json": "d63728cbfe5d48b492c47bb1661285052661f2b092388a72cc873e268b559b34",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairE.csv": "b90abf52854433972095446f18cd2b40c6197e927e592d511f582590885a33f3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairE.csv": "b90abf52854433972095446f18cd2b40c6197e927e592d511f582590885a33f3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairE.fork_events.csv": "55f92896a4a623d98f05050fa44bec470ef03680de379ac217f276cb808745d7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairE.fork_events.csv": "55f92896a4a623d98f05050fa44bec470ef03680de379ac217f276cb808745d7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairE.topk.csv.gz": "2a951848d6fe718009fe6aa7d3b11d8e6e3defd828d21cf5e2c9380e0fa03fe8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairE.topk.csv": "0e190a9724b82c959be6b2acba54afef21f8aac6eae0138e3db3124735438ff7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairE.governance.json": "c7ae72fe01c9817be545dae4625a39c06e693df4bd7e75467c92fe9c48561c5b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairE.governance.json": "c7ae72fe01c9817be545dae4625a39c06e693df4bd7e75467c92fe9c48561c5b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s1_pairE.summary.json": "81843349f618c2d79deed88a5adeed88c0135d3ab0b9b265784d79c1b053e292",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s1_pairE.summary.json": "9d315ea6bf9bc90ca5c08e507923488d9676acef8e212fb8ef277c2cd5c9f6b2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.summary.json": "0cb9349e27322b9290dc379e77b750348da79d2565b39419bfa09a7952e3daad",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.csv": "9cc5561fdc1db0df2ba5268e50461c5c15a6c51987741fc42f51eb5fb8f5e4e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.csv": "9cc5561fdc1db0df2ba5268e50461c5c15a6c51987741fc42f51eb5fb8f5e4e9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.fork_events.csv": "14d857c224479317378cd9ec0fc08b152b450af006b829a0344fb332daab0f44",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.fork_events.csv": "14d857c224479317378cd9ec0fc08b152b450af006b829a0344fb332daab0f44",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.topk.csv": "83f1f996eec4c7417860e38a5310b8f139fc1217a7a0f24003680f0efa854fa8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.topk.csv.gz": "79febc6aa084b09c4b373aade5b1e1ce75e9bbc25afbe3b0dae1013717cf3a6a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE.summary.json": "24958f61ef1259f6252cba162d55d65d48aac96e2a73262b55529262a0f3f3b9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s1_pairA.csv": "9100e1d99f14e68d7dedc325cf14d869a34b0df9d949e8d69693d9c144aa3b91",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s1_pairA.csv": "9100e1d99f14e68d7dedc325cf14d869a34b0df9d949e8d69693d9c144aa3b91",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s1_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s1_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s1_pairA.fork_events.csv": "301d74e568eb35a2ae35360542613553eaace8aa3f298df3fd080ca91d530fa6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s1_pairA.fork_events.csv": "301d74e568eb35a2ae35360542613553eaace8aa3f298df3fd080ca91d530fa6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s1_pairA.topk.csv.gz": "de1ba93b64ed759347b75ac0d655288e203bd5b2541face2bf0dc8b5aeb88502",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s1_pairA.topk.csv": "4aab2a9543ef019ce5a728bc88cd4e8d81fe6ac76337c6ee3924333f9e7f442c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s1_pairA.governance.json": "3f9385e43a22765b7667fa478fd3dca93d6b38bbddf1e65f02d1eef3958a7355",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s1_pairA.governance.json": "3f9385e43a22765b7667fa478fd3dca93d6b38bbddf1e65f02d1eef3958a7355",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s1_pairA.summary.json": "78b3a2e780bd8810b16e5a716fdcf1b41aaf17f57d2444381db0a28c2612904a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s1_pairA.summary.json": "d36f27c22e109d4f0b28460635cc46d5df412acc1226a793d00e739ee1b7aa4f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s1_pairA.summary.json": "9e33a671480437cd13d00b18e41dca7893754ac126ed80cbb1b9391bd252ee53",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s1_pairA.csv": "9100e1d99f14e68d7dedc325cf14d869a34b0df9d949e8d69693d9c144aa3b91",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s1_pairA.csv": "9100e1d99f14e68d7dedc325cf14d869a34b0df9d949e8d69693d9c144aa3b91",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s1_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s1_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s1_pairA.fork_events.csv": "301d74e568eb35a2ae35360542613553eaace8aa3f298df3fd080ca91d530fa6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s1_pairA.fork_events.csv": "301d74e568eb35a2ae35360542613553eaace8aa3f298df3fd080ca91d530fa6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s1_pairA.topk.csv": "4aab2a9543ef019ce5a728bc88cd4e8d81fe6ac76337c6ee3924333f9e7f442c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s1_pairA.topk.csv.gz": "1f72890ff22dfa2bdf81c7bfa8e31e99661f1f93ce6b1f643dcfb32ce79821ae",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s1_pairA.summary.json": "d0641da18eeda17de8de29bb0ec5f4a9abffa8f7d5f441c913356cd0258effbd",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s1.csv": "c3d9a2486b42725a501d4536b28b902493c34dda486f0005b77fea8e8cc92bda",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s1.csv": "c3d9a2486b42725a501d4536b28b902493c34dda486f0005b77fea8e8cc92bda",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s1.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s1.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s1.fork_events.csv": "d762fb43858f638d8edda657b253695b7f42567486e74e3f71e030733737a974",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s1.fork_events.csv": "d762fb43858f638d8edda657b253695b7f42567486e74e3f71e030733737a974",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s1.topk.csv.gz": "9a5291eb28e3eee99434cbb7c1c7e8ffdc0aea50365d998676ec68d249bad2df",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s1.topk.csv": "359196acf04847bbeeb8f54d54091657e7b025323dbd9e2a64c6f93ad77130e1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s1.governance.json": "f53d052c52fb91606b5b672436efdb0a35a0ce4ea87bf56d67b672ccfef48580",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s1.governance.json": "f53d052c52fb91606b5b672436efdb0a35a0ce4ea87bf56d67b672ccfef48580",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s1.summary.json": "7ae9c4ece439bc62baf2959fe0b0ebcbd60c2e381cff744b3ab204270442c6c4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s1.summary.json": "df103d1e5e902cf65b7da5a3dc405be9a4a2c4d4035bd31ef3b05b7f339b072e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_pairC_s1.summary.json": "405d32eec41a344176814bc833ffa12200d37ba95493a76af4e302dab37c6824",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s2_pairD.csv": "5cc63ea376fe0b23669298be25b6a3dfcb951ea41bd0e8b980cac27b813a74f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s2_pairD.csv": "5cc63ea376fe0b23669298be25b6a3dfcb951ea41bd0e8b980cac27b813a74f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s2_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s2_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s2_pairD.fork_events.csv": "9006ed04cb57e646bd2fb3b21012ff76eed347c75270961efd6564ea7207ee03",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s2_pairD.fork_events.csv": "9006ed04cb57e646bd2fb3b21012ff76eed347c75270961efd6564ea7207ee03",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s2_pairD.topk.csv.gz": "d46b0d483a7d7a0e320fae6fa4badfb119e9abc7119b0f89222ee70c58973809",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s2_pairD.topk.csv": "6f087587bc8d0608a4c5f55bd62ecba5d986ae5fce8506d0cd9d89539e6af131",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s2_pairD.governance.json": "f300c1cf09fecb09069287d89c5b777c7f7663460b2c667674ace1d0cdc5e4d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s2_pairD.governance.json": "f300c1cf09fecb09069287d89c5b777c7f7663460b2c667674ace1d0cdc5e4d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/none/per_probe_stale-soft_s2_pairD.summary.json": "82889131fffabf861f835d99f7830133705752a7e0ec0a49c5ebb10120eb7713",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/shadow/per_probe_stale-soft_s2_pairD.summary.json": "157c421b0fe08693650fe92b5f8f8292fac352c659aa3ce42d4e25abee2ea54a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.summary.json": "9da4e4615ea6adcee7af715f5aa54d48429e931b1776759ad37a951c8f4aec60",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.csv": "78541aec15412c07202556c7a70a42b02d2f5ab71553be15c87cbc280a202673",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.csv": "78541aec15412c07202556c7a70a42b02d2f5ab71553be15c87cbc280a202673",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.fork_events.csv": "9cf3108085ff17337f842cbbf7308334a062dc389476424e5c47d82d54f65c76",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.fork_events.csv": "9cf3108085ff17337f842cbbf7308334a062dc389476424e5c47d82d54f65c76",
+    "results/issue_failure_mode_blindness/pr9_2/panel/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.topk.csv": "c005a359f9b35886fc07e3a8972819137201178b613f7f8989ee0f981f25c753",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.topk.csv.gz": "22131fe45a4d082796ea7bbaa785a337669f910f176a9e96d25bc53aa69f4bf0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s2_pairD.summary.json": "9ddbcec86d896226f9d8829eaa56891bca535fd2086087b8a9003637d6a607f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairB.csv": "c13573a4c47020617dc8966c6e3690c9fe8441482b05c28afe53bacdb494a44e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairB.csv": "c13573a4c47020617dc8966c6e3690c9fe8441482b05c28afe53bacdb494a44e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairB.fork_events.csv": "6258cf77d00c451dea2a92956cd73ff43f62d23c07b9a48cb15ce1ba935655a8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairB.fork_events.csv": "6258cf77d00c451dea2a92956cd73ff43f62d23c07b9a48cb15ce1ba935655a8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairB.topk.csv.gz": "7a1d5d6789a12894f34ab2997dc01a65ab56b28690896cce6a06f175a4ecbcba",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairB.topk.csv": "6e38ca51a75246e6109088601c8bcc06c1bbc727ae42bc3d7138db7f69b491a5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairB.governance.json": "7f169d49ace97e8b24a05595aae980a48b83edbf42022ba76d944c6ec3782b98",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairB.governance.json": "7f169d49ace97e8b24a05595aae980a48b83edbf42022ba76d944c6ec3782b98",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairB.summary.json": "433b5a67cdcbc32cd82a4ce545194076c864bdb5c45ece09d42fb0313f66768c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairB.summary.json": "6f8af4090c87e90ffc8492946a574906cc6beb36f6901a3f11d90616e33b357a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.summary.json": "de7185b67f48bbc502cb14cfad92c6948855db6e3d5b6aed4a3f4ba5b6d6ca14",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.csv": "da20f2a33ee47dd8e2d5af8025eac96ac041ecf30bebf5b8738edbf12dbac9f4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.csv": "da20f2a33ee47dd8e2d5af8025eac96ac041ecf30bebf5b8738edbf12dbac9f4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.fork_events.csv": "f361ee67821310f83bf6e2073a059b0ab4d60877514e2c0aaee0397eb489a986",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.fork_events.csv": "f361ee67821310f83bf6e2073a059b0ab4d60877514e2c0aaee0397eb489a986",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.topk.csv": "6a8d2851862bfa6d86fd18b37b1516c56f06151f573406ab28de61a600f42b5b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.topk.csv.gz": "96b70cd8105014b809a174778b9437bda9039daf5d51f8f068bd1299d396937c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB.summary.json": "6c11c346b47e37f742f97a838d7ade3bb13fe7bad0695a2b6d12ada339d67463",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairE.csv": "d6abc6f0c7f9d40f305c655b20ab81e83197b835a22d06fe870d28de90153d35",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairE.csv": "d6abc6f0c7f9d40f305c655b20ab81e83197b835a22d06fe870d28de90153d35",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairE.fork_events.csv": "d1d3b6329d507eba521bc8f1a151d4313c82ba0276e51e3a9a39ecbc931d231c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairE.fork_events.csv": "d1d3b6329d507eba521bc8f1a151d4313c82ba0276e51e3a9a39ecbc931d231c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairE.topk.csv.gz": "135db350ce0135e4c2b47597e8fd784da0d7bdb12659bc140f0d5f11e8272c46",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairE.topk.csv": "822e87345a6d3b3b856b4096f631f2491986bc702b6965b461eccfc9092ad2bd",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairE.governance.json": "3a52da24e88d0c465a2121c65006c86efdb5bc0c3424093e1da63230ae00cf87",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairE.governance.json": "3a52da24e88d0c465a2121c65006c86efdb5bc0c3424093e1da63230ae00cf87",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/none/per_probe_stale-soft_s2_pairE.summary.json": "f73de08b721b546f27f7400dc98065dc3f5d06e90ea2bd8544ed174c0781a497",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/shadow/per_probe_stale-soft_s2_pairE.summary.json": "023a9d8b45245b01d842f4e690b328ca7fd866399f10051e371a45a75c9d295b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.summary.json": "440c733eaf010f96fda3bea5d6cb2c2916cad931001ba8691ef71cce8426ebff",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.csv": "0f9535980cd1d804085da92a7723bbae734ca8b4c19f54c567924edac61628e7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.csv": "0f9535980cd1d804085da92a7723bbae734ca8b4c19f54c567924edac61628e7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.fork_events.csv": "d227a567a5863f91a4d37754380a3282589ef55549c66dc99b7c9b936bbe4cba",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.fork_events.csv": "d227a567a5863f91a4d37754380a3282589ef55549c66dc99b7c9b936bbe4cba",
+    "results/issue_failure_mode_blindness/pr9_2/panel/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.topk.csv": "8ae92adeff53ee9271b5b7caf874695446bae927ed949b779e75ec4532eb31d2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.topk.csv.gz": "ff6ccfe3116348dbccfd408987aae7ba0da59b16b3ede2c5aea73a95906a2984",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE.summary.json": "c8da0a5af3a92168e1f440184445f97635fd83d857f1ea7b990f83dc26d80cfa",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairA.csv": "b8a35ad89cba68d86fcdd66dc8433ecc387df5399a7d7a67b58c956f89c02dbb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairA.csv": "b8a35ad89cba68d86fcdd66dc8433ecc387df5399a7d7a67b58c956f89c02dbb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairA.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairA.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairA.fork_events.csv": "4cca604ceee874d70eaff834f97b892d437603aef9bd6b2d92137856f13c3cbc",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairA.fork_events.csv": "4cca604ceee874d70eaff834f97b892d437603aef9bd6b2d92137856f13c3cbc",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairA.topk.csv.gz": "932a564d01bdc2dc2d13fa1638716bc0ee8f9723e10c1c57108106d00174d4a4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairA.topk.csv": "b6dee2738868f279c955f4452de5d5c9de69d61078fc658ddb52afbc0455d7c2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairA.governance.json": "b855b454abbe88e1917c86884de57fa3515d11914ba10f4527e3eb9881816014",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairA.governance.json": "b855b454abbe88e1917c86884de57fa3515d11914ba10f4527e3eb9881816014",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairA.summary.json": "82becf5d45f23eafdde2370686bbfba1e7cb9b0c9bf6245e1ca515a92506dee3",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairA.summary.json": "a7f51a61a165f9cbb659833e2bb2604f62a83d9b217ad9982875acdd8a4e9924",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.summary.json": "6e58cc776c582a2350dd73ce4c0c9bb27ea72cb9cf93a8c0e13fcdb9a0bf2402",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.csv": "7b4493b4ae52e954514c7766fd313ddc4ee280d688dc01ad6f6a0c3b07742e88",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.csv": "7b4493b4ae52e954514c7766fd313ddc4ee280d688dc01ad6f6a0c3b07742e88",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.fork_events.csv": "acffd581d567465104f465cd2e26a5aae7a85b4212fcf03b60fa0704d6bfbc5e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.fork_events.csv": "acffd581d567465104f465cd2e26a5aae7a85b4212fcf03b60fa0704d6bfbc5e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.topk.csv": "fd41f3dafef89026e11eaea8b27cb564925d0b301d762214b05447b9a9939ff6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.topk.csv.gz": "49961d8fe495c265d350145b7a94a7429f5bc7b66e756e838ae70b6f37f80ca0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA.summary.json": "de1aaf2f573814f6e626247e6e3bb159a70538ac7952947693237dd1a644b029",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairB.csv": "c13573a4c47020617dc8966c6e3690c9fe8441482b05c28afe53bacdb494a44e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairB.csv": "c13573a4c47020617dc8966c6e3690c9fe8441482b05c28afe53bacdb494a44e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairB.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairB.fork_events.csv": "6258cf77d00c451dea2a92956cd73ff43f62d23c07b9a48cb15ce1ba935655a8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairB.fork_events.csv": "6258cf77d00c451dea2a92956cd73ff43f62d23c07b9a48cb15ce1ba935655a8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairB.topk.csv.gz": "7a1d5d6789a12894f34ab2997dc01a65ab56b28690896cce6a06f175a4ecbcba",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairB.topk.csv": "6e38ca51a75246e6109088601c8bcc06c1bbc727ae42bc3d7138db7f69b491a5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairB.governance.json": "7f169d49ace97e8b24a05595aae980a48b83edbf42022ba76d944c6ec3782b98",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairB.governance.json": "7f169d49ace97e8b24a05595aae980a48b83edbf42022ba76d944c6ec3782b98",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairB.summary.json": "433b5a67cdcbc32cd82a4ce545194076c864bdb5c45ece09d42fb0313f66768c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairB.summary.json": "6f8af4090c87e90ffc8492946a574906cc6beb36f6901a3f11d90616e33b357a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.summary.json": "de7185b67f48bbc502cb14cfad92c6948855db6e3d5b6aed4a3f4ba5b6d6ca14",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.csv": "da20f2a33ee47dd8e2d5af8025eac96ac041ecf30bebf5b8738edbf12dbac9f4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.csv": "da20f2a33ee47dd8e2d5af8025eac96ac041ecf30bebf5b8738edbf12dbac9f4",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.fork_events.csv": "f361ee67821310f83bf6e2073a059b0ab4d60877514e2c0aaee0397eb489a986",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.fork_events.csv": "f361ee67821310f83bf6e2073a059b0ab4d60877514e2c0aaee0397eb489a986",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.topk.csv": "6a8d2851862bfa6d86fd18b37b1516c56f06151f573406ab28de61a600f42b5b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.topk.csv.gz": "96b70cd8105014b809a174778b9437bda9039daf5d51f8f068bd1299d396937c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB.summary.json": "6c11c346b47e37f742f97a838d7ade3bb13fe7bad0695a2b6d12ada339d67463",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairD.csv": "5cc63ea376fe0b23669298be25b6a3dfcb951ea41bd0e8b980cac27b813a74f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairD.csv": "5cc63ea376fe0b23669298be25b6a3dfcb951ea41bd0e8b980cac27b813a74f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairD.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairD.fork_events.csv": "9006ed04cb57e646bd2fb3b21012ff76eed347c75270961efd6564ea7207ee03",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairD.fork_events.csv": "9006ed04cb57e646bd2fb3b21012ff76eed347c75270961efd6564ea7207ee03",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairD.topk.csv.gz": "a063f6b1a928acaa576fe231b90b043bc31a5902de2f37a589218781a26c38f6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairD.topk.csv": "6f087587bc8d0608a4c5f55bd62ecba5d986ae5fce8506d0cd9d89539e6af131",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairD.governance.json": "f300c1cf09fecb09069287d89c5b777c7f7663460b2c667674ace1d0cdc5e4d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairD.governance.json": "f300c1cf09fecb09069287d89c5b777c7f7663460b2c667674ace1d0cdc5e4d9",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairD.summary.json": "82889131fffabf861f835d99f7830133705752a7e0ec0a49c5ebb10120eb7713",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairD.summary.json": "157c421b0fe08693650fe92b5f8f8292fac352c659aa3ce42d4e25abee2ea54a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.summary.json": "9da4e4615ea6adcee7af715f5aa54d48429e931b1776759ad37a951c8f4aec60",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.csv": "78541aec15412c07202556c7a70a42b02d2f5ab71553be15c87cbc280a202673",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.csv": "78541aec15412c07202556c7a70a42b02d2f5ab71553be15c87cbc280a202673",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.fork_events.csv": "9cf3108085ff17337f842cbbf7308334a062dc389476424e5c47d82d54f65c76",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.fork_events.csv": "9cf3108085ff17337f842cbbf7308334a062dc389476424e5c47d82d54f65c76",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.topk.csv": "c005a359f9b35886fc07e3a8972819137201178b613f7f8989ee0f981f25c753",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.topk.csv.gz": "6fe5e6f3b7bcf0c2050cd1424a2463fd290e5e94d67481a1ffc2330cc59da3f0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD.summary.json": "9ddbcec86d896226f9d8829eaa56891bca535fd2086087b8a9003637d6a607f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairE.csv": "d6abc6f0c7f9d40f305c655b20ab81e83197b835a22d06fe870d28de90153d35",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairE.csv": "d6abc6f0c7f9d40f305c655b20ab81e83197b835a22d06fe870d28de90153d35",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairE.per_slot.csv": "8439fc9f3a2f2c8af2b22e3c9ebe0776e72f23ccb49fb8b718014cd4adbfb776",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairE.fork_events.csv": "d1d3b6329d507eba521bc8f1a151d4313c82ba0276e51e3a9a39ecbc931d231c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairE.fork_events.csv": "d1d3b6329d507eba521bc8f1a151d4313c82ba0276e51e3a9a39ecbc931d231c",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairE.topk.csv.gz": "135db350ce0135e4c2b47597e8fd784da0d7bdb12659bc140f0d5f11e8272c46",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairE.topk.csv": "822e87345a6d3b3b856b4096f631f2491986bc702b6965b461eccfc9092ad2bd",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairE.governance.json": "3a52da24e88d0c465a2121c65006c86efdb5bc0c3424093e1da63230ae00cf87",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairE.governance.json": "3a52da24e88d0c465a2121c65006c86efdb5bc0c3424093e1da63230ae00cf87",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/none/per_probe_stale-soft_s2_pairE.summary.json": "f73de08b721b546f27f7400dc98065dc3f5d06e90ea2bd8544ed174c0781a497",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/shadow/per_probe_stale-soft_s2_pairE.summary.json": "023a9d8b45245b01d842f4e690b328ca7fd866399f10051e371a45a75c9d295b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.summary.json": "440c733eaf010f96fda3bea5d6cb2c2916cad931001ba8691ef71cce8426ebff",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.csv": "0f9535980cd1d804085da92a7723bbae734ca8b4c19f54c567924edac61628e7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.csv": "0f9535980cd1d804085da92a7723bbae734ca8b4c19f54c567924edac61628e7",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.per_slot.csv": "5b28d5a377febf3e88dac71d406f78ea2cebd206a08f0b4f4046ab49d15f474e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.fork_events.csv": "d227a567a5863f91a4d37754380a3282589ef55549c66dc99b7c9b936bbe4cba",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.fork_events.csv": "d227a567a5863f91a4d37754380a3282589ef55549c66dc99b7c9b936bbe4cba",
+    "results/issue_failure_mode_blindness/pr9_2/panel/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.topk.csv": "8ae92adeff53ee9271b5b7caf874695446bae927ed949b779e75ec4532eb31d2",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.topk.csv.gz": "ff6ccfe3116348dbccfd408987aae7ba0da59b16b3ede2c5aea73a95906a2984",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE.summary.json": "c8da0a5af3a92168e1f440184445f97635fd83d857f1ea7b990f83dc26d80cfa",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s2_pairA.csv": "b594e60c36894e0be042084a88a52d197790e12d98312d99b63670b857e0fa7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s2_pairA.csv": "b594e60c36894e0be042084a88a52d197790e12d98312d99b63670b857e0fa7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s2_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s2_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s2_pairA.fork_events.csv": "4bd1865f14d5836af59aba1d3f4106179ce48311fbf4a521d5536b8485f45fc1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s2_pairA.fork_events.csv": "4bd1865f14d5836af59aba1d3f4106179ce48311fbf4a521d5536b8485f45fc1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s2_pairA.topk.csv.gz": "2b983501f7dca4869e81e04927db13be822846949de6c03ded82c32e577321f8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s2_pairA.topk.csv": "18bbcd0fcc3a6b1ec95edd5c68fc83941a7eacb75eb9a0b1ea43fcdf71d539c8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s2_pairA.governance.json": "cca7af42c573ce60bf047b00830710b5539809a39f7e556e5bd0bf21ad121b0a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s2_pairA.governance.json": "cca7af42c573ce60bf047b00830710b5539809a39f7e556e5bd0bf21ad121b0a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_s2_pairA.summary.json": "5f351e7186f97cf2bd5f6b6c0aaf8741ca8ab21e8ea1236626a5b76ace584f01",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_s2_pairA.summary.json": "43941caf9e110f8b5d8d5e9fec38647c02d9f6244d21c415ac0f15871c0463f0",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s2_pairA.summary.json": "fae785a3c17fd3dc447a4d47fb1029c0d3ca4e8813cbe0514f054d2648b551f5",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s2_pairA.csv": "b594e60c36894e0be042084a88a52d197790e12d98312d99b63670b857e0fa7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s2_pairA.csv": "b594e60c36894e0be042084a88a52d197790e12d98312d99b63670b857e0fa7d",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s2_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s2_pairA.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s2_pairA.fork_events.csv": "4bd1865f14d5836af59aba1d3f4106179ce48311fbf4a521d5536b8485f45fc1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s2_pairA.fork_events.csv": "4bd1865f14d5836af59aba1d3f4106179ce48311fbf4a521d5536b8485f45fc1",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_s2_pairA.topk.csv": "18bbcd0fcc3a6b1ec95edd5c68fc83941a7eacb75eb9a0b1ea43fcdf71d539c8",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s2_pairA.topk.csv.gz": "93ec6d317d80d52de7f048486c672e99d09db0d5c9f7456a3b4fafd54ff72d4b",
+    "results/issue_failure_mode_blindness/pr9_2/panel/../../pr7/twin/clean_control/quarantine/per_probe_clean_s2_pairA.summary.json": "3fcd9c224339f20a29330a317eb2804a48e84752cf31a27323e5d67a1ece1e49",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s2.csv": "ddef2ec79952fe1345369bee49c060f876f9ba2f715f14950f2f255e22c9726f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s2.csv": "ddef2ec79952fe1345369bee49c060f876f9ba2f715f14950f2f255e22c9726f",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s2.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s2.per_slot.csv": "75c8f1a1108b5f2ca96d436d589b4f67336ae206f4a25ecf9a64ef400765181e",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s2.fork_events.csv": "6105f96708870189a5678f6f0cadca1341429293c242c6f1ea9067dba45adf1a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s2.fork_events.csv": "6105f96708870189a5678f6f0cadca1341429293c242c6f1ea9067dba45adf1a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s2.topk.csv.gz": "04e25f4ce3e1fe39ae8c210a7d77fc7502fefcda195dc7f574acbbaf6833b62a",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s2.topk.csv": "c6bc062e8d0618fa5c747ae199dded1a7b78995b10f714eca8f73095c66732eb",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s2.governance.json": "1c486300859e496d7e07005195e259ed47475e3ea0c7000c8577fa4874d089d6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s2.governance.json": "1c486300859e496d7e07005195e259ed47475e3ea0c7000c8577fa4874d089d6",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/none/per_probe_clean_pairC_s2.summary.json": "285d49b8044585f3ca03fa4f819c7ab63fbdc0fd781a3b91c90a3c58326f6847",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/shadow/per_probe_clean_pairC_s2.summary.json": "7e4d17c0669b012b96a40332e09d1447c53d05b1144ca0446c3bb6135e808577",
+    "results/issue_failure_mode_blindness/pr9_2/panel/clean_control/quarantine/per_probe_clean_pairC_s2.summary.json": "78c9d8e54f882acbc32c8f9cad2eb8e94869e92c3bf8c7ca7b74660d9d9579bf"
+  }
+}

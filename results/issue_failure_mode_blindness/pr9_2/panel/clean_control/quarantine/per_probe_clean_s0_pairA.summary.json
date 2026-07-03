@@ -1,0 +1,171 @@
+{
+  "arm": "clean",
+  "base_arm": "clean",
+  "one_shot": false,
+  "key_jitter": 0.0,
+  "payload_mode": "onehot",
+  "cache_path": "feature_cache_vitl14/cifar100_dinov2_train.pt",
+  "classes": [
+    0,
+    8,
+    19,
+    33
+  ],
+  "attractor_class": 71,
+  "samples_per_class": 32,
+  "held_out_per_class": 64,
+  "contraction": 0.0,
+  "injection_rate": 0.15,
+  "epochs": 12,
+  "seed": 0,
+  "max_entries": 4096,
+  "dim": 1024,
+  "n_injections": 0,
+  "injection_outcomes": {},
+  "rows_written": 2532,
+  "per_epoch": [
+    {
+      "epoch": 0,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 1,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 2,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 3,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 4,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 5,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 6,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 7,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 8,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 9,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 10,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    },
+    {
+      "epoch": 11,
+      "probes": 211,
+      "wrong": 0,
+      "contradictory_strict": 0,
+      "contradictory_lenient": 0,
+      "live_fork_slots": 0,
+      "acc_epoch": 0.980469
+    }
+  ],
+  "govern": {
+    "action": "quarantine",
+    "step": "pr7-step6-quarantine",
+    "implemented": true,
+    "implemented_actions": [
+      "none",
+      "annotate",
+      "shadow",
+      "quarantine",
+      "refuse"
+    ],
+    "events_seen": 1536,
+    "outcome_counts": {
+      "absorbed": 1408,
+      "plain-miss": 128
+    },
+    "quarantined_events": 0,
+    "quarantined_event_class": "supersession",
+    "quarantine_ledger": {
+      "opportunity_count": 0,
+      "quarantined_count": 0,
+      "retained_recoverable": true,
+      "absorbed_into_active_memory": false,
+      "payload_label_histogram": {},
+      "reason": "write-time merge_suspect (supersession) writes diverted to this recoverable side ledger BEFORE commit \u2014 excluded from the active memory state / deployed read vote, but retained (payload accounting below), not destroyed; non-suspect writes allowed unchanged (PR7_DESIGN.md \u00a74 quarantine row).",
+      "diverted_event_join_key": [
+        "epoch",
+        "event_class",
+        "incumbent_slot",
+        "incumbent_last_write_seq"
+      ],
+      "diverted_events": []
+    },
+    "reason": "write-time merge_suspect (supersession) writes quarantined (diverted to the recoverable ledger, kept out of active memory) before commit; non-suspect writes (clean / contradiction) allowed unchanged; deployed read-time retrieval path untouched (PR7_DESIGN.md \u00a74/\u00a713)."
+  }
+}

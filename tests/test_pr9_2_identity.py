@@ -227,6 +227,26 @@ def test_fidelity_passes_on_additive_only_ledger_growth(tmp_path):
     assert out["status"] == cert.PASS, out
 
 
+def test_fidelity_ignores_registry_version_but_not_run_fields(tmp_path):
+    """`implemented_actions` records the driver's action REGISTRY (which grew
+    when PR-8 registered `shadow`), not the run — the §8-era committed
+    ledgers list 4 actions, an instrumented re-run lists 5. Fidelity must
+    pass on that skew alone, and still fail on any run-describing field."""
+    committed, rerun = _fidelity_pair(tmp_path)
+    cs = committed.parent / (committed.name + ".summary.json")
+    summ = json.loads(cs.read_text())
+    summ["govern"]["implemented_actions"] = \
+        ["none", "annotate", "quarantine", "refuse"]  # the §8-era registry
+    cs.write_text(json.dumps(summ, indent=2))
+    out = cert.check_quarantine_rerun_fidelity(cert.ShaLog(), rerun, committed)
+    assert out["status"] == cert.PASS, out
+    # a run-describing field still gates
+    summ["govern"]["events_seen"] = 999
+    cs.write_text(json.dumps(summ, indent=2))
+    out = cert.check_quarantine_rerun_fidelity(cert.ShaLog(), rerun, committed)
+    assert out["status"] == cert.FAIL
+
+
 def test_fidelity_fails_on_retrieval_byte_drift(tmp_path):
     committed, rerun = _fidelity_pair(tmp_path)
     f = rerun.parent / (rerun.name + ".csv")

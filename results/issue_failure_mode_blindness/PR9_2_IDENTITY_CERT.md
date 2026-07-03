@@ -130,24 +130,110 @@ they are left untouched and uncompared.
 
 ---
 
-## 5. Identity smoke, re-run with the intrinsic key (results)
+## 5. Identity smoke, re-run with the intrinsic key (result: as registered)
 
-*(appended after the darwin smoke — expectation, registered here: the same
-divergent trio construction as `pr8/identity_smoke/` yields intrinsic-key
-join 24/24 `identity-proven`, with the incumbent diagnostic reproducing the
-recorded 8/24.)*
+`pr9_2/identity_smoke/` — the exact `pr8/identity_smoke/` divergent trio,
+instrumented driver: `flag_set_identity` **pass, `identity-proven`,
+intersection 24/24**, both symmetric differences empty, zero `payload_label`
+mismatches, ledger anchored to shadow's own committed `fork_events.csv`. The
+incumbent diagnostic reproduces the committed refutation **exactly: 8/24**
+(first supersession epoch only). What refuted the legacy key is now a recorded
+property; the intrinsic key is immune to it on the same artifacts. Inertness
+and ledger coverage pass; smoke verdict `incomplete` (clean/panel/cross-host
+absent by construction — correct smoke semantics).
 
-## 6. Panel results
+## 6. Panel results (`pr9_2/cert_report.json`): **verdict `pass` → `promoted-audit`**
 
-*(appended after the gentoo panel.)*
+The full frozen §8 panel — 27 (cell, pair, seed) runs, gentoo
+(`feature_cache_vitl14/`, torch 2.10.0+cu128), harness scored on darwin over
+sha-verified transfers. Prologue drift-guard **passed** (fresh `none` re-runs
+of pairD stale-soft s0 and pairA clean s0 byte-identical to the committed §8
+stems — today's gentoo stack still reproduces the §8-era bytes); same-seed
+shadow twin **byte-identical** (summary included).
+
+All seven dimensions pass:
+
+| dimension | result |
+|---|---|
+| inertness | pass — every shadow retrieval/readout artifact byte/content-identical to the committed `none` baseline on every cell/seed (governance re-scored same-scorer both sides) |
+| ledger_coverage | pass — flagged **exactly 192/seed on all 21 stale-soft cells, 0 on all 6 clean cells**; disposition `flagged_not_diverted` everywhere |
+| flag_set_identity | pass — **21 cells `identity-proven` (192/192 joined, 4,032 events total), 6 clean cells `identity-proven-empty`**; zero symmetric-difference entries, zero `payload_label` mismatches, zero collisions; fork_events anchor OK on every cell |
+| clean_control | pass — byte-inert and zero flags on pairA and pairC, all seeds |
+| panel_coverage | pass — the frozen §4.5 matrix complete, all artifacts present |
+| cross_host_determinism | pass — 447 darwin-scored artifacts verified against the gentoo-computed sha256 manifest, 0 mismatches (method `gentoo-sha-manifest` + the on-gentoo same-seed twin; the PR-10-consistent reading of §4.7 cond. 3) |
+| quarantine_rerun_fidelity | pass — all 24 instrumented re-runs byte-identical to the committed §8 quarantine arms on every retrieval artifact; summaries identical except the two declared additive ledger fields and one registry-provenance field (below) |
+
+**The incumbent-key diagnostic, panel scale.** On every one of the 21
+stale-soft cells the legacy key agrees on **exactly 32 of 192** joined events
+— the first supersession epoch (epoch 6) — and diverges on all 160 events of
+epochs 7–11, entirely in `incumbent_last_write_seq` (672/4,032 = 16.7%
+agreement overall). The §8 refutation mechanism is thus fully regular at
+panel scale, and fully attributable to the state component, exactly as §1
+records.
+
+**One post-registration comparison-spec correction (documented, not tuned).**
+The first fidelity pass failed on all 24 comparisons with every retrieval
+artifact byte-identical: the `govern` blocks differ in `implemented_actions`
+(§8-era runs predate the `shadow` action's registration, so their recorded
+registry lists 4 actions vs today's 5). That field records the driver's
+action REGISTRY, not anything the run did — the same version-skew class as
+governance.json across scorer versions (§3), so it was excluded from the
+comparison and the exclusion pinned by test
+(`test_fidelity_ignores_registry_version_but_not_run_fields`: registry skew
+alone passes; any run-describing field — `action`, `step`, `events_seen`,
+`outcome_counts`, `quarantined_events`, ledger counts/histogram — still
+gates). No expected value, margin, or identity semantics moved.
 
 ## 7. Answers to the certification questions
 
-*(appended after §5–§6.)*
+1. **Old basis & contamination** — §1: `(epoch, event_class, incumbent_slot,
+   incumbent_last_write_seq)`; the last component is incumbent state and
+   diverges after the first diversion (8/24 smoke, 32/192 panel — first
+   epoch only, mechanically regular).
+2. **Proposed key** — §2: `(epoch, event_class, batch_index)` unique join,
+   `payload_label` consistency check.
+3. **State-free components** — all three join components are
+   protocol-determined (schedule, schedule, batch position); `payload_label`
+   intrinsic to the record; incumbent fields carried as diagnostics only.
+4. **Identity-smoke expectation** — holds: intrinsic 24/24
+   `identity-proven` on the recorded refutation trio; the 24/24 state-free
+   component agreement of the pr8 smoke README is superseded by a true keyed
+   join, and the 8/24 legacy behavior is reproduced as a diagnostic.
+5. **Joins to existing artifacts** — clean: shadow ledger ↔ shadow's own
+   committed `fork_events.csv` anchored per epoch on every cell; shadow ↔
+   committed §8 quarantine evidence bridged via instrumented re-runs proven
+   byte-identical to the committed arms (fidelity, 24/24).
+6. **Existing certified rows unchanged** — zero committed artifacts modified
+   (all additions under `pr9_2/` + driver/harness/tests/memo); PR-10's
+   merge-abstain contract untouched (no reader-path change; no
+   `--read-govern` anywhere in this PR); no changed answers, no new
+   abstentions; full suite green.
+7. **Ambiguity / collision / non-additive artifacts** — none: zero intrinsic
+   key collisions on any of the 27 runs (the uniqueness claim held at
+   192/seed panel scale); zero join ambiguity; the single non-additive-
+   looking difference (`implemented_actions`) is registry-version provenance,
+   fully explained and comparison-spec-corrected (§6). No unexplained
+   row-count drift anywhere (the prologue and fidelity checks byte-pin the
+   row streams).
+8. **§9B sufficiency** — see §8.
 
-## 8. Verdict and §9B sufficiency
+## 8. Verdict: **`identity-certified`**
 
-*(appended: exactly one of identity-certified / identity-blocked /
-identity-inconclusive, and whether this suffices to treat §9B write-event
-authority as a FUTURE pre-registered design — not part of this PR either
-way.)*
+The §9A gate (PR8 §4.7) passes end-to-end — `promoted-audit` — with event
+identity decided on the pre-registered write-event-intrinsic key: the shadow
+ledger is a complete, inert, deterministic, event-addressable audit trail
+whose flagged set provably equals the §8 quarantine diverted set on every
+panel cell.
+
+**What this makes possible (and does not).** §9B's entry conditions
+(gate memo §5) are: (a) §9A passes — **now met**; (b) a parameter-free binary
+second key exists in committed write-time observables — **still open, and
+untouched by this PR**. §9B write-event authority is therefore now eligible
+to be considered as a FUTURE pre-registered design — its own memo, its own
+margins (the inherited §8 aggregate margins AND the frozen −3 per-seed bound
+on every seed), its own branch — and nothing more: this PR implements no
+write-event authority, changes no reader contract, and promotes no
+quarantine behavior. `promoted-audit` certifies the detector/forensic role
+only. The PR-11.1 negative stands unchanged: the read-time path over router
+sets remains refuted; the escalation fork is now concretely §9B-shaped or
+explicit acceptance of the residuals.

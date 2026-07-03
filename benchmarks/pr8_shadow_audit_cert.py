@@ -600,11 +600,16 @@ def check_quarantine_rerun_fidelity(sha: ShaLog, q_stem: Path,
     identical modulo ``govern``; the ``govern`` block identical after dropping
     the additive per-event instrumentation fields from the re-run side
     (``diverted_events`` / ``diverted_event_join_key`` — absent from
-    pre-instrumentation §8 ledgers). governance.json is NOT compared here: it
-    is a deterministic function of the (byte-identical) CSVs, and the two
-    sides were scored by different registered scorer versions (policy registry
-    growth since §8), so byte inequality there is expected and carries no
-    information the CSV identity does not."""
+    pre-instrumentation §8 ledgers) and the REGISTRY-VERSION provenance field
+    ``implemented_actions`` from both sides (it records the driver's action
+    registry — which grew when PR-8 registered ``shadow`` — not anything the
+    run did; every run-describing field: ``action``, ``step``,
+    ``events_seen``, ``outcome_counts``, ``quarantined_events`` and the
+    ledger counts/histogram, remains strictly compared). governance.json is
+    NOT compared here: it is a deterministic function of the (byte-identical)
+    CSVs, and the two sides were scored by different registered scorer
+    versions (policy-registry growth since §8), so byte inequality there is
+    expected and carries no information the CSV identity does not."""
     arts = {}
     ok = True
     for suf in INERT_RAW_SUFFIXES:
@@ -638,6 +643,9 @@ def check_quarantine_rerun_fidelity(sha: ShaLog, q_stem: Path,
             r_led.pop(additive, None)
         if "quarantine_ledger" in r_gov:
             r_gov["quarantine_ledger"] = r_led
+        # registry-version provenance, not run behavior (see docstring)
+        r_gov.pop("implemented_actions", None)
+        c_gov.pop("implemented_actions", None)
         same_gov = r_gov == c_gov
         arts[SUF_SUMMARY] = {
             "status": PASS if (same_body and same_gov) else FAIL,

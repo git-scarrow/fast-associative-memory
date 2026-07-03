@@ -1,0 +1,335 @@
+{
+ "panel": "pr8-9a",
+ "readout": "frozen-87",
+ "mode": "panel",
+ "artifact_root": "results/issue_failure_mode_blindness/pr9_2/panel",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "gentoo_sha_manifest": "results/issue_failure_mode_blindness/pr9_2/panel.gentoo.sha256",
+ "runs": [
+  {
+   "cell": "direct_harm",
+   "pair": "pairD",
+   "seed": 0,
+   "stems": {
+    "none": "direct_harm/none/per_probe_stale-soft_s0_pairD",
+    "shadow": "direct_harm/shadow/per_probe_stale-soft_s0_pairD",
+    "quarantine": "direct_harm/quarantine/per_probe_stale-soft_s0_pairD",
+    "quarantine_committed": "../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s0_pairD"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "collateral_harm",
+   "pair": "pairB",
+   "seed": 0,
+   "stems": {
+    "none": "collateral_harm/none/per_probe_stale-soft_s0_pairB",
+    "shadow": "collateral_harm/shadow/per_probe_stale-soft_s0_pairB",
+    "quarantine": "collateral_harm/quarantine/per_probe_stale-soft_s0_pairB",
+    "quarantine_committed": "../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairB"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "collateral_harm",
+   "pair": "pairE",
+   "seed": 0,
+   "stems": {
+    "none": "collateral_harm/none/per_probe_stale-soft_s0_pairE",
+    "shadow": "collateral_harm/shadow/per_probe_stale-soft_s0_pairE",
+    "quarantine": "collateral_harm/quarantine/per_probe_stale-soft_s0_pairE",
+    "quarantine_committed": "../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s0_pairE"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairA",
+   "seed": 0,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s0_pairA",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s0_pairA",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairA"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairB",
+   "seed": 0,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s0_pairB",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s0_pairB",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairB"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairD",
+   "seed": 0,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s0_pairD",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s0_pairD",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairD"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairE",
+   "seed": 0,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s0_pairE",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s0_pairE",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s0_pairE"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "clean_control",
+   "pair": "pairA",
+   "seed": 0,
+   "stems": {
+    "none": "clean_control/none/per_probe_clean_s0_pairA",
+    "shadow": "clean_control/shadow/per_probe_clean_s0_pairA",
+    "quarantine": "clean_control/quarantine/per_probe_clean_s0_pairA",
+    "quarantine_committed": "../../pr7/twin/clean_control/quarantine/per_probe_clean_s0_pairA"
+   },
+   "expected_flagged": 0
+  },
+  {
+   "cell": "clean_control",
+   "pair": "pairC",
+   "seed": 0,
+   "stems": {
+    "none": "clean_control/none/per_probe_clean_pairC_s0",
+    "shadow": "clean_control/shadow/per_probe_clean_pairC_s0",
+    "quarantine": "clean_control/quarantine/per_probe_clean_pairC_s0"
+   },
+   "expected_flagged": 0
+  },
+  {
+   "cell": "direct_harm",
+   "pair": "pairD",
+   "seed": 1,
+   "stems": {
+    "none": "direct_harm/none/per_probe_stale-soft_s1_pairD",
+    "shadow": "direct_harm/shadow/per_probe_stale-soft_s1_pairD",
+    "quarantine": "direct_harm/quarantine/per_probe_stale-soft_s1_pairD",
+    "quarantine_committed": "../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s1_pairD"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "collateral_harm",
+   "pair": "pairB",
+   "seed": 1,
+   "stems": {
+    "none": "collateral_harm/none/per_probe_stale-soft_s1_pairB",
+    "shadow": "collateral_harm/shadow/per_probe_stale-soft_s1_pairB",
+    "quarantine": "collateral_harm/quarantine/per_probe_stale-soft_s1_pairB",
+    "quarantine_committed": "../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairB"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "collateral_harm",
+   "pair": "pairE",
+   "seed": 1,
+   "stems": {
+    "none": "collateral_harm/none/per_probe_stale-soft_s1_pairE",
+    "shadow": "collateral_harm/shadow/per_probe_stale-soft_s1_pairE",
+    "quarantine": "collateral_harm/quarantine/per_probe_stale-soft_s1_pairE",
+    "quarantine_committed": "../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s1_pairE"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairA",
+   "seed": 1,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s1_pairA",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s1_pairA",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairA"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairB",
+   "seed": 1,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s1_pairB",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s1_pairB",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairB"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairD",
+   "seed": 1,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s1_pairD",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s1_pairD",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairD"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairE",
+   "seed": 1,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s1_pairE",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s1_pairE",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s1_pairE"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "clean_control",
+   "pair": "pairA",
+   "seed": 1,
+   "stems": {
+    "none": "clean_control/none/per_probe_clean_s1_pairA",
+    "shadow": "clean_control/shadow/per_probe_clean_s1_pairA",
+    "quarantine": "clean_control/quarantine/per_probe_clean_s1_pairA",
+    "quarantine_committed": "../../pr7/twin/clean_control/quarantine/per_probe_clean_s1_pairA"
+   },
+   "expected_flagged": 0
+  },
+  {
+   "cell": "clean_control",
+   "pair": "pairC",
+   "seed": 1,
+   "stems": {
+    "none": "clean_control/none/per_probe_clean_pairC_s1",
+    "shadow": "clean_control/shadow/per_probe_clean_pairC_s1",
+    "quarantine": "clean_control/quarantine/per_probe_clean_pairC_s1"
+   },
+   "expected_flagged": 0
+  },
+  {
+   "cell": "direct_harm",
+   "pair": "pairD",
+   "seed": 2,
+   "stems": {
+    "none": "direct_harm/none/per_probe_stale-soft_s2_pairD",
+    "shadow": "direct_harm/shadow/per_probe_stale-soft_s2_pairD",
+    "quarantine": "direct_harm/quarantine/per_probe_stale-soft_s2_pairD",
+    "quarantine_committed": "../../pr7/twin/direct_harm/quarantine/per_probe_stale-soft_s2_pairD"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "collateral_harm",
+   "pair": "pairB",
+   "seed": 2,
+   "stems": {
+    "none": "collateral_harm/none/per_probe_stale-soft_s2_pairB",
+    "shadow": "collateral_harm/shadow/per_probe_stale-soft_s2_pairB",
+    "quarantine": "collateral_harm/quarantine/per_probe_stale-soft_s2_pairB",
+    "quarantine_committed": "../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairB"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "collateral_harm",
+   "pair": "pairE",
+   "seed": 2,
+   "stems": {
+    "none": "collateral_harm/none/per_probe_stale-soft_s2_pairE",
+    "shadow": "collateral_harm/shadow/per_probe_stale-soft_s2_pairE",
+    "quarantine": "collateral_harm/quarantine/per_probe_stale-soft_s2_pairE",
+    "quarantine_committed": "../../pr7/twin/collateral_harm/quarantine/per_probe_stale-soft_s2_pairE"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairA",
+   "seed": 2,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s2_pairA",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s2_pairA",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairA"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairB",
+   "seed": 2,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s2_pairB",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s2_pairB",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairB"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairD",
+   "seed": 2,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s2_pairD",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s2_pairD",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairD"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "merge_path_stale",
+   "pair": "pairE",
+   "seed": 2,
+   "stems": {
+    "none": "merge_path_stale/none/per_probe_stale-soft_s2_pairE",
+    "shadow": "merge_path_stale/shadow/per_probe_stale-soft_s2_pairE",
+    "quarantine": "merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE",
+    "quarantine_committed": "../../pr7/twin/merge_path_stale/quarantine/per_probe_stale-soft_s2_pairE"
+   },
+   "expected_flagged": 192
+  },
+  {
+   "cell": "clean_control",
+   "pair": "pairA",
+   "seed": 2,
+   "stems": {
+    "none": "clean_control/none/per_probe_clean_s2_pairA",
+    "shadow": "clean_control/shadow/per_probe_clean_s2_pairA",
+    "quarantine": "clean_control/quarantine/per_probe_clean_s2_pairA",
+    "quarantine_committed": "../../pr7/twin/clean_control/quarantine/per_probe_clean_s2_pairA"
+   },
+   "expected_flagged": 0
+  },
+  {
+   "cell": "clean_control",
+   "pair": "pairC",
+   "seed": 2,
+   "stems": {
+    "none": "clean_control/none/per_probe_clean_pairC_s2",
+    "shadow": "clean_control/shadow/per_probe_clean_pairC_s2",
+    "quarantine": "clean_control/quarantine/per_probe_clean_pairC_s2"
+   },
+   "expected_flagged": 0
+  }
+ ]
+}

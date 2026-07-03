@@ -1,0 +1,628 @@
+{
+ "admissible_columns": [
+  "epoch",
+  "event_class",
+  "batch_index",
+  "payload_label"
+ ],
+ "blocked_family_diagnostics": {
+  "pairA": {
+   "n": 576,
+   "payload_cos_max": 0.789987,
+   "payload_cos_mean": 0.702792,
+   "payload_cos_min": 0.6,
+   "sign_test_fired_fraction": 0.0,
+   "vigilance_test_fired_fraction": 1.0
+  },
+  "pairB": {
+   "n": 576,
+   "payload_cos_max": 0.789987,
+   "payload_cos_mean": 0.702792,
+   "payload_cos_min": 0.6,
+   "sign_test_fired_fraction": 0.0,
+   "vigilance_test_fired_fraction": 1.0
+  },
+  "pairD": {
+   "n": 576,
+   "payload_cos_max": 0.789987,
+   "payload_cos_mean": 0.702792,
+   "payload_cos_min": 0.6,
+   "sign_test_fired_fraction": 0.0,
+   "vigilance_test_fired_fraction": 1.0
+  },
+  "pairE": {
+   "n": 576,
+   "payload_cos_max": 0.789987,
+   "payload_cos_mean": 0.702792,
+   "payload_cos_min": 0.6,
+   "sign_test_fired_fraction": 0.0,
+   "vigilance_test_fired_fraction": 1.0
+  }
+ },
+ "bounds": {
+  "capture_floor": 0.5,
+  "false_action_ceiling": 0.05
+ },
+ "candidates": [
+  {
+   "capture": {
+    "pairD": 1.0,
+    "pairE": 1.0
+   },
+   "capture_bound_ok": true,
+   "capture_destruction_fraction": {
+    "pairA": 1.0,
+    "pairB": 1.0,
+    "pairD": 1.0,
+    "pairE": 1.0
+   },
+   "clean_fired": 0,
+   "definition": "true (act on every eligible event)",
+   "exclusion": "constant on the denominator \u2014 restates the first key; committed acting outcome = PR-7 refuse",
+   "false_action": {
+    "pairA": 1.0,
+    "pairB": 1.0
+   },
+   "false_action_bound_ok": false,
+   "fired_set_identical_across_cells": true,
+   "id": "K0",
+   "mechanism": null,
+   "passes_gate": false,
+   "redundancy_pr11": "acts on a subset of the merge-suspect event class P2 merge-support-abstain keyed on (K0 IS the committed PR-7 refuse arm)",
+   "requires_threshold_movement": false,
+   "second_key": false
+  },
+  {
+   "capture": {
+    "pairD": 0.16666666666666666,
+    "pairE": 0.16666666666666666
+   },
+   "capture_bound_ok": false,
+   "capture_destruction_fraction": {
+    "pairA": 0.16666666666666666,
+    "pairB": 0.16666666666666666,
+    "pairD": 0.16666666666666666,
+    "pairE": 0.16666666666666666
+   },
+   "clean_fired": 0,
+   "definition": "epoch == 6 (first eligible epoch)",
+   "exclusion": null,
+   "false_action": {
+    "pairA": 0.16666666666666666,
+    "pairB": 0.16666666666666666
+   },
+   "false_action_bound_ok": false,
+   "fired_set_identical_across_cells": true,
+   "id": "K1",
+   "mechanism": "only self-transporting predicate (state identical under acting divergence only on the first eligible epoch \u2014 \u00a79A 32/192 finding)",
+   "passes_gate": false,
+   "redundancy_pr11": "acts on a subset of the merge-suspect event class P2 merge-support-abstain keyed on",
+   "requires_threshold_movement": false,
+   "second_key": true
+  },
+  {
+   "capture": {
+    "pairD": 0.8333333333333334,
+    "pairE": 0.8333333333333334
+   },
+   "capture_bound_ok": true,
+   "capture_destruction_fraction": {
+    "pairA": 0.8333333333333334,
+    "pairB": 0.8333333333333334,
+    "pairD": 0.8333333333333334,
+    "pairE": 0.8333333333333334
+   },
+   "clean_fired": 0,
+   "definition": "epoch > 6 (complement of K1)",
+   "exclusion": null,
+   "false_action": {
+    "pairA": 0.8333333333333334,
+    "pairB": 0.8333333333333334
+   },
+   "false_action_bound_ok": false,
+   "fired_set_identical_across_cells": true,
+   "id": "K2",
+   "mechanism": "formal complement closure of K1",
+   "passes_gate": false,
+   "redundancy_pr11": "acts on a subset of the merge-suspect event class P2 merge-support-abstain keyed on",
+   "requires_threshold_movement": false,
+   "second_key": true
+  },
+  {
+   "capture": {
+    "pairD": 0.16666666666666666,
+    "pairE": 0.16666666666666666
+   },
+   "capture_bound_ok": false,
+   "capture_destruction_fraction": {
+    "pairA": 0.16666666666666666,
+    "pairB": 0.16666666666666666,
+    "pairD": 0.16666666666666666,
+    "pairE": 0.16666666666666666
+   },
+   "clean_fired": 0,
+   "definition": "epoch == 11 (last eligible epoch)",
+   "exclusion": null,
+   "false_action": {
+    "pairA": 0.16666666666666666,
+    "pairB": 0.16666666666666666
+   },
+   "false_action_bound_ok": false,
+   "fired_set_identical_across_cells": true,
+   "id": "K3",
+   "mechanism": "distinguished position only; no mechanism statable",
+   "passes_gate": false,
+   "redundancy_pr11": "acts on a subset of the merge-suspect event class P2 merge-support-abstain keyed on",
+   "requires_threshold_movement": false,
+   "second_key": true
+  },
+  {
+   "capture": {
+    "pairD": 0.03125,
+    "pairE": 0.03125
+   },
+   "capture_bound_ok": false,
+   "capture_destruction_fraction": {
+    "pairA": 0.03125,
+    "pairB": 0.03125,
+    "pairD": 0.03125,
+    "pairE": 0.03125
+   },
+   "clean_fired": 0,
+   "definition": "batch_index == 0",
+   "exclusion": null,
+   "false_action": {
+    "pairA": 0.03125,
+    "pairB": 0.03125
+   },
+   "false_action_bound_ok": true,
+   "fired_set_identical_across_cells": true,
+   "id": "K4",
+   "mechanism": "distinguished position only; no mechanism statable",
+   "passes_gate": false,
+   "redundancy_pr11": "acts on a subset of the merge-suspect event class P2 merge-support-abstain keyed on",
+   "requires_threshold_movement": false,
+   "second_key": true
+  }
+ ],
+ "committed_citations": {
+  "baseline_3seed_sums": {
+   "pairA": {
+    "frozen_probe_broken": 0,
+    "merge_suspect_events": 0,
+    "stale_wrong": 0
+   },
+   "pairB": {
+    "frozen_probe_broken": 1,
+    "merge_suspect_events": 576,
+    "stale_wrong": 1076
+   },
+   "pairD": {
+    "frozen_probe_broken": 338,
+    "merge_suspect_events": 576,
+    "stale_wrong": 1019
+   },
+   "pairE": {
+    "frozen_probe_broken": 138,
+    "merge_suspect_events": 576,
+    "stale_wrong": 1164
+   }
+  },
+  "pr11_post_pr10_soft_residual": {
+   "pairD": {
+    "0": 83,
+    "1": 38,
+    "2": 30
+   },
+   "pairE": {
+    "0": 12,
+    "1": 1,
+    "2": 1
+   }
+  },
+  "pr11_verdict": "negative",
+  "refuse_overall_verdict": "needs_review",
+  "refuse_pairD_governed_3seed_sums": {
+   "frozen_probe_broken": 227,
+   "merge_suspect_events": 0,
+   "stale_wrong": 719
+  }
+ },
+ "denominator_verification": {
+  "batch_indices": [
+   0,
+   31
+  ],
+  "coordinate_multiset_identical_across_runs": true,
+  "eligible_epochs": [
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
+  ],
+  "event_class_constant": true,
+  "events_per_stale_run": 192,
+  "payload_label_constant_per_run": true,
+  "payload_label_equal_across_runs": true,
+  "total_events": 2304,
+  "unique_clean_runs": 6,
+  "unique_stale_soft_runs": 12
+ },
+ "design": "PR9B_SECOND_KEY_DESK_SCAN.md",
+ "invariance_lemma_holds": true,
+ "per_cell": {
+  "K0": {
+   "per_probe_clean_pairC_s0": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s1": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s2": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s0_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s1_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s2_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_stale-soft_s0_pairA": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s0_pairB": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s0_pairD": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s0_pairE": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s1_pairA": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s1_pairB": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s1_pairD": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s1_pairE": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s2_pairA": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s2_pairB": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s2_pairD": {
+    "eligible": 192,
+    "fired": 192
+   },
+   "per_probe_stale-soft_s2_pairE": {
+    "eligible": 192,
+    "fired": 192
+   }
+  },
+  "K1": {
+   "per_probe_clean_pairC_s0": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s1": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s2": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s0_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s1_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s2_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_stale-soft_s0_pairA": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s0_pairB": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s0_pairD": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s0_pairE": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairA": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairB": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairD": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairE": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairA": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairB": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairD": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairE": {
+    "eligible": 192,
+    "fired": 32
+   }
+  },
+  "K2": {
+   "per_probe_clean_pairC_s0": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s1": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s2": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s0_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s1_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s2_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_stale-soft_s0_pairA": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s0_pairB": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s0_pairD": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s0_pairE": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s1_pairA": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s1_pairB": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s1_pairD": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s1_pairE": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s2_pairA": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s2_pairB": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s2_pairD": {
+    "eligible": 192,
+    "fired": 160
+   },
+   "per_probe_stale-soft_s2_pairE": {
+    "eligible": 192,
+    "fired": 160
+   }
+  },
+  "K3": {
+   "per_probe_clean_pairC_s0": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s1": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s2": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s0_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s1_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s2_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_stale-soft_s0_pairA": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s0_pairB": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s0_pairD": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s0_pairE": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairA": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairB": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairD": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s1_pairE": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairA": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairB": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairD": {
+    "eligible": 192,
+    "fired": 32
+   },
+   "per_probe_stale-soft_s2_pairE": {
+    "eligible": 192,
+    "fired": 32
+   }
+  },
+  "K4": {
+   "per_probe_clean_pairC_s0": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s1": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_pairC_s2": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s0_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s1_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_clean_s2_pairA": {
+    "eligible": 0,
+    "fired": 0
+   },
+   "per_probe_stale-soft_s0_pairA": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s0_pairB": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s0_pairD": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s0_pairE": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s1_pairA": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s1_pairB": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s1_pairD": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s1_pairE": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s2_pairA": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s2_pairB": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s2_pairD": {
+    "eligible": 192,
+    "fired": 6
+   },
+   "per_probe_stale-soft_s2_pairE": {
+    "eligible": 192,
+    "fired": 6
+   }
+  }
+ },
+ "verdict": "second-key-failed"
+}

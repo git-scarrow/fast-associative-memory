@@ -1,0 +1,81 @@
+{
+  "policy_version": "pr12-proto-0.1",
+  "design_memo": "results/issue_failure_mode_blindness/PR12_HARNESS_BOUNDARY_DESIGN.md",
+  "states": [
+    "agent-readable",
+    "hidden",
+    "stale",
+    "superseded",
+    "quarantined",
+    "audit-only",
+    "human-review"
+  ],
+  "dispositions": [
+    "shown",
+    "shown_with_caveat",
+    "withheld",
+    "escalated",
+    "not_retrieved"
+  ],
+  "reason_codes": [
+    "no_adverse_flag",
+    "merge_support_member",
+    "core_abstention_passthrough",
+    "led_quarantined_contradiction",
+    "led_pending_ambiguous",
+    "led_superseded_supersession",
+    "not_surviving_engine"
+  ],
+  "certification_tiers": ["core-certified", "harness-heuristic"],
+  "core_certified_only": {
+    "contract": "PR-10 merge-abstain",
+    "note": "the ONLY behavior this harness may label core-certified is the pass-through of served_outcome=abstain / abstain_reason=merge_suspect_led"
+  },
+  "state_precedence_for_served_answer": [
+    "led_quarantined_contradiction -> quarantined (withheld, escalated)",
+    "led_pending_ambiguous -> human-review (dual-present notice, escalated)",
+    "led_superseded_supersession -> superseded (withheld unless allow_stale)",
+    "merge_support_member -> agent-readable + stale-suspect caveat (shown_with_caveat)",
+    "else -> agent-readable (shown)"
+  ],
+  "frozen_scorer_constants": {
+    "source": "benchmarks/analyze_fork_governance.py (read-only mirror; lines 117-120, 292-368)",
+    "CONFLICT_COS": 0.5,
+    "MERGE_SUSPECT_COS": 0.9
+  },
+  "ledger_schema_stub": {
+    "note": "mechanism (e) schema only; no live ingest exists in this prototype",
+    "fields": ["item_id", "intrinsic_key(epoch,event_class,batch_index)",
+               "ingest_ts", "source_id", "version", "ttl",
+               "tombstone_state"]
+  },
+  "cells": {
+    "pairD_stale-soft_s0": {
+      "role": "primary",
+      "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-soft_pairD_s0",
+      "hazard_governance": "results/issue_failure_mode_blindness/pr6/stale_de/per_probe_stale-soft_s0_pairD.governance.json",
+      "hazard_governance_note": "DESIGN ASSUMPTION CORRECTION: PR12 memo §5 assumed a .governance.json sibling per pr10 governed run; none exists. Committed hazard evidence for the same (pair, arm, seed) lives in the pr6 panel; cross-run use is justified by PR-10 G1 write-stream byte-identity and is cross-checked against the rebuilt router.",
+      "anchors": {
+        "certified_abstentions": 300,
+        "stale_wrong_total": 375,
+        "stale_wrong_abstained": 292,
+        "stale_wrong_residual_flagged": 83,
+        "n_merge_suspect_events": 192,
+        "n_conflict_pairs": 28
+      }
+    },
+    "clean_pairA_s0": {
+      "role": "control",
+      "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairA_s0",
+      "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_clean_s0.governance.json",
+      "hazard_governance_note": "same cross-run correction as the primary cell; pr3c clean_s0 is the committed pairA clean baseline",
+      "anchors": {
+        "certified_abstentions": 0,
+        "adverse_states": 0,
+        "n_merge_suspect_events": 0,
+        "n_conflict_pairs": 0
+      }
+    }
+  },
+  "output_root": "results/issue_failure_mode_blindness/pr12"
+}

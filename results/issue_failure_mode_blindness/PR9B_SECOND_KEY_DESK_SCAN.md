@@ -290,4 +290,80 @@ verdict mapping; the committed scan artifact's verdict.
 ---
 
 *Sections above this line are the pre-registration and were committed
-before the scan ran. Sections below are appended by the scan run.*
+before the scan ran (`bac5339`). Sections below are appended by the scan
+run.*
+
+## 8. Results
+
+Scan: `benchmarks/pr9b_second_key_scan.py` →
+`pr9b/second_key_scan.json`. Darwin-only; committed artifacts only; no
+stop condition was hit.
+
+**Denominator verification (§7 step 1) — all pass.** 12 unique stale-soft
+runs × 192 events (2,304 total) + 6 clean runs × 0; per-run intrinsic-key
+uniqueness (zero collisions); `event_class ≡ supersession`;
+`payload_label` constant per run **and equal across all 12 runs**;
+eligible epochs 6–11 × batch positions 0–31.
+
+**Invariance lemma: HOLDS.** The `(epoch, batch_index)` multiset is one
+and the same across all 12 runs, and both remaining admissible columns are
+constants on the denominator. Every pair-agnostic candidate therefore
+fires on the identical protocol positions in every cell (confirmed
+per-candidate: `fired_set_identical_across_cells = true` for all five),
+so capture and false-action are the same number by construction — for the
+entire admissible class, enumerated or not.
+
+**Candidate scores (3-seed aggregates; capture on D/E, false-action on
+A/B; clean cells fired 0 for every candidate):**
+
+| id | predicate | fired/192 | capture D | capture E | FA A | FA B | capture ≥ 0.5 | FA ≤ 0.05 | gate |
+|---|---|---|---|---|---|---|---|---|---|
+| K0 | `true` (= PR-7 refuse) | 192 | 1.000 | 1.000 | 1.000 | 1.000 | pass | **fail** | excluded (constant) + fail |
+| K1 | first eligible epoch | 32 | 0.167 | 0.167 | 0.167 | 0.167 | **fail** | **fail** | fail |
+| K2 | epoch > first | 160 | 0.833 | 0.833 | 0.833 | 0.833 | pass | **fail** | fail |
+| K3 | last eligible epoch | 32 | 0.167 | 0.167 | 0.167 | 0.167 | **fail** | **fail** | fail |
+| K4 | `batch_index == 0` | 6 | 0.031 | 0.031 | 0.031 | 0.031 | **fail** | pass | fail |
+
+Every row realizes the lemma exactly (capture = FA per candidate, one
+number per row). K1's 32/192 is the §9A incumbent-diagnostic prefix, as
+predicted. No candidate requires threshold movement; all are redundant
+with the already-adjudicated merge-suspect class (K0 *is* the committed
+PR-7 refuse arm, verdict `needs_review`: broken 338→227, stale-wrong
+1019→719, write-time capture 576→0 at 100% firing — the ceiling every
+refinement is below).
+
+**Blocked-family diagnostics (forbidden columns; diagnostic only, valid
+up to a hypothetical acting run's first action).** Stronger than PR-5's
+prediction: the `payload_cos_incumbent` distribution on eligible events is
+**identical to six decimals across all four pairs** (mean 0.702792, min
+0.600000, max 0.789987, n = 576 each); the sign test
+(`payload_cos ≤ 0`) fires 0.000 on every pair and the vigilance test
+(`pre_sim ≥ effective_vigilance`) fires 1.000 on every pair — both are
+*constants* on the denominator. Even waiving the contamination bar, the
+natural candidates carry zero harm information at write time. The D-vs-A
+difference is not present in any single write's observables; it exists
+only in how the read-time trajectory unfolds (the PR-5/PR-6 finding, now
+at per-event resolution).
+
+**Committed citations (extracted programmatically):** baselines broken
+D=338 / E=138 / A=0 / B=1; PR-11.1 verdict `negative`; post-PR-10 soft
+residual pairD {83, 38, 30}, pairE {12, 1, 1}.
+
+## 9. Verdict
+
+The admissible candidate list is non-empty (K1–K4 satisfy every form
+constraint), and no member passes the pre-registered bounds — nor can any
+member of the admissible class, by the verified invariance lemma: on this
+protocol, write-event-intrinsic coordinates are hazard-blind by
+construction, and every hazard-bearing observable is either
+state-contaminated (the §9A-certified divergence class), outcome-leaking,
+or empirically constant across harm and benign cells.
+
+Per the pre-registered mapping (§5) and consequence (§6): **§9B is closed
+on the existing observables.** Re-opening it requires new write-time
+observables under a new pre-registered experiment (a `fork_events`/ledger
+schema extension with its own inertness proof). Acceptance of the
+residuals remains an allowed outcome. PR-10 `merge-abstain` stands
+unchanged as the only certified contract.
+
+**second-key-failed**

@@ -26,6 +26,22 @@ abstention counters (`abstained_merge`, `abstained_forced`) as ADDITIVE
 columns on every policy row. No pre-existing field is renamed, removed,
 or recomputed.
 
+PR-11.1 (PR11_ADJUDICATION_DESIGN.md §5, registered scorer change)
+appends three parameter-free set-membership policies on the surviving
+top-1 slot — merge-abstain's certified action shape, differing only in
+which existing ``router_state`` overlay sets they consult:
+`adjudicated-abstain` (P1: quarantine(E) | deprecate(E) — resolved
+verdicts only), `merge-support-abstain` (P2: ANY surviving candidate in
+M — the support-membership widening of the certified merge trigger) and
+`pending-abstain` (P3: P1's sets plus ambiguous(E) — forks held while
+unadjudicated). No exclusions, no vote recomputation, no tie/confidence/
+margin term, no new constants, no parameters; everywhere the trigger is
+silent the `none` answer passes through untouched, so forced abstention
+is structurally impossible for all three. Their per-trigger counters
+(`abstained_adjudicated`, `abstained_pending`, `abstained_merge_support`)
+are recorded ONLY on the three new policy rows — every pre-existing
+policy row, `merge-abstain` included, stays byte-identical.
+
 Shadow-readout fidelity (§10): the policy-`none` vote is recomputed from
 ``<stem>.topk.csv[.gz]`` with the exact aggregation the driver verified at
 write time (``vote_pred_from_candidates``) and compared to the deployed
@@ -130,7 +146,16 @@ POLICIES = ["none", "observe-only", "entropy-abstain", "abstain-tie",
             "recency-naive", "quarantine-naive",
             "mode-conditioned-observe", "mode-conditioned-abstain",
             "mode-conditioned-trust", "trust-downweight", "trust-guarded",
-            "merge-abstain"]
+            "merge-abstain",
+            "adjudicated-abstain", "merge-support-abstain",
+            "pending-abstain"]
+# PR-11.1: the three adjudication-scan policies (appended, never
+# reordered) and the per-trigger counters recorded only on their rows.
+ADJUDICATION_POLICIES = ("adjudicated-abstain", "merge-support-abstain",
+                         "pending-abstain")
+ADJUDICATION_TRIGGER_COUNTERS = ("abstained_adjudicated",
+                                 "abstained_pending",
+                                 "abstained_merge_support")
 # mode-conditioned-trust was an EXPLORATORY refinement in PR-3c (post-hoc
 # there; promoted to pre-registered for PR-4 H1, frozen verbatim):
 # instead of the design memo's contradiction -> quarantine-both, it
@@ -470,6 +495,36 @@ def apply_policy(policy: str, cands: list[dict], witness: list[dict],
         if top1["slot"] in st["merge"]:
             return None, True, {"trigger": "merge"}
         return none_answer, False, None
+    if policy in ("adjudicated-abstain", "pending-abstain"):
+        # PR-11.1 (PR11_ADJUDICATION_DESIGN.md §4): merge-abstain's
+        # certified action shape over the router's existing verdict sets —
+        # abstain iff the deployed vote's surviving top-1 slot is in the
+        # consulted set(s) at the probe's epoch, else the `none` answer
+        # unchanged. adjudicated-abstain (P1) consults quarantine(E) |
+        # deprecate(E) — resolved verdicts only, never during the window;
+        # pending-abstain (P3) adds ambiguous(E) — forks held while
+        # unadjudicated (the window that may never close). router_state's
+        # conservative precedence keeps the sets disjoint, so P3's trigger
+        # decomposition (adjudicated vs pending) is exact.
+        st = router_state(router, epoch)
+        surv = [c for c in cands if c["surviving"]]
+        top1 = max(surv, key=lambda c: float(c["weight"]))
+        if (top1["slot"] in st["quarantine"]
+                or top1["slot"] in st["deprecate"]):
+            return None, True, {"trigger": "adjudicated"}
+        if policy == "pending-abstain" and top1["slot"] in st["ambiguous"]:
+            return None, True, {"trigger": "pending"}
+        return none_answer, False, None
+    if policy == "merge-support-abstain":
+        # PR-11.1 (P2): support-membership widening of the certified merge
+        # trigger — abstain iff ANY surviving candidate is merge-suspect
+        # (a strict superset of merge-abstain's led-only trigger; same
+        # frozen evidence set M, zero new sets, no exclusions, no
+        # parameters).
+        st = router_state(router, epoch)
+        if any(c["surviving"] and c["slot"] in st["merge"] for c in cands):
+            return None, True, {"trigger": "merge_support"}
+        return none_answer, False, None
     if policy.startswith("mode-conditioned") or policy in TRUST_ROUTED:
         st = router_state(router, epoch, trust=policy in TRUST_ROUTED)
         surv = [c for c in cands if c["surviving"]]
@@ -532,7 +587,9 @@ def score_run(run: dict, det, thr) -> dict:
         "broken", "direct_br", "collateral_br", "tie_flips",
         "witness_probes",
         "stale_wrong", "stale_wrong_fixed", "stale_wrong_abstained",
-        "contra_wrong", "contra_wrong_fixed", "contra_wrong_abstained")}
+        "contra_wrong", "contra_wrong_fixed", "contra_wrong_abstained")
+        + (ADJUDICATION_TRIGGER_COUNTERS
+           if policy in ADJUDICATION_POLICIES else ())}
         for policy in POLICIES}
     dropped_ever = {policy: set() for policy in POLICIES}
     for i, p in enumerate(probes):
@@ -580,6 +637,12 @@ def score_run(run: dict, det, thr) -> dict:
                 m["abstained"] += 1
                 m["abstained_merge"] += int(trigger == "merge")
                 m["abstained_forced"] += int(trigger == "forced")
+                if policy in ADJUDICATION_POLICIES:
+                    m["abstained_adjudicated"] += int(
+                        trigger == "adjudicated")
+                    m["abstained_pending"] += int(trigger == "pending")
+                    m["abstained_merge_support"] += int(
+                        trigger == "merge_support")
                 m["abstain_on_correct"] += int(none_correct)
                 m["abstain_on_wrong"] += int(not none_correct)
                 m["stale_wrong_abstained"] += int(is_stale_wrong)

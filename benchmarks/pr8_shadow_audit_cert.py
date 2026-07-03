@@ -67,12 +67,27 @@ SHADOW_STEP = "pr8-9a-shadow-quarantine-audit"
 QUARANTINE_ACTION = "quarantine"
 FLAGGED_DISPOSITION = "flagged_not_diverted"
 
-# The per-event key tuple the §9A flag-set-identity join uses, present on BOTH
-# the committed shadow fork_events.csv (as columns) and the quarantine ledger's
-# diverted_events list. Mirrors failure_mode_probe.QUARANTINE_DIVERTED_JOIN_KEY
-# (pinned equal by tests). A diverted write has no record_seq/owner_slot of its
-# own, so events are bridged by the incumbent identity they supersede.
+# The per-event key tuple the LEGACY §9A flag-set-identity join used, present
+# on BOTH the committed shadow fork_events.csv (as columns) and the quarantine
+# ledger's diverted_events list. Mirrors
+# failure_mode_probe.QUARANTINE_DIVERTED_JOIN_KEY (pinned equal by tests). A
+# diverted write has no record_seq/owner_slot of its own, so events were
+# bridged by the incumbent identity they supersede. STATE-CONTAMINATED: the
+# incumbent_last_write_seq component diverges after the first diversion (the
+# recorded §8 finding — identity smoke 8/24), so this key is retained as a
+# reported DIAGNOSTIC, no longer the gating join.
 JOIN_KEY = ("epoch", "event_class", "incumbent_slot", "incumbent_last_write_seq")
+
+# PR-9.2: the pre-registered write-event-INTRINSIC identity key (gate memo §8's
+# required registration). Mirrors failure_mode_probe.PR92_INTRINSIC_JOIN_KEY /
+# PR92_INTRINSIC_CHECK_FIELDS (pinned equal by tests). Every component is
+# protocol-determined for a given (seed, arm) — no memory state, no RNG, no
+# dependence on whether earlier eligible writes committed or diverted — so it
+# is identical across none/shadow/quarantine by construction. It is claimed
+# UNIQUE per run: a duplicate key on either side is a STOP condition
+# (identity-collision), never a joinable multiset.
+INTRINSIC_JOIN_KEY = ("epoch", "event_class", "batch_index")
+INTRINSIC_CHECK_FIELDS = ("payload_label",)
 
 # --- artifact suffixes -------------------------------------------------------
 SUF_PER_PROBE = ".csv"
@@ -176,6 +191,13 @@ def _join_key(d: dict) -> tuple:
     """Normalize the JOIN_KEY tuple to strings so a CSV row (str fields) and a
     JSON ledger event (int fields) compare equal field-by-field."""
     return tuple(str(d.get(k)) for k in JOIN_KEY)
+
+
+def _intrinsic_key(d: dict) -> tuple:
+    """Normalize the PR-9.2 INTRINSIC_JOIN_KEY tuple to strings (both sides
+    are JSON ledger events, but string-normalizing keeps the comparison robust
+    to int/str drift)."""
+    return tuple(str(d.get(k)) for k in INTRINSIC_JOIN_KEY)
 
 
 def _mset_diff_to_list(counter: Counter) -> list:
@@ -354,6 +376,10 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
     shadow_ledger = shadow_gov.get("quarantine_ledger") or {}
     shadow_flagged_count = shadow_gov.get("flagged_events")
     shadow_hist = shadow_ledger.get("payload_label_histogram") or {}
+    # PR-9.2: explicit per-event flagged records on the shadow side (the
+    # mirror of the quarantine ledger's diverted_events). Empty on a
+    # pre-instrumentation shadow run.
+    shadow_records = shadow_ledger.get("flagged_event_records") or []
 
     self_consistent = (len(shadow_keys) == shadow_flagged_count)
     shadow_set, none_set = set(shadow_keys), set(none_keys)
@@ -416,8 +442,106 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
                 "reason": f"shadow flagged 0 supersession writes but the §8 "
                           f"quarantine ledger reports {q_count} diverted"}
 
+    # ---- PR-9.2: intrinsic-key join (the gating path) -----------------------
+    # Explicit per-event records on BOTH sides -> join on the pre-registered
+    # write-event-intrinsic key. Uniqueness is part of the claim: a duplicate
+    # key on either side is a STOP condition (identity-collision), because the
+    # key's identity semantics assume one eligible batch per (epoch, class).
+    if shadow_records and diverted_keys_available:
+        s_keys = [_intrinsic_key(e) for e in shadow_records]
+        q_keys = [_intrinsic_key(e) for e in q_diverted]
+        s_dups = [k for k, n in Counter(s_keys).items() if n > 1]
+        q_dups = [k for k, n in Counter(q_keys).items() if n > 1]
+        out.update({
+            "intrinsic_join_key": list(INTRINSIC_JOIN_KEY),
+            "intrinsic_check_fields": list(INTRINSIC_CHECK_FIELDS),
+            "shadow_record_count": len(shadow_records),
+            "quarantine_record_count": len(q_diverted),
+        })
+        if s_dups or q_dups:
+            return {**out, "status": FAIL,
+                    "identity_status": "identity-collision",
+                    "collisions": {
+                        "shadow": [dict(zip(INTRINSIC_JOIN_KEY, k))
+                                   for k in sorted(s_dups)],
+                        "quarantine": [dict(zip(INTRINSIC_JOIN_KEY, k))
+                                       for k in sorted(q_dups)]},
+                    "reason": (
+                        "duplicate intrinsic key within a single arm's ledger: "
+                        "the (epoch, event_class, batch_index) uniqueness claim "
+                        "is violated, so per-event identity is undecidable on "
+                        "this key. STOP condition — do not join as a multiset, "
+                        "do not weaken the key.")}
+        s_map = dict(zip(s_keys, shadow_records))
+        q_map = dict(zip(q_keys, q_diverted))
+        only_q = sorted(set(q_map) - set(s_map))
+        only_s = sorted(set(s_map) - set(q_map))
+        joined = sorted(set(s_map) & set(q_map))
+        check_mismatch = []
+        incumbent_agree = 0
+        for k in joined:
+            se, qe = s_map[k], q_map[k]
+            for f in INTRINSIC_CHECK_FIELDS:
+                if se.get(f) != qe.get(f):
+                    check_mismatch.append(
+                        {"key": dict(zip(INTRINSIC_JOIN_KEY, k)), "field": f,
+                         "shadow": se.get(f), "quarantine": qe.get(f)})
+            if (se.get("incumbent_slot") == qe.get("incumbent_slot")
+                    and se.get("incumbent_last_write_seq")
+                    == qe.get("incumbent_last_write_seq")):
+                incumbent_agree += 1
+        # Cross-link the shadow ledger to shadow's OWN committed fork_events
+        # rows (the committed-schema anchor): per epoch, the ledger's record
+        # count must equal the committed supersession-row count. (Labels are
+        # NOT compared here: fork_events' injected_label is a contra-arm
+        # field, -1 on supersession rows; payload consistency is checked
+        # ledger-to-ledger via INTRINSIC_CHECK_FIELDS above.)
+        ledger_by_epoch = Counter(str(e.get("epoch")) for e in shadow_records)
+        fork_by_epoch = Counter(str(r.get("epoch")) for r in shadow_rows)
+        fork_link_ok = ledger_by_epoch == fork_by_epoch
+        out.update({
+            "intersection_size": len(joined),
+            "diverted_minus_flagged": [dict(zip(INTRINSIC_JOIN_KEY, k))
+                                       for k in only_q],
+            "shadow_flagged_minus_diverted": [dict(zip(INTRINSIC_JOIN_KEY, k))
+                                              for k in only_s],
+            "check_field_mismatches": check_mismatch,
+            "shadow_ledger_fork_events_link_ok": fork_link_ok,
+            "diagnostic_incumbent_key_agreement":
+                {"agree": incumbent_agree, "joined": len(joined),
+                 "note": ("state-contaminated legacy key; expected < joined "
+                          "past the first diversion on acting pairs — "
+                          "recorded, not gating")},
+        })
+        proven = (not only_q and not only_s and not check_mismatch
+                  and fork_link_ok)
+        if not fork_link_ok:
+            return {**out, "status": FAIL,
+                    "identity_status": "shadow-self-inconsistent",
+                    "reason": "shadow flagged_event_records do not match "
+                              "shadow's own committed fork_events supersession "
+                              "rows (per-epoch counts or label multisets "
+                              "differ)"}
+        return {**out,
+                "status": PASS if proven else FAIL,
+                "identity_status": "identity-proven" if proven
+                else "identity-violated",
+                "reason": (
+                    "shadow-flagged set == §8-diverted set on the "
+                    "write-event-intrinsic key; every joined pair agrees on "
+                    "the check fields; ledger anchored to committed "
+                    "fork_events." if proven else
+                    "decided on the write-event-intrinsic key: non-empty "
+                    "symmetric difference or check-field contradiction — the "
+                    "shadow-flagged and §8-diverted event sets provably "
+                    "differ.")}
+
     if diverted_keys_available:
-        # Per-event keys on BOTH sides -> true MULTISET relations on JOIN_KEY.
+        # LEGACY path (pre-PR-9.2 shadow artifacts, no flagged_event_records):
+        # multiset join on the state-contaminated incumbent key. Retained so
+        # old artifacts (e.g. the committed pr8/identity_smoke) score exactly
+        # as recorded; expected to report identity-violated past the first
+        # diversion.
         shadow_mset = Counter(_join_key(r) for r in shadow_rows)
         q_mset = Counter(_join_key(e) for e in q_diverted)
         d_minus_f = q_mset - shadow_mset      # diverted but not flagged
@@ -464,18 +588,125 @@ def check_flag_set_identity(sha: ShaLog, none_stem: Path, shadow_stem: Path,
 
 
 # ---------------------------------------------------------------------------
+# PR-9.2: instrumented quarantine re-run fidelity vs the committed §8 arm
+# ---------------------------------------------------------------------------
+def check_quarantine_rerun_fidelity(sha: ShaLog, q_stem: Path,
+                                    q_committed_stem: Path) -> dict:
+    """The instrumented quarantine RE-RUN must be the committed §8 quarantine
+    arm plus nothing but the additive ledger keys.
+
+    Retrieval artifacts (per_probe / per_slot / fork_events raw bytes, topk
+    decompressed content) byte-identical to the committed stem; summary.json
+    identical modulo ``govern``; the ``govern`` block identical after dropping
+    the additive per-event instrumentation fields from the re-run side
+    (``diverted_events`` / ``diverted_event_join_key`` — absent from
+    pre-instrumentation §8 ledgers). governance.json is NOT compared here: it
+    is a deterministic function of the (byte-identical) CSVs, and the two
+    sides were scored by different registered scorer versions (policy registry
+    growth since §8), so byte inequality there is expected and carries no
+    information the CSV identity does not."""
+    arts = {}
+    ok = True
+    for suf in INERT_RAW_SUFFIXES:
+        rf, cf = _artifact(q_stem, suf), _artifact(q_committed_stem, suf)
+        if not (rf.exists() and cf.exists()):
+            arts[suf] = {"status": INCOMPLETE, "reason": "artifact missing"}
+            ok = False
+            continue
+        same = sha.bytes_of(rf) == sha.bytes_of(cf)
+        arts[suf] = {"status": PASS if same else FAIL, "byte_identical": same}
+        ok = ok and same
+    try:
+        same_topk = (sha.topk_content(q_stem)
+                     == sha.topk_content(q_committed_stem))
+        arts["topk"] = {"status": PASS if same_topk else FAIL,
+                        "content_identical": same_topk}
+        ok = ok and same_topk
+    except FileNotFoundError:
+        arts["topk"] = {"status": INCOMPLETE, "reason": "topk missing"}
+        ok = False
+    rs, cs = (_artifact(q_stem, SUF_SUMMARY),
+              _artifact(q_committed_stem, SUF_SUMMARY))
+    if rs.exists() and cs.exists():
+        r_sum, c_sum = sha.json_of(rs), sha.json_of(cs)
+        same_body = (_summary_minus_govern(r_sum)
+                     == _summary_minus_govern(c_sum))
+        r_gov = dict(r_sum.get("govern") or {})
+        c_gov = dict(c_sum.get("govern") or {})
+        r_led = dict(r_gov.get("quarantine_ledger") or {})
+        for additive in ("diverted_events", "diverted_event_join_key"):
+            r_led.pop(additive, None)
+        if "quarantine_ledger" in r_gov:
+            r_gov["quarantine_ledger"] = r_led
+        same_gov = r_gov == c_gov
+        arts[SUF_SUMMARY] = {
+            "status": PASS if (same_body and same_gov) else FAIL,
+            "body_identical_except_govern": same_body,
+            "govern_identical_minus_additive_keys": same_gov}
+        ok = ok and same_body and same_gov
+    else:
+        arts[SUF_SUMMARY] = {"status": INCOMPLETE, "reason": "summary missing"}
+        ok = False
+    statuses = [a["status"] for a in arts.values()]
+    status = (FAIL if FAIL in statuses
+              else INCOMPLETE if INCOMPLETE in statuses else PASS)
+    return {"status": status, "artifacts": arts}
+
+
+# ---------------------------------------------------------------------------
 # Cross-host determinism
 # ---------------------------------------------------------------------------
 def check_cross_host(sha: ShaLog, darwin_root: Path,
-                     gentoo_root: Path | None) -> dict:
-    """sha256-compare every read artifact against a second-host (gentoo) tree.
+                     gentoo_root: Path | None,
+                     gentoo_sha_manifest: Path | None = None) -> dict:
+    """sha256-verify every read artifact against the canonical (gentoo) stack.
 
-    Single host (no gentoo_root) -> INCOMPLETE: cross-host determinism is a
-    first-class precondition for FINAL §9A certification (PR8 §4.7 cond. 3), but
-    not required for a smoke. With a gentoo_root, each darwin artifact is
-    relocated under it by its path RELATIVE TO the darwin root (so
-    ``none/run.csv`` and ``shadow/run.csv`` never collide); paths outside the
-    root fall back to basename."""
+    Two accepted forms of the §4.7 cond-3 evidence:
+
+    * ``gentoo_root`` — a literal second-host tree to byte-compare against
+      (the original path; requires both trees on one filesystem);
+    * ``gentoo_sha_manifest`` (PR-9.2) — a ``sha256sum``-format digest list
+      computed ON gentoo over the panel tree before transfer. Every artifact
+      the harness read is verified against the gentoo-computed digest of the
+      same relative path. Combined with the run matrix's same-seed twin ON
+      gentoo, this is the PR-10-consistent reading of "sha256-stable across
+      darwin/gentoo": run artifacts are gentoo-canonical and darwin verifies
+      the bytes it scored are the bytes gentoo produced. (Cross-ARCHITECTURE
+      run replication was refuted program-wide in PR-10's result memo — float
+      tails compound through the vigilance gate — so demanding a darwin
+      recompute would fail for reasons §9A does not test.)
+
+    Single host (neither given) -> INCOMPLETE: not required for a smoke, but
+    a FINAL certification cannot pass without one of the two forms."""
+    if gentoo_sha_manifest is not None:
+        digests = {}
+        for line in gentoo_sha_manifest.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            digest, _, rel = line.partition("  ")
+            digests[rel.lstrip("./")] = digest
+        mismatches = []
+        checked = 0
+        for darwin_path, digest in list(sha.manifest.items()):
+            dp = Path(darwin_path)
+            try:
+                rel = str(dp.relative_to(darwin_root))
+            except ValueError:
+                rel = dp.name
+            g = digests.get(rel)
+            if g is None:
+                # Committed baselines read from OUTSIDE the transferred panel
+                # tree (e.g. pr7/twin none stems) have no gentoo-side digest;
+                # they are covered by git object identity on both hosts.
+                continue
+            checked += 1
+            if g != digest:
+                mismatches.append({"artifact": rel, "reason": "sha256 differs"})
+        return {"status": PASS if (checked and not mismatches) else
+                (FAIL if mismatches else INCOMPLETE),
+                "method": "gentoo-sha-manifest",
+                "artifacts_checked": checked, "mismatches": mismatches}
     if gentoo_root is None:
         return {"status": INCOMPLETE,
                 "reason": "single host: cross-host sha256 determinism not "
@@ -578,6 +809,12 @@ def run_certification(manifest: dict, *, manifest_path: str | None = None,
         ledger = check_ledger(sha, shadow_stem, is_clean=is_clean,
                               expected_flagged=r.get("expected_flagged"))
         identity = check_flag_set_identity(sha, none_stem, shadow_stem, q_stem)
+        # PR-9.2: optional fidelity check of the instrumented quarantine
+        # re-run against the committed §8 arm (additive-only ledger growth).
+        fidelity = None
+        if q_stem is not None and stems.get("quarantine_committed"):
+            fidelity = check_quarantine_rerun_fidelity(
+                sha, q_stem, _stem_path(root, stems["quarantine_committed"]))
         clean = None
         if is_clean:
             clean = {"status": inert["status"],
@@ -591,10 +828,14 @@ def run_certification(manifest: dict, *, manifest_path: str | None = None,
         per_run.append({
             "cell": cell, "pair": pair, "seed": seed, "is_clean": is_clean,
             "inertness": inert, "ledger": ledger,
-            "flag_set_identity": identity, "clean_control": clean})
+            "flag_set_identity": identity,
+            "quarantine_rerun_fidelity": fidelity, "clean_control": clean})
 
     panel = check_panel_coverage(runs, seeds, mode, present_by_run)
-    cross_host = check_cross_host(sha, root, gentoo_root)
+    gentoo_sha_manifest = (Path(manifest["gentoo_sha_manifest"])
+                           if manifest.get("gentoo_sha_manifest") else None)
+    cross_host = check_cross_host(sha, root, gentoo_root,
+                                  gentoo_sha_manifest=gentoo_sha_manifest)
 
     # ---- roll up each dimension across runs --------------------------------
     def rollup(key, sub=None):
@@ -625,6 +866,15 @@ def run_certification(manifest: dict, *, manifest_path: str | None = None,
     else:
         clean_status = INCOMPLETE
 
+    # PR-9.2: fidelity rolls up over the runs where a committed §8 quarantine
+    # counterpart was declared (a cell with no committed acting arm — e.g.
+    # pairC clean — has nothing to compare and is not counted). The dimension
+    # exists only when at least one run declares ``quarantine_committed``: it
+    # is a PR-9.2 strengthening check, not a §4.7 condition, so manifests
+    # that never declare it (pre-PR-9.2 smokes, fixtures) are not demoted.
+    fid_sts = [pr["quarantine_rerun_fidelity"]["status"] for pr in per_run
+               if pr["quarantine_rerun_fidelity"] is not None]
+
     dimensions = {
         "inertness": inertness_status,
         "ledger_coverage": ledger_status,
@@ -633,6 +883,10 @@ def run_certification(manifest: dict, *, manifest_path: str | None = None,
         "panel_coverage": panel["status"],
         "cross_host_determinism": cross_host["status"],
     }
+    if fid_sts:
+        dimensions["quarantine_rerun_fidelity"] = (
+            FAIL if FAIL in fid_sts
+            else PASS if all(s == PASS for s in fid_sts) else INCOMPLETE)
 
     # ---- verdict -----------------------------------------------------------
     if FAIL in dimensions.values():

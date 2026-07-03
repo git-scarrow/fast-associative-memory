@@ -19,6 +19,14 @@ frozen scorer never loads the per_slot ``is_*`` diagnostic flags (its
 policy-visible allowlist excludes them — they are driver diagnostics, not
 label-free observables). States here derive from the label-free router
 only; per_slot-flag agreement is reported as a diagnostic.
+
+Reproducibility gate (run before merge):
+
+    python3 harness/harness_boundary_sim.py --check
+
+regenerates every emitted artifact from the committed inputs into a temp
+dir and byte-compares against the committed ``pr12/`` outputs, exiting
+nonzero on any drift (no normalization — byte identity is the contract).
 """
 from __future__ import annotations
 
@@ -283,7 +291,7 @@ def scrub_certified(obj, permitted_notice_types=("abstention_notice",)):
 
 
 def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
-             allow_stale: bool) -> dict:
+             allow_stale: bool, out_root: Path | None = None) -> dict:
     stem = repo / cfg["run_stem"]
     cell = load_cell(stem)
     router = build_router(cell["events"], decode_at_fn(cell["decode_snaps"]))
@@ -296,7 +304,8 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
                                   or hz_none.get("contra_wrong", 0))
                    else "baseline")
 
-    out_dir = repo / policy["output_root"] / name
+    out_dir = (out_root if out_root is not None
+               else repo / policy["output_root"]) / name
     out_dir.mkdir(parents=True, exist_ok=True)
     state_by_epoch = {}
     counters = defaultdict(int)
@@ -497,14 +506,45 @@ def main():
     ap.add_argument("--allow-stale", action="store_true",
                     help="compile stale/superseded items WITH caveat and "
                          "logged authorization (I5 override)")
+    ap.add_argument("--check", action="store_true",
+                    help="reproducibility gate: regenerate every artifact "
+                         "into a temp dir and byte-compare against the "
+                         "committed pr12/ outputs; exit 1 on any drift. "
+                         "No normalization is applied — byte identity is "
+                         "the contract (stdlib json with ensure_ascii, "
+                         "insertion-ordered dicts, sets sorted at "
+                         "emission), so drift is a broken determinism "
+                         "assumption, to be reported, never normalized "
+                         "away silently.")
     args = ap.parse_args()
 
     with open(Path(__file__).parent / "harness_policy.json") as f:
         policy = json.load(f)
+    out_root = None
+    if args.check:
+        import shutil
+        import tempfile
+        out_root = Path(tempfile.mkdtemp(prefix="pr12_bytecheck_"))
     results = {name: run_cell(args.repo_root, name, cfg, policy,
-                              args.allow_stale)
+                              args.allow_stale, out_root=out_root)
                for name, cfg in policy["cells"].items()}
     failures = check(results, policy, args.allow_stale)
+    if args.check:
+        print("\nbyte-identity check vs committed artifacts:")
+        committed_root = args.repo_root / policy["output_root"]
+        for name in policy["cells"]:
+            for fn in ("memory_packet.jsonl", "audit_packet.jsonl",
+                       "decision_table.csv"):
+                fresh = (out_root / name / fn).read_bytes()
+                committed = (committed_root / name / fn).read_bytes()
+                if fresh == committed:
+                    print(f"  PASS  {name}/{fn} byte-identical")
+                else:
+                    failures.append(f"byte drift: {name}/{fn}")
+                    print(f"  FAILED DESIGN ASSUMPTION  {name}/{fn}: "
+                          f"regenerated output differs from committed "
+                          f"bytes ({len(fresh)} vs {len(committed)} bytes)")
+        shutil.rmtree(out_root)
     if failures:
         print(f"\nVERDICT: {len(failures)} FAILED DESIGN ASSUMPTION(S) — "
               "see above. These are boundary-design findings, not "

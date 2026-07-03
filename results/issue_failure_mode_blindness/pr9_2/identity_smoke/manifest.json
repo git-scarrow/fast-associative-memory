@@ -1,0 +1,22 @@
+{
+ "panel": "pr8-9a",
+ "readout": "frozen-87",
+ "mode": "smoke",
+ "artifact_root": ".",
+ "seeds": [
+  0
+ ],
+ "runs": [
+  {
+   "cell": "merge_path_stale",
+   "pair": "hermetic",
+   "seed": 0,
+   "expected_flagged": 24,
+   "stems": {
+    "none": "per_probe_stale_s0_none",
+    "shadow": "per_probe_stale_s0_shadow",
+    "quarantine": "per_probe_stale_s0_quarantine"
+   }
+  }
+ ]
+}

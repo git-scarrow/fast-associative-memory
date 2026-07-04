@@ -77,5 +77,41 @@
       }
     }
   },
-  "output_root": "results/issue_failure_mode_blindness/pr12"
+  "output_root": "results/issue_failure_mode_blindness/pr12",
+  "scan": {
+    "design_memo": "results/issue_failure_mode_blindness/PR12_1_DISPOSITION_RESHAPE.md",
+    "policy_version": "pr12.1-scan-0.1",
+    "shapes": ["prototype", "C1", "C2", "C3"],
+    "suppression_ceiling": 0.05,
+    "output_root": "results/issue_failure_mode_blindness/pr12_1",
+    "cells": {
+      "clean_pairA_s0": {
+        "role": "control",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairA_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_clean_s0.governance.json"
+      },
+      "pairD_stale-soft_s0": {
+        "role": "continuity",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-soft_pairD_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr6/stale_de/per_probe_stale-soft_s0_pairD.governance.json",
+        "anchors": {
+          "certified_abstentions": 300,
+          "stale_wrong_total": 375,
+          "stale_wrong_abstained": 292,
+          "stale_wrong_residual_flagged": 83
+        }
+      },
+      "pairD_contra_s0": {
+        "role": "stress",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairD_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/contra/s0",
+        "hazard_governance_note": "PR-12.1 §4: no per-run governance sibling exists for contra-pairD (checked before pre-registration); the committed pr4 aggregate row is the source"
+      },
+      "pairB_contra_s0": {
+        "role": "stress",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairB_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_contra_s0_pairB.governance.json"
+      }
+    }
+  }
 }

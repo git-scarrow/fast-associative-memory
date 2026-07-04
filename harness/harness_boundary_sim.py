@@ -140,8 +140,29 @@ def build_router(events, decode_at):
             verdicts[E] = ("contradiction" if old_n > 0
                            else "supersession" if new_n > 0 else "ambiguous")
         pairs.append({"I": I, "O": O, "epoch": c["epoch"],
+                      "old_side": old_side, "new_side": new_side,
                       "verdict_by_epoch": verdicts})
     return {"pairs": pairs, "merge": merges, "max_epoch": max_epoch}
+
+
+def pair_counterparts(router):
+    # Mirror of pair_counterparts (lines 371-378): static slot -> {counterpart
+    # slots}; membership never changes across epochs, only verdicts do.
+    cp = defaultdict(set)
+    for p in router["pairs"]:
+        cp[p["I"]].add(p["O"])
+        cp[p["O"]].add(p["I"])
+    return dict(cp)
+
+
+def pair_alt_classes(router):
+    """Slot -> decode classes of the OTHER side of every pair the slot is a
+    member of (PR-12.1 C2 dual-present payload; router evidence only)."""
+    alt = defaultdict(set)
+    for p in router["pairs"]:
+        alt[p["I"]].add(p["new_side"])
+        alt[p["O"]].add(p["old_side"])
+    return dict(alt)
 
 
 def router_state(router, epoch):
@@ -167,7 +188,8 @@ def router_state(router, epoch):
 # ---------------------------------------------------------------------------
 # Harness decision for one probe row
 # ---------------------------------------------------------------------------
-def decide_probe(row, cands, st, allow_stale, policy_version, cell_name):
+def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
+                 shape="prototype", counterpart=None, alt_classes=None):
     epoch = int(float(row["epoch"]))
     probe_index = int(row["probe_index"])
     qid = f"{cell_name}:e{epoch}:p{probe_index}"
@@ -204,14 +226,41 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name):
                                      c["slot"] for c in surv)},
                   "certification_tier": HARNESS_TIER, "caveats": []}
         if led in st["quarantine"]:
-            state, disp, reason = ("quarantined", "escalated",
-                                   "led_quarantined_contradiction")
-            evidence = (f"router(fork_events.csv): slot {led} in "
-                        f"contradiction pair, unresolved @epoch {epoch}")
-            items.append({"type": "unresolved_notice",
-                          "text": "unresolved contradiction fork — answer "
-                                  "withheld pending adjudication",
-                          "certification_tier": HARNESS_TIER})
+            # PR-12.1 §3 disposition shapes for quarantine-led served
+            # answers ONLY; reason_code is shared (no new codes) so V1
+            # (audit basis) is disposition-invariant. shape="prototype"
+            # is byte-identical to PR-12.
+            reason = "led_quarantined_contradiction"
+            surv_slots = {c["slot"] for c in surv}
+            witness_live = bool((counterpart or {}).get(led, set())
+                                & surv_slots)
+            escalate = (shape == "prototype"
+                        or (shape == "C3" and witness_live))
+            if escalate:
+                state, disp = "quarantined", "escalated"
+                evidence = (f"router(fork_events.csv): slot {led} in "
+                            f"contradiction pair, unresolved @epoch {epoch}")
+                if shape == "C3":
+                    evidence += ("; witness-gated: counterpart co-surviving "
+                                 "in this probe's support")
+                items.append({"type": "unresolved_notice",
+                              "text": "unresolved contradiction fork — "
+                                      "answer withheld pending adjudication",
+                              "certification_tier": HARNESS_TIER})
+            else:
+                state, disp = "agent-readable", "shown_with_caveat"
+                evidence = (f"router(fork_events.csv): slot {led} in "
+                            f"contradiction pair, unresolved @epoch {epoch}")
+                if shape == "C3":
+                    evidence += ("; witness-gated: no counterpart in this "
+                                 "probe's support (degraded to caveat)")
+                answer["caveats"].append(
+                    "contradiction: led slot is party to an unresolved "
+                    "contradiction fork (review pending)")
+                if shape == "C2":
+                    answer["alternatives"] = sorted(
+                        (alt_classes or {}).get(led, set()))
+                items.append(answer)
         elif led in st["ambiguous"]:
             state, disp, reason = ("human-review", "escalated",
                                    "led_pending_ambiguous")
@@ -290,13 +339,67 @@ def scrub_certified(obj, permitted_notice_types=("abstention_notice",)):
     return obj
 
 
+def load_hazard(repo: Path, spec: str) -> dict:
+    """Load a committed hazard-governance source. `path#key1#key2`
+    navigates into an aggregate table, each #-segment one literal JSON
+    key (keys may contain slashes, e.g. 'pairD/contra/s0' in
+    pr4_geometry_table.json — PR-12.1 §4: contra-pairD has no per-run
+    sibling). Missing file or key is a stop condition, never worked
+    around."""
+    path, *frags = spec.split("#")
+    with open(repo / path) as f:
+        src = json.load(f)
+    for key in frags:
+        if key not in src:
+            raise FileNotFoundError(
+                f"hazard key '{key}' not found in {path}")
+        src = src[key]
+    return src
+
+
+def build_review_queue(router, led_rows, quarantine_led_by_slot):
+    """PR-12.1 §2 V3 payload: one audit-only record per final-epoch
+    contradiction pair — pair identity, per-side affected row counts,
+    stable exemplar query IDs (explicit no_led_rows when a side never
+    leads a served row). Derived from router + led mapping only, so it
+    is disposition-shape-invariant by construction; V3 checks that."""
+    queue = []
+    for p in router["pairs"]:
+        if p["verdict_by_epoch"].get(router["max_epoch"]) != "contradiction":
+            continue
+        sides = []
+        for slot, side_cls, role in ((p["I"], p["old_side"], "old_side"),
+                                     (p["O"], p["new_side"], "new_side")):
+            rows = led_rows.get(slot, [])
+            side = {"slot": slot, "role": role, "decode_class": side_cls,
+                    "led_row_count": len(rows)}
+            if rows:
+                side["exemplars"] = {"first": rows[0], "last": rows[-1]}
+            else:
+                side["no_led_rows"] = True
+            sides.append(side)
+        queue.append({
+            "record_type": "contradiction_pair_review",
+            "pair": {"incumbent_slot": p["I"], "owner_slot": p["O"],
+                     "onset_epoch": p["epoch"]},
+            "quarantine_led_rows_total":
+                quarantine_led_by_slot.get(p["I"], 0)
+                + quarantine_led_by_slot.get(p["O"], 0),
+            "sides": sides,
+            "certification_tier": HARNESS_TIER})
+    return queue
+
+
 def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
-             allow_stale: bool, out_root: Path | None = None) -> dict:
+             allow_stale: bool, out_root: Path | None = None,
+             shape: str = "prototype", policy_version: str | None = None,
+             emit_review_queue: bool = False) -> dict:
     stem = repo / cfg["run_stem"]
     cell = load_cell(stem)
     router = build_router(cell["events"], decode_at_fn(cell["decode_snaps"]))
-    with open(repo / cfg["hazard_governance"]) as f:
-        hazard_src = json.load(f)
+    counterpart = pair_counterparts(router)
+    alt_classes = pair_alt_classes(router)
+    hazard_src = load_hazard(repo, cfg["hazard_governance"])
     hz_router = hazard_src.get("_router", {})
     hz_none = hazard_src.get("none", {})
     hazard_tier = ("elevated" if (hz_router.get("n_merge_suspect_events", 0)
@@ -307,9 +410,15 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
     out_dir = (out_root if out_root is not None
                else repo / policy["output_root"]) / name
     out_dir.mkdir(parents=True, exist_ok=True)
+    pv = policy_version or policy["policy_version"]
     state_by_epoch = {}
     counters = defaultdict(int)
     table_rows = []
+    led_rows = defaultdict(list)          # slot -> [query_id, ...] (served)
+    quarantine_led_by_slot = defaultdict(int)
+    exposure = {flag: {"caveated": 0, "unmarked": 0}
+                for flag in ("stale_lenient", "contradictory_lenient",
+                             "merge_support", "no_flag")}
     with open(out_dir / "memory_packet.jsonl", "w") as mem_f, \
             open(out_dir / "audit_packet.jsonl", "w") as aud_f:
         for row in cell["probes"]:
@@ -318,8 +427,9 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
                 state_by_epoch[epoch] = router_state(router, epoch)
             st = state_by_epoch[epoch]
             cands = cell["topk"][(epoch, int(row["probe_index"]))]
-            d = decide_probe(row, cands, st, allow_stale,
-                             policy["policy_version"], name)
+            d = decide_probe(row, cands, st, allow_stale, pv, name,
+                             shape=shape, counterpart=counterpart,
+                             alt_classes=alt_classes)
             answer_dec = d["decisions"][0]
             mem_f.write(json.dumps({"query_id": d["query_id"],
                                     "items": d["items"]}) + "\n")
@@ -364,6 +474,51 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
             counters["abstain_led_merge_mismatch"] += int(
                 d["abstained"] != (d["led_slot"] in st["merge"]))
 
+            # ---- PR-12.1 scan tracking (counters only; never emitted on
+            # ---- the prototype byte path, so pr12/ identity is untouched)
+            correct = deployed == truth
+            counters["wrong_none"] += int(not correct)
+            if not d["abstained"]:
+                led_rows[d["led_slot"]].append(d["query_id"])
+                q_led = d["led_slot"] in st["quarantine"]
+                if q_led:
+                    quarantine_led_by_slot[d["led_slot"]] += 1
+                    counters["quarantine_led_served"] += 1
+                    # V1: audit basis retained, never no_adverse_flag
+                    counters["v1_violations"] += int(
+                        answer_dec["reason_code"]
+                        != "led_quarantined_contradiction")
+                    # V2: compiled item carries a contradiction marker
+                    marker = any(
+                        it.get("type") == "unresolved_notice"
+                        or any("contradiction" in cv
+                               for cv in it.get("caveats", []))
+                        for it in d["items"])
+                    counters["v2_violations"] += int(not marker)
+                if answer_dec["disposition"] == "escalated":
+                    counters["escalated_on_correct"] += int(correct)
+                elif answer_dec["disposition"] == "withheld":
+                    counters["withheld_on_correct"] += int(correct)
+                elif not correct:  # wrong row entering the prompt (§5 E)
+                    mark = ("caveated" if answer_dec["disposition"]
+                            == "shown_with_caveat" else "unmarked")
+                    flags = [f for f, on in (
+                        ("stale_lenient", row["stale_lenient"] == "1"),
+                        ("contradictory_lenient",
+                         row["contradictory_lenient"] == "1"),
+                        ("merge_support", d["merge_support"])) if on]
+                    for f in flags or ["no_flag"]:
+                        exposure[f][mark] += 1
+                    counters["wrong_in_prompt"] += 1
+                    counters["wrong_in_prompt_caveated"] += int(
+                        mark == "caveated")
+
+        review_queue = build_review_queue(router, led_rows,
+                                          quarantine_led_by_slot)
+        if emit_review_queue:
+            for rec in review_queue:
+                aud_f.write(json.dumps(rec) + "\n")
+
     with open(out_dir / "decision_table.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(table_rows[0].keys()))
         w.writeheader()
@@ -385,9 +540,13 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
                 "n_conflict_pairs": hz_router.get("n_conflict_pairs"),
                 "n_merge_suspect_events": hz_router.get(
                     "n_merge_suspect_events"),
-                "stale_wrong_none": hz_none.get("stale_wrong")},
+                "n_rows": hz_none.get("n"),
+                "stale_wrong_none": hz_none.get("stale_wrong"),
+                "contra_wrong_none": hz_none.get("contra_wrong")},
             "merge_flag_diag": {"agree": agree, "mismatch": mismatch},
-            "hazard_tier": hazard_tier}
+            "hazard_tier": hazard_tier,
+            "review_queue": review_queue,
+            "exposure": exposure}
 
 
 def check(results: dict, policy: dict, allow_stale: bool) -> list[str]:
@@ -499,6 +658,224 @@ def check(results: dict, policy: dict, allow_stale: bool) -> list[str]:
     return failures
 
 
+# ---------------------------------------------------------------------------
+# PR-12.1 §8 — disposition re-shaping scan (gates scored with no discretion)
+# ---------------------------------------------------------------------------
+def packet_invariants(out_dir: Path) -> dict:
+    """V4 file-level invariants for one emitted (shape, cell): I1
+    certified-string containment and I7 audit completeness. Handles both
+    per-probe records and review-queue records."""
+    leaks = incomplete = 0
+    required = ("query_id", "item_id", "state", "disposition",
+                "reason_code", "evidence_ptr", "certification_tier",
+                "policy_version")
+    for fname in ("memory_packet.jsonl", "audit_packet.jsonl"):
+        with open(out_dir / fname) as f:
+            for line in f:
+                rec = json.loads(line)
+                if "certified" in json.dumps(
+                        scrub_certified(rec)).lower():
+                    leaks += 1
+                for dec in rec.get("decisions", []):
+                    if any(not dec.get(k) for k in required):
+                        incomplete += 1
+    with open(out_dir / "decision_table.csv", newline="") as f:
+        for r in csv.DictReader(f):
+            r.pop("certification_tier", None)
+            if "certified" in json.dumps(r).lower():
+                leaks += 1
+    return {"certified_leaks": leaks, "incomplete_audits": incomplete}
+
+
+def base_bytecheck(repo: Path, policy: dict, allow_stale: bool) -> bool:
+    """PR-12 reproducibility gate, callable: regenerate the committed
+    pr12/ cells into a temp dir and byte-compare. True iff all
+    byte-identical."""
+    import shutil
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix="pr12_bytecheck_"))
+    ok = True
+    try:
+        for name, cfg in policy["cells"].items():
+            run_cell(repo, name, cfg, policy, allow_stale, out_root=tmp)
+            for fn in ("memory_packet.jsonl", "audit_packet.jsonl",
+                       "decision_table.csv"):
+                fresh = (tmp / name / fn).read_bytes()
+                committed = (repo / policy["output_root"] / name
+                             / fn).read_bytes()
+                ok &= fresh == committed
+    finally:
+        shutil.rmtree(tmp)
+    return ok
+
+
+def run_scan(repo: Path, policy: dict, allow_stale: bool) -> int:
+    scan = policy["scan"]
+    shapes = scan["shapes"]
+    cells = scan["cells"]
+    ceiling = scan["suppression_ceiling"]
+    pv = scan["policy_version"]
+    scan_root = repo / scan["output_root"]
+    report = {"design_memo": scan["design_memo"], "policy_version": pv,
+              "suppression_ceiling": ceiling, "shapes": shapes,
+              "cells": list(cells), "gates": {}, "exposure": {},
+              "counters": {}, "blocked": []}
+
+    print("G-R prologue: PR-12 base byte-gate")
+    before = base_bytecheck(repo, policy, allow_stale)
+    report["base_bytecheck_before"] = before
+    print(f"  {'PASS' if before else 'FAILED DESIGN ASSUMPTION'}  "
+          f"pr12/ regeneration byte-identical (before scan)")
+
+    results = {}
+    for shape in shapes:
+        for name, cfg in cells.items():
+            try:
+                results[(shape, name)] = run_cell(
+                    repo, name, cfg, policy, allow_stale,
+                    out_root=scan_root / shape, shape=shape,
+                    policy_version=pv, emit_review_queue=True)
+            except FileNotFoundError as e:
+                report["blocked"].append(
+                    {"shape": shape, "cell": name, "missing": str(e)})
+    if report["blocked"]:
+        report["verdict"] = "reshape-blocked"
+        _write_report(scan_root, report)
+        print(f"\nVERDICT: reshape-blocked — missing committed inputs: "
+              f"{report['blocked']}")
+        return 1
+
+    # ---- instrumentation gates (shape-independent -> blocked on failure)
+    blocked = not before
+    for name, cfg in cells.items():
+        res = results[("prototype", name)]
+        c, rc, hz = res["counters"], res["router_counts"], \
+            res["hazard_source_counts"]
+        checks = {
+            "router_pairs_match_committed":
+                hz["n_conflict_pairs"] is None
+                or rc["n_conflict_pairs"] == hz["n_conflict_pairs"],
+            "router_merges_match_committed":
+                hz["n_merge_suspect_events"] is None
+                or rc["n_merge_suspect_events"]
+                == hz["n_merge_suspect_events"],
+            "row_count_matches_committed":
+                hz["n_rows"] is None or c["n"] == hz["n_rows"],
+            "abstain_set_exact": c["abstain_led_merge_mismatch"] == 0,
+        }
+        report["gates"].setdefault("instrumentation", {})[name] = checks
+        for label, okc in checks.items():
+            print(f"  {'PASS' if okc else 'FAILED DESIGN ASSUMPTION'}  "
+                  f"[{name}] {label}")
+            blocked |= not okc
+    if blocked:
+        report["verdict"] = "reshape-blocked"
+        _write_report(scan_root, report)
+        print("\nVERDICT: reshape-blocked — instrumentation contradiction "
+              "(anchor break or base byte-gate failure); no candidate may "
+              "be judged from a blocked run.")
+        return 1
+
+    # ---- per-candidate gates
+    candidates_pass = []
+    for shape in shapes:
+        report["gates"][shape] = {}
+        report["exposure"][shape] = {}
+        report["counters"][shape] = {}
+        shape_ok = True
+        print(f"\n[{shape}]")
+        for name, cfg in cells.items():
+            res = results[(shape, name)]
+            proto = results[("prototype", name)]
+            c = res["counters"]
+            denom = c["n"] - c["wrong_none"]
+            supp = c.get("escalated_on_correct", 0) \
+                + c.get("withheld_on_correct", 0)
+            rate = supp / denom if denom else 0.0
+            inv = packet_invariants(res["out_dir"])
+            gates = {
+                "G-S": {"suppressive_on_correct": supp,
+                        "correct_traffic": denom,
+                        "rate": round(rate, 6),
+                        "pass": rate <= ceiling},
+                "V1": {"quarantine_led_served":
+                       c.get("quarantine_led_served", 0),
+                       "violations": c.get("v1_violations", 0),
+                       "pass": c.get("v1_violations", 0) == 0},
+                "V2": {"violations": c.get("v2_violations", 0),
+                       "pass": c.get("v2_violations", 0) == 0},
+                "V3": {"pairs": len(res["review_queue"]),
+                       "pass": res["review_queue"]
+                       == proto["review_queue"]},
+                "V4": {**inv,
+                       "pass": inv["certified_leaks"] == 0
+                       and inv["incomplete_audits"] == 0},
+                "G-R_mech_d_superseded_identical": {
+                    "pass": all(
+                        c.get(k, 0) == proto["counters"].get(k, 0)
+                        for k in ("state:human-review", "state:superseded",
+                                  "abstained",
+                                  "stale_wrong_flagged_served"))},
+            }
+            if cfg["role"] == "continuity":
+                a = cfg["anchors"]
+                gates["G-R_anchors"] = {"pass": (
+                    c["abstained"] == a["certified_abstentions"]
+                    and c["stale_wrong"] == a["stale_wrong_total"]
+                    and c["stale_wrong_abstained"]
+                    == a["stale_wrong_abstained"]
+                    and c["stale_wrong_flagged_served"]
+                    == a["stale_wrong_residual_flagged"]
+                    and c["stale_wrong_unflagged_served"] == 0)}
+            if cfg["role"] == "control":
+                adverse = sum(v for k, v in c.items()
+                              if k.startswith("state:")
+                              and k.split(":", 1)[1] != "agent-readable") \
+                    + c.get("disposition:shown_with_caveat", 0) \
+                    + c.get("disposition:withheld", 0) \
+                    + c.get("disposition:escalated", 0)
+                gates["G-R_control_zero_adverse"] = {
+                    "adverse": adverse, "pass": adverse == 0}
+            report["gates"][shape][name] = gates
+            report["exposure"][shape][name] = res["exposure"]
+            report["counters"][shape][name] = res["counters"]
+            cell_ok = all(g["pass"] for g in gates.values())
+            shape_ok &= cell_ok
+            print(f"  [{name}] " + "  ".join(
+                f"{g}={'PASS' if v['pass'] else 'FAIL'}"
+                + (f"({v['rate']:.3f})" if g == "G-S" else "")
+                for g, v in gates.items()))
+        if shape != "prototype" and shape_ok:
+            candidates_pass.append(shape)
+
+    print("\nG-R epilogue: PR-12 base byte-gate")
+    after = base_bytecheck(repo, policy, allow_stale)
+    report["base_bytecheck_after"] = after
+    print(f"  {'PASS' if after else 'FAILED DESIGN ASSUMPTION'}  "
+          f"pr12/ regeneration byte-identical (after scan)")
+    if not after:
+        report["verdict"] = "reshape-blocked"
+        _write_report(scan_root, report)
+        return 1
+
+    report["candidates_pass"] = candidates_pass
+    report["verdict"] = (f"reshape-evidence-GO({','.join(candidates_pass)})"
+                         if candidates_pass else "reshape-negative")
+    _write_report(scan_root, report)
+    print(f"\nVERDICT: {report['verdict']}")
+    print("Scope (PR12_1_DISPOSITION_RESHAPE.md §5): reshape evidence at "
+          "the offline simulator layer only — not runtime prompt safety, "
+          "not policy promotion.")
+    return 0
+
+
+def _write_report(scan_root: Path, report: dict):
+    scan_root.mkdir(parents=True, exist_ok=True)
+    with open(scan_root / "reshape_scan.json", "w") as f:
+        json.dump(report, f, indent=1, sort_keys=True)
+        f.write("\n")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--repo-root", type=Path,
@@ -516,10 +893,37 @@ def main():
                          "emission), so drift is a broken determinism "
                          "assumption, to be reported, never normalized "
                          "away silently.")
+    ap.add_argument("--shape", choices=["prototype", "C1", "C2", "C3"],
+                    help="PR-12.1 §3 disposition shape for quarantine-led "
+                         "served answers; emits one shape over the scan "
+                         "panel under pr12_1/<shape>/ without gate "
+                         "scoring")
+    ap.add_argument("--scan", action="store_true",
+                    help="PR-12.1 §8 full scan: all shapes × all panel "
+                         "cells, §5 gates scored with no discretion, "
+                         "reshape_scan.json + verdict; includes the PR-12 "
+                         "base byte-gate before and after")
     args = ap.parse_args()
 
     with open(Path(__file__).parent / "harness_policy.json") as f:
         policy = json.load(f)
+    if args.scan:
+        sys.exit(run_scan(args.repo_root, policy, args.allow_stale))
+    if args.shape:
+        scan = policy["scan"]
+        for name, cfg in scan["cells"].items():
+            res = run_cell(args.repo_root, name, cfg, policy,
+                           args.allow_stale,
+                           out_root=args.repo_root / scan["output_root"]
+                           / args.shape,
+                           shape=args.shape,
+                           policy_version=scan["policy_version"],
+                           emit_review_queue=True)
+            print(f"[{args.shape}/{name}] -> {res['out_dir']} | "
+                  + ", ".join(f"{k.split(':', 1)[1]}={v}"
+                              for k, v in sorted(res["counters"].items())
+                              if k.startswith("disposition:")))
+        return
     out_root = None
     if args.check:
         import shutil

@@ -237,3 +237,81 @@ measurement.*
 > Score the §5 gates with no discretion and append the §9 results
 > section to this memo with the verdict. Stop there: no policy-version
 > promotion, no agent integration, no additional cells or candidates.
+
+## 9. Results (appended after the scan): **`reshape-negative`**
+
+*Appended 2026-07-04. Scan executed exactly as §8 authorizes:
+`python3 harness/harness_boundary_sim.py --scan` (policy
+`pr12.1-scan-0.1`), all four shapes × all four §4 cells, gates scored
+with no discretion; every number below is recomputable from
+`pr12_1/reshape_scan.json`. The PR-12 base byte-gate was green before
+and after; the committed `pr12/` outputs are untouched. All 49 emitted
+files are committed (git-compressed; each regenerable byte-exactly via
+`--shape <s>`). One implementation defect was caught by the blocked
+path working as designed: the first scan run returned
+`reshape-blocked` because the hazard-fragment loader split
+`pr4_geometry_table.json`'s literal `pairD/contra/s0` key on slashes —
+fixed to `#`-segment navigation and re-run; no gate was touched.*
+
+**Instrumentation gates: all PASS.** Router rebuild matches every
+committed source on every cell — including the pr4 aggregate row for
+contra-pairD (237 conflict pairs, 0 merge events, row counts equal) —
+so PR-10 G1 write-stream byte-identity held across artifact eras, and
+the certified abstain set equals the merge-led set row-for-row on all
+four cells.
+
+**G-S suppression on correct traffic (ceiling 0.05, every cell):**
+
+| shape | clean (2,532) | pairD/stale-soft (2,449) | pairD/contra (2,136) | pairB/contra (2,476) |
+|---|---|---|---|---|
+| prototype (baseline) | 0.000 | 0.307 | 0.593 | 0.538 |
+| C1 contradiction-caveat | 0.000 | **0.018** | **0.113** | **0.103** |
+| C2 dual-present-inline | 0.000 | **0.018** | **0.113** | **0.103** |
+| C3 witness-gated | 0.000 | 0.162 | 0.593 | 0.538 |
+
+No candidate passes G-S on every cell → **`reshape-negative`** (§5, no
+discretion). G-V (V1–V4) and G-R passed for every shape × cell: zero
+V1/V2 violations, review queues payload-identical across shapes
+(28 / 208 / 209 / 0 contradiction pairs with per-side counts and
+exemplars, `no_led_rows` sides explicit), mechanisms (a)/(d),
+superseded handling, and the PR-12 continuity anchors
+(300; 375 = 292 + 83) byte-stable under every shape.
+
+**Finding 1 — the memo's title question answers YES; the gate still
+says no.** Quarantine-led escalation itself is fully removable with
+zero visibility loss: C1/C2 eliminate 100% of it on every cell while
+V1–V4 pass everywhere. The residual G-S failure on the contra cells is
+**entirely mechanism (d) pending-led escalation** — 242 (pairD) and
+256 (pairB) correct rows, with superseded-withholding contributing 0 —
+the §6-flagged out-of-scope risk, materialized. On contra geometry the
+29 never-resolving ambiguous pairs lead 303 served rows per cell.
+Mechanism (c) is no longer the binding suppressor anywhere; (d) is.
+
+**Finding 2 — C3 falsified sharply.** On both contra cells
+witness-gating degraded *nothing* (rates identical to prototype):
+counterpart co-survival is universal there because contradiction forks
+are co-resident by construction. On the continuity cell it halves
+suppression (0.307 → 0.162) but sits 3× over the ceiling. PR-4's
+slot-granularity falsification extends to read-time co-residence
+gating at the harness layer.
+
+**Exposure report (§5 E, report-only).** C1/C2 add **only caveated**
+wrong rows to the prompt; the unmarked wrong-in-prompt count is
+identical to the prototype on every cell (33 continuity / 104
+pairD-contra / 1 pairB-contra — rows the router never localized in any
+shape). Newly exposed caveated wrong rows: 142 continuity (83
+stale+merge-flagged, 72 no-flag-but-quarantine-led, overlap counted
+per flag), 446 pairD-contra, 300 pairB-contra. C2's alternatives
+payload has identical economics to C1 — richer disclosure at zero
+suppression cost.
+
+**Consequence (§7, pre-registered, applied verbatim).** No candidate
+GOes; no threshold motion, no gate re-scoping, no re-scored variant
+without a new pre-registration. The honest §9 observation for any
+successor: the binding constraint has moved from mechanism (c) to
+mechanism (d)'s pending-led handling on contra geometry, which §0
+froze out of scope here — a candidate addressing (d) (e.g.
+dual-presentation economics for never-resolving pairs) requires its
+own pre-registration with its own gates. Verdict scope per §5: this
+scan certifies reshape evidence at the offline simulator layer only —
+not runtime prompt safety, not policy promotion.

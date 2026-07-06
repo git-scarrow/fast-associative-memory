@@ -270,3 +270,79 @@ explicit scope boundary (not checkable now, therefore never claimed):
   pending_scan.json` — every G-S/G-M/G-T/G-V/G-R check, the E report,
   both byte-gate results, and the verdict; every number in the appended
   results section must be recomputable from it.
+
+## 11. Erratum E1 (authorized amendment; appended 2026-07-05, before the judging run)
+
+The first scan run (2026-07-05) returned `pending-blocked` on kill
+condition 3: §8's prototype byte-no-op clause, as written, is
+self-contradictory with §10 — the audit packets necessarily embed the
+§10-mandated per-record `policy_version` (`pr12.2-scan-0.1`) and the
+§10-mandated appended `ambiguous_pair_review` records, so byte identity
+to the committed `pr12_1/prototype/` audit packets is impossible by
+construction (on the shared cells without ambiguous pairs the files
+differ at identical byte counts — the version digit alone). Erratum,
+explicitly authorized and limited to instrumentation mechanics:
+
+**The prototype byte-no-op audit-packet check excludes only (1) the
+per-record `policy_version` field introduced by the PR-12.2 scan
+instrumentation, and (2) the appended `ambiguous_pair_review` records
+required by §10.** The comparison is performed record-by-record after
+those two exclusions and must otherwise be exact. Memory-packet byte
+identity and decision-table byte identity are NOT altered — they remain
+strict. No gate (G-S, G-M, G-T, V1′–V4′, G-R), no threshold, no
+intervention family, and no verdict criterion is changed by this
+erratum. Also recorded from the blocked run: an implementation defect
+(D1/D2 accidentally inheriting C1's quarantine caveat — an unauthorized
+C1 revival) was caught by `G-R_non_pending_identical` failing on every
+cell and fixed before any judging run; the gate designed to catch
+exactly that caught exactly that.
+
+## 12. Results (appended after the judging run): **`pending-negative`**
+
+*Appended 2026-07-05. One judging run under erratum E1
+(`python3 harness/harness_boundary_sim.py --scan12-2`); every number
+recomputable from `pr12_2/pending_scan.json`. All kill conditions clear
+(router/hazard cross-checks on all six cells including 32/32 one-shot
+ambiguous pairs; PR-12 base byte-gate green before and after; prototype
+memory packets and decision tables strictly byte-identical to
+`pr12_1/prototype/` on the shared cells; audit packets identical modulo
+exactly the two E1 exclusions). No candidate passes on every cell →
+`pending-negative` (§5, no discretion).*
+
+**The structural fact this verdict records: G-S is unpassable by design
+under the frozen-quarantine baseline.** §2 froze mechanism (c) at the
+prototype escalation, and G-S counts all suppression — so the frozen
+quarantine burden alone (0.29–0.59 of correct traffic on every
+non-clean cell) exceeds the 0.05 ceiling regardless of what any
+pending-led candidate does. The verdict is therefore pre-determined by
+gate composition, not by candidate behavior; this is recorded as a
+finding about the pre-registration's design, not reinterpreted away.
+Per §4 (no gate re-scoping) it stands; a pending-attributable
+suppression gate is a PR-12.3 question, not an amendment here.
+
+**What the candidates showed inside that envelope (evidence, no GO):**
+
+* **G-M behaved as pre-registered.** D1 fails the presentation-mass
+  ceiling on both contra cells (0.113 / 0.103 — the §5 brute-force
+  prediction, confirmed); D2's never-resolving selectivity passes G-M
+  everywhere (0.000–0.007), dual-presenting 15–16 rows per contra cell
+  and 10–12 per one-shot cell instead of D1's hundreds.
+* **G-T falsified the §5 triviality analysis in the opposite
+  direction.** Predicted near-saturation on one-shot cells; measured
+  **low** containment exactly there — D1 0.203 (pairD) / 0.494 (pairB),
+  D2 0.160 / 0.493, all below the 0.5 floor — while pairB/contra is
+  high (0.957) and pairD/contra middling (0.689 D1 / 0.333 D2). The
+  dual-presentation's candidate set often does not contain the truth
+  precisely where the never-resolving harm class lives: the wrong rows'
+  leading pairs are frequently not the probe's true-class fork.
+  Dual-presentation as constructed is not a truth-recovery mechanism on
+  one-shot geometry.
+* **Visibility is not the obstacle.** V1′–V4′ pass for every shape ×
+  cell; both review queues (contradiction and ambiguous, full payload)
+  are identical across shapes; `G-R_non_pending_identical` passes
+  everywhere after the §11 defect fix — D1/D2 verifiably touch
+  pending-led rows only.
+
+Verdict scope per §5, restated: offline-simulator evidence only — no
+prompt-safety, promotion, memory-ingestion, or autonomous
+downstream-use claim; PR-12.2 is **not** a pass.

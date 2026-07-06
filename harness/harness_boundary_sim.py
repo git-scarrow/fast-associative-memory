@@ -188,8 +188,24 @@ def router_state(router, epoch):
 # ---------------------------------------------------------------------------
 # Harness decision for one probe row
 # ---------------------------------------------------------------------------
+def ambiguous_pairs_at(router, epoch, st):
+    """slot -> [{'onset': pair onset epoch, 'alt': counterpart decode
+    class}] for pairs whose verdict at `epoch` is ambiguous, restricted
+    to slots the router-state precedence left in the ambiguous set
+    (PR-12.2 §3; router evidence only, no lookahead)."""
+    out = defaultdict(list)
+    for p in router["pairs"]:
+        if p["verdict_by_epoch"].get(epoch) != "ambiguous":
+            continue
+        for slot, alt in ((p["I"], p["new_side"]), (p["O"], p["old_side"])):
+            if slot in st["ambiguous"]:
+                out[slot].append({"onset": p["epoch"], "alt": alt})
+    return dict(out)
+
+
 def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
-                 shape="prototype", counterpart=None, alt_classes=None):
+                 shape="prototype", counterpart=None, alt_classes=None,
+                 amb_pairs=None):
     epoch = int(float(row["epoch"]))
     probe_index = int(row["probe_index"])
     qid = f"{cell_name}:e{epoch}:p{probe_index}"
@@ -198,6 +214,7 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
            if surv else None)
     merge_support = any(c["slot"] in st["merge"] for c in surv)
     abstained = row["served_outcome"] == "abstain"
+    dual_out = None
 
     def audit(item_id, state, disposition, reason, evidence, tier,
               authorization=None):
@@ -234,7 +251,10 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
             surv_slots = {c["slot"] for c in surv}
             witness_live = bool((counterpart or {}).get(led, set())
                                 & surv_slots)
-            escalate = (shape == "prototype"
+            # PR-12.2 shapes D1/D2 modify pending-led rows ONLY (§2/§4);
+            # quarantine-led escalation keeps the prototype disposition
+            # under them — C1/C2 behavior is NOT revived.
+            escalate = (shape in ("prototype", "D1", "D2")
                         or (shape == "C3" and witness_live))
             if escalate:
                 state, disp = "quarantined", "escalated"
@@ -262,14 +282,55 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
                         (alt_classes or {}).get(led, set()))
                 items.append(answer)
         elif led in st["ambiguous"]:
-            state, disp, reason = ("human-review", "escalated",
-                                   "led_pending_ambiguous")
-            evidence = (f"router(fork_events.csv): slot {led} in "
-                        f"ambiguous (pending) pair @epoch {epoch}")
-            items.append({"type": "unresolved_notice",
-                          "text": "unresolved fork — two candidates, "
-                                  "unresolved tie",
-                          "certification_tier": HARNESS_TIER})
+            # PR-12.2 §3 shapes for pending-led served answers ONLY;
+            # reason_code shared (V1' is disposition-invariant). Every
+            # shape other than D1/D2 keeps the PR-12 prototype
+            # escalation byte-identically. D2's never-resolving
+            # classifier uses onset epoch vs current epoch only —
+            # no future-epoch verdict is consulted (§4).
+            reason = "led_pending_ambiguous"
+            pairs_here = (amb_pairs or {}).get(led, [])
+            fresh = any(p["onset"] == epoch for p in pairs_here)
+            dual = bool(pairs_here) and (
+                shape == "D1" or (shape == "D2" and not fresh))
+            if not dual:
+                state, disp = "human-review", "escalated"
+                evidence = (f"router(fork_events.csv): slot {led} in "
+                            f"ambiguous (pending) pair @epoch {epoch}")
+                if shape == "D2":
+                    evidence += ("; age-gated: pair inside its onset "
+                                 "epoch (genuinely undecided)")
+                items.append({"type": "unresolved_notice",
+                              "text": "unresolved fork — two candidates, "
+                                      "unresolved tie",
+                              "certification_tier": HARNESS_TIER})
+            else:
+                state, disp = "human-review", "shown_with_caveat"
+                alts = sorted({p["alt"] for p in pairs_here})
+                deployed_label = int(float(row["vote_pred_label"]))
+                dual_classes = sorted({deployed_label, *alts})
+                evidence = (f"router(fork_events.csv): slot {led} in "
+                            f"ambiguous (pending) pair @epoch {epoch}; "
+                            f"never-resolving classifier: ambiguous past "
+                            f"onset (onsets "
+                            f"{sorted({p['onset'] for p in pairs_here})})"
+                            if shape == "D2" else
+                            f"router(fork_events.csv): slot {led} in "
+                            f"ambiguous (pending) pair @epoch {epoch}; "
+                            f"dual-present-all")
+                items.append({
+                    "type": "unresolved_tie",
+                    "text": "unresolved tie — two candidates, neither "
+                            "asserted",
+                    "candidates": [
+                        {"decode_class": deployed_label, "slot": led,
+                         "basis": "deployed vote"},
+                        *[{"decode_class": a,
+                           "basis": "fork counterpart (router pair)"}
+                          for a in alts]],
+                    "certification_tier": HARNESS_TIER})
+                answer = None  # never compiled as a single answer
+                dual_out = dual_classes
         elif led in st["deprecate"]:
             state, reason = "superseded", "led_superseded_supersession"
             evidence = (f"router(fork_events.csv): slot {led} superseded "
@@ -317,7 +378,9 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
                                "absence is evidenced by k, not enumerable"}
     return {"query_id": qid, "items": items, "decisions": decisions,
             "retrieval_scope": retrieval_scope, "led_slot": led,
-            "merge_support": merge_support, "abstained": abstained}
+            "merge_support": merge_support, "abstained": abstained,
+            "pending_led": (not abstained and led in st["ambiguous"]),
+            "dual_classes": dual_out}
 
 
 # ---------------------------------------------------------------------------
@@ -390,10 +453,41 @@ def build_review_queue(router, led_rows, quarantine_led_by_slot):
     return queue
 
 
+def build_ambiguous_queue(router, led_rows):
+    """PR-12.2 §6 V3' payload: one audit-only record per final-epoch
+    ambiguous pair — identity, the never-resolving classification
+    (recorded for every shape), per-side counts and exemplars, explicit
+    no_led_rows. Disposition-shape-invariant by construction."""
+    queue = []
+    for p in router["pairs"]:
+        if p["verdict_by_epoch"].get(router["max_epoch"]) != "ambiguous":
+            continue
+        sides = []
+        for slot, side_cls, role in ((p["I"], p["old_side"], "old_side"),
+                                     (p["O"], p["new_side"], "new_side")):
+            rows = led_rows.get(slot, [])
+            side = {"slot": slot, "role": role, "decode_class": side_cls,
+                    "led_row_count": len(rows)}
+            if rows:
+                side["exemplars"] = {"first": rows[0], "last": rows[-1]}
+            else:
+                side["no_led_rows"] = True
+            sides.append(side)
+        queue.append({
+            "record_type": "ambiguous_pair_review",
+            "pair": {"incumbent_slot": p["I"], "owner_slot": p["O"],
+                     "onset_epoch": p["epoch"]},
+            "never_resolving": p["epoch"] < router["max_epoch"],
+            "sides": sides,
+            "certification_tier": HARNESS_TIER})
+    return queue
+
+
 def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
              allow_stale: bool, out_root: Path | None = None,
              shape: str = "prototype", policy_version: str | None = None,
-             emit_review_queue: bool = False) -> dict:
+             emit_review_queue: bool = False,
+             emit_ambiguous_queue: bool = False) -> dict:
     stem = repo / cfg["run_stem"]
     cell = load_cell(stem)
     router = build_router(cell["events"], decode_at_fn(cell["decode_snaps"]))
@@ -416,20 +510,24 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
     table_rows = []
     led_rows = defaultdict(list)          # slot -> [query_id, ...] (served)
     quarantine_led_by_slot = defaultdict(int)
-    exposure = {flag: {"caveated": 0, "unmarked": 0}
+    exposure = {flag: {"caveated": 0, "unmarked": 0, "dual_presented": 0}
                 for flag in ("stale_lenient", "contradictory_lenient",
                              "merge_support", "no_flag")}
+    amb_by_epoch = {}
     with open(out_dir / "memory_packet.jsonl", "w") as mem_f, \
             open(out_dir / "audit_packet.jsonl", "w") as aud_f:
         for row in cell["probes"]:
             epoch = int(float(row["epoch"]))
             if epoch not in state_by_epoch:
                 state_by_epoch[epoch] = router_state(router, epoch)
+                amb_by_epoch[epoch] = ambiguous_pairs_at(
+                    router, epoch, state_by_epoch[epoch])
             st = state_by_epoch[epoch]
             cands = cell["topk"][(epoch, int(row["probe_index"]))]
             d = decide_probe(row, cands, st, allow_stale, pv, name,
                              shape=shape, counterpart=counterpart,
-                             alt_classes=alt_classes)
+                             alt_classes=alt_classes,
+                             amb_pairs=amb_by_epoch[epoch])
             answer_dec = d["decisions"][0]
             mem_f.write(json.dumps({"query_id": d["query_id"],
                                     "items": d["items"]}) + "\n")
@@ -495,12 +593,34 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
                                for cv in it.get("caveats", []))
                         for it in d["items"])
                     counters["v2_violations"] += int(not marker)
+                if d["pending_led"]:
+                    counters["pending_led_served"] += 1
+                    # V1'/V2' (PR-12.2 §6): audit basis + prompt marker
+                    counters["v1p_violations"] += int(
+                        answer_dec["reason_code"]
+                        != "led_pending_ambiguous")
+                    marker = any(it.get("type") in ("unresolved_notice",
+                                                    "unresolved_tie")
+                                 for it in d["items"])
+                    counters["v2p_violations"] += int(not marker)
+                    if d["dual_classes"] is not None:
+                        counters["pending_dual"] += 1
+                        counters["pending_dual_on_correct"] += int(correct)
+                        if not correct:
+                            counters["pending_dual_wrong"] += 1
+                            counters["pending_dual_truth_contained"] += int(
+                                truth in d["dual_classes"])
+                    else:
+                        counters["pending_escalated"] += 1
                 if answer_dec["disposition"] == "escalated":
                     counters["escalated_on_correct"] += int(correct)
                 elif answer_dec["disposition"] == "withheld":
                     counters["withheld_on_correct"] += int(correct)
                 elif not correct:  # wrong row entering the prompt (§5 E)
-                    mark = ("caveated" if answer_dec["disposition"]
+                    mark = ("dual_presented"
+                            if d["dual_classes"] is not None
+                            else "caveated"
+                            if answer_dec["disposition"]
                             == "shown_with_caveat" else "unmarked")
                     flags = [f for f, on in (
                         ("stale_lenient", row["stale_lenient"] == "1"),
@@ -515,8 +635,12 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
 
         review_queue = build_review_queue(router, led_rows,
                                           quarantine_led_by_slot)
+        ambiguous_queue = build_ambiguous_queue(router, led_rows)
         if emit_review_queue:
             for rec in review_queue:
+                aud_f.write(json.dumps(rec) + "\n")
+        if emit_ambiguous_queue:
+            for rec in ambiguous_queue:
                 aud_f.write(json.dumps(rec) + "\n")
 
     with open(out_dir / "decision_table.csv", "w", newline="") as f:
@@ -542,10 +666,13 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
                     "n_merge_suspect_events"),
                 "n_rows": hz_none.get("n"),
                 "stale_wrong_none": hz_none.get("stale_wrong"),
-                "contra_wrong_none": hz_none.get("contra_wrong")},
+                "contra_wrong_none": hz_none.get("contra_wrong"),
+                "ambiguous_pairs_final": hz_router.get(
+                    "final_epoch_verdicts", {}).get("ambiguous", 0)},
             "merge_flag_diag": {"agree": agree, "mismatch": mismatch},
             "hazard_tier": hazard_tier,
             "review_queue": review_queue,
+            "ambiguous_queue": ambiguous_queue,
             "exposure": exposure}
 
 
@@ -869,11 +996,245 @@ def run_scan(repo: Path, policy: dict, allow_stale: bool) -> int:
     return 0
 
 
-def _write_report(scan_root: Path, report: dict):
+def _write_report(scan_root: Path, report: dict,
+                  fname: str = "reshape_scan.json"):
     scan_root.mkdir(parents=True, exist_ok=True)
-    with open(scan_root / "reshape_scan.json", "w") as f:
+    with open(scan_root / fname, "w") as f:
         json.dump(report, f, indent=1, sort_keys=True)
         f.write("\n")
+
+
+# ---------------------------------------------------------------------------
+# PR-12.2 §5 — pending dual-presentation scan (gates scored, no discretion)
+# ---------------------------------------------------------------------------
+def run_scan12_2(repo: Path, policy: dict, allow_stale: bool) -> int:
+    scan = policy["scan12_2"]
+    shapes, cells, pv = scan["shapes"], scan["cells"], scan["policy_version"]
+    s_ceil, m_ceil = scan["suppression_ceiling"], \
+        scan["presentation_mass_ceiling"]
+    t_floor = scan["truth_containment_floor"]
+    scan_root = repo / scan["output_root"]
+    report = {"design_memo": scan["design_memo"], "policy_version": pv,
+              "ceilings": {"G-S": s_ceil, "G-M": m_ceil, "G-T": t_floor},
+              "shapes": shapes, "cells": list(cells), "gates": {},
+              "exposure": {}, "counters": {}, "kill_conditions": []}
+
+    def kill(cond, label, detail):
+        ok = not cond
+        print(f"  {'PASS' if ok else 'KILL'}  {label}"
+              + ("" if ok else f": {detail}"))
+        if cond:
+            report["kill_conditions"].append({"label": label,
+                                              "detail": detail})
+
+    print("§8 prologue: PR-12 base byte-gate")
+    before = base_bytecheck(repo, policy, allow_stale)
+    report["base_bytecheck_before"] = before
+    kill(not before, "kill-2: base byte-gate green (before)",
+         "pr12/ regeneration drifted")
+
+    results = {}
+    for shape in shapes:
+        for name, cfg in cells.items():
+            try:
+                results[(shape, name)] = run_cell(
+                    repo, name, cfg, policy, allow_stale,
+                    out_root=scan_root / shape, shape=shape,
+                    policy_version=pv, emit_review_queue=True,
+                    emit_ambiguous_queue=True)
+            except FileNotFoundError as e:
+                kill(True, f"kill-1: committed input present "
+                     f"[{shape}/{name}]", str(e))
+    if report["kill_conditions"]:
+        report["verdict"] = "pending-blocked"
+        _write_report(scan_root, report, "pending_scan.json")
+        print(f"\nVERDICT: pending-blocked — {report['kill_conditions']}")
+        return 1
+
+    # ---- kill conditions 1 (cross-checks), 3 (byte-no-op), 4 (exactness)
+    for name, cfg in cells.items():
+        res = results[("prototype", name)]
+        c, rc, hz = res["counters"], res["router_counts"], \
+            res["hazard_source_counts"]
+        kill(hz["n_conflict_pairs"] is not None
+             and rc["n_conflict_pairs"] != hz["n_conflict_pairs"],
+             f"kill-1: router pairs match committed [{name}]",
+             f"rebuilt {rc['n_conflict_pairs']} vs {hz['n_conflict_pairs']}")
+        kill(hz["n_merge_suspect_events"] is not None
+             and rc["n_merge_suspect_events"]
+             != hz["n_merge_suspect_events"],
+             f"kill-1: router merges match committed [{name}]",
+             f"rebuilt {rc['n_merge_suspect_events']} vs "
+             f"{hz['n_merge_suspect_events']}")
+        kill(hz["n_rows"] is not None and c["n"] != hz["n_rows"],
+             f"kill-1: row count matches committed [{name}]",
+             f"{c['n']} vs {hz['n_rows']}")
+        n_amb = len(res["ambiguous_queue"])
+        kill(n_amb != hz["ambiguous_pairs_final"],
+             f"kill-1: final-epoch ambiguous pairs match committed "
+             f"[{name}]",
+             f"rebuilt {n_amb} vs committed {hz['ambiguous_pairs_final']}")
+        if "expected_ambiguous_pairs" in cfg:
+            kill(n_amb != cfg["expected_ambiguous_pairs"],
+                 f"kill-1: one-shot ambiguous pairs == "
+                 f"{cfg['expected_ambiguous_pairs']} [{name}]",
+                 f"got {n_amb}")
+        kill(c["abstain_led_merge_mismatch"] != 0,
+             f"kill-4: certified abstain set == merge-led set [{name}]",
+             f"{c['abstain_led_merge_mismatch']} mismatches")
+
+    def audit_equal_modulo_e1(fresh_path: Path, committed_path: Path):
+        """Erratum E1 (memo §11): record-by-record equality after
+        excluding ONLY (1) per-record policy_version fields and (2)
+        appended ambiguous_pair_review records; otherwise exact."""
+        def norm(path, drop_ambiguous):
+            out = []
+            with open(path) as f:
+                for line in f:
+                    rec = json.loads(line)
+                    if rec.get("record_type") == "ambiguous_pair_review":
+                        if drop_ambiguous:
+                            continue
+                        return None  # unexpected on the committed side
+                    for dec in rec.get("decisions", []):
+                        dec.pop("policy_version", None)
+                    out.append(rec)
+            return out
+        fresh = norm(fresh_path, drop_ambiguous=True)
+        committed = norm(committed_path, drop_ambiguous=False)
+        return committed is not None and fresh == committed
+
+    shared_baseline = repo / scan["shared_prototype_baseline"]
+    for name in cells:
+        base_dir = shared_baseline / name
+        if not base_dir.exists():
+            continue  # one-shot cells: new baseline (§8)
+        for fn in ("memory_packet.jsonl", "decision_table.csv"):
+            fresh = (scan_root / "prototype" / name / fn).read_bytes()
+            committed = (base_dir / fn).read_bytes()
+            kill(fresh != committed,
+                 f"kill-3: prototype byte-no-op vs pr12_1 [{name}/{fn}]",
+                 f"{len(fresh)} vs {len(committed)} bytes (strict byte "
+                 f"identity; NOT covered by erratum E1)")
+        kill(not audit_equal_modulo_e1(
+                scan_root / "prototype" / name / "audit_packet.jsonl",
+                base_dir / "audit_packet.jsonl"),
+             f"kill-3: prototype audit packet == pr12_1 modulo E1 "
+             f"exclusions [{name}]",
+             "differences beyond the two E1 exclusions "
+             "(policy_version fields / appended ambiguous_pair_review "
+             "records)")
+
+    # ---- per-candidate gates (recorded even if killed; judged only if not)
+    npend_keys = ("state:quarantined", "state:superseded",
+                  "state:human-review", "abstained",
+                  "stale_wrong_flagged_served", "quarantine_led_served")
+    for shape in shapes:
+        report["gates"][shape] = {}
+        report["exposure"][shape] = {}
+        report["counters"][shape] = {}
+        print(f"\n[{shape}]")
+        for name, cfg in cells.items():
+            res, proto = results[(shape, name)], \
+                results[("prototype", name)]
+            c = res["counters"]
+            denom = c["n"] - c["wrong_none"]
+            supp = c.get("escalated_on_correct", 0) \
+                + c.get("withheld_on_correct", 0)
+            mass = c.get("pending_dual_on_correct", 0)
+            dw = c.get("pending_dual_wrong", 0)
+            tc = c.get("pending_dual_truth_contained", 0)
+            unmarked = sum(v["unmarked"] for v in res["exposure"].values())
+            unmarked_p = sum(v["unmarked"]
+                             for v in proto["exposure"].values())
+            inv = packet_invariants(res["out_dir"])
+            gates = {
+                "G-S": {"suppressive_on_correct": supp,
+                        "correct_traffic": denom,
+                        "rate": round(supp / denom, 6) if denom else 0.0,
+                        "pass": (supp / denom if denom else 0) <= s_ceil},
+                "G-M": {"dual_on_correct": mass,
+                        "rate": round(mass / denom, 6) if denom else 0.0,
+                        "pass": (mass / denom if denom else 0) <= m_ceil},
+                "V1'": {"violations": c.get("v1p_violations", 0),
+                        "pass": c.get("v1p_violations", 0) == 0},
+                "V2'": {"violations": c.get("v2p_violations", 0),
+                        "unmarked": unmarked,
+                        "unmarked_prototype": unmarked_p,
+                        "pass": c.get("v2p_violations", 0) == 0
+                        and unmarked <= unmarked_p},
+                "V3'": {"contradiction_pairs": len(res["review_queue"]),
+                        "ambiguous_pairs": len(res["ambiguous_queue"]),
+                        "pass": res["review_queue"] == proto["review_queue"]
+                        and res["ambiguous_queue"]
+                        == proto["ambiguous_queue"]},
+                "V4'": {**inv, "pass": inv["certified_leaks"] == 0
+                        and inv["incomplete_audits"] == 0},
+                "G-R_non_pending_identical": {
+                    "pass": all(c.get(k, 0) == proto["counters"].get(k, 0)
+                                for k in npend_keys)},
+            }
+            if cfg["role"] in ("pending_burden", "harm_class"):
+                gates["G-T"] = {"dual_wrong": dw, "truth_contained": tc,
+                                "fraction": round(tc / dw, 6) if dw
+                                else None,
+                                "pass": (tc / dw >= t_floor) if dw
+                                else True}
+            if cfg["role"] == "continuity":
+                a = cfg["anchors"]
+                gates["G-R_anchors"] = {"pass": (
+                    c["abstained"] == a["certified_abstentions"]
+                    and c["stale_wrong"] == a["stale_wrong_total"]
+                    and c["stale_wrong_abstained"]
+                    == a["stale_wrong_abstained"]
+                    and c["stale_wrong_flagged_served"]
+                    == a["stale_wrong_residual_flagged"]
+                    and c["stale_wrong_unflagged_served"] == 0)}
+            if cfg["role"] == "control":
+                adverse = sum(v for k, v in c.items()
+                              if k.startswith("state:")
+                              and k.split(":", 1)[1] != "agent-readable") \
+                    + c.get("disposition:shown_with_caveat", 0) \
+                    + c.get("disposition:withheld", 0) \
+                    + c.get("disposition:escalated", 0)
+                gates["G-R_control_zero_adverse"] = {
+                    "adverse": adverse, "pass": adverse == 0}
+            report["gates"][shape][name] = gates
+            report["exposure"][shape][name] = res["exposure"]
+            report["counters"][shape][name] = res["counters"]
+            print(f"  [{name}] " + "  ".join(
+                f"{g}={'PASS' if v['pass'] else 'FAIL'}"
+                + (f"({v['rate']:.3f})" if g in ("G-S", "G-M") else
+                   f"({v['fraction']})" if g == "G-T" else "")
+                for g, v in gates.items()))
+
+    print("\n§8 epilogue: PR-12 base byte-gate")
+    after = base_bytecheck(repo, policy, allow_stale)
+    report["base_bytecheck_after"] = after
+    kill(not after, "kill-2: base byte-gate green (after)",
+         "pr12/ regeneration drifted")
+
+    if report["kill_conditions"]:
+        report["verdict"] = "pending-blocked"
+        _write_report(scan_root, report, "pending_scan.json")
+        print(f"\nVERDICT: pending-blocked — "
+              f"{len(report['kill_conditions'])} kill condition(s); no "
+              "candidate judged from a blocked run (memo §9).")
+        return 1
+
+    candidates_pass = [
+        s for s in shapes if s != "prototype"
+        and all(g["pass"] for name in cells
+                for g in report["gates"][s][name].values())]
+    report["candidates_pass"] = candidates_pass
+    report["verdict"] = (f"pending-evidence-GO({','.join(candidates_pass)})"
+                         if candidates_pass else "pending-negative")
+    _write_report(scan_root, report, "pending_scan.json")
+    print(f"\nVERDICT: {report['verdict']}")
+    print("Scope (PR12_2_PENDING_DUAL_PRESENTATION.md §5): offline-"
+          "simulator evidence only — no prompt-safety, promotion, memory-"
+          "ingestion, or autonomous downstream-use claim.")
+    return 0
 
 
 def main():
@@ -903,10 +1264,17 @@ def main():
                          "cells, §5 gates scored with no discretion, "
                          "reshape_scan.json + verdict; includes the PR-12 "
                          "base byte-gate before and after")
+    ap.add_argument("--scan12-2", action="store_true",
+                    help="PR-12.2 §5 full scan: shapes prototype/D1/D2 × "
+                         "the six-cell panel, gates G-S/G-M/G-T/G-V'/G-R "
+                         "scored with no discretion, pending_scan.json + "
+                         "verdict; §9 kill conditions enforced")
     args = ap.parse_args()
 
     with open(Path(__file__).parent / "harness_policy.json") as f:
         policy = json.load(f)
+    if args.scan12_2:
+        sys.exit(run_scan12_2(args.repo_root, policy, args.allow_stale))
     if args.scan:
         sys.exit(run_scan(args.repo_root, policy, args.allow_stale))
     if args.shape:

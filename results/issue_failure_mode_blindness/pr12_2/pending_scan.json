@@ -1,0 +1,1676 @@
+{
+ "base_bytecheck_after": true,
+ "base_bytecheck_before": true,
+ "candidates_pass": [],
+ "ceilings": {
+  "G-M": 0.05,
+  "G-S": 0.05,
+  "G-T": 0.5
+ },
+ "cells": [
+  "clean_pairA_s0",
+  "pairD_stale-soft_s0",
+  "pairD_contra_s0",
+  "pairB_contra_s0",
+  "pairD_oneshot_s0",
+  "pairB_oneshot_s0"
+ ],
+ "counters": {
+  "D1": {
+   "clean_pairA_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:shown": 2532,
+    "n": 2532,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 2532,
+    "wrong_none": 0
+   },
+   "pairB_contra_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1375,
+    "disposition:shown": 1146,
+    "disposition:shown_with_caveat": 303,
+    "escalated_on_correct": 1075,
+    "n": 2824,
+    "pending_dual": 303,
+    "pending_dual_on_correct": 256,
+    "pending_dual_truth_contained": 45,
+    "pending_dual_wrong": 47,
+    "pending_led_served": 303,
+    "quarantine_led_served": 1375,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 1146,
+    "state:human-review": 303,
+    "state:quarantined": 1375,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 48,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 348
+   },
+   "pairB_oneshot_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 296,
+    "disposition:shown": 2070,
+    "disposition:shown_with_caveat": 340,
+    "escalated_on_correct": 272,
+    "n": 2706,
+    "pending_dual": 340,
+    "pending_dual_on_correct": 10,
+    "pending_dual_truth_contained": 163,
+    "pending_dual_wrong": 330,
+    "pending_led_served": 340,
+    "quarantine_led_served": 296,
+    "stale_wrong": 354,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 354,
+    "state:agent-readable": 2070,
+    "state:human-review": 340,
+    "state:quarantined": 296,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 330,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 354
+   },
+   "pairD_contra_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1470,
+    "disposition:shown": 974,
+    "disposition:shown_with_caveat": 303,
+    "escalated_on_correct": 1024,
+    "n": 2747,
+    "pending_dual": 303,
+    "pending_dual_on_correct": 242,
+    "pending_dual_truth_contained": 42,
+    "pending_dual_wrong": 61,
+    "pending_led_served": 303,
+    "quarantine_led_served": 1470,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 974,
+    "state:human-review": 303,
+    "state:quarantined": 1470,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 165,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 611
+   },
+   "pairD_oneshot_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 923,
+    "disposition:shown": 1702,
+    "disposition:shown_with_caveat": 203,
+    "disposition:withheld": 11,
+    "escalated_on_correct": 711,
+    "n": 2839,
+    "pending_dual": 203,
+    "pending_dual_on_correct": 50,
+    "pending_dual_truth_contained": 31,
+    "pending_dual_wrong": 153,
+    "pending_led_served": 203,
+    "quarantine_led_served": 923,
+    "stale_wrong": 274,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 274,
+    "state:agent-readable": 1702,
+    "state:human-review": 203,
+    "state:quarantined": 923,
+    "state:superseded": 11,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "withheld_on_correct": 8,
+    "wrong_in_prompt": 187,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 402
+   },
+   "pairD_stale-soft_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 300,
+    "caveat_on_correct": 280,
+    "disposition:escalated": 850,
+    "disposition:shown": 1690,
+    "disposition:shown_with_caveat": 88,
+    "disposition:withheld": 311,
+    "escalated_on_correct": 708,
+    "n": 2939,
+    "pending_dual": 42,
+    "pending_dual_on_correct": 35,
+    "pending_dual_truth_contained": 6,
+    "pending_dual_wrong": 7,
+    "pending_led_served": 42,
+    "quarantine_led_served": 850,
+    "stale_wrong": 375,
+    "stale_wrong_abstained": 292,
+    "stale_wrong_flagged_served": 83,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 1736,
+    "state:audit-only": 300,
+    "state:human-review": 42,
+    "state:quarantined": 850,
+    "state:superseded": 11,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "withheld_on_correct": 8,
+    "wrong_in_prompt": 53,
+    "wrong_in_prompt_caveated": 13,
+    "wrong_none": 490
+   }
+  },
+  "D2": {
+   "clean_pairA_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:shown": 2532,
+    "n": 2532,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 2532,
+    "wrong_none": 0
+   },
+   "pairB_contra_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1667,
+    "disposition:shown": 1146,
+    "disposition:shown_with_caveat": 11,
+    "escalated_on_correct": 1320,
+    "n": 2824,
+    "pending_dual": 11,
+    "pending_dual_on_correct": 11,
+    "pending_escalated": 292,
+    "pending_led_served": 303,
+    "quarantine_led_served": 1375,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 1146,
+    "state:human-review": 303,
+    "state:quarantined": 1375,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 1,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 348
+   },
+   "pairB_oneshot_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 362,
+    "disposition:shown": 2070,
+    "disposition:shown_with_caveat": 274,
+    "escalated_on_correct": 282,
+    "n": 2706,
+    "pending_dual": 274,
+    "pending_dual_on_correct": 0,
+    "pending_dual_truth_contained": 135,
+    "pending_dual_wrong": 274,
+    "pending_escalated": 66,
+    "pending_led_served": 340,
+    "quarantine_led_served": 296,
+    "stale_wrong": 354,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 354,
+    "state:agent-readable": 2070,
+    "state:human-review": 340,
+    "state:quarantined": 296,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 274,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 354
+   },
+   "pairD_contra_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1755,
+    "disposition:shown": 974,
+    "disposition:shown_with_caveat": 18,
+    "escalated_on_correct": 1251,
+    "n": 2747,
+    "pending_dual": 18,
+    "pending_dual_on_correct": 15,
+    "pending_dual_truth_contained": 1,
+    "pending_dual_wrong": 3,
+    "pending_escalated": 285,
+    "pending_led_served": 303,
+    "quarantine_led_served": 1470,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 974,
+    "state:human-review": 303,
+    "state:quarantined": 1470,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 107,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 611
+   },
+   "pairD_oneshot_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 997,
+    "disposition:shown": 1702,
+    "disposition:shown_with_caveat": 129,
+    "disposition:withheld": 11,
+    "escalated_on_correct": 751,
+    "n": 2839,
+    "pending_dual": 129,
+    "pending_dual_on_correct": 10,
+    "pending_dual_truth_contained": 19,
+    "pending_dual_wrong": 119,
+    "pending_escalated": 74,
+    "pending_led_served": 203,
+    "quarantine_led_served": 923,
+    "stale_wrong": 274,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 274,
+    "state:agent-readable": 1702,
+    "state:human-review": 203,
+    "state:quarantined": 923,
+    "state:superseded": 11,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "withheld_on_correct": 8,
+    "wrong_in_prompt": 153,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 402
+   },
+   "pairD_stale-soft_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 300,
+    "caveat_on_correct": 280,
+    "disposition:escalated": 892,
+    "disposition:shown": 1690,
+    "disposition:shown_with_caveat": 46,
+    "disposition:withheld": 311,
+    "escalated_on_correct": 743,
+    "n": 2939,
+    "pending_escalated": 42,
+    "pending_led_served": 42,
+    "quarantine_led_served": 850,
+    "stale_wrong": 375,
+    "stale_wrong_abstained": 292,
+    "stale_wrong_flagged_served": 83,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 1736,
+    "state:audit-only": 300,
+    "state:human-review": 42,
+    "state:quarantined": 850,
+    "state:superseded": 11,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "withheld_on_correct": 8,
+    "wrong_in_prompt": 46,
+    "wrong_in_prompt_caveated": 13,
+    "wrong_none": 490
+   }
+  },
+  "prototype": {
+   "clean_pairA_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:shown": 2532,
+    "n": 2532,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 2532,
+    "wrong_none": 0
+   },
+   "pairB_contra_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1678,
+    "disposition:shown": 1146,
+    "escalated_on_correct": 1331,
+    "n": 2824,
+    "pending_escalated": 303,
+    "pending_led_served": 303,
+    "quarantine_led_served": 1375,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 1146,
+    "state:human-review": 303,
+    "state:quarantined": 1375,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 1,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 348
+   },
+   "pairB_oneshot_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 636,
+    "disposition:shown": 2070,
+    "escalated_on_correct": 282,
+    "n": 2706,
+    "pending_escalated": 340,
+    "pending_led_served": 340,
+    "quarantine_led_served": 296,
+    "stale_wrong": 354,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 354,
+    "state:agent-readable": 2070,
+    "state:human-review": 340,
+    "state:quarantined": 296,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_none": 354
+   },
+   "pairD_contra_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1773,
+    "disposition:shown": 974,
+    "escalated_on_correct": 1266,
+    "n": 2747,
+    "pending_escalated": 303,
+    "pending_led_served": 303,
+    "quarantine_led_served": 1470,
+    "stale_wrong": 0,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 974,
+    "state:human-review": 303,
+    "state:quarantined": 1470,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "wrong_in_prompt": 104,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 611
+   },
+   "pairD_oneshot_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 0,
+    "caveat_on_correct": 0,
+    "disposition:escalated": 1126,
+    "disposition:shown": 1702,
+    "disposition:withheld": 11,
+    "escalated_on_correct": 761,
+    "n": 2839,
+    "pending_escalated": 203,
+    "pending_led_served": 203,
+    "quarantine_led_served": 923,
+    "stale_wrong": 274,
+    "stale_wrong_abstained": 0,
+    "stale_wrong_flagged_served": 0,
+    "stale_wrong_unflagged_served": 274,
+    "state:agent-readable": 1702,
+    "state:human-review": 203,
+    "state:quarantined": 923,
+    "state:superseded": 11,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "withheld_on_correct": 8,
+    "wrong_in_prompt": 34,
+    "wrong_in_prompt_caveated": 0,
+    "wrong_none": 402
+   },
+   "pairD_stale-soft_s0": {
+    "abstain_led_merge_mismatch": 0,
+    "abstained": 300,
+    "caveat_on_correct": 280,
+    "disposition:escalated": 892,
+    "disposition:shown": 1690,
+    "disposition:shown_with_caveat": 46,
+    "disposition:withheld": 311,
+    "escalated_on_correct": 743,
+    "n": 2939,
+    "pending_escalated": 42,
+    "pending_led_served": 42,
+    "quarantine_led_served": 850,
+    "stale_wrong": 375,
+    "stale_wrong_abstained": 292,
+    "stale_wrong_flagged_served": 83,
+    "stale_wrong_unflagged_served": 0,
+    "state:agent-readable": 1736,
+    "state:audit-only": 300,
+    "state:human-review": 42,
+    "state:quarantined": 850,
+    "state:superseded": 11,
+    "v1_violations": 0,
+    "v1p_violations": 0,
+    "v2_violations": 0,
+    "v2p_violations": 0,
+    "withheld_on_correct": 8,
+    "wrong_in_prompt": 46,
+    "wrong_in_prompt_caveated": 13,
+    "wrong_none": 490
+   }
+  }
+ },
+ "design_memo": "results/issue_failure_mode_blindness/PR12_2_PENDING_DUAL_PRESENTATION.md",
+ "exposure": {
+  "D1": {
+   "clean_pairA_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairB_contra_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 47,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 1
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairB_oneshot_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 330,
+     "unmarked": 0
+    }
+   },
+   "pairD_contra_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 61,
+     "unmarked": 80
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 24
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairD_oneshot_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 7,
+     "unmarked": 29
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 146,
+     "unmarked": 5
+    }
+   },
+   "pairD_stale-soft_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 13,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 7,
+     "unmarked": 33
+    },
+    "stale_lenient": {
+     "caveated": 13,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   }
+  },
+  "D2": {
+   "clean_pairA_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairB_contra_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 1
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairB_oneshot_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 274,
+     "unmarked": 0
+    }
+   },
+   "pairD_contra_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 3,
+     "unmarked": 80
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 24
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairD_oneshot_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 29
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 119,
+     "unmarked": 5
+    }
+   },
+   "pairD_stale-soft_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 13,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 33
+    },
+    "stale_lenient": {
+     "caveated": 13,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   }
+  },
+  "prototype": {
+   "clean_pairA_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairB_contra_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 1
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairB_oneshot_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairD_contra_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 80
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 24
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   },
+   "pairD_oneshot_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 29
+    },
+    "stale_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 5
+    }
+   },
+   "pairD_stale-soft_s0": {
+    "contradictory_lenient": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "merge_support": {
+     "caveated": 13,
+     "dual_presented": 0,
+     "unmarked": 0
+    },
+    "no_flag": {
+     "caveated": 0,
+     "dual_presented": 0,
+     "unmarked": 33
+    },
+    "stale_lenient": {
+     "caveated": 13,
+     "dual_presented": 0,
+     "unmarked": 0
+    }
+   }
+  }
+ },
+ "gates": {
+  "D1": {
+   "clean_pairA_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_control_zero_adverse": {
+     "adverse": 0,
+     "pass": true
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2532,
+     "pass": true,
+     "rate": 0.0,
+     "suppressive_on_correct": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 0,
+     "unmarked_prototype": 0,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 0,
+     "contradiction_pairs": 0,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairB_contra_s0": {
+    "G-M": {
+     "dual_on_correct": 256,
+     "pass": false,
+     "rate": 0.103393
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2476,
+     "pass": false,
+     "rate": 0.434168,
+     "suppressive_on_correct": 1075
+    },
+    "G-T": {
+     "dual_wrong": 47,
+     "fraction": 0.957447,
+     "pass": true,
+     "truth_contained": 45
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 1,
+     "unmarked_prototype": 1,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 23,
+     "contradiction_pairs": 209,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairB_oneshot_s0": {
+    "G-M": {
+     "dual_on_correct": 10,
+     "pass": true,
+     "rate": 0.004252
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2352,
+     "pass": false,
+     "rate": 0.115646,
+     "suppressive_on_correct": 272
+    },
+    "G-T": {
+     "dual_wrong": 330,
+     "fraction": 0.493939,
+     "pass": false,
+     "truth_contained": 163
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 0,
+     "unmarked_prototype": 0,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 32,
+     "contradiction_pairs": 7,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_contra_s0": {
+    "G-M": {
+     "dual_on_correct": 242,
+     "pass": false,
+     "rate": 0.113296
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2136,
+     "pass": false,
+     "rate": 0.479401,
+     "suppressive_on_correct": 1024
+    },
+    "G-T": {
+     "dual_wrong": 61,
+     "fraction": 0.688525,
+     "pass": true,
+     "truth_contained": 42
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 104,
+     "unmarked_prototype": 104,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 29,
+     "contradiction_pairs": 208,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_oneshot_s0": {
+    "G-M": {
+     "dual_on_correct": 50,
+     "pass": true,
+     "rate": 0.020517
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2437,
+     "pass": false,
+     "rate": 0.295035,
+     "suppressive_on_correct": 719
+    },
+    "G-T": {
+     "dual_wrong": 153,
+     "fraction": 0.202614,
+     "pass": false,
+     "truth_contained": 31
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 34,
+     "unmarked_prototype": 34,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 32,
+     "contradiction_pairs": 28,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_stale-soft_s0": {
+    "G-M": {
+     "dual_on_correct": 35,
+     "pass": true,
+     "rate": 0.014292
+    },
+    "G-R_anchors": {
+     "pass": true
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2449,
+     "pass": false,
+     "rate": 0.292364,
+     "suppressive_on_correct": 716
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 33,
+     "unmarked_prototype": 33,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 0,
+     "contradiction_pairs": 28,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   }
+  },
+  "D2": {
+   "clean_pairA_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_control_zero_adverse": {
+     "adverse": 0,
+     "pass": true
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2532,
+     "pass": true,
+     "rate": 0.0,
+     "suppressive_on_correct": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 0,
+     "unmarked_prototype": 0,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 0,
+     "contradiction_pairs": 0,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairB_contra_s0": {
+    "G-M": {
+     "dual_on_correct": 11,
+     "pass": true,
+     "rate": 0.004443
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2476,
+     "pass": false,
+     "rate": 0.533118,
+     "suppressive_on_correct": 1320
+    },
+    "G-T": {
+     "dual_wrong": 0,
+     "fraction": null,
+     "pass": true,
+     "truth_contained": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 1,
+     "unmarked_prototype": 1,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 23,
+     "contradiction_pairs": 209,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairB_oneshot_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2352,
+     "pass": false,
+     "rate": 0.119898,
+     "suppressive_on_correct": 282
+    },
+    "G-T": {
+     "dual_wrong": 274,
+     "fraction": 0.492701,
+     "pass": false,
+     "truth_contained": 135
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 0,
+     "unmarked_prototype": 0,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 32,
+     "contradiction_pairs": 7,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_contra_s0": {
+    "G-M": {
+     "dual_on_correct": 15,
+     "pass": true,
+     "rate": 0.007022
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2136,
+     "pass": false,
+     "rate": 0.585674,
+     "suppressive_on_correct": 1251
+    },
+    "G-T": {
+     "dual_wrong": 3,
+     "fraction": 0.333333,
+     "pass": false,
+     "truth_contained": 1
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 104,
+     "unmarked_prototype": 104,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 29,
+     "contradiction_pairs": 208,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_oneshot_s0": {
+    "G-M": {
+     "dual_on_correct": 10,
+     "pass": true,
+     "rate": 0.004103
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2437,
+     "pass": false,
+     "rate": 0.311449,
+     "suppressive_on_correct": 759
+    },
+    "G-T": {
+     "dual_wrong": 119,
+     "fraction": 0.159664,
+     "pass": false,
+     "truth_contained": 19
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 34,
+     "unmarked_prototype": 34,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 32,
+     "contradiction_pairs": 28,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_stale-soft_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_anchors": {
+     "pass": true
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2449,
+     "pass": false,
+     "rate": 0.306656,
+     "suppressive_on_correct": 751
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 33,
+     "unmarked_prototype": 33,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 0,
+     "contradiction_pairs": 28,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   }
+  },
+  "prototype": {
+   "clean_pairA_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_control_zero_adverse": {
+     "adverse": 0,
+     "pass": true
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2532,
+     "pass": true,
+     "rate": 0.0,
+     "suppressive_on_correct": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 0,
+     "unmarked_prototype": 0,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 0,
+     "contradiction_pairs": 0,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairB_contra_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2476,
+     "pass": false,
+     "rate": 0.537561,
+     "suppressive_on_correct": 1331
+    },
+    "G-T": {
+     "dual_wrong": 0,
+     "fraction": null,
+     "pass": true,
+     "truth_contained": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 1,
+     "unmarked_prototype": 1,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 23,
+     "contradiction_pairs": 209,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairB_oneshot_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2352,
+     "pass": false,
+     "rate": 0.119898,
+     "suppressive_on_correct": 282
+    },
+    "G-T": {
+     "dual_wrong": 0,
+     "fraction": null,
+     "pass": true,
+     "truth_contained": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 0,
+     "unmarked_prototype": 0,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 32,
+     "contradiction_pairs": 7,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_contra_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2136,
+     "pass": false,
+     "rate": 0.592697,
+     "suppressive_on_correct": 1266
+    },
+    "G-T": {
+     "dual_wrong": 0,
+     "fraction": null,
+     "pass": true,
+     "truth_contained": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 104,
+     "unmarked_prototype": 104,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 29,
+     "contradiction_pairs": 208,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_oneshot_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2437,
+     "pass": false,
+     "rate": 0.315552,
+     "suppressive_on_correct": 769
+    },
+    "G-T": {
+     "dual_wrong": 0,
+     "fraction": null,
+     "pass": true,
+     "truth_contained": 0
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 34,
+     "unmarked_prototype": 34,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 32,
+     "contradiction_pairs": 28,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   },
+   "pairD_stale-soft_s0": {
+    "G-M": {
+     "dual_on_correct": 0,
+     "pass": true,
+     "rate": 0.0
+    },
+    "G-R_anchors": {
+     "pass": true
+    },
+    "G-R_non_pending_identical": {
+     "pass": true
+    },
+    "G-S": {
+     "correct_traffic": 2449,
+     "pass": false,
+     "rate": 0.306656,
+     "suppressive_on_correct": 751
+    },
+    "V1'": {
+     "pass": true,
+     "violations": 0
+    },
+    "V2'": {
+     "pass": true,
+     "unmarked": 33,
+     "unmarked_prototype": 33,
+     "violations": 0
+    },
+    "V3'": {
+     "ambiguous_pairs": 0,
+     "contradiction_pairs": 28,
+     "pass": true
+    },
+    "V4'": {
+     "certified_leaks": 0,
+     "incomplete_audits": 0,
+     "pass": true
+    }
+   }
+  }
+ },
+ "kill_conditions": [],
+ "policy_version": "pr12.2-scan-0.1",
+ "shapes": [
+  "prototype",
+  "D1",
+  "D2"
+ ],
+ "verdict": "pending-negative"
+}

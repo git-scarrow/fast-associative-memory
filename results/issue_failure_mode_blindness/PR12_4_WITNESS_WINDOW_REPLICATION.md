@@ -333,3 +333,215 @@ pre-registration.
 
 Intentionally empty at pre-registration. §§1–11 above are the frozen
 snapshot and are never rewritten.
+
+Run date 2026-07-07, this section committed on branch
+`feat/pr12.4-witness-window-replication-scan` (append-only; the §§1–11
+pre-registration above — including its DRAFT header, committed unchanged
+on docs branch `4345cb6`, merged to main `7779297` — is never rewritten).
+Implementation authorized separately after the pre-registration merge:
+`--scan12-4` + `--shape12-4 {prototype|W1|W2}` and the `scan12_4` policy
+block (policy_version `pr12.4-scan-0.1`) in the two harness files only;
+`decide_probe`, the W1/W2 shapes, the witness-window builder, and every
+per-row counter are byte-reused from the committed PR-12.3
+implementation — no new shape, observable, or per-row counter was
+introduced (see §12.8). Every number below is a verbatim field of
+`replication_scan.json`.
+
+### 12.1 Verdict
+
+**`replication-GO(W1,W2)`** — the witness-window result replicates
+across seed variation. Both W1 (dual-present-all) and W2 (age-gated)
+pass every hard gate on every cell where that gate applies, with
+genuine (non-vacuous, non-width-saturated) G-T passes on all four gated
+one-shot cells. `kill_conditions: []` (zero);
+`base_bytecheck_before = base_bytecheck_after = true`; reproducibility
+checks all true (§12.4).
+
+### 12.2 Exact G-A / G-M / G-T on the four gated harm-class cells
+
+Ceilings: G-A ≤ 0.05, G-M ≤ 0.05, G-T ≥ 0.5 floor **and** ≥ that
+cell's chance-baseline+0.15. Denominator for G-A/G-M is correct traffic
+`n − wrong_none`. s0 reference (PR-12.3 §9.2, closed, not re-judged):
+W1 0.921569/1.0, W2 0.915966/1.0 (pairD/pairB).
+
+| shape · cell | G-A rate (rows) | G-M rate (rows) | dual_wrong | contained | containment | verdict |
+|---|---|---|---|---|---|---|
+| W1 · pairD_oneshot_s1 | 0.000000 (0) | 0.020408 (52) | 178 | 178 | 1.000000 | **PASS** |
+| W1 · pairB_oneshot_s1 | 0.000000 (0) | 0.002931 (6) | 278 | 278 | 1.000000 | **PASS** |
+| W1 · pairD_oneshot_s2 | 0.000000 (0) | 0.015690 (38) | 213 | 212 | 0.995305 | **PASS** |
+| W1 · pairB_oneshot_s2 | 0.000000 (0) | 0.006748 (15) | 330 | 330 | 1.000000 | **PASS** |
+| W2 · pairD_oneshot_s1 | 0.015699 (40) | 0.004710 (12) | 142 | 142 | 1.000000 | **PASS** |
+| W2 · pairB_oneshot_s1 | 0.002931 (6) | 0.000000 (0) | 231 | 231 | 1.000000 | **PASS** |
+| W2 · pairD_oneshot_s2 | 0.015277 (37) | 0.000413 (1) | 170 | 170 | 1.000000 | **PASS** |
+| W2 · pairB_oneshot_s2 | 0.006748 (15) | 0.000000 (0) | 275 | 275 | 1.000000 | **PASS** |
+
+Containment at s1/s2 (0.9953–1.0000) is at or above the s0 values it
+replicates. Exactly one dual-presented wrong row in the whole scan is
+uncontained (W1 · pairD_oneshot_s2). Independently re-scored from the
+emitted memory packets + committed pr10 CSVs (bypassing every harness
+counter): dw/tc/containment exact-match on all 8 (candidate × gated
+cell) pairs. The witness window, not the fallback, carries the result:
+W2 is pure witness (0 fallback rows on every gated cell); W1 fallback
+rows are 30/6/38/15 of 230/284/251/345 dual-presented.
+
+### 12.3 Chance-baseline values (containment-inflation control, §5 / kill-9)
+
+`n_decode_classes = 4` on every cell at both seeds (as at s0; measured
+per cell from committed decode data, §5). All eight gated
+(candidate, cell) pairs clear chance+0.15 with margin ≥ +0.30;
+`width_saturated = false`, `vacuous = false`, `genuine = true`
+everywhere; kill-9 does not fire.
+
+| shape · cell | chance_baseline_rate | chance+0.15 | containment | margin |
+|---|---|---|---|---|
+| W1 · pairD_oneshot_s1 | 0.546348 | 0.696348 | 1.000000 | +0.304 |
+| W1 · pairB_oneshot_s1 | 0.500000 | 0.650000 | 1.000000 | +0.350 |
+| W1 · pairD_oneshot_s2 | 0.521127 | 0.671127 | 0.995305 | +0.324 |
+| W1 · pairB_oneshot_s2 | 0.500000 | 0.650000 | 1.000000 | +0.350 |
+| W2 · pairD_oneshot_s1 | 0.545775 | 0.695775 | 1.000000 | +0.304 |
+| W2 · pairB_oneshot_s1 | 0.500000 | 0.650000 | 1.000000 | +0.350 |
+| W2 · pairD_oneshot_s2 | 0.522059 | 0.672059 | 1.000000 | +0.328 |
+| W2 · pairB_oneshot_s2 | 0.500000 | 0.650000 | 1.000000 | +0.350 |
+
+The §5 vacuous-cell rule never had to fire on a candidate: every gated
+cell carried a substantial dual-presented wrong population (142–330
+rows). (The prototype shape's G-T is `vacuous` by construction — it
+never dual-presents — and the prototype is not a judged candidate.)
+
+### 12.4 G-W, V1–V4, G-R, reproducibility, and kill conditions — all pass
+
+* **G-W (hard, every cell):** `over_bound_rows = 0`,
+  `truncated_rows = 0`, `empty_candidate_set_rows = 0` on every
+  (shape, cell); full-width fractions ≤ 0.169 on gated cells (0 on both
+  pairB cells — every pairB dual-wrong row is width 2, which is why its
+  chance baseline is exactly 0.5).
+* **V1–V4 (hard, every cell):** all pass; V1/V2 violations = 0; V3
+  review queues identical across shapes; V4 `certified_leaks = 0`,
+  `incomplete_audits = 0`.
+* **G-R (hard, every cell):** kill-3 (audit-record-level non-pending
+  identity vs the in-run prototype, modulo per-record policy_version —
+  the §5 baseline deviation, stronger than the kill-5 counter check)
+  passes on all 24 candidate (shape, cell) pairs; kill-5 counter
+  identity passes; controls zero-adverse with structurally-zero G-M;
+  continuity cells pass the structural anchor gate (zero
+  certified-abstention escapes, §12.6); PR-12 base byte-gate green
+  before and after.
+* **§8 reproducibility, recorded in the scan output:**
+  `pr12_4_double_run = true` (embedded re-emission byte-identical);
+  `scan12_2_tree = true` and `scan12_3_tree = true` (committed
+  pr12_2/pr12_3 artifact trees regenerate byte-identically under the
+  PR-12.4 implementation, checked in temp dirs without touching them).
+  Externally verified in addition: a second full `--scan12-4`
+  invocation reproduces all 109 `pr12_4/` files byte-identically
+  (sha256 over the tree) with the same verdict; full in-place re-runs
+  of `--scan12-2` and `--scan12-3` leave `git status` clean and their
+  verdicts unchanged (**`pending-negative`**,
+  **`attribution-evidence-GO(W1,W2)`**).
+* **Kill conditions 1–10:** none fired (`kill_conditions: []`),
+  including the new structural kill-10 (shape set frozen to
+  {prototype, W1, W2} — asserted before anything runs).
+
+### 12.5 Contra cells remain report-only — the §2 double-bind replicates at s1/s2
+
+Candidate-economics gates were not applied to contra cells (§2); the
+same measurements, carried report-only, confirm the recorded structural
+double-bind at both new seeds — the same two horns as s0:
+
+| shape · contra cell | G-A rate | G-M rate | would-fail-if-gated |
+|---|---|---|---|
+| W1 · pairD_contra_s1 | 0.000000 | 0.110972 | **G-M** |
+| W1 · pairB_contra_s1 | 0.000000 | 0.090502 | **G-M** |
+| W1 · pairD_contra_s2 | 0.000000 | 0.106599 | **G-M** |
+| W1 · pairB_contra_s2 | 0.000000 | 0.081649 | **G-M** |
+| W2 · pairD_contra_s1 | 0.089615 | 0.021357 | **G-A** |
+| W2 · pairB_contra_s1 | 0.086918 | 0.003584 | **G-A** |
+| W2 · pairD_contra_s2 | 0.089255 | 0.017343 | **G-A** |
+| W2 · pairB_contra_s2 | 0.079705 | 0.001944 | **G-A** |
+
+Per §2/§3 (corrected framing): this gate family cannot pass on the
+contra cells under the current 5% ceilings; a contra claim would
+require a different pre-registered accounting model or intervention
+family. The GO makes no claim about contra-arm pending-led rows.
+
+### 12.6 Registered per-seed anchors and resolution lag (§5 G-R deviation)
+
+The measured per-seed counts below are now the registered anchors for
+any future s1/s2 work (`anchor_counts` in `replication_scan.json`;
+recomputable). Continuity structural anchor — zero certified-abstention
+escapes — holds at both seeds with seed-specific totals (the s0
+constants 300/375 = 292+83 were measurements, not laws): stale-soft s1
+= 280 abstained, 318 = 280 + 38 flagged, 0 escapes; s2 = 296 abstained,
+326 = 296 + 30 flagged, 0 escapes. Router/hazard cross-checks proved
+genuinely per-seed: final-epoch ambiguous pairs are 32 on every
+one-shot cell at s1/s2 (the 32-pair one-shot signature is
+protocol-structural, not a seed-0 accident) but 30/25 on
+pairD/pairB_contra_s2 — and the committed hazard evidence matched both
+departures exactly.
+
+**W2 exactness carries (§4 report field):** `max_resolution_lag = 1` on
+every cell with pairs, at both seeds — the committed s0 max-lag-1 bound
+under which PR-12.2 proved the never-resolving classifier exact is an
+empirical invariant of this protocol at s1/s2 as well, so W2's
+selectivity is exact on this panel (reported, never gated).
+
+### 12.7 Frozen-baseline suppression — reported, gated nowhere (§5)
+
+Identical under prototype/W1/W2 per cell: pairD_oneshot 820 (0.321821)
+s1 / 636 (0.262593) s2; pairB_oneshot 418 (0.204201) s1 / 327
+(0.147099) s2; pairD_contra 963 (0.403266) / 1018 (0.430626);
+pairB_contra 771 (0.345430) / 918 (0.356921); pairD_stale-soft 816
+(0.319499) / 640 (0.263050); clean 0 / 0. G-A measures only
+candidate-attributable suppression (§12.2), which is ≤ 0.0157.
+
+### 12.8 Implementation notes
+
+1. **No `pr124` counter namespace was needed.** §7.10 required new
+   counters to be namespaced to protect committed byte identity; in the
+   event, PR-12.4 introduced **zero** new per-row counters — the frozen
+   W1/W2 shapes and the existing namespaced `pr123` counters already
+   carry every §5 measurement, so there was nothing to leak. The one
+   new measurement (`resolution_lag`, §12.6) is a top-level `run_cell`
+   return key computed from the rebuilt router — it touches nothing
+   emitted and no counter dict. The §7.10 protection was then verified
+   rather than assumed: committed pr12_2/pr12_3 trees regenerate
+   byte-identically (§12.4).
+2. **The recurring PR-12.2/12.3 allow-list defect class could not
+   recur:** no new shape exists to omit from the quarantine escalate
+   allow-list (W1/W2 were added there by the committed PR-12.3 fix),
+   and kill-10 asserts the frozen shape set before any cell runs.
+3. Change surface: `harness/harness_boundary_sim.py` +
+   `harness/harness_policy.json` only; `pr12_4/` new (108 artifacts +
+   `replication_scan.json`); committed `pr12/`, `pr12_1/`, `pr12_2/`,
+   `pr12_3/`, FAM-core, and the frozen scorer untouched (verified by
+   git status and the embedded byte-checks).
+
+### 12.9 Scope and downstream boundary (restated per §10 — nothing enlarged)
+
+Offline-simulator evidence only, seeds s1/s2 on pairs B/D. This GO does
+**not** certify mechanism (d) globally, nor make any reader-utility,
+prompting, promotion, memory-ingestion, or downstream-use-safety claim,
+nor authorize any FAM-core / policy / threshold / reader-contract
+change. It does not enlarge PR-12.3's seed-0 claim — the two results
+stand side by side as registered evidence. **PR-10's merge-abstain
+remains the only certified reader contract.** PR-12.1
+(`reshape-negative`) and PR-12.2 (`pending-negative`) verdicts stand
+unchanged; C1/C2/C3 are not revived; contra-arm pending-led rows remain
+outside every candidate-economics claim (§12.5). What a GO here adds to
+the record is exactly one thing: witness-window truth-containment on
+the one-shot harm class is now evidenced at three seeds on two pairs,
+upgrading PR-12.3's attribution evidence toward a mechanism property —
+each §11-listed step toward any use of it still requires its own
+pre-registration.
+
+### 12.10 Emitted artifacts (108 per-(shape × cell) files + the scan report)
+
+Gate report:
+`results/issue_failure_mode_blindness/pr12_4/replication_scan.json`
+
+Per (shape × cell) under `results/issue_failure_mode_blindness/pr12_4/`,
+the three standard files (3 shapes × 12 cells × 3 = 108):
+
+```
+pr12_4/{prototype,W1,W2}/{clean_pairA,pairD_stale-soft,pairD_contra,pairB_contra,pairD_oneshot,pairB_oneshot}_{s1,s2}/
+    {audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+```

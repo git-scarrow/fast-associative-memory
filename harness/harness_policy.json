@@ -216,5 +216,82 @@
         "expected_ambiguous_pairs": 32
       }
     }
+  },
+  "scan12_4": {
+    "design_memo": "results/issue_failure_mode_blindness/PR12_4_WITNESS_WINDOW_REPLICATION.md",
+    "policy_version": "pr12.4-scan-0.1",
+    "shapes": ["prototype", "W1", "W2"],
+    "attributable_suppression_ceiling": 0.05,
+    "presentation_mass_ceiling": 0.05,
+    "truth_containment_floor": 0.5,
+    "chance_baseline_margin": 0.15,
+    "width_bound_classes": 3,
+    "output_root": "results/issue_failure_mode_blindness/pr12_4",
+    "gated_roles": ["harm_class"],
+    "baseline_note": "PR-12.4 §5 marked deviation: no committed prototype exists at s1/s2, so there is no shared_prototype_baseline; the prototype shape is the in-run baseline and byte-reproducibility is the §8 double-run check. s0 anchor constants are inapplicable as numbers (§5) — continuity anchors are structural (zero escapes) with per-seed counts recorded in replication_scan.json.",
+    "cells": {
+      "clean_pairA_s1": {
+        "role": "control",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairA_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_clean_s1.governance.json"
+      },
+      "pairD_stale-soft_s1": {
+        "role": "continuity",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-soft_pairD_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr6/stale_de/per_probe_stale-soft_s1_pairD.governance.json"
+      },
+      "pairD_contra_s1": {
+        "role": "contra_report_only",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairD_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/contra/s1"
+      },
+      "pairB_contra_s1": {
+        "role": "contra_report_only",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairB_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/contra/s1",
+        "hazard_governance_note": "PR-12.4 §3 recorded decision: pr3c's pair-suffixed contra governance exists only at s0; the committed (pairB, contra, s1/s2) hazard evidence lives in the pr4 geometry table — the same cross-run pattern scan12_2/scan12_3 use for pairD_contra_s0 — and is cross-checked against the rebuilt router (kill-1)"
+      },
+      "pairD_oneshot_s1": {
+        "role": "harm_class",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairD_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/oneshot/s1"
+      },
+      "pairB_oneshot_s1": {
+        "role": "harm_class",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairB_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/oneshot/s1"
+      },
+      "clean_pairA_s2": {
+        "role": "control",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairA_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_clean_s2.governance.json"
+      },
+      "pairD_stale-soft_s2": {
+        "role": "continuity",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-soft_pairD_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr6/stale_de/per_probe_stale-soft_s2_pairD.governance.json"
+      },
+      "pairD_contra_s2": {
+        "role": "contra_report_only",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairD_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/contra/s2"
+      },
+      "pairB_contra_s2": {
+        "role": "contra_report_only",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairB_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/contra/s2",
+        "hazard_governance_note": "same PR-12.4 §3 recorded decision as pairB_contra_s1"
+      },
+      "pairD_oneshot_s2": {
+        "role": "harm_class",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairD_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/oneshot/s2"
+      },
+      "pairB_oneshot_s2": {
+        "role": "harm_class",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairB_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/oneshot/s2"
+      }
+    }
   }
 }

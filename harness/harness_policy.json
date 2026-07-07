@@ -163,5 +163,58 @@
         "expected_ambiguous_pairs": 32
       }
     }
+  },
+  "scan12_3": {
+    "design_memo": "results/issue_failure_mode_blindness/PR12_3_SUPPRESSION_ATTRIBUTION.md",
+    "policy_version": "pr12.3-scan-0.1",
+    "shapes": ["prototype", "W1", "W2"],
+    "attributable_suppression_ceiling": 0.05,
+    "presentation_mass_ceiling": 0.05,
+    "truth_containment_floor": 0.5,
+    "chance_baseline_margin": 0.15,
+    "width_bound_classes": 3,
+    "output_root": "results/issue_failure_mode_blindness/pr12_3",
+    "shared_prototype_baseline": "results/issue_failure_mode_blindness/pr12_2/prototype",
+    "gated_roles": ["harm_class"],
+    "cells": {
+      "clean_pairA_s0": {
+        "role": "control",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairA_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_clean_s0.governance.json"
+      },
+      "pairD_stale-soft_s0": {
+        "role": "continuity",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-soft_pairD_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr6/stale_de/per_probe_stale-soft_s0_pairD.governance.json",
+        "anchors": {
+          "certified_abstentions": 300,
+          "stale_wrong_total": 375,
+          "stale_wrong_abstained": 292,
+          "stale_wrong_residual_flagged": 83
+        }
+      },
+      "pairD_contra_s0": {
+        "role": "contra_report_only",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairD_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/contra/s0"
+      },
+      "pairB_contra_s0": {
+        "role": "contra_report_only",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairB_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr3c/per_probe_contra_s0_pairB.governance.json"
+      },
+      "pairD_oneshot_s0": {
+        "role": "harm_class",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairD_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/oneshot/s0",
+        "expected_ambiguous_pairs": 32
+      },
+      "pairB_oneshot_s0": {
+        "role": "harm_class",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairB_s0",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/oneshot/s0",
+        "expected_ambiguous_pairs": 32
+      }
+    }
   }
 }

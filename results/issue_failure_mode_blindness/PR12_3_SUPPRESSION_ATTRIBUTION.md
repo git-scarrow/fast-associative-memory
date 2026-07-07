@@ -268,3 +268,168 @@ scope decision).
   every G-A/G-M/G-T/G-W/G-V/G-R check, frozen-baseline suppression
   report, contra report-only economics, exposure report, both byte-gate
   results, verdict; every §9 number recomputable from it.
+
+## 9. Results (append-only; §§1–8 are the frozen pre-registration snapshot)
+
+Run date 2026-07-07, this section committed on branch
+`feat/pr12.3-witness-window-scan` (append-only; the §§1–8 pre-registration
+above — including the DRAFT header, committed unchanged on docs branch
+`2ad4bdc`, merged to main `8ab0ee0` — is never rewritten). Implementation:
+`--scan12-3` + `--shape12-3 {prototype|W1|W2}` and the `scan12_3` policy
+block (policy_version `pr12.3-scan-0.1`, shared prototype baseline
+`pr12_2/prototype`) in the two harness files only. Every number below is a
+verbatim field of `attribution_scan.json`.
+
+### 9.1 Verdict
+
+**`attribution-evidence-GO(W1,W2)`** — the first GO in the PR-12 series.
+Both W1 (dual-present-all) and W2 (age-gated) pass every hard gate on every
+cell where that gate applies. `kill_conditions: []` (zero); PR-12 base
+byte-gate `base_bytecheck_before = true`, `base_bytecheck_after = true`.
+
+### 9.2 Exact G-A / G-M / G-T on the two gated harm-class cells
+
+Ceilings: G-A ≤ 0.05, G-M ≤ 0.05, G-T ≥ 0.5 floor **and** ≥ chance+0.15.
+Denominator for G-A/G-M is correct traffic `n − wrong_none`.
+
+| shape · cell | G-A rate (rows) | G-M rate (rows) | G-T dual_wrong | truth_contained | containment | verdict |
+|---|---|---|---|---|---|---|
+| W1 · pairD_oneshot_s0 | 0.000000 (0) | 0.020517 (50) | 153 | 141 | 0.921569 | **PASS** |
+| W1 · pairB_oneshot_s0 | 0.000000 (0) | 0.004252 (10) | 330 | 330 | 1.000000 | **PASS** |
+| W2 · pairD_oneshot_s0 | 0.016414 (40) | 0.004103 (10) | 119 | 109 | 0.915966 | **PASS** |
+| W2 · pairB_oneshot_s0 | 0.004252 (10) | 0.000000 (0)  | 274 | 274 | 1.000000 | **PASS** |
+
+G-A/G-M/G-T `pass = true` on all four (cell,candidate) pairs. The wrong-row
+sets are the same rows PR-12.2's D1/D2 scored (dual_wrong pairD 153/119,
+pairB 330/274); only the candidate-set construction changed, lifting
+containment from D1/D2's 0.203/0.494 (pairD/pairB) to 0.92/1.00 — recorded
+here as confirmation of §1's "the failure is set construction, not
+selectivity."
+
+### 9.3 Chance-baseline values and chance+0.15 thresholds (containment inflation control, §5 / kill-9)
+
+`n_decode_classes = 4` on every cell (decode alphabet {0,1,2,3}, contiguous;
+NOT the ~5 the §3/§5 prose assumed — recorded as an observed correction, not
+a spec change: the control is defined per-cell from committed decode data,
+so it self-adjusts). `chance_i = width_used_i / 4`; cell chance rate = mean
+over dual-presented wrong rows. A cell counts as a **genuine** G-T pass only
+if containment ≥ chance+0.15; else `width-saturated` (not a pass).
+
+| shape · cell | chance_baseline_rate | chance+0.15 threshold | containment | margin over threshold | genuine | width_saturated |
+|---|---|---|---|---|---|---|
+| W1 · pairD_oneshot_s0 | 0.526144 | 0.676144 | 0.921569 | +0.245 | true | false |
+| W1 · pairB_oneshot_s0 | 0.500000 | 0.650000 | 1.000000 | +0.350 | true | false |
+| W2 · pairD_oneshot_s0 | 0.527311 | 0.677311 | 0.915966 | +0.239 | true | false |
+| W2 · pairB_oneshot_s0 | 0.500000 | 0.650000 | 1.000000 | +0.350 | true | false |
+
+All four clear their own same-width chance-baseline-plus-0.15 margin;
+`floor_pass = margin_pass = genuine = true`, `width_saturated = false`;
+kill-9 does not fire.
+
+### 9.4 G-W, V1–V4, G-R, and kill conditions — all pass
+
+* **G-W (width integrity, hard every cell):** `over_bound_rows = 0`,
+  `pending_dual_width_gt3 = 0` on every (shape,cell); selection
+  `vote-mass-descending, tie-break ascending decode-class index (§3)`. Width
+  usage on the gated cells is witness-carried: W1 pairD 165 witness / 38
+  fallback-pair-counterpart rows, W1 pairB 330 witness / 10 fallback, W2
+  pairD 129 witness / 0 fallback, W2 pairB 274 witness / 0 fallback;
+  full-width fractions ≤ 0.14 on the gated cells (truncation never fires on
+  them: `truncated_rows = 0`). `empty_candidate_set_rows = 0` everywhere.
+* **V1–V4 (visibility, hard every cell):** all `pass = true`; V1/V2
+  violations = 0; V2 unmarked ≤ prototype per cell (identical); V3 review
+  queues identical across shapes; V4 `certified_leaks = 0`,
+  `incomplete_audits = 0` on every cell.
+* **G-R (regression, hard every cell):** continuity anchors hold
+  (`G-R_anchors` pass — 300 certified abstentions; 375 = 292 + 83, zero
+  escapes); `G-R_non_pending_identical` pass on every cell; control
+  `G-R_control_zero_adverse` pass (adverse = 0); PR-12 base byte-gate green
+  before and after; committed `pr12/`, `pr12_1/`, `pr12_2/` byte-untouched.
+  Quarantine-led rows are byte-identical across prototype/W1/W2 under the §5
+  audit-packet rule (policy_version excluded): 850/1470/1375/923/296 records
+  on pairD_stale-soft / pairD_contra / pairB_contra / pairD_oneshot /
+  pairB_oneshot respectively, IDENTICAL on both candidates — direct evidence
+  the quarantine-caveat downgrade was not revived (§9.7).
+* **Kill conditions 1–9:** none fired (`kill_conditions: []`). Determinism
+  re-verified: a second `--scan12-3` reproduces the entire `pr12_3/` tree
+  byte-identically and the same verdict.
+
+### 9.5 Contra cells remain report-only — no GO claim, the §2 double-bind confirmed
+
+Per §2 the candidate-economics gates are **not** applied to the contra
+cells; the same measurements are carried report-only (`gated: false`,
+`role: contra_report_only`). They confirm the pre-registered structural
+double-bind exactly — and would have pre-determined `attribution-negative`
+by gate composition had §2 not scoped them out:
+
+| shape · contra cell | G-A rate | G-M rate | would-fail-if-gated |
+|---|---|---|---|
+| W1 · pairD_contra_s0 | 0.000000 | 0.113296 | **G-M** (dual-present-all blows the mass ceiling) |
+| W1 · pairB_contra_s0 | 0.000000 | 0.103393 | **G-M** |
+| W2 · pairD_contra_s0 | 0.106273 | 0.007022 | **G-A** (escalate-most blows the attribution ceiling) |
+| W2 · pairB_contra_s0 | 0.098950 | 0.004443 | **G-A** |
+
+The GO makes **no claim** about contra-arm pending-led rows; that harm class
+is out of PR-12.3's scope (§2, §5 downstream boundary).
+
+### 9.6 Frozen-baseline suppression — reported, gated nowhere (§5)
+
+Quarantine-led + superseded suppression is design-frozen (mechanism (a)/(c),
+PR-12.2 §12) and gated nowhere; it is reported identically under
+prototype/W1/W2: pairD_oneshot 719 (rate 0.295035), pairB_oneshot 272
+(0.115646), pairD_contra 1024 (0.479401), pairB_contra 1075 (0.434168),
+pairD_stale-soft 716 (0.292364), clean 0. G-A measures only
+**candidate-attributable** suppression (§9.2), which is ≤ 0.0164.
+
+### 9.7 Implementation incidents (both caught and resolved before the judging run)
+
+1. **kill-5 caught a forbidden C1/quarantine-caveat inheritance before any
+   outcome gate was computed.** W1/W2 initially fell outside the quarantine
+   `escalate` allow-list, so quarantine-led rows would have taken C1's
+   caveat downgrade (`state:quarantined` 923 → 0 on pairD_oneshot) — an
+   unauthorized C1 revival (§4). The kills-1–8 sweep returns
+   `attribution-blocked` (`harness_boundary_sim.py:1582`) **before**
+   `economics()` is even defined (`:1591`), so G-A/G-M/G-T were never
+   computed or printed on that blocked run — no outcome was observed. Fixed
+   by adding `"W1","W2"` to the allow-list (`:331`), with the §4 rationale
+   pinned in the adjacent comment. Same defect class PR-12.2 hit with D1/D2;
+   the recurring lesson: any new pending-led shape must join the quarantine
+   escalate allow-list or it silently revives C1.
+2. **PR-12.3 counters namespaced under `pr123` to preserve PR-12.2 byte
+   identity.** The ten new counters would otherwise have leaked into
+   `run_scan12_2`'s wholesale `res["counters"]` dump and modified the
+   committed `pr12_2/pending_scan.json` (a §4/§7.2 byte-identity violation).
+   They are routed to a separate `pr123` defaultdict returned as
+   `res["pr123_counters"]`; `run_scan12_3` scores from a merged view;
+   `run_scan12_2` is literally untouched. Re-verified this run: `--scan12-2`
+   reproduces byte-identically and its verdict remains **`pending-negative`**
+   (G-S FAIL, G-T FAIL 0.159664 / 0.492701, G-M PASS).
+
+### 9.8 Scope and downstream boundary (restated per §5 — nothing here is enlarged)
+
+Offline-simulator evidence only. This GO does **not** certify mechanism (d)
+globally (beyond the two gated one-shot cells), nor authorize agent
+prompting, promotion to any policy version, memory ingestion or write-back
+of dual-presented content, autonomous downstream use of the emitted packets,
+or any FAM-core / policy / threshold / reader-contract change. **PR-10's
+merge-abstain remains the only certified reader contract, unmodified by this
+outcome.** PR-12.1 (`reshape-negative`) and PR-12.2 (`pending-negative`)
+verdicts stand unchanged; C1/C2/C3 are not revived.
+
+### 9.9 Emitted artifacts (54 per-(shape × cell) files + the scan report)
+
+Gate report:
+`results/issue_failure_mode_blindness/pr12_3/attribution_scan.json`
+
+Per (shape × cell) under `results/issue_failure_mode_blindness/pr12_3/`, the
+three standard files `audit_packet.jsonl`, `decision_table.csv`,
+`memory_packet.jsonl` (3 shapes × 6 cells × 3 = 54):
+
+```
+pr12_3/{prototype,W1,W2}/clean_pairA_s0/{audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+pr12_3/{prototype,W1,W2}/pairD_stale-soft_s0/{audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+pr12_3/{prototype,W1,W2}/pairD_contra_s0/{audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+pr12_3/{prototype,W1,W2}/pairB_contra_s0/{audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+pr12_3/{prototype,W1,W2}/pairD_oneshot_s0/{audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+pr12_3/{prototype,W1,W2}/pairB_oneshot_s0/{audit_packet.jsonl,decision_table.csv,memory_packet.jsonl}
+```

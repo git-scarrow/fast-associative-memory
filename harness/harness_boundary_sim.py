@@ -39,9 +39,10 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-# Frozen constants — analyze_fork_governance.py:119-120 (read-only mirror).
+# Frozen constants — analyze_fork_governance.py:117-120 (read-only mirror).
 CONFLICT_COS = 0.5
 MERGE_SUSPECT_COS = 0.9
+WITNESS_SIM_WINDOW = 0.05  # frozen since PR-2; analyze_fork_governance.py:117
 
 CORE_TIER = "core-certified"
 HARNESS_TIER = "harness-heuristic"
@@ -203,6 +204,77 @@ def ambiguous_pairs_at(router, epoch, st):
     return dict(out)
 
 
+# ---------------------------------------------------------------------------
+# PR-12.3 §3 — witness-window candidate-set construction (frozen-scorer mirror)
+# ---------------------------------------------------------------------------
+def _surv_class_mass(cands):
+    """Surviving vote mass per decode class — the §3 width-bound ordering key.
+    Mirror of analyze_fork_governance.py:282-286 (_class_mass), restricted to
+    surviving candidates as §3 specifies ('descending surviving vote mass').
+    Label-free: reads only topk weight/decode, never the registry."""
+    mass = defaultdict(float)
+    for c in cands:
+        if c["surviving"]:
+            mass[c["decode"]] += float(c["weight"])
+    return mass
+
+
+def witness_window_classes(cands):
+    """Decode classes of the probe's fork witness window. EXACT reimplement of
+    the frozen scorer's fork_witness (analyze_fork_governance.py:246-254):
+    surviving candidates within WITNESS_SIM_WINDOW raw cosine of the surviving
+    top-1 (top-1 by ``sim``), iff they span >= 2 decode classes; else empty.
+
+    This is the probe's own read-time tie set (PR-12.3 §1); it reads only the
+    probe's own topk rows — no lookahead (§4). PR-12.3 §6 names the fidelity
+    of this mirror as the key assumption: a divergence from the frozen
+    scorer's fork_witness is instrumentation, not evidence."""
+    surv = [c for c in cands if c["surviving"]]
+    if not surv:
+        return set()
+    top = max(c["sim"] for c in surv)
+    win = [c for c in surv if c["sim"] >= top - WITNESS_SIM_WINDOW]
+    classes = {c["decode"] for c in win}
+    return set(classes) if len(classes) >= 2 else set()
+
+
+def build_witness_present(cands, deployed_label, pairs_here):
+    """PR-12.3 §3 candidate set + width bound for W1/W2 (parameter-free).
+
+    Candidate classes = witness-window decode classes UNION the deployed
+    answer; if the witness window is empty, fall back to the PR-12.2 D2 set
+    (the leading ambiguous pair's counterpart classes), recorded
+    ``fallback='pair_counterpart'``. Width bound (§3): at most 3 decode
+    classes total — deployed always present, plus <= 2 alternatives selected
+    by DESCENDING surviving vote mass per class, ties broken by ASCENDING
+    decode-class index (fixed, label-free, not a new observable). Truncated
+    alternatives are counted, never silently dropped.
+
+    Empty-set scoring (§3): if the fallback set is nonetheless empty for some
+    row (instrumentation fault), the presented set is {deployed} alone (width
+    1) and the row is NEVER excluded from scoring — a small set only makes
+    containment harder to achieve, never easier."""
+    wclasses = witness_window_classes(cands)
+    if wclasses:
+        candidate_classes = set(wclasses) | {deployed_label}
+        fallback = None
+    else:
+        candidate_classes = {p["alt"] for p in pairs_here} | {deployed_label}
+        fallback = "pair_counterpart"
+    mass = _surv_class_mass(cands)
+    ordered_alts = sorted(candidate_classes - {deployed_label},
+                          key=lambda cls: (-mass[cls], cls))
+    kept = ordered_alts[:2]                    # deployed + <= 2 alternatives
+    presented = [deployed_label, *kept]        # emission order: deployed first
+    return {"presented": presented,
+            "presented_set": sorted(set(presented)),
+            "ordered_alts": kept,
+            "fallback": fallback,
+            "truncated": len(ordered_alts) - len(kept),
+            "width_used": len(presented),
+            "candidate_class_count": len(candidate_classes)}
+
+
 def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
                  shape="prototype", counterpart=None, alt_classes=None,
                  amb_pairs=None):
@@ -215,6 +287,7 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
     merge_support = any(c["slot"] in st["merge"] for c in surv)
     abstained = row["served_outcome"] == "abstain"
     dual_out = None
+    dual_meta = None
 
     def audit(item_id, state, disposition, reason, evidence, tier,
               authorization=None):
@@ -251,10 +324,11 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
             surv_slots = {c["slot"] for c in surv}
             witness_live = bool((counterpart or {}).get(led, set())
                                 & surv_slots)
-            # PR-12.2 shapes D1/D2 modify pending-led rows ONLY (§2/§4);
-            # quarantine-led escalation keeps the prototype disposition
-            # under them — C1/C2 behavior is NOT revived.
-            escalate = (shape in ("prototype", "D1", "D2")
+            # PR-12.2 shapes D1/D2 and PR-12.3 shapes W1/W2 modify pending-led
+            # rows ONLY (§2/§4); quarantine-led escalation keeps the prototype
+            # disposition under them — C1/C2 behavior is NOT revived (a
+            # quarantine-led disposition change would be a §7.5 kill).
+            escalate = (shape in ("prototype", "D1", "D2", "W1", "W2")
                         or (shape == "C3" and witness_live))
             if escalate:
                 state, disp = "quarantined", "escalated"
@@ -291,8 +365,13 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
             reason = "led_pending_ambiguous"
             pairs_here = (amb_pairs or {}).get(led, [])
             fresh = any(p["onset"] == epoch for p in pairs_here)
+            # PR-12.3 W1 dual-presents every pending-led row; W2 uses PR-12.2
+            # D2's never-resolving selectivity (dual iff ambiguous strictly
+            # past onset; fresh rows keep the prototype escalation). Neither
+            # revives C1/C2/C3 nor alters quarantine/superseded handling (§4).
             dual = bool(pairs_here) and (
-                shape == "D1" or (shape == "D2" and not fresh))
+                shape == "D1" or (shape == "D2" and not fresh)
+                or shape == "W1" or (shape == "W2" and not fresh))
             if not dual:
                 state, disp = "human-review", "escalated"
                 evidence = (f"router(fork_events.csv): slot {led} in "
@@ -300,37 +379,80 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
                 if shape == "D2":
                     evidence += ("; age-gated: pair inside its onset "
                                  "epoch (genuinely undecided)")
+                elif shape == "W2":
+                    evidence += ("; age-gated: fresh ambiguity inside onset "
+                                 "epoch — prototype escalation retained")
                 items.append({"type": "unresolved_notice",
                               "text": "unresolved fork — two candidates, "
                                       "unresolved tie",
                               "certification_tier": HARNESS_TIER})
             else:
                 state, disp = "human-review", "shown_with_caveat"
-                alts = sorted({p["alt"] for p in pairs_here})
                 deployed_label = int(float(row["vote_pred_label"]))
-                dual_classes = sorted({deployed_label, *alts})
-                evidence = (f"router(fork_events.csv): slot {led} in "
-                            f"ambiguous (pending) pair @epoch {epoch}; "
-                            f"never-resolving classifier: ambiguous past "
-                            f"onset (onsets "
-                            f"{sorted({p['onset'] for p in pairs_here})})"
-                            if shape == "D2" else
-                            f"router(fork_events.csv): slot {led} in "
-                            f"ambiguous (pending) pair @epoch {epoch}; "
-                            f"dual-present-all")
-                items.append({
-                    "type": "unresolved_tie",
-                    "text": "unresolved tie — two candidates, neither "
-                            "asserted",
-                    "candidates": [
-                        {"decode_class": deployed_label, "slot": led,
-                         "basis": "deployed vote"},
-                        *[{"decode_class": a,
-                           "basis": "fork counterpart (router pair)"}
-                          for a in alts]],
-                    "certification_tier": HARNESS_TIER})
-                answer = None  # never compiled as a single answer
-                dual_out = dual_classes
+                if shape in ("W1", "W2"):
+                    # PR-12.3 §3 witness-window candidate set + width bound.
+                    w = build_witness_present(cands, deployed_label,
+                                              pairs_here)
+                    dual_meta = {"fallback": w["fallback"],
+                                 "truncated": w["truncated"],
+                                 "width_used": w["width_used"],
+                                 "empty_candidate_set":
+                                     len(w["ordered_alts"]) == 0,
+                                 "source": ("pair_counterpart"
+                                            if w["fallback"] else "witness")}
+                    src_basis = ("fork counterpart (router pair fallback)"
+                                 if w["fallback"] else
+                                 "witness co-resident (fork_witness)")
+                    # Per-row fallback/truncation markers live inside the
+                    # decision evidence (§8), audit-side.
+                    evidence = (f"router(fork_events.csv): slot {led} in "
+                                f"ambiguous (pending) pair @epoch {epoch}; "
+                                f"witness-window dual-present "
+                                f"[source={dual_meta['source']}, "
+                                f"width={w['width_used']}, "
+                                f"truncated={w['truncated']}]")
+                    if shape == "W2":
+                        evidence += ("; age-gated: ambiguous strictly past "
+                                     "onset (onsets "
+                                     f"{sorted({p['onset'] for p in pairs_here})})")
+                    items.append({
+                        "type": "unresolved_tie",
+                        "text": "unresolved tie — two candidates, neither "
+                                "asserted",
+                        "candidates": [
+                            {"decode_class": deployed_label, "slot": led,
+                             "basis": "deployed vote"},
+                            *[{"decode_class": a, "basis": src_basis}
+                              for a in w["ordered_alts"]]],
+                        "certification_tier": HARNESS_TIER})
+                    answer = None  # never compiled as a single answer
+                    dual_out = w["presented_set"]
+                else:
+                    # PR-12.2 D1/D2 (byte-frozen; not a PR-12.3 shape).
+                    alts = sorted({p["alt"] for p in pairs_here})
+                    dual_classes = sorted({deployed_label, *alts})
+                    evidence = (f"router(fork_events.csv): slot {led} in "
+                                f"ambiguous (pending) pair @epoch {epoch}; "
+                                f"never-resolving classifier: ambiguous past "
+                                f"onset (onsets "
+                                f"{sorted({p['onset'] for p in pairs_here})})"
+                                if shape == "D2" else
+                                f"router(fork_events.csv): slot {led} in "
+                                f"ambiguous (pending) pair @epoch {epoch}; "
+                                f"dual-present-all")
+                    items.append({
+                        "type": "unresolved_tie",
+                        "text": "unresolved tie — two candidates, neither "
+                                "asserted",
+                        "candidates": [
+                            {"decode_class": deployed_label, "slot": led,
+                             "basis": "deployed vote"},
+                            *[{"decode_class": a,
+                               "basis": "fork counterpart (router pair)"}
+                              for a in alts]],
+                        "certification_tier": HARNESS_TIER})
+                    answer = None  # never compiled as a single answer
+                    dual_out = dual_classes
         elif led in st["deprecate"]:
             state, reason = "superseded", "led_superseded_supersession"
             evidence = (f"router(fork_events.csv): slot {led} superseded "
@@ -380,7 +502,7 @@ def decide_probe(row, cands, st, allow_stale, policy_version, cell_name,
             "retrieval_scope": retrieval_scope, "led_slot": led,
             "merge_support": merge_support, "abstained": abstained,
             "pending_led": (not abstained and led in st["ambiguous"]),
-            "dual_classes": dual_out}
+            "dual_classes": dual_out, "dual_meta": dual_meta}
 
 
 # ---------------------------------------------------------------------------
@@ -507,6 +629,10 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
     pv = policy_version or policy["policy_version"]
     state_by_epoch = {}
     counters = defaultdict(int)
+    # PR-12.3 §5 counters live in a SEPARATE namespace so the shared run_cell
+    # never perturbs the committed PR-12.1/12.2 scan reports (which dump
+    # `counters` wholesale) — byte-identity of pr12_1/pr12_2 is the contract.
+    pr123 = defaultdict(int)
     table_rows = []
     led_rows = defaultdict(list)          # slot -> [query_id, ...] (served)
     quarantine_led_by_slot = defaultdict(int)
@@ -606,12 +732,49 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
                     if d["dual_classes"] is not None:
                         counters["pending_dual"] += 1
                         counters["pending_dual_on_correct"] += int(correct)
+                        meta = d.get("dual_meta")
+                        if meta is not None:   # PR-12.3 W1/W2 witness shapes
+                            pr123["pending_dual_witness"] += int(
+                                meta["fallback"] is None)
+                            pr123["pending_dual_fallback_paircp"] += int(
+                                meta["fallback"] == "pair_counterpart")
+                            pr123["pending_dual_truncated_rows"] += int(
+                                meta["truncated"] > 0)
+                            pr123["pending_dual_truncated_classes"] += \
+                                meta["truncated"]
+                            pr123["pending_dual_full_width"] += int(
+                                meta["width_used"] == 3)
+                            pr123["pending_dual_width_gt3"] += int(
+                                meta["width_used"] > 3)
+                            pr123["pending_dual_empty_candidate_set"] += \
+                                int(meta["empty_candidate_set"])
                         if not correct:
                             counters["pending_dual_wrong"] += 1
                             counters["pending_dual_truth_contained"] += int(
                                 truth in d["dual_classes"])
+                            # width_used per dual-presented WRONG row feeds the
+                            # §5 chance-baseline (mean width / n_decode_classes)
+                            if meta is not None:
+                                pr123["pending_dual_wrong_width_sum"] += \
+                                    meta["width_used"]
                     else:
                         counters["pending_escalated"] += 1
+                        # PR-12.3 G-A: candidate-attributable suppression is
+                        # the pending-led escalate/withhold on CORRECT traffic
+                        # — the only suppression the W1/W2 candidate controls
+                        # (frozen-baseline quarantine/superseded is separate).
+                        pr123["pending_led_suppressed_on_correct"] += int(
+                            correct)
+                # PR-12.3 §5: frozen-baseline suppression (quarantine-led +
+                # superseded; design-frozen per PR-12.2 §12) is reported on
+                # every cell and gated NOWHERE — not the candidate's to
+                # control. Recorded distinctly from the G-A numerator above.
+                if (correct and answer_dec["disposition"] in ("escalated",
+                                                              "withheld")
+                        and answer_dec["reason_code"] in
+                        ("led_quarantined_contradiction",
+                         "led_superseded_supersession")):
+                    pr123["frozen_baseline_suppressed_on_correct"] += 1
                 if answer_dec["disposition"] == "escalated":
                     counters["escalated_on_correct"] += int(correct)
                 elif answer_dec["disposition"] == "withheld":
@@ -657,7 +820,13 @@ def run_cell(repo: Path, name: str, cfg: dict, policy: dict,
         else:
             mismatch += 1
 
-    return {"counters": dict(counters), "out_dir": out_dir,
+    # §5 chance-baseline denominator: the cell's decode-class alphabet size
+    # (distinct decode classes observed in topk; label-free, no registry).
+    n_decode_classes = len({c["decode"]
+                            for cs in cell["topk"].values() for c in cs})
+
+    return {"counters": dict(counters), "pr123_counters": dict(pr123),
+            "out_dir": out_dir, "n_decode_classes": n_decode_classes,
             "router_counts": {"n_conflict_pairs": len(router["pairs"]),
                               "n_merge_suspect_events": len(router["merge"])},
             "hazard_source_counts": {
@@ -1237,6 +1406,385 @@ def run_scan12_2(repo: Path, policy: dict, allow_stale: bool) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# PR-12.3 §5 — suppression-attribution + witness-window scan (no discretion)
+# ---------------------------------------------------------------------------
+def run_scan12_3(repo: Path, policy: dict, allow_stale: bool) -> int:
+    scan = policy["scan12_3"]
+    shapes, cells, pv = scan["shapes"], scan["cells"], scan["policy_version"]
+    a_ceil = scan["attributable_suppression_ceiling"]
+    m_ceil = scan["presentation_mass_ceiling"]
+    t_floor = scan["truth_containment_floor"]
+    margin = scan["chance_baseline_margin"]
+    width_bound = scan["width_bound_classes"]
+    gated_roles = set(scan["gated_roles"])
+    scan_root = repo / scan["output_root"]
+    report = {"design_memo": scan["design_memo"], "policy_version": pv,
+              "ceilings": {"G-A": a_ceil, "G-M": m_ceil, "G-T": t_floor,
+                           "chance_baseline_margin": margin,
+                           "width_bound_classes": width_bound},
+              "gated_roles": sorted(gated_roles),
+              "shapes": shapes, "cells": list(cells),
+              "roles": {n: cells[n]["role"] for n in cells},
+              "gates": {}, "report_only": {}, "exposure": {},
+              "counters": {}, "n_decode_classes": {},
+              "kill_conditions": []}
+
+    def kill(cond, label, detail):
+        ok = not cond
+        print(f"  {'PASS' if ok else 'KILL'}  {label}"
+              + ("" if ok else f": {detail}"))
+        if cond:
+            report["kill_conditions"].append({"label": label,
+                                              "detail": detail})
+
+    def merged(r):
+        """Existing PR-12.2 counters plus the namespaced PR-12.3 counters
+        (disjoint keys). run_scan12_3 scores from this merged view; the
+        shared run_cell keeps them separate so scan12_2 stays byte-identical."""
+        return {**r["counters"], **r["pr123_counters"]}
+
+    print("§8 prologue: PR-12 base byte-gate")
+    before = base_bytecheck(repo, policy, allow_stale)
+    report["base_bytecheck_before"] = before
+    kill(not before, "kill-2: base byte-gate green (before)",
+         "pr12/ regeneration drifted")
+
+    # ---- run every (shape, cell); missing committed input -> kill-1
+    results = {}
+    for shape in shapes:
+        for name, cfg in cells.items():
+            try:
+                results[(shape, name)] = run_cell(
+                    repo, name, cfg, policy, allow_stale,
+                    out_root=scan_root / shape, shape=shape,
+                    policy_version=pv, emit_review_queue=True,
+                    emit_ambiguous_queue=True)
+            except FileNotFoundError as e:
+                kill(True, f"kill-1: committed input present "
+                     f"[{shape}/{name}]", str(e))
+    if report["kill_conditions"]:
+        report["verdict"] = "attribution-blocked"
+        _write_report(scan_root, report, "attribution_scan.json")
+        print(f"\nVERDICT: attribution-blocked — {report['kill_conditions']}")
+        return 1
+    for name in cells:
+        report["n_decode_classes"][name] = \
+            results[("prototype", name)]["n_decode_classes"]
+
+    # ---- kill-1 cross-checks + kill-4 (abstain exactness) on prototype
+    for name, cfg in cells.items():
+        res = results[("prototype", name)]
+        c, rc, hz = res["counters"], res["router_counts"], \
+            res["hazard_source_counts"]
+        kill(hz["n_conflict_pairs"] is not None
+             and rc["n_conflict_pairs"] != hz["n_conflict_pairs"],
+             f"kill-1: router pairs match committed [{name}]",
+             f"rebuilt {rc['n_conflict_pairs']} vs {hz['n_conflict_pairs']}")
+        kill(hz["n_merge_suspect_events"] is not None
+             and rc["n_merge_suspect_events"]
+             != hz["n_merge_suspect_events"],
+             f"kill-1: router merges match committed [{name}]",
+             f"rebuilt {rc['n_merge_suspect_events']} vs "
+             f"{hz['n_merge_suspect_events']}")
+        kill(hz["n_rows"] is not None and c["n"] != hz["n_rows"],
+             f"kill-1: row count matches committed [{name}]",
+             f"{c['n']} vs {hz['n_rows']}")
+        n_amb = len(res["ambiguous_queue"])
+        kill(n_amb != hz["ambiguous_pairs_final"],
+             f"kill-1: final-epoch ambiguous pairs match committed [{name}]",
+             f"rebuilt {n_amb} vs committed {hz['ambiguous_pairs_final']}")
+        if "expected_ambiguous_pairs" in cfg:
+            kill(n_amb != cfg["expected_ambiguous_pairs"],
+                 f"kill-1: one-shot ambiguous pairs == "
+                 f"{cfg['expected_ambiguous_pairs']} [{name}]",
+                 f"got {n_amb}")
+        kill(c["abstain_led_merge_mismatch"] != 0,
+             f"kill-4: certified abstain set == merge-led set [{name}]",
+             f"{c['abstain_led_merge_mismatch']} mismatches")
+
+    # ---- kill-3 prototype byte-no-op vs pr12_2/prototype (§5 rule)
+    def audit_equal_modulo_pv(fresh_path: Path, committed_path: Path):
+        """§5 comparison rule (adopted up front, the E1 lesson): audit packet
+        equal record-by-record after excluding ONLY the per-record
+        policy_version field — no other exclusion, since PR-12.3 appends no
+        new record type beyond the 12.2 baseline (both carry the two
+        review-queue record types)."""
+        def norm(path):
+            out = []
+            with open(path) as f:
+                for line in f:
+                    rec = json.loads(line)
+                    for dec in rec.get("decisions", []):
+                        dec.pop("policy_version", None)
+                    out.append(rec)
+            return out
+        return norm(fresh_path) == norm(committed_path)
+
+    shared_baseline = repo / scan["shared_prototype_baseline"]
+    for name in cells:
+        base_dir = shared_baseline / name
+        kill(not base_dir.exists(),
+             f"kill-3: pr12_2 prototype baseline present [{name}]",
+             f"{base_dir} missing")
+        if not base_dir.exists():
+            continue
+        for fn in ("memory_packet.jsonl", "decision_table.csv"):
+            fresh = (scan_root / "prototype" / name / fn).read_bytes()
+            committed = (base_dir / fn).read_bytes()
+            kill(fresh != committed,
+                 f"kill-3: prototype byte-no-op vs pr12_2 [{name}/{fn}]",
+                 f"{len(fresh)} vs {len(committed)} bytes (strict byte "
+                 f"identity)")
+        kill(not audit_equal_modulo_pv(
+                scan_root / "prototype" / name / "audit_packet.jsonl",
+                base_dir / "audit_packet.jsonl"),
+             f"kill-3: prototype audit == pr12_2 modulo policy_version "
+             f"[{name}]",
+             "differences beyond the per-record policy_version field")
+
+    # ---- kill-5/6/7/8 across candidate shapes (structural instrumentation)
+    npend_keys = ("state:quarantined", "state:superseded",
+                  "state:human-review", "abstained",
+                  "stale_wrong_flagged_served", "quarantine_led_served")
+    for shape in shapes:
+        if shape == "prototype":
+            continue
+        for name in cells:
+            res, proto = results[(shape, name)], results[("prototype", name)]
+            c, pc = merged(res), merged(proto)
+            kill(any(c.get(k, 0) != pc.get(k, 0) for k in npend_keys),
+                 f"kill-5: no candidate diff outside pending-led rows "
+                 f"[{shape}/{name}]",
+                 "non-pending disposition counters differ from prototype")
+            kill(c.get("pending_dual_width_gt3", 0) != 0,
+                 f"kill-6: width bound (<= {width_bound} classes) holds "
+                 f"[{shape}/{name}]",
+                 f"{c.get('pending_dual_width_gt3', 0)} rows exceed "
+                 f"{width_bound} presented classes")
+            kill(res["review_queue"] != proto["review_queue"]
+                 or res["ambiguous_queue"] != proto["ambiguous_queue"],
+                 f"kill-7: review queues identical across shapes "
+                 f"[{shape}/{name}]",
+                 "contradiction/ambiguous review queue diverged")
+            inv = packet_invariants(res["out_dir"])
+            kill(inv["certified_leaks"] != 0,
+                 f"kill-8: 'certified' only in permitted fields "
+                 f"[{shape}/{name}]",
+                 f"{inv['certified_leaks']} leaks")
+
+    print("\n§8 epilogue: PR-12 base byte-gate")
+    after = base_bytecheck(repo, policy, allow_stale)
+    report["base_bytecheck_after"] = after
+    kill(not after, "kill-2: base byte-gate green (after)",
+         "pr12/ regeneration drifted")
+
+    if report["kill_conditions"]:
+        report["verdict"] = "attribution-blocked"
+        _write_report(scan_root, report, "attribution_scan.json")
+        print(f"\nVERDICT: attribution-blocked — "
+              f"{len(report['kill_conditions'])} kill condition(s); no "
+              "candidate judged from a blocked run (§7).")
+        return 1
+
+    # ---- economics measurements (G-A / G-M / G-T with chance baseline) -----
+    def economics(res):
+        c = merged(res)
+        denom = c["n"] - c["wrong_none"]
+        supp = c.get("pending_led_suppressed_on_correct", 0)
+        mass = c.get("pending_dual_on_correct", 0)
+        dw = c.get("pending_dual_wrong", 0)
+        tc = c.get("pending_dual_truth_contained", 0)
+        wsum = c.get("pending_dual_wrong_width_sum", 0)
+        n_dec = res["n_decode_classes"]
+        containment = (tc / dw) if dw else None
+        chance = (wsum / (dw * n_dec)) if dw else None
+        floor_pass = (containment >= t_floor) if dw else True
+        # §5: a genuine G-T pass must beat its own same-width chance-baseline
+        # by >= margin, not merely clear the fixed 0.5 floor. Clearing 0.5
+        # without the margin is width-saturated and NOT a pass (kill-9).
+        margin_pass = (containment >= chance + margin) if dw else True
+        width_saturated = bool(dw) and floor_pass and not margin_pass
+        genuine = floor_pass and margin_pass
+        return {
+            "denom_correct_traffic": denom,
+            "G-A": {"attributable_suppressed_on_correct": supp,
+                    "rate": round(supp / denom, 6) if denom else 0.0,
+                    "ceiling": a_ceil,
+                    "pass": (supp / denom if denom else 0) <= a_ceil},
+            "G-M": {"dual_on_correct": mass,
+                    "rate": round(mass / denom, 6) if denom else 0.0,
+                    "ceiling": m_ceil,
+                    "pass": (mass / denom if denom else 0) <= m_ceil},
+            "G-T": {"dual_wrong": dw, "truth_contained": tc,
+                    "containment_rate": round(containment, 6)
+                    if containment is not None else None,
+                    "floor": t_floor, "floor_pass": floor_pass,
+                    "n_decode_classes": n_dec,
+                    "chance_baseline_rate": round(chance, 6)
+                    if chance is not None else None,
+                    "chance_margin": margin,
+                    "chance_plus_margin": round(chance + margin, 6)
+                    if chance is not None else None,
+                    "margin_pass": margin_pass,
+                    "width_saturated": width_saturated,
+                    "genuine": genuine, "pass": genuine}}
+
+    def frozen_baseline(res):
+        c = merged(res)
+        denom = c["n"] - c["wrong_none"]
+        fb = c.get("frozen_baseline_suppressed_on_correct", 0)
+        return {"frozen_baseline_suppressed_on_correct": fb,
+                "rate": round(fb / denom, 6) if denom else 0.0,
+                "note": "quarantine-led + superseded; design-frozen, gated "
+                        "nowhere (§5)"}
+
+    def width_report(res):
+        c = merged(res)
+        dual = c.get("pending_dual", 0)
+        dw = c.get("pending_dual_wrong", 0)
+        wsum = c.get("pending_dual_wrong_width_sum", 0)
+        n_dec = res["n_decode_classes"]
+        return {"dual_presented": dual,
+                "over_bound_rows": c.get("pending_dual_width_gt3", 0),
+                "truncated_rows": c.get("pending_dual_truncated_rows", 0),
+                "truncated_classes": c.get("pending_dual_truncated_classes", 0),
+                "full_width_rows": c.get("pending_dual_full_width", 0),
+                "full_width_fraction": round(
+                    c.get("pending_dual_full_width", 0) / dual, 6)
+                    if dual else 0.0,
+                "fallback_pair_counterpart_rows":
+                    c.get("pending_dual_fallback_paircp", 0),
+                "witness_rows": c.get("pending_dual_witness", 0),
+                "empty_candidate_set_rows":
+                    c.get("pending_dual_empty_candidate_set", 0),
+                "chance_baseline_rate_wrong": round(wsum / (dw * n_dec), 6)
+                    if dw else None,
+                "selection": "vote-mass-descending, tie-break ascending "
+                             "decode-class index (§3)"}
+
+    # ---- per-candidate gate scoring ---------------------------------------
+    for shape in shapes:
+        report["gates"][shape] = {}
+        report["report_only"][shape] = {}
+        report["exposure"][shape] = {}
+        report["counters"][shape] = {}
+        print(f"\n[{shape}]")
+        for name, cfg in cells.items():
+            res, proto = results[(shape, name)], results[("prototype", name)]
+            c, proto_c = merged(res), merged(proto)
+            role = cfg["role"]
+            econ = economics(res)
+            wrep = width_report(res)
+            inv = packet_invariants(res["out_dir"])
+            unmarked = sum(v["unmarked"] for v in res["exposure"].values())
+            unmarked_p = sum(v["unmarked"]
+                             for v in proto["exposure"].values())
+            gates = {
+                # G-W width integrity (hard, every cell)
+                "G-W": {"over_bound_rows": c.get("pending_dual_width_gt3", 0),
+                        "width_bound": width_bound, **wrep,
+                        "pass": c.get("pending_dual_width_gt3", 0) == 0},
+                # G-V visibility (hard, every cell)
+                "V1": {"violations": c.get("v1p_violations", 0),
+                       "pass": c.get("v1p_violations", 0) == 0},
+                "V2": {"violations": c.get("v2p_violations", 0),
+                       "unmarked": unmarked, "unmarked_prototype": unmarked_p,
+                       "pass": c.get("v2p_violations", 0) == 0
+                       and unmarked <= unmarked_p},
+                "V3": {"contradiction_pairs": len(res["review_queue"]),
+                       "ambiguous_pairs": len(res["ambiguous_queue"]),
+                       "pass": res["review_queue"] == proto["review_queue"]
+                       and res["ambiguous_queue"]
+                       == proto["ambiguous_queue"]},
+                "V4": {**inv, "pass": inv["certified_leaks"] == 0
+                       and inv["incomplete_audits"] == 0},
+                # G-R regression (hard, every cell)
+                "G-R_non_pending_identical": {
+                    "pass": all(c.get(k, 0) == proto_c.get(k, 0)
+                                for k in npend_keys)},
+            }
+            if role in gated_roles:  # G-A/G-M/G-T hard on gated harm class
+                gates["G-A"] = econ["G-A"]
+                gates["G-M"] = econ["G-M"]
+                gates["G-T"] = econ["G-T"]
+            if role == "continuity":
+                a = cfg["anchors"]
+                gates["G-R_anchors"] = {"pass": (
+                    c["abstained"] == a["certified_abstentions"]
+                    and c["stale_wrong"] == a["stale_wrong_total"]
+                    and c["stale_wrong_abstained"]
+                    == a["stale_wrong_abstained"]
+                    and c["stale_wrong_flagged_served"]
+                    == a["stale_wrong_residual_flagged"]
+                    and c["stale_wrong_unflagged_served"] == 0)}
+            if role == "control":
+                adverse = sum(v for k, v in c.items()
+                              if k.startswith("state:")
+                              and k.split(":", 1)[1] != "agent-readable") \
+                    + c.get("disposition:shown_with_caveat", 0) \
+                    + c.get("disposition:withheld", 0) \
+                    + c.get("disposition:escalated", 0)
+                gates["G-R_control_zero_adverse"] = {
+                    "adverse": adverse, "pass": adverse == 0}
+                gates["G-M_control_structural_zero"] = {
+                    "dual_on_correct": econ["G-M"]["dual_on_correct"],
+                    "pass": econ["G-M"]["dual_on_correct"] == 0}
+            report["gates"][shape][name] = gates
+            report["report_only"][shape][name] = {
+                "role": role, "gated": role in gated_roles,
+                "economics": econ,
+                "frozen_baseline_suppression": frozen_baseline(res),
+                "width": wrep}
+            report["exposure"][shape][name] = res["exposure"]
+            report["counters"][shape][name] = c  # merged view (§8 recompute)
+            gt = gates.get("G-T")
+            print(f"  [{name}] ({role}) " + "  ".join(
+                f"{g}={'PASS' if v['pass'] else 'FAIL'}"
+                for g, v in gates.items())
+                + (f"  | cont={gt['containment_rate']} "
+                   f"chance={gt['chance_baseline_rate']}"
+                   + ("  WIDTH-SATURATED" if gt["width_saturated"] else "")
+                   if gt else ""))
+
+    # ---- verdict: candidate passes every hard gate on every applicable cell
+    candidates_pass = [
+        s for s in shapes if s != "prototype"
+        and all(g["pass"] for name in cells
+                for g in report["gates"][s][name].values())]
+
+    # ---- kill-9: containment-inflation guard (§7.9). Mathematically a
+    # width-saturated cell already fails G-T (genuine=False), so no such
+    # candidate can be in candidates_pass; this asserts that invariant.
+    for s in list(candidates_pass):
+        for name, cfg in cells.items():
+            if cfg["role"] in gated_roles \
+                    and report["gates"][s][name].get(
+                        "G-T", {}).get("width_saturated"):
+                kill(True, f"kill-9: containment-inflation guard [{s}/{name}]",
+                     "a GO candidate carries a width-saturated G-T (clears "
+                     "0.5 but not chance-baseline + margin)")
+    if report["kill_conditions"]:
+        report["verdict"] = "attribution-blocked"
+        _write_report(scan_root, report, "attribution_scan.json")
+        print("\nVERDICT: attribution-blocked — containment-inflation "
+              "contradiction (§7.9).")
+        return 1
+
+    report["candidates_pass"] = candidates_pass
+    report["verdict"] = (
+        f"attribution-evidence-GO({','.join(candidates_pass)})"
+        if candidates_pass else "attribution-negative")
+    _write_report(scan_root, report, "attribution_scan.json")
+    print(f"\nVERDICT: {report['verdict']}")
+    print("Scope (PR12_3_SUPPRESSION_ATTRIBUTION.md §5): offline-simulator "
+          "evidence only — no global mechanism-(d) certification, agent "
+          "prompting, promotion, memory ingestion, autonomous downstream "
+          "use, or FAM-core change; PR-10 merge-abstain remains the only "
+          "certified reader contract.")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--repo-root", type=Path,
@@ -1269,10 +1817,25 @@ def main():
                          "the six-cell panel, gates G-S/G-M/G-T/G-V'/G-R "
                          "scored with no discretion, pending_scan.json + "
                          "verdict; §9 kill conditions enforced")
+    ap.add_argument("--scan12-3", action="store_true",
+                    help="PR-12.3 §5 full scan: shapes prototype/W1/W2 × the "
+                         "six-cell panel; gates G-A/G-M/G-T(+chance-baseline)/"
+                         "G-W/G-V/G-R scored with no discretion, "
+                         "attribution_scan.json + verdict; §7 kill conditions "
+                         "enforced. Candidate economics (G-A/G-M/G-T) hard on "
+                         "the two one-shot harm-class cells only; contra "
+                         "cells report-only (§2)")
+    ap.add_argument("--shape12-3", choices=["prototype", "W1", "W2"],
+                    help="PR-12.3 §3 witness-window disposition shape for "
+                         "pending-led served answers; emits one shape over "
+                         "the panel under pr12_3/<shape>/ without gate "
+                         "scoring")
     args = ap.parse_args()
 
     with open(Path(__file__).parent / "harness_policy.json") as f:
         policy = json.load(f)
+    if args.scan12_3:
+        sys.exit(run_scan12_3(args.repo_root, policy, args.allow_stale))
     if args.scan12_2:
         sys.exit(run_scan12_2(args.repo_root, policy, args.allow_stale))
     if args.scan:
@@ -1288,6 +1851,21 @@ def main():
                            policy_version=scan["policy_version"],
                            emit_review_queue=True)
             print(f"[{args.shape}/{name}] -> {res['out_dir']} | "
+                  + ", ".join(f"{k.split(':', 1)[1]}={v}"
+                              for k, v in sorted(res["counters"].items())
+                              if k.startswith("disposition:")))
+        return
+    if args.shape12_3:
+        scan = policy["scan12_3"]
+        for name, cfg in scan["cells"].items():
+            res = run_cell(args.repo_root, name, cfg, policy,
+                           args.allow_stale,
+                           out_root=args.repo_root / scan["output_root"]
+                           / args.shape12_3,
+                           shape=args.shape12_3,
+                           policy_version=scan["policy_version"],
+                           emit_review_queue=True, emit_ambiguous_queue=True)
+            print(f"[{args.shape12_3}/{name}] -> {res['out_dir']} | "
                   + ", ".join(f"{k.split(':', 1)[1]}={v}"
                               for k, v in sorted(res["counters"].items())
                               if k.startswith("disposition:")))

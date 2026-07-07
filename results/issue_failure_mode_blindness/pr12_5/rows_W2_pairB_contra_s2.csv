@@ -1,0 +1,6 @@
+query_id,width,truth_in_set,truth_in_alts,deployed_correct,P-assert,P-uniform,P-alt-uniform
+pairB_contra_s2:e4:p180,2,1,0,1,1.0,0.5,0.0
+pairB_contra_s2:e7:p112,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s2:e7:p180,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s2:e8:p188,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s2:e10:p188,3,1,0,1,1.0,0.333333,0.0

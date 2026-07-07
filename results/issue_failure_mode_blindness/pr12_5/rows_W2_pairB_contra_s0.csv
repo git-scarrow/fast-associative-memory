@@ -1,0 +1,12 @@
+query_id,width,truth_in_set,truth_in_alts,deployed_correct,P-assert,P-uniform,P-alt-uniform
+pairB_contra_s0:e8:p122,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e8:p211,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e9:p73,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e9:p79,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e9:p122,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e9:p211,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e10:p81,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e10:p211,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e10:p229,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e11:p79,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s0:e11:p211,3,1,0,1,1.0,0.333333,0.0

@@ -675,3 +675,91 @@ promotion, memory ingestion, autonomous downstream use, or reader-contract
 change is created or implied — **PR-10 merge-abstain remains the only
 certified reader contract**, and the operational posture remains
 deferral. PR-12.1–12.6 verdicts stand unchanged.
+
+## 24. Stage A generator implementation + anchor parity proof (append-only; §§1–23 frozen)
+
+*Implementation note under the §19/§22+ append-only convention. Scope of
+the separate authorization executed here: implement the §23.3 standalone
+generator and run the §23.4 known-cell byte-equivalence self-check —
+**nothing else**. No C/E holdout packet was generated; no
+`scan12_7_holdout` config block was added; no `pr12_7/` or
+`pr12_7_holdout_cache/` path was created; no Stage B scoring ran;
+`action_boundary_score.py` was not run; no FAM-core file was imported,
+read, or modified; no PR-12.1–12.6 artifact/verdict/gate/output changed;
+no reader-contract change — PR-10 merge-abstain remains the only
+certified reader contract; posture remains deferral. Stage A C/E
+emission and Stage B scoring each still require separate explicit
+approval (§23.7).*
+
+### 24.1 Artifact
+
+`harness/action_boundary_holdout_generate.py` (new file; stdlib +
+subprocess-git only). It imports the byte-frozen emitter's `run_cell`
+(sha256 pin `2539686a205fa03ba88fb4e222043720dc6acf97460f896a31bd58d1a11d32e5`,
+checked before import and after every run — `harness_boundary_sim.py`
+was not edited) and invokes it with the keyword-identical signature of
+the registered PR-12.4 W2 runner (`run_scan12_4`,
+`harness_boundary_sim.py:1897-1901`):
+`run_cell(repo, name, cfg, policy, allow_stale=False, out_root=<root>/<shape>,
+shape=<shape>, policy_version=<scan policy_version>,
+emit_review_queue=True, emit_ambiguous_queue=True)`. `allow_stale=False`
+is the emitter CLI's `store_true` default; no registered PR-12.x run
+passed `--allow-stale`, and the anchor byte-identity below certifies the
+pin. C/E emission (`--emit-holdout`) is structurally gated: it always
+re-runs the anchor self-check first, refuses while no `scan12_7_holdout`
+block exists (verified: refusal exits nonzero and creates nothing),
+kill-checks any future block against the §4 registered cell table
+byte-for-byte (§23.5.3), double-emits and byte-compares (§23.5.6), and
+purity-scans its output for the §23.6 forbidden tokens.
+
+### 24.2 Anchor parity proof (§23.4) — PASS
+
+Run 2026-07-08 (UTC), darwin, Python 3.13.5, repo pin `152be88`
+(= main, clean on every frozen surface; §23.5.5 check recorded empty).
+Command (regeneration into a system temp dir, removed afterward; the
+provenance JSON was written outside the repo):
+
+```
+python3 harness/action_boundary_holdout_generate.py --self-check \
+    --provenance-out <scratch>/anchor_parity_provenance.json
+```
+
+Anchor cell `scan12_4 / W2 / pairD_oneshot_s1`, policy_version
+`pr12.4-scan-0.1`. Committed input hashes (sha256):
+
+| input | sha256 |
+|---|---|
+| `pr10/governed/per_probe_stale-oneshot_pairD_s1.csv` | `d8a1a6fc8a567337da8e765e71f38d2ff5cae723cd5e870b13fc178f15579810` |
+| `…pairD_s1.topk.csv.gz` | `7660af183faa05a0d8beedb35b3f0732cf50e3986dd8881539410a3740321fa0` |
+| `…pairD_s1.per_slot.csv` | `cba81e2d4f7b916ff69d01ebf9d36324798d01e072df1927300d8b8d36f218bd` |
+| `…pairD_s1.fork_events.csv` | `2e8389b50944058f47f87bc0cb4c3d3f270b2f9863ea6ab122d013609502aa66` |
+| `…pairD_s1.summary.json` | `c3652b51c8517de4979db857dd914076df9b4f9994686879c7bb6e1875d0b52c` |
+| `pr4/pr4_geometry_table.json` | `cec2e61bd5751a645da8645610106d29b331e462cf3541cd01f3b0cd46c551f6` |
+| `harness/harness_policy.json` | `fdd4c9c2667eb8602136f001d1569a5efde9bed40c022c7561a88bb5d1d12e68` |
+
+Regenerated vs committed anchor outputs — **byte-identical, sha256
+equal, schema equal, record ordering equal, all three files**:
+
+| file | committed = regenerated sha256 | records |
+|---|---|---|
+| `memory_packet.jsonl` | `fc451528716e330ba07d8692456c825621a824cbe5cb1b9f43a2d178eacfa03a` | 2857 |
+| `audit_packet.jsonl` | `f02c9037ca8b6de32be3bca2537d37bfb73067e9be7c1680ba545503511e2b18` | 2917 |
+| `decision_table.csv` | `f425c3500550af460e0cd8e33ef0e64093fe75d9e0817fa027bf5c284ab51bab` | 2857 |
+
+Emitter sha256 before run = after run = pin (`2539686a…`). §23.6 purity
+scan of the regenerated packets: zero hits on all forbidden tokens
+(`true_label`, `vote_pred`, `registry`, `action-boundary-`,
+`holdout-validity-`, `holdout-insufficient`, `F1a/F1b/F1c`, `coverage`,
+`precision`, `wrong_mass`, `wrong-action`, `pr12_5/`, `pr12_6/`). An
+external second `--self-check` run reproduced an identical provenance
+record (modulo timestamp). Verdict recorded: `anchor-parity-pass`.
+
+### 24.3 Consequence
+
+The §23.4 gate is satisfied: the standalone generator provably
+constructs W2 packets through the registered frozen primitive,
+byte-for-byte. Per §23.4 a passing anchor certifies that a *future*,
+separately-authorized C/E emission through the same invocation is
+constructed by the registered primitive. This note authorizes no such
+emission: the `scan12_7_holdout` config manifest, the Stage A C/E run,
+and Stage B scoring each remain separately unauthorized.

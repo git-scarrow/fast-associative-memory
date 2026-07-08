@@ -353,4 +353,94 @@
       }
     }
   }
+  ,
+  "scan12_8_panel": {
+    "design_memo": "results/issue_failure_mode_blindness/PR12_8_READER_CONTRACT_CANDIDACY.md",
+    "policy_version": "pr12.8-panel-0.1",
+    "shapes": ["prototype", "W1", "W2"],
+    "output_root": "results/issue_failure_mode_blindness/pr12_8_panel_cache",
+    "mechanism_note": "Data manifest ONLY (PR-12.8 \u00a77 Stage A): read by the standalone panel generator harness/action_boundary_panel_generate.py, never by any emitter CLI path; harness_boundary_sim.py remains byte-frozen (sha256 2539686a205fa03ba88fb4e222043720dc6acf97460f896a31bd58d1a11d32e5). Cells = the registered mixed/plain-stale traffic-axis extension (pairs B-E, seeds s1/s2; s0 excluded as dev exposure). The registered jitter (pairA) and g5twin (pairD) anchors are PANEL-INSUFFICIENT by pre-flight: committed stems exist only at s0 and no pr4 geometry-table governance key exists for either arm - recorded as named scope bounds, not emitted.",
+    "cells": {
+      "pairB_mixed_s1": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairB_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/mixed/s1"
+      },
+      "pairB_mixed_s2": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairB_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/mixed/s2"
+      },
+      "pairC_mixed_s1": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairC_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/mixed/s1"
+      },
+      "pairC_mixed_s2": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairC_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/mixed/s2"
+      },
+      "pairD_mixed_s1": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairD_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/mixed/s1"
+      },
+      "pairD_mixed_s2": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairD_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/mixed/s2"
+      },
+      "pairE_mixed_s1": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairE_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/mixed/s1"
+      },
+      "pairE_mixed_s2": {
+        "role": "mixed",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_mixed_pairE_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/mixed/s2"
+      },
+      "pairB_stale_s1": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairB_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/stale/s1"
+      },
+      "pairB_stale_s2": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairB_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/stale/s2"
+      },
+      "pairC_stale_s1": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairC_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/stale/s1"
+      },
+      "pairC_stale_s2": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairC_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/stale/s2"
+      },
+      "pairD_stale_s1": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairD_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/stale/s1"
+      },
+      "pairD_stale_s2": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairD_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairD/stale/s2"
+      },
+      "pairE_stale_s1": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairE_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/stale/s1"
+      },
+      "pairE_stale_s2": {
+        "role": "stale",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale_pairE_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/stale/s2"
+      }
+    }
+  }
 }

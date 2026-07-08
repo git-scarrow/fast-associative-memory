@@ -51,9 +51,13 @@ OUT_DIR = BASE / "pr12_8"
 CONTRACT_ID = "s1-witness-alt-batch"
 CONTRACT_VERSION = "0.1-candidate"
 
-# Panel pin: main @ the Stage C(i) merge — every consumed input below is
-# committed at this commit.
-PANEL_PIN = "8cbf870d7de2d81747d1f6a8e9a32b3a09e0d6dc"
+# Panel pin: every consumed input below is committed at this commit.
+# v0.1 ran at the Stage C(i) merge (8cbf870); v0.2 re-pins to the Stage A
+# panel-scoring commit (all v0.1 input blobs are unchanged between the
+# two pins, so every v0.1 cell entry must reproduce identically — the
+# run asserts this against the committed v0.1 envelope).
+PANEL_PIN = "62363821b23db51194f31812fc14c25bb4af7976"
+ENVELOPE_VERSION = "0.2"
 
 # The committed W2 evidence panel (every W2-shape packet cell in the repo)
 # and, where one exists, the committed truth-joined F1b table whose ACT
@@ -78,6 +82,17 @@ for _cell in ("clean_pairC_s1", "clean_pairE_s1",
               "pairE_oneshot_s1", "pairE_oneshot_s2"):
     PANEL.append(("pr12_7_holdout_cache", _cell,
                   str(BASE / "pr12_7" / f"rows_W2_{_cell}_F1b.csv")))
+for _cell in ("pairB_mixed_s1", "pairB_mixed_s2",
+              "pairC_mixed_s1", "pairC_mixed_s2",
+              "pairD_mixed_s1", "pairD_mixed_s2",
+              "pairE_mixed_s1", "pairE_mixed_s2",
+              "pairB_stale_s1", "pairB_stale_s2",
+              "pairC_stale_s1", "pairC_stale_s2",
+              "pairD_stale_s1", "pairD_stale_s2",
+              "pairE_stale_s1", "pairE_stale_s2"):
+    PANEL.append(("pr12_8_panel_cache", _cell,           # v0.2 Stage A
+                  str(BASE / "pr12_8"
+                      / f"rows_panel_W2_{_cell}_F1b.csv")))
 
 SHAPE = "W2"   # contract §2: W2-shape packet trees only
 
@@ -324,6 +339,7 @@ def main() -> int:
     report = {"contract_doc": CONTRACT_DOC, "design_memo": DESIGN_MEMO,
               "contract_id": CONTRACT_ID,
               "contract_version": CONTRACT_VERSION,
+              "envelope_version": ENVELOPE_VERSION,
               "panel_pin": PANEL_PIN, "policy_pin": PIN,
               "shape": SHAPE, "cells": {},
               "input_manifest": manifest, "anomalies": anomalies,
@@ -451,6 +467,24 @@ def main() -> int:
                           f"witness_alt set != committed F1b ACT set: "
                           f"{key}"})
 
+    # ---- prior-version preservation: the committed envelope's cell
+    # entries must reproduce identically (append-only version bump,
+    # PR-12.8 §14.2 scope note — entries are never rewritten)
+    prev_raw = subprocess.run(
+        ["git", "show", f"HEAD:{OUT_DIR}/f1b_envelope.json"],
+        cwd=repo, capture_output=True)
+    if prev_raw.returncode == 0:
+        prev = json.loads(prev_raw.stdout)
+        mismatched = [k for k, v in prev.get("cells", {}).items()
+                      if report["cells"].get(k) != v]
+        report["prior_version_entries_preserved"] = not mismatched
+        report["prior_version_cells_checked"] = len(prev.get("cells", {}))
+        if mismatched:
+            kills.append({"kill": 2, "label": f"prior envelope entries "
+                                              f"changed: {mismatched[:3]}"})
+    else:
+        report["prior_version_entries_preserved"] = None
+
     # ---- I3 epilogue + determinism (internal double pass)
     report["i3_dirs_clean_after"] = dirs_clean()
     if not report["i3_dirs_clean_after"]:
@@ -482,13 +516,18 @@ def main() -> int:
     report["verdict"] = ("stageC-envelope-frozen" if not kills
                          else "stageC-blocked")
     report["scope_note"] = (
-        "Envelope v0.1 covers the committed W2 panel at the panel pin "
-        "(pr12_3 s0 dev, pr12_4 s1/s2, pr12_7 holdout C/E). Cells without "
-        "a committed truth-joined table carry the exact witness_alt "
-        "multiset with expected_correct_mass=null — no truth was joined "
-        "by this stage. A future Stage A panel extension appends cells "
-        "as an envelope version bump; it never rewrites these entries. "
-        "This artifact confers no operative force on the candidate.")
+        "Envelope v0.2 covers the committed W2 panel at the panel pin: "
+        "pr12_3 s0 dev, pr12_4 s1/s2, pr12_7 holdout C/E (the v0.1 "
+        "cells, entries preserved identically), plus the Stage A "
+        "traffic-axis extension (mixed and plain-stale, pairs B-E, "
+        "s1/s2). Cells without a committed truth-joined table carry the "
+        "exact witness_alt multiset with expected_correct_mass=null — "
+        "no truth was joined by this stage. jitter and g5twin remain "
+        "outside the envelope: panel-insufficient by pre-flight (s0-only "
+        "stems, no governance arm), carried as named scope bounds. "
+        "Future extensions append cells as version bumps; entries are "
+        "never rewritten. This artifact confers no operative force on "
+        "the candidate.")
 
     # ---- emit (writes under pr12_8/ ONLY)
     out_root.mkdir(parents=True, exist_ok=True)
@@ -509,7 +548,8 @@ def main() -> int:
           f"witness_alt={total['witness_alt']} abstain={total['abstain']} "
           f"composition_pass={total['composition_pass_cells']}/"
           f"{total['cells']} "
-          f"act_set_cross_checked={total['cross_checked_cells']}/18")
+          f"act_set_cross_checked={total['cross_checked_cells']}/"
+          f"{sum(1 for _, _, t in PANEL if t is not None)}")
     print("Scope (PR12_8_S1_CONTRACT_CANDIDATE.md §11): proof artifacts "
           "for a rung-1 candidate with no operative force — nothing is "
           "served to any consumer; no deployment, prompting use, "

@@ -421,3 +421,68 @@ envelope-frozen). Stages A/B/D/E remain separately unauthorized; the
 envelope scope note records that it covers the committed panel only
 and confers no operative force. PR-10 merge-abstain remains the only
 certified reader contract; posture remains deferral.
+
+### 14.3 Stage A discharged — traffic-axis panel extension scored; envelope v0.2 (append-only; 2026-07-08)
+
+Separately authorized (goal directive: extend the candidate panel
+across the registered traffic-axis cells). Three artifacts, all under
+the §7 Stage A registration:
+
+**Pre-flight determinations of record.** mixed and plain-stale: 16
+cells (pairs B–E × s1/s2), all 80 committed input files and all 16
+`pr4_geometry_table` governance keys present. **jitter and g5twin:
+`panel-insufficient` without generation** — their committed stems exist
+only at s0 (dev exposure, excluded by the standing discipline) and the
+pr4 geometry table has no governance arm for either, so they are not
+generable under the registered provenance mechanism; carried as named
+scope bounds per §7/§8, not silently dropped.
+
+**Generation.** Additive `scan12_8_panel` manifest (+90/−0, every
+pre-existing key byte-equal) + new driver
+`harness/action_boundary_panel_generate.py` (the 12.7 erratum-E1
+pattern as a new file, per §11). Anchor gate re-passed; 16 cells × 3
+shapes emitted to `pr12_8_panel_cache/` (145 files, committed
+`f3f5304`); 48/48 double-emits byte-identical; purity zero hits;
+emitter sha = pin `2539686a…` throughout.
+
+**Scoring** (`harness/action_boundary_panel_score.py`, 12.7 G-H
+structure, sha-attested block `2f009cf2…`, cache pin `f3f5304`):
+STAGE A STATUS `panel-extension-scored`, zero kills, internal double
+pass identical, external re-run byte-identical (193 files). G-H1
+exposure empty; G-H2 48/48; G-H4 per-type power: **mixed 155 W2 rows
+POWERED; plain-stale 0 — `panel-insufficient`** (the type is
+structurally tie-free: guard-open cells, zero dual-present rows, so
+F1b has no action surface there — zero utility, zero wrong-action
+risk). **The mixed finding:** every mixed cell is quiet-cell-guard
+CLOSED (contradiction 209–237 vs ambiguous 54–63; margins +155…+183) —
+mixed traffic presents as loud cells, and W2:F1b acts on **zero** of
+the 155 in-scope mixed rows: `scored-pass` **safe-by-silence** (wrong
+mass 0.0 on every unit, global 0.0), the same posture class as contra,
+with the same honest caveat: no utility on this type. **Guard-regime
+(G-R4):** `pairD_stale_s1` (margin −4) is the **first boundary-regime
+cell observed** (|margin| ≤ 4) — recorded; it carries zero in-scope
+rows, so no per-row behavior exists to report; the guard's three
+observed clusters are now one-shot open (−4…−32), contra closed
+(+176…+184), mixed closed (+155…+183).
+
+**Envelope v0.2** (`pr12_8/f1b_envelope.json`, verdict
+`stageC-envelope-frozen`, panel pin `6236382`): 44 W2 cells, 116,991
+rows, composition I1–I4 **44/44**, act-set cross-check **34/34**
+against committed truth-joined tables, `witness_alt` total unchanged
+at 2,052 (the 16 new cells contribute zero), **all 28 v0.1 entries
+reproduced identically** (in-run assertion against the committed v0.1
+envelope; version-bump-never-rewrite honored); 122 pinned inputs; both
+double passes identical; external re-run reproduces all 238 `pr12_8/`
+files byte-identically.
+
+**Consequence for the candidacy.** The served-surface envelope now
+covers every traffic type the committed corpus can produce packets
+for. W2:F1b's acting surface is confirmed to be exactly the one-shot
+harm class: it acts nowhere else (contra 0, mixed 0, stale
+structurally 0, clean 0). G-R3's ledger after Stage A: one-shot
+scored-pass (12.6/12.7), mixed scored-pass (safe-by-silence), contra
+scored-pass (12.6/12.7, thin panels), plain-stale/jitter/g5twin
+`panel-insufficient` scope bounds. Stages B/D/E remain separately
+unauthorized; no candidacy verdict is emitted here; nothing is served
+to anyone. PR-10 merge-abstain remains the only certified reader
+contract; posture remains deferral.

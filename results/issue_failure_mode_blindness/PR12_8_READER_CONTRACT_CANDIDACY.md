@@ -375,3 +375,49 @@ adjudicated, the candidate authorizes serving nothing to anyone —
 certification is a separate future pre-registration (§13). PR-10
 merge-abstain remains the only certified reader contract; posture
 remains deferral.
+
+### 14.2 Stage C(ii)+(iii) discharged — composition proven, envelope frozen (append-only; 2026-07-08)
+
+Separately authorized. New `harness/witness_alt_reference_reader.py`
+(stdlib + subprocess-git; label-free by construction — every serving
+decision from the packet pair alone, committed truth-joined tables
+opened only post-decision for cross-check; §5 policy block copied
+verbatim and runtime-attested sha `2f009cf2…` against the frozen 12.6
+scorer) run twice over the full committed W2 panel at panel pin
+`8cbf870` (the Stage C(i) merge): 28 cells — pr12_3 s0 (6, dev),
+pr12_4 s1/s2 (12), pr12_7_holdout_cache C/E (10) — 75,631 packet rows,
+74 pinned inputs, zero kills, zero anomalies.
+
+**C(ii) composition proof — PASS on all 28 cells.** I1: zero
+precedence violations (no abstention row carries a tie item). I2:
+eligible-set ∩ certified-abstention-set = ∅ exactly, per cell —
+proven on real co-occurrence material: the three `pairD_stale-soft`
+cells carry 300/280/296 incumbent abstentions alongside 903/943/763
+dual-present defers, and the quiet-cell guard is CLOSED on all three,
+so F1b emits zero `witness_alt` on the incumbent's home traffic. I3:
+frozen surfaces git-clean before and after; packets read-only. I4:
+every `witness_alt` record `harness-heuristic`; `core-certified`
+appears only on incumbent abstain records.
+
+**C(iii) envelope — FROZEN as `pr12_8/f1b_envelope.json`** (verdict
+`stageC-envelope-frozen`) + 28 per-cell served-decision tables under
+`pr12_8/served/`. Totals: **2,052 witness_alt rows** across the panel;
+876 abstain rows co-scored. On all **18/18** cells with a committed
+truth-joined table (12.6 test + 12.7 holdout) the reader's
+`witness_alt` set matches the committed F1b ACT set **exactly**
+(query_id and class), and expected-correct mass is copied verbatim
+(e.g. pairB_oneshot 231/231 + 275/275; pairD_oneshot 116/128 +
+155/156; pairE_oneshot 225/250 + 280/280; all contra and clean cells
+0 acted). The 10 cells without committed truth (s0 dev, clean_pairA
+s1/s2, stale-soft s1/s2) carry their exact label-free `witness_alt`
+multisets (s0: pairB_oneshot 274, pairD_oneshot 111; all others 0)
+with `expected_correct_mass=null` — no truth was joined by this stage.
+Internal double pass identical; external re-run reproduces all 29
+`pr12_8/` files byte-identically.
+
+The candidate `s1-witness-alt-batch 0.1-candidate` thereby holds the
+evidence for **rung 2** of its status ladder (composition-proven +
+envelope-frozen). Stages A/B/D/E remain separately unauthorized; the
+envelope scope note records that it covers the committed panel only
+and confers no operative force. PR-10 merge-abstain remains the only
+certified reader contract; posture remains deferral.

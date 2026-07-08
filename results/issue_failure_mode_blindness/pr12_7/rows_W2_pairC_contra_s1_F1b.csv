@@ -1,0 +1,8 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairC_contra_s1:e3:p120,3,1,1,DEFER,,
+pairC_contra_s1:e8:p78,3,1,1,DEFER,,
+pairC_contra_s1:e8:p106,3,1,1,DEFER,,
+pairC_contra_s1:e9:p91,3,1,1,DEFER,,
+pairC_contra_s1:e10:p127,3,1,1,DEFER,,
+pairC_contra_s1:e11:p74,3,1,1,DEFER,,
+pairC_contra_s1:e11:p106,3,1,1,DEFER,,

@@ -1,0 +1,13 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairE_contra_s1:e7:p54,3,1,1,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s1:e8:p54,3,1,1,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s1:e9:p72,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s1:e9:p121,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s1:e10:p54,3,1,1,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s1:e10:p107,3,1,1,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s1:e10:p217,3,1,1,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s1:e11:p0,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s1:e11:p20,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s1:e11:p53,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s1:e11:p78,3,1,1,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s1:e11:p217,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5

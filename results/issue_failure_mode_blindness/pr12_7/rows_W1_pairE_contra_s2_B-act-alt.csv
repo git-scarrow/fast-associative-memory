@@ -1,0 +1,251 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairE_contra_s2:e0:p2,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p9,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p13,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p31,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p39,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e0:p47,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p58,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e0:p65,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p71,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p77,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p78,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p80,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p84,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p87,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p102,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p125,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e0:p131,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p145,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p151,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e0:p165,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p170,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e0:p190,2,1,0,ACT,"{""2"": 1.0}",1.0
+pairE_contra_s2:e0:p192,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p207,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e0:p218,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p231,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e0:p232,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e0:p250,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e0:p255,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p20,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e1:p65,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p87,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p88,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e1:p89,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e1:p90,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p92,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p98,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p103,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p105,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p112,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p116,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p119,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p121,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p124,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e1:p126,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e1:p130,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p135,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p136,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p144,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p147,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p149,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p152,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p159,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p160,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p161,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p162,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p166,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p169,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p180,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p186,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p188,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e1:p190,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e1:p193,2,1,1,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e2:p0,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p3,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e2:p5,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e2:p18,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p19,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e2:p27,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e2:p30,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e2:p42,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p51,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e2:p55,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e2:p60,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e2:p74,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p99,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e2:p110,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p114,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p118,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e2:p120,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p127,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e2:p128,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e2:p146,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e2:p178,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e2:p191,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e2:p212,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p10,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p21,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e3:p28,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p37,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p43,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p45,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p46,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p63,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e3:p72,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e3:p89,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e3:p102,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p105,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p119,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.5
+pairE_contra_s2:e3:p146,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p159,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p174,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e3:p181,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s2:e3:p184,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairE_contra_s2:e3:p187,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p191,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e3:p224,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e4:p1,2,1,0,ACT,"{""0"": 1.0}",1.0
+pairE_contra_s2:e4:p6,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p11,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p14,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e4:p17,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p22,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p23,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p24,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p29,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p32,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e4:p35,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p38,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p54,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p56,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p57,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p59,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e4:p114,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p129,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e4:p132,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p134,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairE_contra_s2:e4:p142,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e4:p153,2,1,0,ACT,"{""2"": 1.0}",1.0
+pairE_contra_s2:e4:p157,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p168,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e4:p182,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairE_contra_s2:e4:p183,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e4:p185,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairE_contra_s2:e4:p191,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s2:e4:p251,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e4:p252,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e5:p19,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e5:p60,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e5:p74,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e5:p97,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e5:p102,3,1,1,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e5:p118,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e5:p132,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p27,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p31,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p50,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e6:p51,2,1,0,ACT,"{""0"": 1.0}",1.0
+pairE_contra_s2:e6:p74,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p96,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p122,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p133,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p150,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e6:p158,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e6:p164,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e6:p167,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e6:p171,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e6:p179,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e6:p194,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e6:p196,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p197,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e6:p201,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p204,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p208,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e6:p209,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p220,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p223,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairE_contra_s2:e6:p229,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e6:p235,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e6:p236,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p237,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p238,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p243,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p244,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p253,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e6:p254,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e7:p17,2,1,0,ACT,"{""0"": 1.0}",1.0
+pairE_contra_s2:e7:p23,2,1,0,ACT,"{""0"": 1.0}",1.0
+pairE_contra_s2:e7:p35,2,1,0,ACT,"{""0"": 1.0}",1.0
+pairE_contra_s2:e7:p59,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e7:p75,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e7:p90,2,1,0,ACT,"{""1"": 1.0}",1.0
+pairE_contra_s2:e7:p155,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e7:p166,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e7:p180,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e7:p203,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e7:p221,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e7:p222,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e7:p224,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e7:p245,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e7:p247,2,1,0,ACT,"{""0"": 1.0}",0.0
+pairE_contra_s2:e8:p2,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s2:e8:p9,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e8:p13,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s2:e8:p20,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e8:p47,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e8:p72,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e8:p74,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e8:p136,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e8:p152,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e8:p175,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e8:p211,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e8:p219,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e8:p248,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e9:p64,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e9:p92,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e9:p93,3,1,1,ACT,"{""0"": 0.5, ""1"": 0.5}",0.5
+pairE_contra_s2:e9:p107,3,1,1,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e9:p121,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e9:p143,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e9:p154,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e9:p155,2,1,0,ACT,"{""2"": 1.0}",1.0
+pairE_contra_s2:e9:p160,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e9:p169,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e9:p178,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e9:p203,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e9:p250,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s2:e10:p6,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e10:p7,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e10:p32,3,1,0,ACT,"{""2"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e10:p38,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.5
+pairE_contra_s2:e10:p56,3,1,0,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e10:p62,3,1,0,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e10:p76,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e10:p91,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e10:p97,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e10:p104,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e10:p106,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e10:p109,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e10:p113,2,1,0,ACT,"{""3"": 1.0}",0.0
+pairE_contra_s2:e10:p120,3,1,0,ACT,"{""0"": 0.5, ""1"": 0.5}",0.5
+pairE_contra_s2:e10:p205,2,1,0,ACT,"{""3"": 1.0}",1.0
+pairE_contra_s2:e10:p214,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e10:p217,2,1,0,ACT,"{""3"": 1.0}",1.0
+pairE_contra_s2:e10:p227,2,1,0,ACT,"{""3"": 1.0}",1.0
+pairE_contra_s2:e10:p230,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e10:p246,2,1,0,ACT,"{""2"": 1.0}",0.0
+pairE_contra_s2:e11:p7,2,1,0,ACT,"{""1"": 1.0}",0.0
+pairE_contra_s2:e11:p74,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e11:p76,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e11:p109,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e11:p117,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e11:p130,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e11:p159,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e11:p175,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.0
+pairE_contra_s2:e11:p188,3,1,0,ACT,"{""0"": 0.5, ""2"": 0.5}",0.5
+pairE_contra_s2:e11:p193,3,1,1,ACT,"{""1"": 0.5, ""2"": 0.5}",0.0
+pairE_contra_s2:e11:p195,2,1,0,ACT,"{""3"": 1.0}",1.0
+pairE_contra_s2:e11:p198,3,1,0,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5
+pairE_contra_s2:e11:p210,2,1,0,ACT,"{""0"": 1.0}",0.0

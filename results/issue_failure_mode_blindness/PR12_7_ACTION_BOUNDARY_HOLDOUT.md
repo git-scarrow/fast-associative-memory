@@ -495,3 +495,183 @@ Intentionally empty at pre-registration. §§1–21 above are the frozen
 snapshot and are never rewritten. Implementation of Stage A (generation)
 and Stage B (scoring) is **not** authorized by this memo and requires a
 separate explicit approval.
+
+## 23. Erratum E1 — Stage A mechanism correction (append-only; §§1–22 frozen)
+
+*Design-only. This section is appended under the memo's own append-only
+convention (§19/§22, the PR-9.2 / PR-12.2-E1 / PR-12.3-E1 precedent). It
+does not rewrite §§1–22; those remain the historical registration
+snapshot of what was originally proposed. This erratum **supersedes the
+Stage A generation mechanism registered in §4** and **refines the
+classification note in §3**, and registers nothing executable: no
+generator is implemented, no packet is generated, no scoring runs, no
+threshold/policy/verdict vocabulary changes. `harness_boundary_sim.py`,
+`reader_utility_score.py`, `action_boundary_score.py`, all FAM-core
+files, and every PR-12.1–12.6 artifact/verdict/gate/output/memo section
+remain byte-frozen. PR-10 merge-abstain remains the only certified reader
+contract; operational posture remains deferral.*
+
+### 23.1 What was found at Stage A execution (why this erratum exists)
+
+Stage A was **authorized and attempted on 2026-07-08 and halted clean
+before any mutation** — no packets generated, no scoring, no config edit,
+no branch/commit, `harness_boundary_sim.py` sha256 unchanged
+(`2539686a205fa03ba88fb4e222043720dc6acf97460f896a31bd58d1a11d32e5`),
+no `pr12_7/` or `pr12_7_holdout_cache/` created. The registered §4 Stage A
+mechanism — *"add a `scan12_7_holdout` block to `harness_policy.json` and
+run the byte-frozen emitter, no code edit"* — is **not executable as
+written**. Read-only inspection established that the witness-window
+(W1/W2) **emission** path in `harness_boundary_sim.py` is dispatched by
+**hardcoded literal scan-block keys**: `run_scan`/`run_scan12_2`/
+`run_scan12_3`/`run_scan12_4` each bind `scan = policy["scan12_N"]`, and
+the emitting CLI paths in `main()` (`--shape`, `--shape12-3`,
+`--shape12-4`) each hardcode their `policy["scan12_N"]`. There is **no
+`--scan12-7`/`--shape12-7` flag, no `run_scan12_7`, and no generic
+"run an arbitrary named block" CLI path** (the single indirection,
+`scan = policy[scan_key]` at line 1819, is an internal
+`scan_tree_bytecheck` parameter with hardcoded call-sites, not
+CLI-reachable). The only generic path — the default `policy["cells"]`
+loop used by `--check` — covers exactly the two base cells
+`{pairD_stale-soft_s0, clean_pairA_s0}` emitted to `pr12/`, **not** pairs
+C/E, **not** the W1/W2 shapes, **not** the cache directory. Emitting C/E
+W2 holdout packets under the §4 mechanism would therefore require adding a
+flag + a `main()` dispatch branch reading `policy["scan12_7_holdout"]` —
+an **edit to the frozen emitter's logic** (changing its sha256), which
+§4 forbade ("no code edit; sha256 unchanged") and which fired the
+registered stop condition ("generation requires changing registered
+config or emitter logic").
+
+### 23.2 Refinement to the §3 classification (correction of record)
+
+§3 concluded classification **C** on the reasoning that "the emitter is
+fully data-driven from `harness_policy.json` (`run_cell` iterates
+`policy["cells"]`), so addressing pairs C/E is a config-only cell
+addition." That reasoning is **correct for the `--check` byte-gate path
+only** and **does not hold for the witness-window shape-emission path
+that Stage A actually needs**, which is per-block hardcoded. The
+classification is refined (not overturned): **strong pair-axis holdout
+candidates on pairs C/E still exist** (unexposed to any 12.1–12.6
+aggregate; both harm classes committed in `pr10/governed`; committed
+hazard-governance in the PR-4 geometry table; label-free features
+reconstructable), **but Stage A requires a registered generation
+capability** because W1/W2 emission is not config-only generic. In the
+memo's own A/B/C/D vocabulary this is still **C with a named capability
+prerequisite**, not **D** — no *new* engine or FAM-core work is needed;
+the required primitives already exist and are frozen; what is missing is a
+registered, byte-verified *invocation* of them. This erratum supplies that
+registration.
+
+### 23.3 Corrected Stage A mechanism — separately-authorized standalone generator
+
+The Stage A generation mechanism registered in §4 is superseded by a
+**standalone generation driver**, mirroring the Stage B standalone-scorer
+pattern (a new file that reuses frozen primitives without editing them):
+
+* **Artifact (future, separately authorized; not created by this
+  erratum):** `harness/action_boundary_holdout_generate.py` — stdlib +
+  `subprocess`-git only; it **imports** the frozen emitter
+  (`from harness_boundary_sim import run_cell`, and any read-only helpers
+  it needs) and **must not edit `harness_boundary_sim.py`** (whose sha256
+  must be unchanged across the run, pinned to
+  `2539686a205fa03ba88fb4e222043720dc6acf97460f896a31bd58d1a11d32e5`).
+* **Additive config:** a `scan12_7_holdout` block in
+  `harness_policy.json` is retained as the *data manifest* for the C/E
+  cells (run-stems + hazard-governance, per §4's table), but it is
+  **read by the standalone generator**, not by any emitter CLI flag — so
+  no emitter dispatch branch is added.
+* **Faithful-invocation contract:** the generator must construct W2
+  packets by invoking the **same primitive the registered W2 runner
+  uses** — `run_cell(repo, name, cfg, policy, allow_stale, out_root=…/
+  <shape>, shape="W2", policy_version=<the scan12_7_holdout policy
+  version>, emit_review_queue=True, emit_ambiguous_queue=True)` — with
+  the identical keyword signature and shape semantics as the PR-12.4 W2
+  emission path (`main()` `--shape12-4` / `run_scan12_4`). It reuses,
+  never reimplements, the packet-construction logic. (F1b is W2-only;
+  the generator emits the same shape set the registered runner emits for
+  parity, and the holdout scoring target remains W2.)
+* **Output:** witness-window holdout packets only, under
+  `results/issue_failure_mode_blindness/pr12_7_holdout_cache/` (the §19
+  cache path). No `pr12_7/` scoring directory is created by Stage A.
+
+### 23.4 Mandatory pre-emission byte-equivalence self-check (the crux of this erratum)
+
+Before emitting any C/E holdout packet, the generator **must** prove it
+reproduces the registered runner's output byte-for-byte on an
+**already-committed known W2 cell**:
+
+* **Parity anchor:** a committed W2 **emitter-output** cell from
+  **PR-12.4** — canonically
+  `results/issue_failure_mode_blindness/pr12_4/W2/pairD_oneshot_s1/`
+  (`memory_packet.jsonl`, `audit_packet.jsonl`, `decision_table.csv` all
+  committed). *Precision recorded:* PR-12.6 produced **no** emitter
+  packets (it is a read-only scoring stage over 12.3/12.4 packets), so
+  the parity anchor is a PR-12.4 (or PR-12.3) W2 cell, not a 12.6 output;
+  where §4/point-5 says "PR-12.4/12.6", read it as "the committed W2
+  emitter output, which lives in PR-12.4/12.3."
+* **Procedure:** regenerate the anchor cell into a temp directory via the
+  imported `run_cell` at `shape="W2"` with the anchor cell's own
+  committed config, then compare against the committed bytes — exactly
+  the `scan_tree_bytecheck`/`base_bytecheck` discipline already in the
+  frozen emitter (reused, not reimplemented).
+* **Proof required:** for each of the three artifact files —
+  **byte-identical** content (full compare), **identical sha256**,
+  **identical schema** (field/column set), and **identical record
+  ordering** — recorded in a provenance JSON. Byte-identity is the
+  contract; schema/ordering are asserted explicitly and are implied by
+  it.
+* **Gate:** only **after** the self-check passes on the anchor cell may
+  the generator emit the C/E holdout packets. The anchor comparison and
+  the C/E emission use the *same* `run_cell` invocation, so a passing
+  anchor certifies the C/E packets are constructed by the registered
+  primitive.
+
+### 23.5 Registered kill conditions for the corrected Stage A (any → generation aborts, cache discarded)
+
+1. **Byte-equivalence failure** — the anchor-cell regeneration differs
+   from the committed bytes in any file, sha256, schema field, or record
+   order (§23.4). Generation must not proceed to C/E; the run is a kill.
+2. **Emitter-edit requirement** — if faithful generation is found to
+   require editing `harness_boundary_sim.py` (its sha256 would change),
+   that is a kill **unless a separate pre-registration explicitly
+   authorizes an emitter extension** with its own byte-gate. This erratum
+   does **not** authorize an emitter edit.
+3. **Config/scope drift** — any `scan12_7_holdout` cell pointing at
+   anything other than the §4-registered committed C/E governed
+   run-stems; any use of s0 or pairs A/B/D as "holdout"; any exposure hit
+   under the §16 G-H1 grep.
+4. **Label / outcome leak into the cache (§23.6).**
+5. **Writes outside `pr12_7_holdout_cache/`**; any creation of `pr12_7/`
+   scoring artifacts by Stage A; `git` dirtiness on `pr12/`–`pr12_6/`,
+   `pr10/`, or any frozen harness file.
+6. **Nondeterminism** — the holdout cache not byte-identical across two
+   generation runs.
+
+### 23.6 Cache purity requirement (no scoring outcomes in Stage A output)
+
+Generated C/E holdout packets **must not** contain — and the generator
+must scan its own cache and abort if it finds — any `true_label`,
+registry label, `vote_pred`/post-hoc correctness field, action-boundary
+verdict token (`action-boundary-*`, `holdout-validity-*`,
+`holdout-insufficient`), F1a/F1b/F1c decision, coverage/precision/
+wrong-mass figure, or any reference to `pr12_5/`/`pr12_6/` scoring
+outputs. The packets are the emitter's `memory_packet.jsonl` /
+`audit_packet.jsonl` / `decision_table.csv` only — the same
+label-free artifacts whose truth-freedom PR-12.6's provenance audit
+already established. Stage A produces read-time observables for a future
+Stage B; it must carry **no** scoring signal.
+
+### 23.7 Scope, stage separation, and boundary (unchanged, restated)
+
+Stage A (generation) remains **separate from and prior to** Stage B
+(scoring), which is **still unauthorized** and unchanged by this erratum.
+This erratum authorizes **nothing to execute**: implementing
+`action_boundary_holdout_generate.py`, running it, generating any packet,
+and running any scoring each require **separate explicit approval**. FAM-
+core is untouched; no emitter edit is authorized; the W2:F1b policy,
+gates, thresholds, holdout-validity gates (G-H1–G-H5), and verdict
+vocabulary (§20) are unchanged; the pair-axis (not fresh-seed) holdout
+scope (§3) is unchanged. No deployment, live acting, prompting use,
+promotion, memory ingestion, autonomous downstream use, or reader-contract
+change is created or implied — **PR-10 merge-abstain remains the only
+certified reader contract**, and the operational posture remains
+deferral. PR-12.1–12.6 verdicts stand unchanged.

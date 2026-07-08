@@ -1,0 +1,4 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairC_mixed_s2:e3:p136,3,1,1,DEFER,,
+pairC_mixed_s2:e4:p249,2,1,1,DEFER,,
+pairC_mixed_s2:e7:p189,3,1,1,DEFER,,

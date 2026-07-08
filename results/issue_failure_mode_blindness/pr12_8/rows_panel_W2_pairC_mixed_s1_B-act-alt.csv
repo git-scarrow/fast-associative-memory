@@ -1,0 +1,8 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairC_mixed_s1:e4:p186,3,1,1,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairC_mixed_s1:e4:p209,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairC_mixed_s1:e5:p186,3,1,1,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairC_mixed_s1:e6:p186,3,1,1,ACT,"{""0"": 0.5, ""1"": 0.5}",0.0
+pairC_mixed_s1:e7:p209,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairC_mixed_s1:e8:p249,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5
+pairC_mixed_s1:e9:p245,3,1,1,ACT,"{""0"": 0.5, ""3"": 0.5}",0.5

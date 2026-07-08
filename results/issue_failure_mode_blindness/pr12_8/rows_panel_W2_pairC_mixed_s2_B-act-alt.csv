@@ -1,0 +1,4 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairC_mixed_s2:e3:p136,3,1,1,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0
+pairC_mixed_s2:e4:p249,2,1,1,ACT,"{""2"": 1.0}",0.0
+pairC_mixed_s2:e7:p189,3,1,1,ACT,"{""1"": 0.5, ""3"": 0.5}",0.0

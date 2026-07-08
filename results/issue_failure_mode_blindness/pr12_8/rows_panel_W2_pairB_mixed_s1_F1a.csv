@@ -1,0 +1,8 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairB_mixed_s1:e2:p66,2,1,1,ACT,"{""2"": 1.0}",0.0
+pairB_mixed_s1:e4:p67,3,1,1,DEFER,,
+pairB_mixed_s1:e8:p67,3,1,1,DEFER,,
+pairB_mixed_s1:e8:p214,3,1,1,DEFER,,
+pairB_mixed_s1:e9:p67,3,1,1,DEFER,,
+pairB_mixed_s1:e11:p66,3,1,1,DEFER,,
+pairB_mixed_s1:e11:p222,3,1,1,DEFER,,

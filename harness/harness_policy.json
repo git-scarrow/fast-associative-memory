@@ -293,5 +293,64 @@
         "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairB/oneshot/s2"
       }
     }
+  },
+  "scan12_7_holdout": {
+    "design_memo": "results/issue_failure_mode_blindness/PR12_7_ACTION_BOUNDARY_HOLDOUT.md",
+    "policy_version": "pr12.7-holdout-0.1",
+    "shapes": ["prototype", "W1", "W2"],
+    "output_root": "results/issue_failure_mode_blindness/pr12_7_holdout_cache",
+    "mechanism_note": "Data manifest ONLY (PR-12.7 erratum E1, memo §23.3): read by the standalone generator harness/action_boundary_holdout_generate.py, never by any emitter CLI path; harness_boundary_sim.py remains byte-frozen (sha256 2539686a205fa03ba88fb4e222043720dc6acf97460f896a31bd58d1a11d32e5). Cells mirror the memo §4 registered table exactly; roles carry the §4 arm labels.",
+    "cells": {
+      "pairC_oneshot_s1": {
+        "role": "oneshot",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairC_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/oneshot/s1"
+      },
+      "pairC_oneshot_s2": {
+        "role": "oneshot",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairC_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/oneshot/s2"
+      },
+      "pairE_oneshot_s1": {
+        "role": "oneshot",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairE_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/oneshot/s1"
+      },
+      "pairE_oneshot_s2": {
+        "role": "oneshot",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_stale-oneshot_pairE_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/oneshot/s2"
+      },
+      "pairC_contra_s1": {
+        "role": "contra",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairC_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/contra/s1"
+      },
+      "pairC_contra_s2": {
+        "role": "contra",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairC_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/contra/s2"
+      },
+      "pairE_contra_s1": {
+        "role": "contra",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairE_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/contra/s1"
+      },
+      "pairE_contra_s2": {
+        "role": "contra",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_contra_pairE_s2",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/contra/s2"
+      },
+      "clean_pairC_s1": {
+        "role": "control",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairC_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairC/clean/s1"
+      },
+      "clean_pairE_s1": {
+        "role": "control",
+        "run_stem": "results/issue_failure_mode_blindness/pr10/governed/per_probe_clean_pairE_s1",
+        "hazard_governance": "results/issue_failure_mode_blindness/pr4/pr4_geometry_table.json#governance#pairE/clean/s1"
+      }
+    }
   }
 }

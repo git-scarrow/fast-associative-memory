@@ -283,3 +283,124 @@ review of this pre-registration.
 
 Intentionally empty at pre-registration. §§1–11 above are the frozen
 snapshot and are never rewritten.
+
+Run date 2026-07-07, this section committed on branch
+`feat/pr12.5-reader-utility-scan` (append-only; §§1–11 — committed on
+docs branch `ea770b0`, merged to main `cc1f3a5` — are never rewritten).
+Implementation exactly per §9: standalone read-only scorer
+`harness/reader_utility_score.py` (stdlib + subprocess-git for the §5
+hash pinning); `harness_boundary_sim.py` byte-untouched (not even
+modified in the working tree). Every number below is a verbatim field
+of `reader_utility_scan.json`.
+
+### 12.1 Verdict
+
+**`reader-utility-evidence-GO(W1:P-alt-uniform, W1:P-uniform,
+W2:P-alt-uniform, W2:P-uniform)`** — all four (candidate, policy)
+combos pass G-U1 and G-U3 on all six gated cells, with G-U2 green on
+every scored row and G-U4 green globally. `kill_conditions: []`; all
+38 input files match the `2226d9d` pin; committed dirs clean before
+and after; internal double pass and an external second invocation both
+byte-identical (25 `pr12_5/` files, sha256-verified).
+
+### 12.2 Gated units — the incumbent is dominated everywhere
+
+Expected correct-action rate per unit (`P-assert` = the certified-only
+reader; policies act on all `n_act` rows, so wrong_rate = 1 −
+correct_rate and G-U1's two strict clauses coincide for always-acting
+policies — recorded here as one dominance dimension, exactly why
+partial-acting policies were scoped out in §4):
+
+| unit | n_act | P-assert | P-uniform | P-alt-uniform |
+|---|---|---|---|---|
+| W1:pairD_oneshot_s0 | 203 | 0.246305 | 0.449918 | 0.655172 |
+| W1:pairB_oneshot_s0 | 340 | 0.029412 | 0.497059 | 0.970588 |
+| W1:pairD_oneshot_s1 | 230 | 0.226087 | 0.476087 | 0.702174 |
+| W1:pairB_oneshot_s1 | 284 | 0.021127 | 0.500000 | 0.978873 |
+| W1:pairD_oneshot_s2 | 251 | 0.151394 | 0.486056 | 0.808765 |
+| W1:pairB_oneshot_s2 | 345 | 0.043478 | 0.500000 | 0.956522 |
+| W2:pairD_oneshot_s0 | 129 | 0.077519 | 0.437984 | 0.794574 |
+| W2:pairB_oneshot_s0 | 274 | 0.000000 | 0.500000 | **1.000000** |
+| W2:pairD_oneshot_s1 | 154 | 0.077922 | 0.471861 | 0.837662 |
+| W2:pairB_oneshot_s1 | 231 | 0.000000 | 0.500000 | **1.000000** |
+| W2:pairD_oneshot_s2 | 171 | 0.005848 | 0.485380 | 0.950292 |
+| W2:pairB_oneshot_s2 | 275 | 0.000000 | 0.500000 | **1.000000** |
+
+G-U1 margins (P-uniform over P-assert): +0.204 to +0.500. G-U3
+chance-control margins (P-uniform over 0.25 + 0.15): +0.038 (worst,
+W2:pairD_s0) to +0.100 — all pass; P-alt-uniform's margins are larger
+everywhere. The §6(a) open question resolved: dominance holds even on
+the W1 pairD units where the incumbent is least bad. The §6(b) open
+question resolved the *other* way than caution suggested:
+**P-alt-uniform beats P-uniform on every gated unit** — on this harm
+class the deployed vote is anti-signal, and on the three W2 pairB
+units the veto policy is exactly right on every row (deployed never
+correct, witness alternative a singleton containing the truth).
+
+### 12.3 G-U5 exchange rates (report-only — the acting-vs-deferral input)
+
+Wrong actions incurred per correct action gained, relative to
+P-abstain's zero-action posture (never gated, §2/§5):
+
+| unit | P-uniform | P-alt-uniform | deferrals avoided | mean width |
+|---|---|---|---|---|
+| W1:pairD_oneshot_s0 | 1.222628 | 0.526316 | 203 | 2.123153 |
+| W1:pairB_oneshot_s0 | 1.011834 | 0.030303 | 340 | 2.017647 |
+| W1:pairD_oneshot_s1 | 1.100457 | 0.424149 | 230 | 2.143478 |
+| W1:pairB_oneshot_s1 | 1.000000 | 0.021583 | 284 | 2.000000 |
+| W1:pairD_oneshot_s2 | 1.057377 | 0.236453 | 251 | 2.071713 |
+| W1:pairB_oneshot_s2 | 1.000000 | 0.045455 | 345 | 2.000000 |
+| W2:pairD_oneshot_s0 | 1.283186 | 0.258537 | 129 | 2.139535 |
+| W2:pairB_oneshot_s0 | 1.000000 | **0.000000** | 274 | 2.000000 |
+| W2:pairD_oneshot_s1 | 1.119266 | 0.193798 | 154 | 2.168831 |
+| W2:pairB_oneshot_s1 | 1.000000 | **0.000000** | 231 | 2.000000 |
+| W2:pairD_oneshot_s2 | 1.060241 | 0.052308 | 171 | 2.087719 |
+| W2:pairB_oneshot_s2 | 1.000000 | **0.000000** | 275 | 2.000000 |
+
+Read: P-uniform buys each correct action at ~1.0–1.3 wrong actions —
+a real price against deferral. P-alt-uniform's price is 0.00–0.53,
+and **0.00 on all three W2 pairB units** — on those cells the veto
+policy takes zero wrong actions while resolving every deferral. Mean
+presented width ≈ 2.0–2.17 of a 4-class alphabet: under
+deferral-with-narrowed-options, a human reviewer's search space halves
+even where no acting policy is adopted. These are the registered
+inputs to any future acting-vs-deferral decision; nothing here decides
+it.
+
+### 12.4 Contra cells (report-only) — the value inversion, measured
+
+As predicted in §2, the policies invert on contra pending-led traffic
+(correct-dominant): P-assert 0.799–1.000, P-uniform 0.333–0.427,
+P-alt-uniform 0.000–0.132 across the 12 contra units. A veto policy
+that is near-perfect on the one-shot harm class is near-always-wrong
+on contra traffic. This is direct, registered evidence that **any
+future acting policy must be disposition-scoped** — the same rule
+applied across harm classes would be harmful, which is exactly why
+this PR gates nothing outside the one-shot cells and proposes no
+contract.
+
+### 12.5 Scope and downstream boundary (restated per §10 — nothing enlarged)
+
+Offline expected-value evidence about parameter-free decision policies
+over committed packets — nothing else. This GO is **not** a reader
+contract, a prompt contract, or a change to PR-10 merge-abstain; it
+does **not** claim acting is safer than abstention/deferral (§12.3 is
+report-only); it certifies no LLM/agent reader behavior, no prompting
+use, promotion, ingestion, write-back, or autonomous downstream use,
+no mechanism-(d) claim beyond the six gated cells, no contra claim,
+and no FAM-core change. **PR-10's merge-abstain remains the only
+certified reader contract.** PR-12.1/12.2 remain negative;
+PR-12.3/12.4 remain narrow containment evidence. What this GO adds to
+the record: registered frozen-policy evidence that the witness-window
+sets are **decision-improving, not merely truth-bearing**, against the
+certified-only reader on the one-shot harm class — at three seeds, two
+pairs, with the veto-policy asymmetry and its contra inversion
+measured before any reader-contract discussion exists.
+
+### 12.6 Emitted artifacts
+
+`results/issue_failure_mode_blindness/pr12_5/reader_utility_scan.json`
+(gates, per-unit per-policy rates, G-U5 table, contra block, 38-file
+input hash manifest, reproducibility flags, verdict) plus 24 per-row
+evidence tables `pr12_5/rows_<candidate>_<cell>.csv` — every §12
+number recomputable from `pr12_5/` alone.

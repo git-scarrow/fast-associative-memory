@@ -1,0 +1,9 @@
+query_id,width,truth_in_set,truth_in_alts,deployed_correct,P-assert,P-uniform,P-alt-uniform
+pairB_contra_s1:e4:p140,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e6:p140,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e8:p140,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e10:p146,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e11:p146,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e11:p216,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e11:p223,3,1,0,1,1.0,0.333333,0.0
+pairB_contra_s1:e11:p245,3,1,0,1,1.0,0.333333,0.0

@@ -352,3 +352,26 @@ Intentionally empty at pre-registration. §§1–13 above are the frozen
 snapshot and are never rewritten. Implementation of every stage
 (A through E) is **not** authorized by this memo and requires separate
 explicit approval per stage.
+
+### 14.1 Stage C(i) discharged — S1 contract-candidate definition registered (append-only; 2026-07-08)
+
+Separately authorized, definition-only. The served-field/contract
+registration deliverable of §7 Stage C(i) is discharged by
+`results/issue_failure_mode_blindness/PR12_8_S1_CONTRACT_CANDIDATE.md`
+— contract_id `s1-witness-alt-batch`, version `0.1-candidate`, status
+**defined** (rung 1 of its §9 status ladder; no operative force). It
+fixes the §5/§6 determinations as normative contract clauses: the
+served-decision record schema (additive-only; `witness_alt` always
+`harness-heuristic` tier), the §4 eligibility conditions as a normative
+restatement with the sha-attested policy block
+(`2f009cf2…`) authoritative on any divergence, the I1–I4 composition
+clauses, batch-only semantics with the retrospective-feature basis
+restated, fail-closed conformance requirements, prohibitions, and
+change control (any edit → new version → all Stage C–E work void).
+Nothing else ran: no reference reader exists, no composition proof
+(C(ii)), no envelope freeze (C(iii)), no Stage A/B/D/E work, no
+scoring, no packet generation, no FAM-core change. Even fully
+adjudicated, the candidate authorizes serving nothing to anyone —
+certification is a separate future pre-registration (§13). PR-10
+merge-abstain remains the only certified reader contract; posture
+remains deferral.

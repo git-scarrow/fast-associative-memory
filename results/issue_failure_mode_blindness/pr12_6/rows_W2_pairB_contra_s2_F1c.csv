@@ -1,0 +1,6 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairB_contra_s2:e4:p180,2,1,1,ACT,"{""0"": 1.0}",0.0
+pairB_contra_s2:e7:p112,3,1,1,DEFER,,
+pairB_contra_s2:e7:p180,3,1,1,DEFER,,
+pairB_contra_s2:e8:p188,3,1,1,DEFER,,
+pairB_contra_s2:e10:p188,3,1,1,DEFER,,

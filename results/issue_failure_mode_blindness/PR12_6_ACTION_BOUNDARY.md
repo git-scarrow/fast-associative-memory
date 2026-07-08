@@ -324,3 +324,137 @@ units. PR-12.1–12.5 verdicts stand unchanged.
 
 Intentionally empty at pre-registration. §§1–20 above are the frozen
 snapshot and are never rewritten.
+
+Run date 2026-07-07, this section committed on branch
+`feat/pr12.6-action-boundary-scan` (append-only; §§1–20 — committed on
+docs branch `ef59a75`, merged to main `5646f00` — are never rewritten).
+Implementation exactly per §18: standalone read-only scorer
+`harness/action_boundary_score.py`; `harness_boundary_sim.py` and
+`reader_utility_score.py` byte-untouched. **F2 registration: zero** of
+the permitted two (§4) — no fitting code path exists, so §16.4 is
+structurally satisfied and the §5 split weakness never enters the
+judged evidence. Every number below is a verbatim field of
+`action_boundary_scan.json`.
+
+### 21.1 Verdict
+
+**`action-boundary-evidence-GO(W2:F1b)`** — exactly one
+(candidate, policy) combo passes every gate on the test partition.
+`kill_conditions: []`; all 85 input files match the `0afcb2b` pin;
+committed dirs clean before and after; internal double pass and an
+external second invocation byte-identical (97 `pr12_6/` files,
+sha256-verified). Label-freedom is structural: policy code receives
+only RowObs/CellCtx objects built from the policy-visible packets
+before any truth file is opened; `pr12_5/` tables are opened only by
+the §16.5 reconciliation checker, which verified every row's
+`truth_in_set`/`truth_in_alts`/`deployed_correct`/`width` against the
+committed values and every unit's `n_act` — zero mismatches.
+
+### 21.2 The quiet-cell guard is the read-time separator (§10 features, measured)
+
+The §10 cell-context features, computed **only** from
+`contradiction_pair_review` / `ambiguous_pair_review` record counts in
+the row's own audit packet (reader-visible structural records; values
+recorded per unit in `cell_context_features` with their source):
+
+* one-shot cells: 19–28 contradiction pairs vs 32 ambiguous pairs →
+  **guard open** (contradiction ≤ ambiguous) on all 12 one-shot units;
+* contra cells: 207–209 contradiction pairs vs 25–32 ambiguous pairs →
+  **guard closed** on all 12 contra units.
+
+The guard separates the harm classes perfectly on this panel without
+ever seeing an arm name, cell name, path, seed, or label.
+
+### 21.3 Gate table on the test partition (all values verbatim)
+
+**W2:F1b — the passing combo.** One-shot units: pairD_s1 coverage
+0.831169, precision 0.906250, wrong mass 0.077922; pairD_s2 0.912281 /
+0.993590 / 0.005848; pairB_s1 1.0 / 1.0 / 0.0; pairB_s2 1.0 / 1.0 /
+0.0. G-A1 (≥ 0.75) pass ×4; G-A3 (dominates P-assert on acted rows)
+pass ×4; §14 (≤ 0.10) pass ×4. Contra units: coverage 0 and wrong mass
+0 on all four → G-C1 (≤ 0.05), G-C2, §14 pass ×4; G-C3 all four contra
+test units included. G-A2 aggregate one-shot test coverage
+**0.950662** ≥ 0.25. §13 global wrong-mass rate **0.013800** ≤ 0.05
+over the candidate's 8 test units (see §21.6 for the §13 wording
+note). The null is beaten, not disguised: `B-defer-all` covers 0 and
+cannot GO (§9); W2:F1b resolves 790 of 831 one-shot test deferrals at
+a wrong-per-deferral-avoided exchange of 0.0 (pairB, both seeds),
+0.09375 (pairD_s1), and 0.00641 (pairD_s2).
+
+**Failing combos — each failure is the registered question answering
+itself:**
+
+| combo | first failing gates | reading |
+|---|---|---|
+| W2:F1a | G-C1/G-C2/§14 on pairB_contra_s2 (wrong mass 0.2), pairD_contra_s1 (0.207547), pairD_contra_s2 (0.4) | the row-local witness signature (W2 · width 2 · witness · never-resolving lead) does NOT separate harm classes — contra W2 rows carry the same row-local shape and the veto is ~0% precise there |
+| W2:F1c | same contra failures as F1a | ditto (F1c ⊇ F1a on W2) |
+| W1:F1c | G-C1/G-C2 on pairD_contra_s1/s2, G-C2 on pairB_contra_s2 (precision 0–0.14 acting on contra) | extending to W1 without the guard imports the same contra exposure |
+| W1:F1a, W1:F1b | G-A2 (coverage 0) | structurally W2-only policies under a W1 candidate; expected at design time |
+
+### 21.4 Development-partition reference (s0; reported, never gated — §5), including the honest exceedance
+
+s0 mirrors the test structure — with one registered caveat that must
+not be buried: on `W2:pairD_oneshot_s0`, F1a/F1b/F1c coverage 0.860465
+at precision 0.864865 gives wrong mass **0.116279, above the 0.10 §14
+ceiling** (and W1:F1c on `pairD_oneshot_s0` is 0.108374, likewise
+above). The gates bind on the test partition per the §5 registration,
+and on test the same policy scores 0.077922/0.005848 — but the s0
+figures show the §14 ceiling is *tight* for pairD one-shot traffic,
+not comfortably cleared everywhere in principle. Any future
+registration building on W2:F1b should treat pairD-class wrong mass
+near 0.08–0.12 as the realistic operating band, not the pairB-class
+zeros. Contra behavior at s0 matches test: guard closed, F1b coverage
+0 on both contra cells; F1a/F1c act on `pairD_contra_s0` at 0.5
+coverage with 0.0 precision (wrong mass 0.5) — the same separation
+failure the test partition shows.
+
+### 21.5 Kill report and reproducibility (§§16–17)
+
+Kills 1–9: none fired. Specifically: 85/85 inputs pinned to
+`0afcb2b`; zero label-leak paths (structural, §21.1); zero family
+motion (the §4 list is the code's `POLICIES` dict, F2 empty); zero
+split violations (no fitting path); zero ACTs outside a presented set;
+zero join misses; zero pr12_5 reconciliation mismatches; zero writes
+outside `pr12_6/` (`git status` clean on `pr12_3/`, `pr12_4/`,
+`pr12_5/`, `pr10/` before and after); internal double pass identical;
+external re-run byte-identical over all 97 emitted files; no contra
+unit excluded from any combo's verdict (G-C3 ×6 combos); no forbidden
+claim language in the output.
+
+### 21.6 Observed §13 wording note (recorded, no threshold motion)
+
+§13's frozen text reads "across all 16 test units … per candidate" —
+internally inconsistent, since a (candidate, policy) verdict spans
+that candidate's 8 test units. Resolved as registered in the scan
+output (`s13_interpretation_note`): the binding gate is per-candidate
+over its 8 test units (W2:F1b = 0.013800 ≤ 0.05), and the pooled
+16-unit figures are also reported (F1a 0.013866, F1b **0.004192**,
+F1c 0.038375) — W2:F1b passes under either reading, so the ambiguity
+is immaterial to this verdict, and it is recorded here rather than
+silently resolved.
+
+### 21.7 Scope and downstream boundary (restated per §20 — nothing enlarged)
+
+Offline action-boundary evidence only, over the 16 test units (plus s0
+development reference). This GO establishes exactly one thing: **a
+registered, label-free, reader-visible, disposition-scoped policy
+(W2:F1b) can decide act-versus-defer on witness-window rows while
+holding every registered wrong-action ceiling across one-shot AND
+contra traffic on this panel** — because the contra harm class is
+separable at read time by contradiction-pair density, not because
+acting is safe in general. It authorizes **no** deployment, FAM-core
+integration, prompting use, promotion, memory ingestion, autonomous
+downstream use, live acting, or reader-contract change. **PR-10's
+merge-abstain remains the only certified reader contract, and the
+operational posture on witness-window rows remains deferral.**
+PR-12.1–12.5 verdicts stand unchanged.
+
+### 21.8 Emitted artifacts
+
+`results/issue_failure_mode_blindness/pr12_6/action_boundary_scan.json`
+(gate tables, §15 accounting incl. comparators, cell-context feature
+values with source, exchange register, 85-file input manifest,
+reproducibility flags, F2 registration, §13 note, verdict) plus 96
+per-row decision tables `pr12_6/rows_<candidate>_<cell>_<policy>.csv`
+(16 test units × 6 policies) — every §21 number recomputable from
+`pr12_6/` alone.

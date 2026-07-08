@@ -1,0 +1,54 @@
+query_id,width,all_witness,led_never_resolving,decision,acted_class_mass,expected_correct
+pairD_contra_s1:e3:p88,3,1,1,DEFER,,
+pairD_contra_s1:e3:p140,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e3:p141,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e3:p142,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e3:p145,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e3:p170,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e4:p122,3,1,1,DEFER,,
+pairD_contra_s1:e4:p137,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e4:p152,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e4:p159,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e5:p91,3,1,1,DEFER,,
+pairD_contra_s1:e5:p141,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e5:p145,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e6:p76,3,1,1,DEFER,,
+pairD_contra_s1:e6:p91,3,1,1,DEFER,,
+pairD_contra_s1:e6:p104,3,1,1,DEFER,,
+pairD_contra_s1:e6:p122,3,1,1,DEFER,,
+pairD_contra_s1:e6:p137,3,1,1,DEFER,,
+pairD_contra_s1:e6:p140,3,1,1,DEFER,,
+pairD_contra_s1:e6:p152,3,1,1,DEFER,,
+pairD_contra_s1:e7:p13,3,1,1,DEFER,,
+pairD_contra_s1:e7:p69,3,1,1,DEFER,,
+pairD_contra_s1:e7:p76,3,1,1,DEFER,,
+pairD_contra_s1:e7:p123,3,1,1,DEFER,,
+pairD_contra_s1:e7:p131,3,1,1,DEFER,,
+pairD_contra_s1:e8:p136,3,1,1,DEFER,,
+pairD_contra_s1:e8:p140,3,1,1,DEFER,,
+pairD_contra_s1:e8:p145,3,1,1,DEFER,,
+pairD_contra_s1:e8:p152,3,1,1,DEFER,,
+pairD_contra_s1:e8:p159,2,1,1,ACT,"{""1"": 1.0}",0.0
+pairD_contra_s1:e8:p173,3,1,1,DEFER,,
+pairD_contra_s1:e9:p13,3,1,1,DEFER,,
+pairD_contra_s1:e9:p141,3,1,1,DEFER,,
+pairD_contra_s1:e9:p142,3,1,1,DEFER,,
+pairD_contra_s1:e10:p35,3,1,1,DEFER,,
+pairD_contra_s1:e10:p69,3,1,1,DEFER,,
+pairD_contra_s1:e10:p76,3,1,1,DEFER,,
+pairD_contra_s1:e10:p90,3,1,1,DEFER,,
+pairD_contra_s1:e10:p100,3,1,1,DEFER,,
+pairD_contra_s1:e10:p109,3,1,1,DEFER,,
+pairD_contra_s1:e10:p140,3,1,1,DEFER,,
+pairD_contra_s1:e10:p145,3,1,1,DEFER,,
+pairD_contra_s1:e10:p149,3,1,1,DEFER,,
+pairD_contra_s1:e10:p152,3,1,1,DEFER,,
+pairD_contra_s1:e10:p170,3,1,1,DEFER,,
+pairD_contra_s1:e11:p75,3,1,1,DEFER,,
+pairD_contra_s1:e11:p100,3,1,1,DEFER,,
+pairD_contra_s1:e11:p104,3,1,1,DEFER,,
+pairD_contra_s1:e11:p131,3,1,1,DEFER,,
+pairD_contra_s1:e11:p136,3,1,1,DEFER,,
+pairD_contra_s1:e11:p137,3,1,1,DEFER,,
+pairD_contra_s1:e11:p140,3,1,1,DEFER,,
+pairD_contra_s1:e11:p149,3,1,1,DEFER,,

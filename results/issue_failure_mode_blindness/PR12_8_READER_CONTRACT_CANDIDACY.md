@@ -486,3 +486,74 @@ scored-pass (12.6/12.7, thin panels), plain-stale/jitter/g5twin
 unauthorized; no candidacy verdict is emitted here; nothing is served
 to anyone. PR-10 merge-abstain remains the only certified reader
 contract; posture remains deferral.
+
+### 14.4 Stage B discharged — contra-power accounting (append-only; 2026-07-08)
+
+Separately authorized (goal directive: quantify whether the contra
+evidence is powered enough to support later adjudication). Analysis
+over committed artifacts only — every number below is recomputed from
+the committed `pr12_6/action_boundary_scan.json`,
+`pr12_7/holdout_scan.json`, `pr12_8/panel_scan.json`, and
+`pr12_8/f1b_envelope.json` (v0.2); no new packet, no new scoring run,
+no truth join beyond what those artifacts already contain. **No
+candidacy verdict, no GO, no certification, no served output.**
+
+**Inventory (the safety-relevant surface = guard-closed cells).**
+Envelope v0.2 contains **21 guard-closed W2 cells**: 8 contra (B/D
+s0–s2, C/E s1/s2), 8 mixed (B–E s1/s2), 3 pairD stale-soft (s0–s2).
+The 3 stale-soft cells carry **zero** in-scope tie rows (the stale
+family is tie-free), leaving 18 closed cells with an action surface:
+**319 in-scope W2 rows, on which F1b acted 0 times** (Stage A raised
+the closed-cell row count from 135 to 319, +136%).
+
+**Counterfactual guardless exposure (what the guard is measurably
+preventing).** On those same 319 rows the guardless F1a row-signature
+would have acted **73 times with wrong mass 70.0** (precision 0.041) —
+e.g. pairD_contra_s2: 21 acts, 18 wrong; pairD_mixed_s1: 16 acts, all
+wrong. The quiet-cell guard is therefore not decorative: it suppresses
+an acting surface that is ~96% wrong where it exists, and it is the
+sole protector (the row-local signature alone passes no contra/mixed
+gate).
+
+**Power quantification (model assumptions stated).**
+* *Row granularity (iid-row model):* 0 acts / 319 rows → one-sided
+  95% upper bound on the per-row act rate on closed cells **0.93%**
+  (99%: 1.43%). Caveat: rows within a cell share the cell guard, so
+  iid-rows overstates independence.
+* *Cell granularity (iid-cell model — the honest thin number):* 0
+  guard mis-opens / 21 closed cells → 95% upper bound on the per-cell
+  mis-open rate **13.3%** (18 scored cells only: 15.3%). Cell
+  granularity is the right unit for guard failure, and this bound is
+  wide: the evidence cannot exclude a ~1-in-8 mis-open rate at 95%
+  confidence under that model.
+* *Margin separation (distribution-free, descriptive):* closed-cell
+  margins are themselves bimodal — contra/mixed +155…+186, stale-soft
+  +23…+28 — and open-cell margins are −4…−32. **The unobserved guard
+  corridor is (−4, +23)**: no committed cell has ever landed in it.
+  This refines the §14.3 G-R4 record (the +23 stale-soft margins are
+  closer to the flip than any contra/mixed cell).
+* *Detection sensitivity of the registered gates:* at the 0.05
+  per-unit ceiling, a **single** wrong act breaches the gate in any
+  unit with n < 20 — true of 13 of the 18 scored closed units; the
+  five larger units (n = 28–61) detect at 2–4 wrong acts. The panels'
+  thinness therefore limits estimation precision, not violation
+  detection: any minimal leakage would have failed a gate.
+
+**Determination (registered §7 Stage B vocabulary; not a verdict).**
+The contra evidence is **sufficient at row granularity and gate
+granularity, thin at cell granularity**. It supports later Stage E
+adjudication **only together with the registered named scope bound**,
+which this accounting fixes as: *"contra-side safety = zero action on
+319 in-scope W2 rows across 18 guard-closed cells (21 including the
+tie-free stale-soft cells), with a counterfactual guardless exposure
+of 73 acts / 70.0 wrong mass suppressed; per-cell guard mis-open rate
+bounded only at ≤13.3% (95%, iid-cell model); guard behavior inside
+the (−4, +23) margin corridor unobserved."* Stage E must carry this
+bound in any verdict text (§8 G-R3/G-R4; dropping it is kill §10.9).
+Enlarging cell-level power is not reachable from the committed corpus
+(every governed run-stem is now either in the panel or
+panel-insufficient); it would require Stage D-strong new-seed engine
+runs or new traffic protocols, both outside this memo's offline
+authorizations. Stages D and E remain separately unauthorized; PR-10
+merge-abstain remains the only certified reader contract; posture
+remains deferral.

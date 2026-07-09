@@ -635,3 +635,61 @@ traffic bounds, and §14.4 contra-power bound verbatim. No candidacy
 verdict, GO, certification, or served output is issued here; PR-10
 merge-abstain remains the only certified reader contract; posture
 remains deferral.
+
+### 14.7 Stage E discharged — VERDICT: `contract-candidate-GO-seedbounded(W2:F1b)` (append-only; 2026-07-08)
+
+Separately authorized. Adjudicator:
+`harness/candidacy_adjudicate.py` (stdlib + subprocess-git; read-only;
+sole write `pr12_8/candidacy_scan.json`; adjudication pin `8f66f7b`;
+run twice, byte-identical; internal double pass identical; zero kill
+conditions; 95 pinned inputs). Every §8 gate evaluated and **all seven
+PASS**:
+
+* **G-R1** — the frozen envelope v0.2 was verified by **independent
+  recomputation**: every one of the 44 cells' `witness_alt` multisets
+  re-derived from the committed packets through the attested policy
+  block and exactly equal to the envelope entries (the reference
+  reader's own double-pass and committed external-rerun records stand
+  alongside, not instead).
+* **G-R2** — composition: envelope I1–I4 pass on 44/44 cells and I2
+  disjointness independently recomputed from the packets on every cell.
+* **G-R3** — traffic ledger, no third state: one-shot scored-pass
+  (12.6 + 12.7 GOs), contra scored-pass with the §14.4 power bound,
+  mixed scored-pass (safe-by-silence), plain-stale/jitter/g5twin
+  `panel-insufficient` named bounds.
+* **G-R4** — guard-regime statement recorded across the full 44-cell
+  panel: open margins −4…−32 (degenerate margin-0 clean cells are
+  vacuous — zero pairs of either kind — distinct from the genuine
+  near-flip pairD cells at −4), closed margins +23…+186, corridor
+  (−4, +23) unobserved; the corridor bound is carried in the verdict
+  text.
+* **G-R5** — the 12.6 constants bind unchanged on every scored unit
+  across 12.6/12.7/panel; near-ceiling caveats carried (0.09434
+  holdout, 0.1163 dev-only).
+* **G-R6** — seed-axis honesty: branch D-bounded; the unqualified GO
+  is unreachable; the emitted name is the seedbounded one.
+* **G-R7** — the verbatim §5 policy block extracts sha-identical
+  (`2f009cf2…`) across all five artifacts that carry it (frozen 12.6
+  scorer, 12.7 scorer, panel scorer, reference reader, adjudicator).
+
+**The verdict**, with its constitutive bounds embedded in the verdict
+text itself (`candidacy_scan.json` `verdict_text`, §12/§10.9):
+`contract-candidate-GO-seedbounded(W2:F1b)` — carrying verbatim the
+§14.5 seed bound (s0–s2 committed regime only), the §14.3 traffic
+bounds, the §14.4 contra-power bound (319 rows / 18 cells zero action;
+mis-open ≤13.3% at 95%, iid cells; corridor unobserved), and the §9
+monitoring terms (T1–T7, withdrawal semantics) as standing conditions.
+
+**What this verdict is and is not.** The
+`s1-witness-alt-batch 0.1-candidate` reaches **rung 3 (adjudicated)**
+of its status ladder. Per §12, this authorizes exactly one thing: a
+future certification pre-registration may cite this verdict as its
+evidence base. It is **not** a certification, confers **no operative
+force**, and serves nothing to any consumer: no deployment, live
+acting, prompting use, promotion, memory ingestion, FAM-core change,
+autonomous downstream use, or reader-contract change. Rung 4
+(certification) requires its own pre-registration with its own gates
+and approval. **PR-10 merge-abstain remains the only certified reader
+contract**; the operational posture on witness-window rows remains
+**deferral**. PR-12.1–12.7 verdicts stand unchanged; PR-12.8's staged
+plan is herewith complete.

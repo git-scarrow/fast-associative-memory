@@ -605,3 +605,33 @@ only). Stage E itself remains separately unauthorized. No candidacy
 verdict, GO, certification, or served output is issued here; PR-10
 merge-abstain remains the only certified reader contract; the
 operational posture on witness-window rows remains deferral.
+
+### 14.6 §9 monitoring/withdrawal registration discharged (append-only; 2026-07-08)
+
+Separately authorized. The §9 deliverable is discharged by
+`results/issue_failure_mode_blindness/PR12_8_MONITORING_WITHDRAWAL.md`
+— registration-only, frozen at commit, tighten-only by append. It
+fixes: **(i) watched quantities** per exercised cell (label-free:
+guard margin and corridor flag against the unobserved (−4, +23)
+corridor, in-scope/witness_alt counts, fail-closed events, composition
+results, envelope-membership exactness; truth-joined, post-decision
+only: per-cell wrong-mass rate, acting precision, engagement
+aggregate); **(ii) tripwires** T1–T7 — envelope exactness and
+composition breaches at zero tolerance, the untouched 12.6 constants
+(0.10 per-cell, 0.75 precision, 0.05 aggregate), corridor entry as an
+evidence-gap fail-closed, and fail-closed events as recorded
+conformance events; **(iii) withdrawal semantics** — automatic
+cell-level reversion to the committed dual-present/escalation posture
+as the registered minimum, candidate-wide `withdrawn-pending-review`
+suspension for exactness/composition/aggregate breaches (tighter than
+the minimum, as permitted), a mandatory append-only event record, and
+reinstatement only via a new pre-registration.
+
+With this section the §14.5 readiness ledger is complete: **Stage E is
+now authorizable** — and remains **unauthorized** until separately
+approved. Any Stage E verdict must cite the monitoring registration as
+the candidate's standing terms and carry the §14.5 seed bound, §14.3
+traffic bounds, and §14.4 contra-power bound verbatim. No candidacy
+verdict, GO, certification, or served output is issued here; PR-10
+merge-abstain remains the only certified reader contract; posture
+remains deferral.

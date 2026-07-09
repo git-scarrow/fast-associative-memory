@@ -490,3 +490,66 @@ registry or posture change; the contract text is unchanged at
 reader contract**; the operational posture on witness-window rows
 remains **deferral**. PR-12.1–12.8 verdicts and registrations stand
 unchanged.
+
+### 12.3 Stage II — certification run (run record, 2026-07-09)
+
+*Separately authorized (explicit user approval, 2026-07-09: "Stage II
+authorized"). Implements the §7 Stage II certification scanner
+(`harness/witness_alt_certification_scan.py`, the §7-ordered
+implementation whose registered output is artifact §5.3) and runs it.
+Per gate C-7, the verdict below **has no effect**: it rests on this
+branch; the §4.2 registry sentence and §4.3 posture change only upon
+explicit human approval of the merge (Stage III, separately
+unauthorized).*
+
+**Certification pin:** `10b9335` (main at the Stage I remediation
+merge). Every consumed input — 93 manifest entries: all 88 packet
+files, the envelope, the contract and monitoring documents, the
+PR-12.8 candidacy scan, and the emitter — verified byte-identical to
+the pin; emitter at `2539686a…`; the policy block sha-identical at
+`2f009cf2…` across all five attested sources; the evidence base's
+verdict intact under its exact name
+`contract-candidate-GO-seedbounded(W2:F1b)`.
+
+**Gate results — all seven pass:**
+
+| gate | result |
+|---|---|
+| C-1 envelope exactness | PASS — dual mechanism: the remediated reference reader (`read_cell`) **and** the Stage E adjudicator's independent recomputation (imported from committed `candidacy_adjudicate.py`, its own policy-block copy) each reproduce the frozen envelope v0.2 `witness_alt` multisets exactly on all 44 cells |
+| C-2 composition | PASS — I1–I4 recomputed on every cell; outcome counts equal the envelope; 0 incumbent-field deviations; 0 tier violations; 0 fail-closed anomalies on committed cells |
+| C-3 conformance suite | PASS — re-run at the pin: all-pass, 27 checks, zero failing subject-results, **zero specification ambiguities** (the `certification-insufficient` trigger is absent) |
+| C-4 withdrawal mechanics | PASS — re-run: all 12 scenarios, T1–T7 all demonstrated, hash chain verified, posture↔event coupling verified |
+| C-5 bound carriage | PASS — the verdict text embeds this registration's §3 **verbatim** (extracted from the pinned memo blob) and cites the PR-12.8 verdict by its exact name; zero required phrases missing |
+| C-6 determinism | PASS — internal double pass identical; **external second full invocation reproduces `certification_scan.json`, `conformance_results.json`, and `withdrawal_demo_report.json` byte-identically** (verified by sha256 comparison); no timestamps; the demo event log is the registered §9 append-only exclusion (26 committed → 52 after the two C-4 exercises, chain verified from genesis over all 52) |
+| C-7 approval separation | PASS — structural: this run changed no registry sentence and no posture |
+
+**Verdict (exactly one, §10):**
+**`reader-contract-certified-seedbounded(s1-witness-alt-batch@1.0, W2:F1b)`**
+— emitted **on this branch only**, with the §3 traffic, contra-power,
+seed, and monitoring bounds embedded verbatim in its `verdict_text`
+as constitutive parts and the `-seedbounded` qualifier permanent. No
+kill condition fired.
+
+**Artifacts:**
+
+| artifact | sha256 |
+|---|---|
+| `harness/witness_alt_certification_scan.py` | `31d8d3511e4aaa916822ef5b8e2e49e1bf158780d62dca5d0c39c009840357a5` |
+| `pr12_9/certification_scan.json` (§5.3) | `431ef56367aa9fe8a7c38701230ec6bcb91f1c47ff5d1597fcddff59efcf2213` |
+| `pr12_9/withdrawal_demo_events.jsonl` (grown append-only, 52 events) | `4f63105f394103a1d02bcb098716174c5c410566cf57d5f6fb9d8e4df8fff5b3` (at commit; grows by design) |
+
+**What this verdict does and does not do.** Per C-7 and §10: it does
+**nothing** until its merge is explicitly approved. Upon such
+approval — and only then — Stage III produces the §5.4 contract
+re-issue `PR12_9_S1_CONTRACT_V1.md` (byte-carrying the 0.1-candidate
+normative text) and the registry sentence changes to exactly the §4.2
+wording; the §4.3 opt-in posture takes effect under the standing
+T1–T7 monitoring terms. Absent approval, the verdict rests here with
+no effect of any kind.
+
+**Boundary.** Stage II run record only. Nothing is served, deployed,
+promoted, or ingested; no FAM-core change; no registry or posture
+change; Stage III remains separately unauthorized. **PR-10
+merge-abstain remains the only certified reader contract**; the
+operational posture on witness-window rows remains **deferral**.
+PR-12.1–12.8 verdicts and registrations stand unchanged.

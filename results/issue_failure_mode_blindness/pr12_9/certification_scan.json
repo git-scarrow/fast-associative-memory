@@ -1,0 +1,463 @@
+{
+ "artifact": "PR-12.9 \u00a75.3 certification scan (Stage II)",
+ "certification_pin": "10b9335f3bf00b3a306e3dfeb869eea95b3842d3",
+ "evidence_base": "PR-12.8 Stage E at a0e621d, verdict contract-candidate-GO-seedbounded(W2:F1b)",
+ "frozen_surfaces_clean_after": true,
+ "frozen_surfaces_clean_before": true,
+ "gates": {
+  "C-1": {
+   "adjudicator_recompute_exact_all": true,
+   "cells": 44,
+   "pass": true,
+   "reference_reader_exact_all": true
+  },
+  "C-2": {
+   "cells": 44,
+   "composition_recomputed_pass_all": true,
+   "fail_closed_anomalies_on_committed_cells": 0,
+   "i4_tier_violations": 0,
+   "incumbent_field_deviations": 0,
+   "pass": true
+  },
+  "C-3": {
+   "failing_subject_results": [],
+   "n_checks": 27,
+   "pass": true,
+   "result": "all-pass",
+   "results_sha256": "7e15a240803294cfb3e3d4f134f2901c4ca9b4ca075e167ee7763abdce98f88e",
+   "specification_ambiguities_found": 0,
+   "suite_exit": 0
+  },
+  "C-4": {
+   "coupling_verified": true,
+   "demo_exit": 0,
+   "event_log_note": "append-only by design; excluded from cross-run byte-identity (\u00a79); no run-varying value from it is embedded in this scan",
+   "hash_chain_verified": true,
+   "pass": true,
+   "report_sha256": "003585525d61a01d67fc320fd779551c8c7459a43c5e673c9b65e5e90d0c3b90",
+   "result": "all-scenarios-pass",
+   "tripwires_demonstrated": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7"
+   ]
+  },
+  "C-5": {
+   "cited_name_exact": true,
+   "pass": true,
+   "required_phrases_missing": [],
+   "sec3_embedded_verbatim_from_pin": true
+  },
+  "C-6": {
+   "external_second_invocation": "performed by the run procedure; this file must be byte-identical across invocations",
+   "internal_double_pass_identical": true,
+   "no_timestamps": true,
+   "pass": true
+  },
+  "C-7": {
+   "note": "this run changes nothing: the verdict below rests on its branch; the \u00a74.2 registry sentence and \u00a74.3 posture change only upon explicit human approval of the merge (Stage III, separately unauthorized)",
+   "pass": true,
+   "posture_changed": false,
+   "registry_sentence_changed": false
+  }
+ },
+ "input_manifest": {
+  "harness/harness_boundary_sim.py": {
+   "matches_certification_pin": true,
+   "sha256": "2539686a205fa03ba88fb4e222043720dc6acf97460f896a31bd58d1a11d32e5"
+  },
+  "results/issue_failure_mode_blindness/PR12_8_MONITORING_WITHDRAWAL.md": {
+   "matches_certification_pin": true,
+   "sha256": "3754f552bb39f84fa8842fbc52c9a9d28c9748b6cef367f6f96067c8c24b7b35"
+  },
+  "results/issue_failure_mode_blindness/PR12_8_S1_CONTRACT_CANDIDATE.md": {
+   "matches_certification_pin": true,
+   "sha256": "53559491ce76cbd3f5c0c6408125e3d10ac7e7f8777871d9afd55fa4833a7053"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/clean_pairA_s0/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0d46a30b662af80bb94957d6087745fc6aaf682f6c4169edccc149e94f882ce1"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/clean_pairA_s0/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "8f7de4ab6e92b627b00098266e7a7ac32c13680b664df40176451672ac1e7b2d"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairB_contra_s0/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "91f56909cb6e0883d94bee1c2e98b747643ba4b6f542d6cc46bdd3141a9c06d4"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairB_contra_s0/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "a7cd15f53616e99e1e7f02d6ae254e880baf0aab1c22bfe2c2ba5d008dbc4ae7"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairB_oneshot_s0/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "8d7941a116538edfe9d8bf2b21b25af9054bb317352e5a97f886faac8c461051"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairB_oneshot_s0/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "6add319ebb339383e759b58fc93aab0f5f99134c0bf28a0bd9a837327b0b6ce1"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairD_contra_s0/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "91ae394b98bdff9383a6153700de2b7f782979f9970077f37938e09555b07bae"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairD_contra_s0/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "007c829f7966ac43b8e54c75c74973292f50946fab9d86cda6db0b496e62ee2d"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairD_oneshot_s0/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0c1f3a043e4e456ddc5c0750d247918532167cc5945d81cee719170d61cb586b"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairD_oneshot_s0/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "a6c65be610cd281d80ae8902cb5c13a744c1b7aced7bfb8570a2c24dcb6d8951"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairD_stale-soft_s0/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0cf5ca438c4ac05b4370096bc642803c55e84667ee19a3bd35237a38ba789db2"
+  },
+  "results/issue_failure_mode_blindness/pr12_3/W2/pairD_stale-soft_s0/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "63d47ee88e5adc604b4cf1591866f4a54207dc0892660c90cc9ec400f8060c02"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/clean_pairA_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "98e52ce048cafb49de17b6721ad700ed0d06a63d7e2c6a5de9402daa1c1ebb0a"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/clean_pairA_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0a2ac9131da9e2f4d72169d2c0b2855d0457466b4a9627d541156a896235edf1"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/clean_pairA_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "8bdf2ab3c826a09c8306747f039ff341b416e0f009563dfc44dd940526d86a35"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/clean_pairA_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "133451db7adf5b6b711fcd85a70f5bc242d3504b9d56c979562d42f2c6f01f02"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_contra_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "07225bd330eeb6733113983c09a0f9b4d2f2232cdde6ff2c575da90fe5cf63f9"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_contra_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "730fc157587665bc202ef5aa40450bcdb085cfc66e28ee106ff6ba3f020f9857"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_contra_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "e8a597c290336cc6ccde5e76142db82bc5a6af02b49d6161a6100a837283ab4d"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_contra_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "95fa1e99d98b015d9fb19ae0290ea58b413e05eba783eb5917e802e0be23910a"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_oneshot_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "ca3d3a423ea5c27c83f0963b7aa35a0142e606add7583c9b2a2004df43162d23"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_oneshot_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "f870d1fdf9bfe6bec3563e0ce2e0a8ea2bc81baf47b6574c6230c93384978202"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_oneshot_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "e4382b8e2a922fd733e18ccdf062a701fcb9cca0c76755fd9a193b0b5b8cabf2"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairB_oneshot_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "732dfb6f02fabd8d0365a627c6fe8009fd6192e62fc9d2aa2607c30ed6461ad6"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_contra_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "35e2a211f0f9dd4f2930baed6b6248522bb59e27957ad71a27e635b00d41f7a8"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_contra_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "e8b98e861ac73406c50e3b1bc5183c2de78abd9f330dfa04bdbe3c0655b2679d"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_contra_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "b2e3bc22ddd54f25206ff8186cb5d4c791108e8f89a61705ed79ecf53add8a7d"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_contra_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0154035c2b7bc8d0e1c0c4c7030e9773f9fe307e2b930e8bab6377da207f8889"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_oneshot_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "f02c9037ca8b6de32be3bca2537d37bfb73067e9be7c1680ba545503511e2b18"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_oneshot_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "fc451528716e330ba07d8692456c825621a824cbe5cb1b9f43a2d178eacfa03a"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_oneshot_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "6782fd1daa281e06eb65cd293e45499ed22b4039fac034aa491f6e53206341ee"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_oneshot_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "3cf723487e1155cc58a073ed0975c8efdf181cdf39d9cb724aa5e742ab9f710d"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_stale-soft_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "c6c21210fdcd311b97de5b609c9858abd5fcd669c5e4faa9ea9d0daa5b2aa64d"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_stale-soft_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "a6cd85565557c6d0d88a002c8c33d81283572523d672b705f118b5e522ed60f0"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_stale-soft_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "99bb636d0285badbc61a52dd81a1ef6f6cac4af6c885d654e2623b368c287143"
+  },
+  "results/issue_failure_mode_blindness/pr12_4/W2/pairD_stale-soft_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "26e8c4e2cee3e65cc96837e622ef1a91a3a3852369f20fb3ee6d336a493a4693"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/clean_pairC_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "086ed099900494fbb4bfed605556aef0728ec703c58ffd44c8e04eb54ed6944c"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/clean_pairC_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "e9036d793fcdec9b58c474c1cba4bad6a7687db14b416511d8a1ce7b3ae5e7f4"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/clean_pairE_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "c2eb517a1f6883f20805e6fbf502a2bf08e453c16400cd79210ae819323bec68"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/clean_pairE_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "a48e00594493b64575d074b1db4a058b07ed39e0d0fae52e5c0748bd12f91876"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_contra_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0f09c0e6b22d4b0c031dd98d436337f5ee84ccb478f87fc7cf7fd15f5f3e43c2"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_contra_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "7a8326484fc7cfafe0f13431a2da4bf91bbb7fe73b7518feb0ed40e26c5cdbbc"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_contra_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "b645a12afe2e9569237bde81edec32f4eb69988e42dda0539aea34f78efb43cd"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_contra_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "74a789d280a14226541492827fbc5fa5819abf6b0a1bd5cecb36b9b0a4e51a4c"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_oneshot_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "973f2d0c279fce59197ffc832360ac8ff53e91619ced0fc11271d52883e3a672"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_oneshot_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "4b681e2452635dbbf9e0e7878facb5a9fcbeaf42181a379a4c3518667ff991bf"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_oneshot_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "122bd84c72491febd47bfee18a2d55d493b1d199efcf0f5899f42b0b7d46db7d"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairC_oneshot_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "3b9131a1e139a1c1089cd4305f7802aeca1f0ba4d142e6f698acef8bc990554c"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_contra_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "e95ec7e5dea8e7aac39fb5997a395dcbe8107fa05a4311fd9fa484016d534770"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_contra_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "fa0ca8e2136ed943981d0a63b4a2da9b3d68968b0cd3e7f3492ced817ff14223"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_contra_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "16fde76d713bf90700be5978d786f2e6997ad2d843a6b07b13328d747612d6e0"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_contra_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "6afcac49355dbe8aec900bad4528c4f4029adab9b911c212b54d188005f57527"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_oneshot_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "76ef82b76770f40fe07e6e17c489169714000a6a569ab77e3c9d32d372921f1e"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_oneshot_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "58ecbd50dc0467d9d511612f09a8d1a7d080e9faa5fdbf17bb783473e4809b9d"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_oneshot_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "038103e8e63f4c3bc509be0e02f88216bfd30f2fab630b497e72c1da8a4805c1"
+  },
+  "results/issue_failure_mode_blindness/pr12_7_holdout_cache/W2/pairE_oneshot_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "7c2c2409ef42174d7dcdb7aae617a1ba22b878265d1c2a7d08c9a109f24d6d5f"
+  },
+  "results/issue_failure_mode_blindness/pr12_8/candidacy_scan.json": {
+   "matches_certification_pin": true,
+   "sha256": "3f3a135e85d7c33d562ac705632217520142deaad61c60b55315a43db68fe0ee"
+  },
+  "results/issue_failure_mode_blindness/pr12_8/f1b_envelope.json": {
+   "matches_certification_pin": true,
+   "sha256": "b595ef112fb3ad77971a5e81ce567b381e37166432e40a4aec6c4c5463c438c8"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_mixed_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "92078d1130fbb9b1e599cb19ff489185e811b099d5314a10f0a1d86a685852f2"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_mixed_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "2bfeac3459c03242655a3f8238597384dc27f34ad965800110db3da84f0336b7"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_mixed_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "a77c34454689945609b5f1373f840f6ae7b2acce2de953ca64285eff8dd8141b"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_mixed_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "6b2ecf45c6e0a6cf17a62b078cc85c547f61fbbbb649c3b31be4790e46b7524c"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_stale_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "a8ca61f47caa13e1bf4b8a2fd8b299f988f1ec0ef389e8b91950c742f40075f6"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_stale_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "2952b8c35d278804a42aed8daf92145909e466d9091b8949f51f96ff6b796e5a"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_stale_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "6bfc06a68260c93d401efcc9a2f634675081b6db8e1ff554f822f5a1583be8d4"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairB_stale_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "63af56f21c06c1551b3f2c7fe804dc365259b681e61369d23fdff68af600ab56"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_mixed_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "fae0617368b490ff2c2a47705aa2a3c589375952b753a60a65c399d7ed0251f6"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_mixed_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "6dab14f86a16b9734c4913b0af0b648309e125ec48025dc65c341d6e6a5e24d0"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_mixed_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "51df455fc2fe5a0e0ec31bdd9636cbf789d79945ac4bd2b1b31c15851de6d6d0"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_mixed_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "136e72fe63231227797b2c89296c37069e63f35455c4cf4bbbcfd87b95f53581"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_stale_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0c347d9560d847364deefb82066e4e786722abaf40433268a1f859c5905f224a"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_stale_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "213e6ef19fa56daedaee5a85db2bdefcfff069f272ad3f1c013b0b337eb6d2d5"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_stale_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "870d4aaed8c620493ecc6e43eec6da7613a6dfabdd4190976af69cb0b05bbd3d"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairC_stale_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "8dd65804286d6ad9cad02ccd7f7163f11926be7c0d24a5295bb1b6dfb61857f8"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_mixed_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "229ea19eca9b39f2f18085370b00367e58cbeda5954f32b474a2cf65cdbef99f"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_mixed_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "3224f83934f9aa25a1404cc12ecbd4340785f18344f43e15da17b5bb9f95d416"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_mixed_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "0026159a0440fcb897103b0acc9f88189f016af065846ea16c7e87dc95db7082"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_mixed_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "9b38fd905298c72044ad71b6ac317b5c5d6d5962dbacffbf2aac44e725f093d1"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_stale_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "5b2ac51ff9982992099fd5e9c4b82470c730170201bdc9b7c77ec8396221267d"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_stale_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "31bb0a377a8a4cba0cdf8e18a4b98e3225a8d7357356f25d4b575088ba9a618e"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_stale_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "3551ef16a8152004e703255965dd5963b25b921edd10ef572ac7d05bd158d570"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairD_stale_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "8ea053a93b690b6df5ad3ca31a7b455364e18f5c7c8bddd450230737f16e6a57"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_mixed_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "ad8c044d7585ccc65004cd54b281ef573eda178eec3f02c733dd508991c54868"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_mixed_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "34368ab8db237ae119a5218c5ba629240d5092ac44e3663c96694c4f7a67546c"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_mixed_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "50e3f2234251cac193911eb656e49c808c99b47baaa1af6a93af676c71f3f0ae"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_mixed_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "f58ef5a03bb6d57f4327a45ef7628cd22bb61db583a648ea835939412748c8df"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_stale_s1/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "95b07f63b44d4d23648d48a99054f6fc1cb521c178a9cb70bfe04cf567145e22"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_stale_s1/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "08dcc08fbebc526a5598aba4f55f93e120c36e8e3820470339c6e39077c9dd88"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_stale_s2/audit_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "ff964db919718c0f8fad3f8c3a3c7f9bec8f600b7fc082fe700143daa265319b"
+  },
+  "results/issue_failure_mode_blindness/pr12_8_panel_cache/W2/pairE_stale_s2/memory_packet.jsonl": {
+   "matches_certification_pin": true,
+   "sha256": "fbefe4fc3af90cb9b138572e13705431f551fe565b4e378764cb1d8d83a28ac9"
+  }
+ },
+ "kill_conditions": [],
+ "pins": {
+  "emitter_sha256_matches": true,
+  "evidence_base_verdict_intact": true,
+  "policy_block_attestation": {
+   "all_sources_identical": true,
+   "by_source": {
+    "harness/action_boundary_holdout_score.py": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15",
+    "harness/action_boundary_panel_score.py": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15",
+    "harness/action_boundary_score.py": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15",
+    "harness/candidacy_adjudicate.py": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15",
+    "harness/witness_alt_reference_reader.py": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15"
+   },
+   "matches_registered": true,
+   "sha256": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15"
+  }
+ },
+ "policy_pin": "0afcb2bc4d94112fd2f2cb9a47525c6d2595c2dd",
+ "registration": "results/issue_failure_mode_blindness/PR12_9_READER_CONTRACT_CERTIFICATION.md",
+ "verdict": "reader-contract-certified-seedbounded(s1-witness-alt-batch@1.0, W2:F1b)",
+ "verdict_text": "reader-contract-certified-seedbounded(s1-witness-alt-batch@1.0, W2:F1b) \u2014 the s1-witness-alt-batch batch packet-reader contract for W2:F1b passes all certification gates C-1\u2013C-7 at certification pin 10b9335f3bf00b3a306e3dfeb869eea95b3842d3, on the sole adjudicated evidence base PR-12.8 Stage E at a0e621d, verdict contract-candidate-GO-seedbounded(W2:F1b), whose registered bounds are constitutive parts of this verdict and are embedded verbatim below (PR-12.9 \u00a73). The -seedbounded qualifier is permanent under this registration. PER GATE C-7 THIS VERDICT HAS NO EFFECT: it rests on its branch; the contract registry sentence changes only per \u00a74.2, and the posture only per \u00a74.3, upon explicit human approval of the merge (Stage III, separately unauthorized). Until then nothing is served, deployed, promoted, or ingested; no FAM-core change; no S2/online claim; PR-10 merge-abstain remains the only certified reader contract and is never modified by any outcome here; the operational posture on witness-window rows remains deferral.\n\n## 3. Evidence base \u2014 carried verbatim (constitutive; dropping any item is kill \u00a78.1)\n\nThe single adjudicated input is PR-12.8 Stage E at main `a0e621d`:\nverdict **`contract-candidate-GO-seedbounded(W2:F1b)`** with all seven\ncandidacy gates G-R1\u2013G-R7 passing (`pr12_8/candidacy_scan.json`, whose\n`verdict_text` embeds the bounds below as constitutive parts). This\nregistration carries those bounds forward verbatim; every \u00a710 verdict\nunder this memo must restate them in its own verdict text:\n\n* **Traffic bounds (PR-12.8 \u00a714.3):** plain-stale, jitter, and g5twin\n  are `panel-insufficient` named scope bounds (plain-stale is\n  structurally tie-free; jitter/g5twin have s0-only stems and no\n  governance arm); mixed traffic is covered as **safe-by-silence only**\n  (guard-closed everywhere, zero acting, zero utility on the type);\n  the acting surface is exactly the one-shot harm class.\n* **Contra-power bound (PR-12.8 \u00a714.4, verbatim):** \"contra-side\n  safety = zero action on 319 in-scope W2 rows across 18 guard-closed\n  cells (21 including the tie-free stale-soft cells), with a\n  counterfactual guardless exposure of 73 acts / 70.0 wrong mass\n  suppressed; per-cell guard mis-open rate bounded only at \u226413.3%\n  (95%, iid-cell model); guard behavior inside the (\u22124, +23) margin\n  corridor unobserved.\"\n* **Seed bound (PR-12.8 \u00a714.5, D-bounded):** valid only for the\n  committed seeds' distributional regime \u2014 s0 (dev), s1, s2 \u2014 on the\n  committed panel protocol (vision, 12 epochs, supersede-epoch 6); no\n  claim about any other seed, write protocol, encoder, or drift. The\n  `-seedbounded` suffix is permanent under this registration: no\n  verdict here may drop it; only a future D-strong adjudication under\n  its own registrations could ever support an unqualified name.\n* **Monitoring terms (PR-12.8 \u00a79 / `PR12_8_MONITORING_WITHDRAWAL.md`),\n  T1\u2013T7 verbatim:** T1 envelope-cell `witness_alt` multiset \u2260 frozen\n  envelope entry (exactness, any byte); T2 any I2 overlap row,\n  incumbent-field deviation, or `witness_alt` at a tier other than\n  `harness-heuristic` (exactness, any instance); T3 per-cell\n  wrong-mass rate > 0.10 (truth-joined); T4 acting precision < 0.75\n  where acted \u2265 1 row (truth-joined); T5 aggregate wrong-mass rate\n  > 0.05 (truth-joined); T6 exercised cell's guard margin inside\n  (\u22124, +23) (evidence-gap fail-closed, any instance); T7\n  `n_fail_closed_events` > 0 on a cell (conformance, any instance).\n  Withdrawal: automatic cell-level reversion to the committed\n  dual-present/escalation posture as the registered minimum;\n  candidate-wide `withdrawn-pending-review` for any T1/T2, any T5, or\n  T3/T4 on two or more cells of one engagement; mandatory append-only\n  event record; reinstatement only via a new pre-registration.\n  Tighten-only, forever."
+}

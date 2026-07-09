@@ -557,3 +557,51 @@ runs or new traffic protocols, both outside this memo's offline
 authorizations. Stages D and E remain separately unauthorized; PR-10
 merge-abstain remains the only certified reader contract; posture
 remains deferral.
+
+### 14.5 Stage D discharged — seed-axis branch chosen: D-bounded (append-only; 2026-07-08)
+
+Separately authorized; the branch choice was made **explicitly by the
+operator** (per §7 Stage D: one branch must be chosen explicitly,
+neither is default). **Chosen: D-bounded.** Registration-only; nothing
+executed.
+
+**What D-bounded fixes.** No new seed is minted; no FAM-engine run
+occurs. The candidacy's seed scope is the committed seeds'
+distributional regime — **s0 (dev), s1, s2** on the committed panel
+protocol (vision, 12 epochs, supersede-epoch 6) — and nothing beyond
+it. Consequences, registered in advance and now operative for Stage E:
+
+* Any Stage E GO **must** be named
+  `contract-candidate-GO-seedbounded(W2:F1b)` — the unqualified
+  `contract-candidate-GO(W2:F1b)` is **unreachable** under this branch
+  (§8 G-R6; emitting it would be kill §10.9, scope laundering).
+* The verdict text must carry the seed bound together with the
+  standing scope bounds it joins: the §14.3 traffic bounds
+  (plain-stale/jitter/g5twin `panel-insufficient`; mixed
+  safe-by-silence) and the §14.4 contra-power bound (zero action on
+  319 closed-cell rows; per-cell mis-open ≤13.3% at 95%, iid-cell
+  model; guard corridor (−4, +23) unobserved).
+* No seed-generalization claim of any kind is created: the candidate,
+  even fully adjudicated, asserts nothing about s3+ seeds, other write
+  protocols, other encoders, or drift — the same class of bound PR-10
+  certification carries (stationary, one encoder), stated rather than
+  implied.
+
+**What D-bounded does not foreclose.** D-strong (new-seed engine runs:
+gentoo compute, darwin byte-verify, its own run-matrix
+pre-registration and execution approval) remains available as a
+*future, separate* registration. If ever run and passed, it would
+support a fresh adjudication under the unqualified verdict name;
+nothing from this branch choice would need to be unwound — the
+D-bounded verdict simply remains the honest record of what the s0–s2
+corpus supported.
+
+**Stage E readiness ledger after this section.** Registered inputs
+complete: Stage A (§14.3), Stage B (§14.4), Stage C (§14.1/§14.2),
+Stage D (this section). The single remaining prerequisite before
+Stage E may be authorized is the **§9 monitoring/withdrawal
+registration** (tripwires = the registered 12.6 constants, tightening
+only). Stage E itself remains separately unauthorized. No candidacy
+verdict, GO, certification, or served output is issued here; PR-10
+merge-abstain remains the only certified reader contract; the
+operational posture on witness-window rows remains deferral.

@@ -272,3 +272,125 @@ verdicts and registrations stand unchanged.
 
 Intentionally empty at pre-registration. §§1–11 above are the frozen
 snapshot and are never rewritten.
+
+### 12.1 Stage I — conformance suite + withdrawal mechanics (run record, 2026-07-09)
+
+*Separately authorized (Stage I only; explicit user approval,
+2026-07-09). This subsection records results append-only per §7. It
+issues **no §10 verdict** — verdicts exist only at Stage II, which
+remains separately unauthorized. Evidence base unchanged: PR-12.8
+Stage E at main `a0e621d`, verdict
+`contract-candidate-GO-seedbounded(W2:F1b)`, carried with every §3
+bound.*
+
+**Artifacts produced (the §5.1 and §5.2 artifacts; nothing else was
+written outside `pr12_9/`):**
+
+| artifact | sha256 |
+|---|---|
+| `harness/witness_alt_conformance_tests.py` (§5.1) | `8c517fb5fbd6749c5770af5ab309bc29ea72c8802e0766b155b8a3e1cb7bfbcd` |
+| `harness/witness_alt_withdrawal_demo.py` (§5.2) | `9a9c7e239b8cb163e1432ac5a1bde22b6137f109d2242509085fff627a173715` |
+| `pr12_9/conformance_results.json` | `4423b315b91254b370fbb9a71d9d79721c787bb0a0a4f715c49b343f3fa25472` |
+| `pr12_9/withdrawal_demo_report.json` | `003585525d61a01d67fc320fd779551c8c7459a43c5e673c9b65e5e90d0c3b90` |
+| `pr12_9/withdrawal_demo_events.jsonl` (append-only event log, 26 events over two runs, hash-chained from genesis, chain verified) | `16e970a65c23b77c69d47892cd1b66a87ec6335d47b53207c38247d181eb87ad` (at commit; grows by design, §9) |
+
+Policy-block attestation passed: the committed reference reader's
+block equals the frozen scorer's byte-for-byte at the registered sha
+`2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15`.
+Both reports are byte-identical across independent re-runs; frozen
+surfaces git-clean before and after every run; synthetic inputs only
+(no committed packet read, no truth label consumed — truth appears
+solely as fabricated fixtures for the T3–T5 demonstrations).
+
+**§5.1 conformance suite — architecture and result.** Every clause is
+exercised against two subjects: *committed* (the merged reference
+reader's `read_cell`, the implementation that froze envelope v0.2 and
+that C-1 will re-run) and *conformant* (a suite-internal batch
+pipeline implementing the contract §§2–7 text exactly, on the same
+attested policy block). 25 checks, 50 subject-results, covering: all
+six §4 eligibility conditions positively and negatively (including
+the `≤` guard boundary at equal pair counts), I1 precedence on a
+crafted abstain+eligible row, I2 fail-closed on a duplicate-join-key
+overlap, I4 tier invariance and the §3 iff-field domains over every
+emitted record, first-tie-item semantics in both directions,
+W2-tree-only refusal (frozen `pol_f1b` refuses `W1` and `prototype`
+at the shape gate), four malformed-packet variants (the T7 feed), and
+double-pass determinism.
+
+Result: **the conformant subject passes 25/25 — zero specification
+ambiguities were found** (every crafted case has behavior the
+contract text determines; the C-3 `certification-insufficient`
+trigger is absent). **The committed reference reader passes 19/25**;
+the 6 failing subject-results reduce to three findings, none touching
+eligibility, the envelope multisets, composition, or any adjudicated
+Stage E gate:
+
+* **F1 — §3 `evidence_ptr` sourcing.** The contract registers
+  "the row's audit-packet decision `evidence_ptr`, carried verbatim";
+  the committed reader carries the memory-packet tie item's `text`
+  (the fixed string "unresolved tie — two candidates, neither
+  asserted") instead. The same divergence is present in the committed
+  `pr12_8/served/*.csv` artifacts (e.g. row `pairD_oneshot_s1:e7:p4`,
+  whose audit decision pointer reads "router(fork_events.csv): slot 2
+  in ambiguous (pending) pair @epoch 7; …"). Non-envelope served
+  field only.
+* **F2 — §6 I2/§7 row-level fail-closed.** On a crafted overlap the
+  committed `read_cell` leaves the affected row at `witness_alt`; the
+  committed pipeline instead detects the overlap in its composition
+  proof and kills the whole run (fail-closed by abort — safe
+  direction, nothing is served as valid, but the registered per-row
+  `defer` record is not produced).
+* **F3 — §7 malformed-packet fail-closed (4 sub-checks).** The
+  committed reader crashes on malformed packet or audit input
+  (`JSONDecodeError`/`KeyError`): fail-closed by crash — nothing is
+  served, never `witness_alt`, but the registered per-row `defer`
+  record and recorded anomaly (the T7 event feed) are not produced.
+
+On all committed panels these three paths never trigger (all 44
+envelope cells are well-formed, overlap-free, and were proven so at
+Stages C/E); the findings concern the contract's *operational*
+envelope, exactly what rung 4 exists to test — H0's prediction
+partially realized.
+
+**§5.2 withdrawal demo — result: all 12 scenarios pass; every
+tripwire T1–T7 demonstrated** with the registered behavior and a
+well-formed, hash-chained event record (cell identity, packet shas,
+tripwire id, measured vs registered value, contract/reader/monitor
+versions): T1 envelope-byte mutation → candidate-wide
+`withdrawn-pending-review`, after which a *healthy* other cell serves
+zero `witness_alt` and a later clean exercise does not
+self-reinstate; T2 (both a tier violation and an I2 overlap row) →
+suspension; T3 per-cell 0.12 → cell reversion that leaves a healthy
+sibling cell untouched; T3 on two cells of one engagement → the
+registered candidate-wide escalation; T4 precision 0.5 → cell
+reversion; T5 aggregate 0.06 with both per-cell rates under 0.10 →
+suspension; T6 margin −1 → reversion *before* serving (2 decided, 0
+served); T7 fail-closed event → reversion. Boundary honesty: T3/T4/T5
+do **not** trip at exactly 0.10/0.75/0.05 (the constants are strict),
+and the corridor is enforced as the open interval — margins −4 and
++23 do not trip. Posture↔event coupling verified bidirectionally.
+Observation of record: a vacuous clean cell (margin 0, no pairs) lies
+*inside* the registered corridor, so a faithful T6 monitor
+fail-closes clean cells — tighter than the evidence requires, as the
+monitoring registration permits, with zero utility lost (F1b never
+acts on clean cells).
+
+**Stage I determination (no §10 verdict).** The withdrawal-mechanics
+half is discharged in full. The conformance half ran to completion
+and establishes that the contract text is determinate and
+implementable, but records 6 failing committed-reader results
+(findings F1–F3). As registered, gate C-3 ("every test of artifact
+§5.1 passes") cannot pass while these stand: a Stage II run today
+would yield `certification-negative` on its merits. The registered
+paths back are outside Stage I's authority and are **not** taken
+here: remediating the reference reader and/or the contract text is a
+§5.4/§10 change-control matter (any semantic change produces a
+0.2-candidate and returns the candidate to rung 1; kill §8.5 guards
+the re-issue), each step under its own explicit authorization.
+
+**Boundary.** Stage I evidence only. Nothing is certified, served,
+deployed, promoted, or ingested; no FAM-core change; no registry or
+posture change; Stages II and III remain separately unauthorized.
+**PR-10 merge-abstain remains the only certified reader contract**;
+the operational posture on witness-window rows remains **deferral**.
+PR-12.1–12.8 verdicts and registrations stand unchanged.

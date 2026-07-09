@@ -1,0 +1,385 @@
+{
+ "artifact": "PR-12.9 \u00a75.2 withdrawal-mechanics demo (Stage I)",
+ "contract_id": "s1-witness-alt-batch",
+ "contract_version": "0.1-candidate",
+ "demo_version": "pr12_9-stage1-withdrawal-demo-v1",
+ "event_log": {
+  "append_only": "events accumulate across runs by design; excluded from cross-run byte-identity (PR-12.9 \u00a79)",
+  "coupling": "every posture change has exactly one recorded event and vice versa",
+  "coupling_verified": true,
+  "hash_chain_verified": true,
+  "path": "results/issue_failure_mode_blindness/pr12_9/withdrawal_demo_events.jsonl"
+ },
+ "frozen_surfaces_clean_after": true,
+ "frozen_surfaces_clean_before": true,
+ "monitoring_doc": "PR12_8_MONITORING_WITHDRAWAL.md",
+ "policy_block_sha256": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15",
+ "registered_constants": {
+  "T3_per_cell_wrong_ceiling": 0.1,
+  "T4_precision_floor": 0.75,
+  "T5_aggregate_wrong_ceiling": 0.05,
+  "T6_corridor_open_interval": [
+   -4,
+   23
+  ]
+ },
+ "registration": "PR12_9_READER_CONTRACT_CERTIFICATION.md (main fe6248e)",
+ "result": "all-scenarios-pass",
+ "scenarios": [
+  {
+   "candidate_status_after": "active",
+   "cells_reverted": [],
+   "detail": {
+    "margin": -5
+   },
+   "events": [],
+   "events_well_formed": true,
+   "expected": "healthy open cell outside the corridor: witness_alt served, zero tripwire events, candidate active",
+   "observed": "served 3 witness_alt, 0 events, status active",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S0-baseline-no-trip",
+   "tripwire": "(none)"
+  },
+  {
+   "candidate_status_after": "active",
+   "cells_reverted": [
+    "c1"
+   ],
+   "detail": {},
+   "events": [
+    {
+     "action": "cell-reversion",
+     "cell": "c1",
+     "measured": "guard margin -1",
+     "registered": "open interval (-4, 23)",
+     "scope": "cell",
+     "tripwire": "T6"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "guard margin -1 inside (-4, +23): cell reverted BEFORE serving -> zero witness_alt served (2 were decided), event recorded",
+   "observed": "margin -1, decided 2, served 0, events ['T6']",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S1-T6-corridor-fail-closed",
+   "tripwire": "T6"
+  },
+  {
+   "candidate_status_after": "per-sub-scenario",
+   "cells_reverted": [
+    "b-zero"
+   ],
+   "detail": {},
+   "events_well_formed": true,
+   "expected": "margins -4/+23/-5/+24 do NOT trip (open interval, committed observations at the ends); margin 0 DOES",
+   "observed": [
+    {
+     "cell": "b-m4",
+     "expected_trip": false,
+     "margin": -4,
+     "note": "margin -4 = observed open boundary",
+     "observed_trip": false,
+     "pass": true
+    },
+    {
+     "cell": "b-p23",
+     "expected_trip": false,
+     "margin": 23,
+     "note": "margin +23 = observed closed boundary",
+     "observed_trip": false,
+     "pass": true
+    },
+    {
+     "cell": "b-m5",
+     "expected_trip": false,
+     "margin": -5,
+     "note": "margin -5 outside corridor",
+     "observed_trip": false,
+     "pass": true
+    },
+    {
+     "cell": "b-p24",
+     "expected_trip": false,
+     "margin": 24,
+     "note": "margin +24 outside corridor",
+     "observed_trip": false,
+     "pass": true
+    },
+    {
+     "cell": "b-zero",
+     "expected_trip": true,
+     "margin": 0,
+     "note": "margin 0: vacuous clean cell IS inside the registered corridor -> fail-closed (tighter than the evidence requires, zero utility lost: F1b never acts on clean cells)",
+     "observed_trip": true,
+     "pass": true
+    }
+   ],
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S2-T6-corridor-open-interval-boundaries",
+   "tripwire": "T6"
+  },
+  {
+   "candidate_status_after": "active",
+   "cells_reverted": [
+    "f1"
+   ],
+   "detail": {},
+   "events": [
+    {
+     "action": "cell-reversion",
+     "cell": "f1",
+     "measured": "n_fail_closed_events=1",
+     "registered": "> 0 (any instance)",
+     "scope": "cell",
+     "tripwire": "T7"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "a fail-closed (schema) event on the cell trips T7: cell reverted, eligible rows' witness_alt suppressed, event recorded",
+   "observed": "decided 2, served 0, events ['T7']",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S3-T7-fail-closed-event",
+   "tripwire": "T7"
+  },
+  {
+   "candidate_status_after": "withdrawn-pending-review",
+   "cells_reverted": [],
+   "detail": {
+    "fixture_multiset": [
+     [
+      "v1:e0",
+      "3"
+     ],
+     [
+      "v1:e1",
+      "3"
+     ]
+    ]
+   },
+   "events": [
+    {
+     "action": "candidate-suspension",
+     "cell": "v1",
+     "measured": "witness_alt multiset [('v1:e0', '999'), ('v1:e1', '3')]",
+     "registered": "frozen envelope entry [('v1:e0', '3'), ('v1:e1', '3')]",
+     "scope": "candidate",
+     "tripwire": "T1"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "exact multiset -> no trip; one mutated class byte -> T1, candidate-wide withdrawn-pending-review; a HEALTHY other cell then serves zero witness_alt; no self-reinstatement on a later clean exercise",
+   "observed": "clean pass trips=0; after mutation status=withdrawn-pending-review; healthy cell served 0; clean re-exercise served 0",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S4-T1-envelope-exactness",
+   "tripwire": "T1"
+  },
+  {
+   "candidate_status_after": "withdrawn-pending-review",
+   "cells_reverted": [],
+   "detail": {},
+   "events": [
+    {
+     "action": "candidate-suspension",
+     "cell": "x1",
+     "measured": "i2_overlap=[] tier_violations=['x1:e0']",
+     "registered": "exactness: any I2 overlap row / incumbent-field deviation / non-harness-heuristic witness_alt",
+     "scope": "candidate",
+     "tripwire": "T2"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "a witness_alt record at a tier other than harness-heuristic -> T2 -> candidate-wide suspension",
+   "observed": "events ['T2'], status withdrawn-pending-review",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S5a-T2-tier-violation",
+   "tripwire": "T2"
+  },
+  {
+   "candidate_status_after": "withdrawn-pending-review",
+   "cells_reverted": [
+    "x2"
+   ],
+   "detail": {},
+   "events": [
+    {
+     "action": "cell-reversion",
+     "cell": "x2",
+     "measured": "n_fail_closed_events=1",
+     "registered": "> 0 (any instance)",
+     "scope": "cell",
+     "tripwire": "T7"
+    },
+    {
+     "action": "candidate-suspension",
+     "cell": "x2",
+     "measured": "i2_overlap=['x2:q0'] tier_violations=[]",
+     "registered": "exactness: any I2 overlap row / incumbent-field deviation / non-harness-heuristic witness_alt",
+     "scope": "candidate",
+     "tripwire": "T2"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "an I2 overlap row -> T2 candidate-wide suspension (the row itself was already fail-closed to defer, which also trips T7)",
+   "observed": "events ['T7', 'T2'], status withdrawn-pending-review, served witness_alt 0",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S5b-T2-i2-overlap-row",
+   "tripwire": "T2 (+T7)"
+  },
+  {
+   "candidate_status_after": "active",
+   "cells_reverted": [
+    "t3a"
+   ],
+   "detail": {
+    "aggregate_rate": 0.046154
+   },
+   "events": [
+    {
+     "action": "cell-reversion",
+     "cell": "t3a",
+     "measured": "wrong-mass rate 0.1200",
+     "registered": "> 0.1",
+     "scope": "cell",
+     "tripwire": "T3"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "wrong-mass rate 0.12 > 0.10 with precision 0.85 >= 0.75: T3 only, cell t3a reverted; healthy cell t3b untouched; candidate stays active (single cell)",
+   "observed": "events ['T3'], reverted ['t3a'], status active",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S6-T3-per-cell-reversion",
+   "tripwire": "T3"
+  },
+  {
+   "candidate_status_after": "active",
+   "cells_reverted": [
+    "t4a"
+   ],
+   "detail": {},
+   "events": [
+    {
+     "action": "cell-reversion",
+     "cell": "t4a",
+     "measured": "acting precision 0.5000",
+     "registered": "< 0.75 (acted >= 1 row)",
+     "scope": "cell",
+     "tripwire": "T4"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "acting precision 0.5 < 0.75 on an acted cell (wrong-mass rate 0.025 stays under every ceiling): T4 only, cell reversion",
+   "observed": "events ['T4'], status active",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S7-T4-precision-reversion",
+   "tripwire": "T4"
+  },
+  {
+   "candidate_status_after": "withdrawn-pending-review",
+   "cells_reverted": [
+    "m1",
+    "m2"
+   ],
+   "detail": {},
+   "events": [
+    {
+     "action": "cell-reversion",
+     "cell": "m1",
+     "measured": "wrong-mass rate 0.1200",
+     "registered": "> 0.1",
+     "scope": "cell",
+     "tripwire": "T3"
+    },
+    {
+     "action": "cell-reversion",
+     "cell": "m2",
+     "measured": "wrong-mass rate 0.1200",
+     "registered": "> 0.1",
+     "scope": "cell",
+     "tripwire": "T3"
+    },
+    {
+     "action": "candidate-suspension",
+     "cell": "(engagement)",
+     "measured": "T3/T4 tripped on 2 cells of one engagement: ['m1', 'm2']",
+     "registered": ">= 2 cells -> candidate-wide suspension",
+     "scope": "candidate",
+     "tripwire": "T3"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "T3 on two cells of one engagement: per-cell reversions PLUS the registered candidate-wide suspension",
+   "observed": "events ['T3', 'T3', 'T3'], status withdrawn-pending-review",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S8-T3-multi-cell-escalation",
+   "tripwire": "T3 (escalation)"
+  },
+  {
+   "candidate_status_after": "withdrawn-pending-review",
+   "cells_reverted": [],
+   "detail": {
+    "aggregate_rate": 0.06
+   },
+   "events": [
+    {
+     "action": "candidate-suspension",
+     "cell": "(engagement)",
+     "measured": "aggregate wrong-mass rate 0.0600",
+     "registered": "> 0.05",
+     "scope": "candidate",
+     "tripwire": "T5"
+    }
+   ],
+   "events_well_formed": true,
+   "expected": "per-cell wrong-mass 0.06 under the 0.10 per-cell ceiling on both cells, aggregate 0.06 > 0.05: T5 -> candidate-wide suspension",
+   "observed": "aggregate 0.06, events ['T5'], status withdrawn-pending-review",
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S9-T5-aggregate-suspension",
+   "tripwire": "T5"
+  },
+  {
+   "candidate_status_after": "active",
+   "cells_reverted": [],
+   "detail": {},
+   "events_well_formed": true,
+   "expected": "the registered constants are strict (> / <): exact boundary values do not trip",
+   "observed": [
+    {
+     "case": "T3 at exactly 0.10 (aggregate held at exactly 0.05)",
+     "no_trip": true
+    },
+    {
+     "case": "T4 at exactly 0.75",
+     "no_trip": true
+    },
+    {
+     "case": "T5 at exactly 0.05 (per-cell 0.04/0.06 both < 0.10)",
+     "no_trip": true
+    }
+   ],
+   "pass": true,
+   "posture_event_coupling": true,
+   "scenario": "S10-strict-inequality-boundaries",
+   "tripwire": "T3/T4/T5"
+  }
+ ],
+ "synthetic_only": "every cell, packet, truth map, and injection is fabricated; no committed packet or truth label is consumed",
+ "tripwires_demonstrated": [
+  "T1",
+  "T2",
+  "T3",
+  "T4",
+  "T5",
+  "T6",
+  "T7"
+ ]
+}

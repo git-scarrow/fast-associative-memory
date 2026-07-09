@@ -272,62 +272,140 @@ def verify_input(repo: Path, relpath: str, manifest: dict, kills: list):
 BLOCK_SHA = None  # set in main() after attestation
 
 
+def _defer_record(qid: str) -> dict:
+    return {"query_id": qid, "served_outcome": "defer",
+            "abstain_reason": "", "witness_alt_class": "",
+            "witness_alt_basis": "", "policy_id": "",
+            "policy_block_sha256": "", "evidence_ptr": "",
+            "certification_tier": "harness-heuristic",
+            "contract_id": CONTRACT_ID,
+            "contract_version": CONTRACT_VERSION}
+
+
 def read_cell(pkt_bytes: bytes, aud_bytes: bytes, anomalies: list,
               cell_key: str):
-    """Contract §4/§5/§6: one served-decision record per packet row.
+    """Contract §4/§5/§6/§7: one served-decision record per packet row.
 
     Decisions are made from the packet pair ALONE (label-free; no
-    committed table is open at this point). Fail-closed: any anomaly
-    serves defer, never witness_alt."""
-    ctx = CellCtx([json.loads(line)
-                   for line in aud_bytes.decode().splitlines()])
+    committed table is open at this point). Fail-closed at ROW
+    granularity (§7; PR-12.9 Stage I remediation of findings F1-F3):
+    any schema failure, I2 overlap, or eligibility ambiguity serves the
+    affected row defer (never witness_alt) and records the anomaly with
+    ``fail_closed: True`` — the monitoring layer's T7 feed. Packet
+    content never aborts the run; only harness/environment failure may.
+
+    ``evidence_ptr`` (§3) carries verbatim the row's audit-packet
+    SERVING decision pointer: the unique decision whose ``item_id`` is
+    ``served_answer@<query_id>``. Slot-level ``withheld`` records are
+    decisions about items, not about the row's serving, and are never
+    the referent (uniqueness verified on all 116,991 audit rows of the
+    committed 44-cell panel; zero or multiple serving decisions, or an
+    empty pointer, on an otherwise-eligible row is a schema-expectation
+    failure and fail-closes that row)."""
+    try:
+        aud_records = [json.loads(line)
+                       for line in aud_bytes.decode().splitlines()]
+    except (json.JSONDecodeError, UnicodeDecodeError) as ex:
+        # batch semantics (§2): an unparseable audit packet poisons the
+        # cell context -> every row is served defer, one recorded
+        # cell-level fail-closed anomaly
+        anomalies.append({"cell": cell_key, "query_id": "",
+                          "fail_closed": True, "clause": "schema",
+                          "anomaly": f"audit packet malformed: "
+                                     f"{type(ex).__name__}"})
+        aud_records = None
+    ctx = CellCtx(aud_records or [])
+    evidence = {}        # qid -> the row's serving-decision evidence_ptr
+    for rec in aud_records or []:
+        qid0 = rec.get("query_id")
+        if not qid0 or not isinstance(rec.get("decisions"), list):
+            continue
+        serving = [d for d in rec["decisions"] if isinstance(d, dict)
+                   and d.get("item_id") == f"served_answer@{qid0}"]
+        if len(serving) == 1 and serving[0].get("evidence_ptr"):
+            evidence.setdefault(qid0, serving[0]["evidence_ptr"])
     records = []
     abstain_qids, eligible_qids = set(), set()
-    for line in pkt_bytes.decode().splitlines():
-        rec = json.loads(line)
-        qid = rec["query_id"]
-        items = rec.get("items", [])
-        abst = [it for it in items if it.get("type") == "abstention_notice"]
-        ties = [it for it in items if it.get("type") == "unresolved_tie"]
-        mems = [it for it in items if it.get("type") == "memory_item"]
-        out = {"query_id": qid, "abstain_reason": "",
-               "witness_alt_class": "", "witness_alt_basis": "",
-               "policy_id": "", "policy_block_sha256": "",
-               "evidence_ptr": "",
-               "certification_tier": "harness-heuristic",
-               "contract_id": CONTRACT_ID,
-               "contract_version": CONTRACT_VERSION}
+    for i, line in enumerate(pkt_bytes.decode().splitlines(), 1):
+        try:
+            rec = json.loads(line)
+            if not isinstance(rec, dict) \
+                    or not isinstance(rec.get("query_id"), str):
+                raise ValueError("row lacks a string query_id")
+            qid = rec["query_id"]
+            items = rec.get("items", [])
+            if not isinstance(items, list):
+                raise ValueError("items is not a list")
+        except Exception as ex:                 # §7 fail-closed row
+            qid = f"__fail_closed_line_{i}__"
+            anomalies.append({"cell": cell_key, "query_id": qid,
+                              "fail_closed": True, "clause": "schema",
+                              "anomaly": f"packet line {i} malformed: "
+                                         f"{type(ex).__name__}: {ex}"})
+            records.append(_defer_record(qid))
+            continue
+        if aud_records is None:                 # cell context poisoned
+            records.append(_defer_record(qid))
+            continue
+        out = _defer_record(qid)
+        abst = [it for it in items if isinstance(it, dict)
+                and it.get("type") == "abstention_notice"]
+        ties = [it for it in items if isinstance(it, dict)
+                and it.get("type") == "unresolved_tie"]
+        mems = [it for it in items if isinstance(it, dict)
+                and it.get("type") == "memory_item"]
         if abst:                                # §6 I1: abstain precedence
             out["served_outcome"] = "abstain"
             out["abstain_reason"] = "merge_suspect_led"
             out["certification_tier"] = "core-certified"
             abstain_qids.add(qid)
-            if ties:                            # fail-closed + record (I1)
+            if ties:                            # recorded anomaly (I1)
                 anomalies.append({"cell": cell_key, "query_id": qid,
                                   "anomaly": "abstention row carries an "
                                              "unresolved_tie item"})
         elif ties:
-            obs = RowObs(SHAPE, ties[0])        # §4.1: first tie item
-            act = pol_f1b(obs, ctx)
-            if act is not None and not set(act) <= set(obs.presented):
+            try:
+                obs = RowObs(SHAPE, ties[0])    # §4.1: first tie item
+                act = pol_f1b(obs, ctx)
+                if act is not None and not set(act) <= set(obs.presented):
+                    raise ValueError("ACT outside presented set")
+                if act is not None and qid not in evidence:
+                    raise ValueError("eligible row lacks a unique "
+                                     "audit-packet serving decision "
+                                     "with an evidence_ptr")
+            except Exception as ex:             # §7 fail-closed row
                 anomalies.append({"cell": cell_key, "query_id": qid,
-                                  "anomaly": "ACT outside presented set"})
-                act = None                      # fail-closed (§7)
+                                  "fail_closed": True,
+                                  "clause": "eligibility",
+                                  "anomaly": f"{type(ex).__name__}: {ex}"})
+                act = None                      # defer, never witness_alt
             if act is not None:
                 out["served_outcome"] = "witness_alt"
                 out["witness_alt_class"] = sorted(act)[0]
                 out["witness_alt_basis"] = WITNESS_BASIS
                 out["policy_id"] = "W2:F1b"
                 out["policy_block_sha256"] = BLOCK_SHA
-                out["evidence_ptr"] = ties[0].get("text", "")
+                out["evidence_ptr"] = evidence[qid]     # §3 passthrough
                 eligible_qids.add(qid)
-            else:
-                out["served_outcome"] = "defer"
         elif mems:
             out["served_outcome"] = "answer"
-        else:
-            out["served_outcome"] = "defer"
         records.append(out)
+    # §6 I2 disjointness, fail-closed at row granularity (§7): a join
+    # key served abstain anywhere may not also be served witness_alt;
+    # the affected candidate-side row reverts to defer
+    overlap = abstain_qids & eligible_qids
+    if overlap:
+        for j, out in enumerate(records):
+            if out["query_id"] in overlap \
+                    and out["served_outcome"] == "witness_alt":
+                anomalies.append({"cell": cell_key,
+                                  "query_id": out["query_id"],
+                                  "fail_closed": True,
+                                  "clause": "i2-overlap",
+                                  "anomaly": "eligible row overlaps the "
+                                             "certified abstention set"})
+                records[j] = _defer_record(out["query_id"])
+        eligible_qids -= overlap
     return ctx, records, abstain_qids, eligible_qids
 
 

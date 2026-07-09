@@ -553,3 +553,62 @@ change; Stage III remains separately unauthorized. **PR-10
 merge-abstain remains the only certified reader contract**; the
 operational posture on witness-window rows remains **deferral**.
 PR-12.1–12.8 verdicts and registrations stand unchanged.
+
+### 12.4 Stage III — disposition: contract re-issue produced (run record, 2026-07-09; effect pending merge approval)
+
+*Separately authorized (explicit user instruction, 2026-07-09). The
+approval of record for the Stage II merge (`8875b72`) was **scoped**:
+"limited to preserving the Stage II certification-run evidence and §10
+GO verdict on main. It does not authorize Stage III, registry
+re-issue, serving, deployment, ingestion, FAM-core change, posture
+change, or any opt-in consumer enablement" — with Stage III production
+then separately ordered to begin. Accordingly: the §10 GO verdict now
+sits on main **as evidence without operative effect**, and this
+subsection records the Stage III artifact production. **Rung 4, the
+§4.2 registry sentence, and the §4.3 posture take effect only upon
+explicit approval of THIS Stage III branch's merge** — the C-7
+separation is preserved one more step, at the user's direction.*
+
+**Artifact §5.4 produced:** `PR12_9_S1_CONTRACT_V1.md`
+(sha256 `8cc3e80f00fea09d0eac21e4dffe60b649a86814396c72a112dc39eef49df2f9`)
+— the one permitted transformation of the adjudicated 0.1-candidate:
+
+* §§2–8 normative content **byte-carried unchanged**, extracted
+  programmatically from the pinned committed blob
+  (`8875b72:PR12_8_S1_CONTRACT_CANDIDATE.md`) and byte-verified
+  identical (carried-span sha256
+  `1a2b80a716f232ee3eb94d94b8614d9dfb6c3a3506aed3e5d46757cf24f50a78`);
+  the §8.5 kill (semantic drift from the adjudicated candidate) is
+  structurally untrippable by construction.
+* Identity block updated exactly as §5.4 permits: version `1.0`,
+  status `certified-seedbounded, pending effect` (rung 4 per ladder,
+  effective only on approved merge), certification citation
+  (Stage II verdict, scan artifact, pin `10b9335`, evidence merge
+  `8875b72`), evidence-base chain extended through PR-12.9.
+* Non-normative frame (§9 ladder, §10 change control, §11 boundary)
+  updated to the certified re-issue's position: any modification →
+  `1.1`, voids certification, rung 1, new pre-registration; boundary
+  restates the §4.3 opt-in-only posture and the permanent
+  prohibitions.
+
+**The registry sentence (§4.2, exact wording, effective only on
+approved merge of this branch):** "PR-10 merge-abstain is the only
+core-certified reader contract; `s1-witness-alt-batch@1.0` is a
+certified opt-in **batch, harness-heuristic-tier, seed-bounded**
+packet-reader contract at its registered bounds." No other wording is
+authorized; historical documents are not rewritten (append-only repo —
+their boundary statements stand as records of their time).
+
+**Explicitly not done, per the scoped approval:** no consumer is
+enrolled or enabled; nothing is served, deployed, promoted, or
+ingested; no FAM-core change; no posture change — blanket deferral
+remains the operational posture on witness-window rows, and even
+after any future approval it remains the **default**, with
+`witness_alt` reaching only explicit opt-in batch consumers under the
+standing T1–T7 monitoring terms and append-only event log.
+
+**Boundary.** Until this branch's merge is explicitly approved:
+**PR-10 merge-abstain remains the only certified reader contract**;
+the operational posture on witness-window rows remains **deferral**;
+rung 4 is not reached. PR-12.1–12.8 verdicts and registrations stand
+unchanged.

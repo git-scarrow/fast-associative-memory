@@ -235,11 +235,18 @@ def serve_conformant(pkt_lines, aud_lines, shape="W2", cell_key="syn"):
                 "abstain_qids": [], "eligible_qids": [], "i2_overlap": [],
                 "ctx": None}
     ctx = wr.CellCtx(aud_records)
-    evidence = {}                       # qid -> audit decision evidence_ptr
+    # qid -> the row's SERVING decision evidence_ptr (contract §3): the
+    # unique decision whose item_id is served_answer@<qid>; slot-level
+    # withheld records are decisions about items, never the referent
+    evidence = {}
     for rec in aud_records:
-        decs = rec.get("decisions") or []
-        if rec.get("query_id") and decs and "evidence_ptr" in decs[0]:
-            evidence.setdefault(rec["query_id"], decs[0]["evidence_ptr"])
+        qid0 = rec.get("query_id")
+        if not qid0 or not isinstance(rec.get("decisions"), list):
+            continue
+        serving = [d for d in rec["decisions"] if isinstance(d, dict)
+                   and d.get("item_id") == f"served_answer@{qid0}"]
+        if len(serving) == 1 and serving[0].get("evidence_ptr"):
+            evidence.setdefault(qid0, serving[0]["evidence_ptr"])
 
     # -- per-row decisions (contract §§3-5; §6 I1 precedence)
     records, abstain_qids, eligible_qids = [], set(), set()
@@ -284,6 +291,10 @@ def serve_conformant(pkt_lines, aud_lines, shape="W2", cell_key="syn"):
                 if act is not None and \
                         not set(act) <= set(obs.presented):
                     raise ValueError("ACT outside presented set")
+                if act is not None and qid not in evidence:
+                    raise ValueError("eligible row lacks a unique "
+                                     "audit-packet serving decision "
+                                     "with an evidence_ptr")
             except Exception as ex:                 # §7 eligibility/schema
                 fail_closed_events.append({
                     "cell": cell_key, "query_id": qid, "clause":
@@ -298,7 +309,7 @@ def serve_conformant(pkt_lines, aud_lines, shape="W2", cell_key="syn"):
                 out["policy_block_sha256"] = REGISTERED_BLOCK_SHA
                 # contract §3: the row's audit-packet decision
                 # evidence_ptr, carried verbatim
-                out["evidence_ptr"] = evidence.get(qid, "")
+                out["evidence_ptr"] = evidence[qid]
                 eligible_qids.add(qid)
         elif mems:                                  # §5: packet answers
             out["served_outcome"] = "answer"
@@ -446,18 +457,75 @@ def run_checks():
 
     # ---- finding F1 probe: §3 evidence_ptr sourcing
     exp_ptr = audit_ptr("syn:q1")
+    f1_committed_ok = outcome_of(cm, "syn:q1")["evidence_ptr"] == exp_ptr
     add_check(
         "evidence_ptr_audit_decision_carriage", "contract §3 (evidence_ptr)",
         "witness_alt row carries the row's audit-packet decision "
         "evidence_ptr verbatim",
-        verdict(outcome_of(cm, "syn:q1")["evidence_ptr"] == exp_ptr),
+        verdict(f1_committed_ok),
         verdict(outcome_of(cf, "syn:q1")["evidence_ptr"] == exp_ptr),
         {"expected": exp_ptr,
          "committed_observed": outcome_of(cm, "syn:q1")["evidence_ptr"],
          "conformant_observed": outcome_of(cf, "syn:q1")["evidence_ptr"],
-         "finding": "F1 (committed reader carries the memory-packet tie "
-                    "item text instead; identical divergence is present in "
-                    "the committed pr12_8/served CSVs)"})
+         "finding": ("" if f1_committed_ok else
+                     "F1 (committed reader carries the memory-packet tie "
+                     "item text instead; identical divergence is present "
+                     "in the committed pr12_8/served CSVs)")})
+
+    # ---- §3 evidence_ptr referent: the SERVING decision, not slot-level
+    # withheld records (audit rows carry both in governed emission)
+    md_aud = mk_audit([], n_contra=0, ambigs=((2, 128, True),))
+    md_aud.append(json.dumps({
+        "query_id": "syn:md1",
+        "decisions": [
+            {"query_id": "syn:md1", "item_id": "slot9@syn:md1",
+             "state": "auto", "disposition": "withheld",
+             "reason_code": "not_surviving_engine",
+             "evidence_ptr": "topk.csv.gz: surviving=0 at rank 16",
+             "certification_tier": "harness-heuristic"},
+            {"query_id": "syn:md1", "item_id": "served_answer@syn:md1",
+             "state": "human-review", "disposition": "shown_with_caveat",
+             "reason_code": "led_pending_ambiguous",
+             "evidence_ptr": audit_ptr("syn:md1"),
+             "certification_tier": "harness-heuristic"}]}))
+    cm_md, cf_md = both([mk_row("syn:md1", [mk_tie()])], md_aud, "syn-md")
+    add_check(
+        "evidence_ptr_serving_decision_referent", "contract §3 + §2",
+        "with multiple decisions on the row's audit record (slot-level "
+        "withheld first, serving decision second), witness_alt carries "
+        "the SERVING decision's pointer (item_id served_answer@<qid>)",
+        verdict(outcome_of(cm_md, "syn:md1")["evidence_ptr"]
+                == audit_ptr("syn:md1")
+                and outcome_of(cm_md, "syn:md1")["served_outcome"]
+                == "witness_alt"),
+        verdict(outcome_of(cf_md, "syn:md1")["evidence_ptr"]
+                == audit_ptr("syn:md1")
+                and outcome_of(cf_md, "syn:md1")["served_outcome"]
+                == "witness_alt"),
+        {"note": "referent uniqueness holds on all 116,991 audit rows "
+                 "of the committed 44-cell panel (verified 2026-07-09); "
+                 "governed emission produces exactly one serving "
+                 "decision per row"})
+    ns_aud = mk_audit([], n_contra=0, ambigs=((2, 128, True),))
+    ns_aud.append(json.dumps({
+        "query_id": "syn:ns1",
+        "decisions": [
+            {"query_id": "syn:ns1", "item_id": "slot9@syn:ns1",
+             "state": "auto", "disposition": "withheld",
+             "reason_code": "not_surviving_engine",
+             "evidence_ptr": "topk.csv.gz: surviving=0 at rank 16",
+             "certification_tier": "harness-heuristic"}]}))
+    cm_ns, cf_ns = both([mk_row("syn:ns1", [mk_tie()])], ns_aud, "syn-ns")
+    add_check(
+        "evidence_ptr_missing_serving_decision_fail_closed",
+        "contract §3 + §7",
+        "an otherwise-eligible row whose audit record has NO serving "
+        "decision (only slot-level records) fails closed to defer — "
+        "never witness_alt with a wrong or empty pointer",
+        verdict(outcome_of(cm_ns, "syn:ns1")["served_outcome"] == "defer"),
+        verdict(outcome_of(cf_ns, "syn:ns1")["served_outcome"] == "defer"
+                and len(cf_ns["fail_closed_events"]) == 1),
+        {})
 
     # ---- §4 conditions, negated one at a time
     negatives = [
@@ -574,13 +642,15 @@ def run_checks():
     cm_i2, cf_i2 = both(dup_pkt, mk_audit(["syn:i2"]), "syn-i2")
     cm_i2_rows = [r["served_outcome"] for r in (cm_i2["records"] or [])]
     cf_i2_rows = [r["served_outcome"] for r in cf_i2["records"]]
+    f2_committed_ok = (bool(cm_i2["records"])
+                       and cm_i2_rows == ["abstain", "defer"]
+                       and not cm_i2["i2_overlap"])
     add_check(
         "i2_overlap_fail_closed_row_level", "contract §6 I2 + §7",
         "eligible set overlapping the certified abstention set -> the "
         "affected row is served defer (never witness_alt) and the "
         "anomaly is recorded",
-        verdict(bool(cm_i2["records"]) and cm_i2_rows == ["abstain", "defer"]
-                and not cm_i2["i2_overlap"]),
+        verdict(f2_committed_ok),
         verdict(cf_i2_rows == ["abstain", "defer"]
                 and cf_i2["i2_overlap"] == ["syn:i2"]
                 and len(cf_i2["fail_closed_events"]) == 1),
@@ -588,11 +658,12 @@ def run_checks():
          "committed_overlap_detected": cm_i2.get("i2_overlap"),
          "conformant_outcomes": cf_i2_rows,
          "conformant_events": cf_i2["fail_closed_events"],
-         "finding": "F2 (committed read_cell leaves the affected row at "
-                    "witness_alt; the committed pipeline instead detects "
-                    "the overlap in its composition proof and kills the "
-                    "whole run — fail-closed by abort, not the registered "
-                    "per-row defer record)"})
+         "finding": ("" if f2_committed_ok else
+                     "F2 (committed read_cell leaves the affected row at "
+                     "witness_alt; the committed pipeline instead detects "
+                     "the overlap in its composition proof and kills the "
+                     "whole run — fail-closed by abort, not the registered "
+                     "per-row defer record)")})
 
     # ---- W2-tree-only refusal (contract §2)
     tie = mk_tie()

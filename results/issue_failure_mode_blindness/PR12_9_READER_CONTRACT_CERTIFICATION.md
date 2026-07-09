@@ -394,3 +394,99 @@ posture change; Stages II and III remain separately unauthorized.
 **PR-10 merge-abstain remains the only certified reader contract**;
 the operational posture on witness-window rows remains **deferral**.
 PR-12.1–12.8 verdicts and registrations stand unchanged.
+
+### 12.2 Stage I remediation — reference reader brought to §7 conformance (run record, 2026-07-09)
+
+*Separately authorized (explicit user approval, 2026-07-09): remediate
+the committed reference reader only; re-version the contract only if
+the fix reveals the text actually underspecified. Target behavior,
+fixed in advance: exact audit-packet `evidence_ptr` passthrough;
+per-row `defer` for I2 overlap; malformed packets handled as per-row
+`defer` with an append-only anomaly/T7 record; no `witness_alt`
+assertion on malformed input; no whole-run abort except
+non-recoverable harness/environment failure. This subsection issues
+**no §10 verdict**.*
+
+**What changed.** `harness/witness_alt_reference_reader.py`
+`read_cell` only (plus a `_defer_record` helper). The §5 sha-attested
+policy block is byte-untouched (attestation re-passes at
+`2f009cf2…`); `main()`, the panel, the pins, and every kill gate are
+unchanged. The remediated `read_cell`: (F1) populates `evidence_ptr`
+from the row's audit-packet **serving decision**, carried verbatim;
+(F2) downgrades any I2-overlap `witness_alt` row to `defer` with a
+recorded `fail_closed` anomaly; (F3) wraps per-row parsing and
+eligibility so malformed packet content yields a per-row `defer`
+record plus a `fail_closed` anomaly (the T7 feed) — an unparseable
+*audit* packet fail-closes the whole cell to `defer` (batch
+semantics, §2) with one recorded cell-level anomaly. Packet content
+can no longer abort a run.
+
+**The referent question (why the contract is NOT re-versioned).**
+Governed audit rows carry multiple `decisions` entries — one
+row-level serving decision (`item_id = served_answer@<query_id>`)
+plus slot-level `withheld` records (decisions about items, not about
+the row's serving). "The row's audit-packet decision `evidence_ptr`"
+(contract §3) therefore has a unique natural referent — the serving
+decision — and the §2 provenance clause (governed emission only)
+makes that uniqueness part of the contract's input domain. Verified
+empirically: **all 116,991 audit rows across the committed 44-cell
+panel carry exactly one serving decision, in first position, with a
+non-empty pointer** (in particular all 2,052 eligible rows). Zero or
+multiple serving decisions, or an empty pointer, on an
+otherwise-eligible row is off-domain and fail-closes that row (§7).
+The text is determinate on its domain; no underspecification found;
+`0.1-candidate` stands unchanged. The suite's conformant pipeline,
+which had used a first-decision shortcut, was corrected to the same
+serving-decision referent, and two new checks pin it (multi-decision
+referent selection; missing-serving-decision fail-closed).
+
+**Verification.**
+
+* Conformance suite: **all-pass — 27 checks (25 prior + 2 new), both
+  subjects, zero failures; findings F1–F3 cleared**; still zero
+  specification ambiguities; results byte-identical across runs. The
+  F1/F2 finding annotations in the suite were made conditional on an
+  observed failure (annotation-only; no expectation changed).
+* Envelope reproduction (throwaway git worktree; the committed
+  `pr12_8/` artifacts in the main tree are untouched): the remediated
+  reader emits verdict `stageC-envelope-frozen`, totals identical
+  (44 cells / 116,991 rows / 2,052 `witness_alt` / 876 abstain /
+  composition 44/44 / act-set cross-check 34/34), **all 44 envelope
+  cell entries byte-identical**, prior-version preservation gate
+  passed; the only envelope-file difference is the known
+  self-referential `prior_version_cells_checked` counter (28→44,
+  deterministic-given-HEAD, documented at Stage A).
+* Served-decision delta, field-precise over all 116,991 rows ×
+  44 files: **exactly 2,052 differing values — every one on a
+  `witness_alt` row, every one in `evidence_ptr`** (tie text →
+  serving-decision pointer), zero diffs in any other field, zero
+  diffs on any non-`witness_alt` row. The committed `pr12_8/served/`
+  CSVs are intentionally left as the historical Stage C record
+  produced at their pins; corrected pointers materialize in any
+  future served output (Stage II C-1 re-run, under its own
+  authorization, at its own pin).
+* Withdrawal demo report byte-identical (the demo does not exercise
+  `read_cell`); frozen surfaces git-clean after the run.
+
+**Artifacts at this remediation:**
+
+| artifact | sha256 |
+|---|---|
+| `harness/witness_alt_reference_reader.py` (remediated) | `b8219f78e3943fef7949e468c755848582e3854c8dfd990317c376b51e7fd7c8` |
+| `harness/witness_alt_conformance_tests.py` (referent + annotations) | `c8d92abddbaa640e7b0482f431f2d44ba94fa3e2c58d8a943be803ec4035458f` |
+| `pr12_9/conformance_results.json` (all-pass state) | `7e15a240803294cfb3e3d4f134f2901c4ca9b4ca075e167ee7763abdce98f88e` |
+
+The §12.1 record and its sha table remain the Stage I finding record
+as run; this subsection supersedes nothing and is append-only.
+**Consequence:** with F1–F3 remediated and the suite all-pass, the
+C-3 obstacle recorded in §12.1 is cleared on this branch; gate C-1's
+envelope-exactness precondition is re-evidenced (multisets and cell
+entries reproduce). Stage II remains **separately unauthorized**.
+
+**Boundary.** Remediation evidence only. Nothing is certified,
+served, deployed, promoted, or ingested; no FAM-core change; no
+registry or posture change; the contract text is unchanged at
+`0.1-candidate`. **PR-10 merge-abstain remains the only certified
+reader contract**; the operational posture on witness-window rows
+remains **deferral**. PR-12.1–12.8 verdicts and registrations stand
+unchanged.

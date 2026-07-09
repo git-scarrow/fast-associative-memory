@@ -11,7 +11,7 @@
      "certification_tier": "harness-heuristic",
      "contract_id": "s1-witness-alt-batch",
      "contract_version": "0.1-candidate",
-     "evidence_ptr": "unresolved tie \u2014 two candidates, neither asserted",
+     "evidence_ptr": "router(synthetic): syn:q1 witness-window dual-present [synthetic conformance fixture]",
      "policy_block_sha256": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15",
      "policy_id": "W2:F1b",
      "query_id": "syn:q1",
@@ -50,16 +50,34 @@
   },
   {
    "clause": "contract \u00a73 (evidence_ptr)",
-   "committed": "fail",
+   "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "committed_observed": "unresolved tie \u2014 two candidates, neither asserted",
+    "committed_observed": "router(synthetic): syn:q1 witness-window dual-present [synthetic conformance fixture]",
     "conformant_observed": "router(synthetic): syn:q1 witness-window dual-present [synthetic conformance fixture]",
     "expected": "router(synthetic): syn:q1 witness-window dual-present [synthetic conformance fixture]",
-    "finding": "F1 (committed reader carries the memory-packet tie item text instead; identical divergence is present in the committed pr12_8/served CSVs)"
+    "finding": ""
    },
    "expectation": "witness_alt row carries the row's audit-packet decision evidence_ptr verbatim",
    "name": "evidence_ptr_audit_decision_carriage"
+  },
+  {
+   "clause": "contract \u00a73 + \u00a72",
+   "committed": "pass",
+   "conformant": "pass",
+   "detail": {
+    "note": "referent uniqueness holds on all 116,991 audit rows of the committed 44-cell panel (verified 2026-07-09); governed emission produces exactly one serving decision per row"
+   },
+   "expectation": "with multiple decisions on the row's audit record (slot-level withheld first, serving decision second), witness_alt carries the SERVING decision's pointer (item_id served_answer@<qid>)",
+   "name": "evidence_ptr_serving_decision_referent"
+  },
+  {
+   "clause": "contract \u00a73 + \u00a77",
+   "committed": "pass",
+   "conformant": "pass",
+   "detail": {},
+   "expectation": "an otherwise-eligible row whose audit record has NO serving decision (only slot-level records) fails closed to defer \u2014 never witness_alt with a wrong or empty pointer",
+   "name": "evidence_ptr_missing_serving_decision_fail_closed"
   },
   {
    "clause": "contract \u00a74.1 (negative)",
@@ -212,16 +230,14 @@
   },
   {
    "clause": "contract \u00a76 I2 + \u00a77",
-   "committed": "fail",
+   "committed": "pass",
    "conformant": "pass",
    "detail": {
     "committed_outcomes": [
      "abstain",
-     "witness_alt"
+     "defer"
     ],
-    "committed_overlap_detected": [
-     "syn:i2"
-    ],
+    "committed_overlap_detected": [],
     "conformant_events": [
      {
       "anomaly": "eligible row overlaps the certified abstention set",
@@ -234,7 +250,7 @@
      "abstain",
      "defer"
     ],
-    "finding": "F2 (committed read_cell leaves the affected row at witness_alt; the committed pipeline instead detects the overlap in its composition proof and kills the whole run \u2014 fail-closed by abort, not the registered per-row defer record)"
+    "finding": ""
    },
    "expectation": "eligible set overlapping the certified abstention set -> the affected row is served defer (never witness_alt) and the anomaly is recorded",
    "name": "i2_overlap_fail_closed_row_level"
@@ -252,10 +268,10 @@
   },
   {
    "clause": "contract \u00a77 fail-closed + PR-12.9 \u00a75.1 (T7 feed)",
-   "committed": "fail",
+   "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "committed_observed": "JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+    "committed_observed": "records emitted",
     "conformant_events": [
      {
       "anomaly": "packet line 2 malformed: JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
@@ -268,17 +284,17 @@
      "witness_alt",
      "defer"
     ],
-    "finding": "F3 (committed read_cell aborts on malformed input: fail-closed by crash \u2014 nothing is served, never witness_alt, but the registered per-row defer record and recorded anomaly are not produced)"
+    "finding": ""
    },
    "expectation": "the affected row is served defer (never witness_alt), the anomaly is recorded as a fail-closed event, and unaffected rows are undisturbed",
    "name": "malformed_json_line"
   },
   {
    "clause": "contract \u00a77 fail-closed + PR-12.9 \u00a75.1 (T7 feed)",
-   "committed": "fail",
+   "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "committed_observed": "KeyError: 'query_id'",
+    "committed_observed": "records emitted",
     "conformant_events": [
      {
       "anomaly": "packet line 1 malformed: ValueError: row lacks a string query_id",
@@ -290,17 +306,17 @@
     "conformant_outcomes": [
      "defer"
     ],
-    "finding": "F3 (committed read_cell aborts on malformed input: fail-closed by crash \u2014 nothing is served, never witness_alt, but the registered per-row defer record and recorded anomaly are not produced)"
+    "finding": ""
    },
    "expectation": "the affected row is served defer (never witness_alt), the anomaly is recorded as a fail-closed event, and unaffected rows are undisturbed",
    "name": "malformed_missing_query_id"
   },
   {
    "clause": "contract \u00a77 fail-closed + PR-12.9 \u00a75.1 (T7 feed)",
-   "committed": "fail",
+   "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "committed_observed": "KeyError: 'candidates'",
+    "committed_observed": "records emitted",
     "conformant_events": [
      {
       "anomaly": "KeyError: 'candidates'",
@@ -312,17 +328,17 @@
     "conformant_outcomes": [
      "defer"
     ],
-    "finding": "F3 (committed read_cell aborts on malformed input: fail-closed by crash \u2014 nothing is served, never witness_alt, but the registered per-row defer record and recorded anomaly are not produced)"
+    "finding": ""
    },
    "expectation": "the affected row is served defer (never witness_alt), the anomaly is recorded as a fail-closed event, and unaffected rows are undisturbed",
    "name": "malformed_tie_without_candidates"
   },
   {
    "clause": "contract \u00a77 fail-closed + PR-12.9 \u00a75.1 (T7 feed)",
-   "committed": "fail",
+   "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "committed_observed": "JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+    "committed_observed": "records emitted",
     "conformant_events": [
      {
       "anomaly": "audit packet malformed: JSONDecodeError",
@@ -334,7 +350,7 @@
     "conformant_outcomes": [
      "defer"
     ],
-    "finding": "F3 (committed read_cell aborts on malformed input: fail-closed by crash \u2014 nothing is served, never witness_alt, but the registered per-row defer record and recorded anomaly are not produced)"
+    "finding": ""
    },
    "expectation": "the affected row is served defer (never witness_alt), the anomaly is recorded as a fail-closed event, and unaffected rows are undisturbed",
    "name": "malformed_audit_packet"
@@ -344,7 +360,7 @@
    "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "records_checked": 41,
+    "records_checked": 50,
     "violations": []
    },
    "expectation": "witness_alt/defer/answer records are always harness-heuristic; only abstain records are core-certified; no other path can mint authority",
@@ -355,7 +371,7 @@
    "committed": "pass",
    "conformant": "pass",
    "detail": {
-    "records_checked": 41,
+    "records_checked": 50,
     "violations": []
    },
    "expectation": "witness_alt_class/basis/policy_id/policy_block_sha256 non-empty iff witness_alt; abstain_reason non-empty iff abstain; contract identity stamped on every record",
@@ -388,7 +404,7 @@
   },
   "harness/witness_alt_reference_reader.py": {
    "matches_head": true,
-   "sha256": "88ad27b2f7f90f215814b448ade76d06102618261c49814f1d3162b34f25d212"
+   "sha256": "b8219f78e3943fef7949e468c755848582e3854c8dfd990317c376b51e7fd7c8"
   },
   "results/issue_failure_mode_blindness/PR12_8_MONITORING_WITHDRAWAL.md": {
    "matches_head": true,
@@ -415,26 +431,15 @@
   "sha256": "2f009cf29ce64dc21e7bd392ceac4bbc189bc5b197489c2edaf8cd3ed1022c15"
  },
  "registration": "PR12_9_READER_CONTRACT_CERTIFICATION.md (main fe6248e)",
- "result": "6 failing subject result(s); findings: F1, F2, F3",
+ "result": "all-pass",
  "suite_version": "pr12_9-stage1-conformance-v1",
  "summary": {
   "ambiguity_note": "every crafted case has behavior the contract text determines; no C-3 certification-insufficient trigger was found",
-  "committed_reader_findings": [
-   "F1",
-   "F2",
-   "F3"
-  ],
+  "committed_reader_findings": [],
   "conformant_subject_failures": [],
-  "failing_subject_results": [
-   "evidence_ptr_audit_decision_carriage [committed]",
-   "i2_overlap_fail_closed_row_level [committed]",
-   "malformed_json_line [committed]",
-   "malformed_missing_query_id [committed]",
-   "malformed_tie_without_candidates [committed]",
-   "malformed_audit_packet [committed]"
-  ],
-  "n_checks": 25,
-  "n_subject_results": 50,
+  "failing_subject_results": [],
+  "n_checks": 27,
+  "n_subject_results": 54,
   "specification_ambiguities_found": 0
  }
 }

@@ -1,0 +1,23 @@
+{
+  "label": "registered-auto-path-clean-gpu",
+  "load_seconds": 23.260624170303345,
+  "loaded": true,
+  "module_placement": {
+    "0": 31,
+    "cpu": 9
+  },
+  "peak_system_rss_bytes": 10466099200,
+  "placement_override": null,
+  "vram_after_load": {
+    "free_bytes": 2910715904,
+    "peak_allocated_bytes": 12821462016,
+    "peak_reserved_bytes": 12842958848,
+    "total_bytes": 16724787200
+  },
+  "vram_before_load": {
+    "free_bytes": 15753674752,
+    "peak_allocated_bytes": 0,
+    "peak_reserved_bytes": 0,
+    "total_bytes": 16724787200
+  }
+}

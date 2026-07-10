@@ -1,0 +1,192 @@
+{
+  "bands": {
+    "high": {
+      "drift_first_half_mean": 4.114131450653076,
+      "drift_second_half_mean": 4.109351348876953,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 4.141035556793213,
+        "mean": 4.111741399765014,
+        "median": 4.112871289253235,
+        "min": 4.0795674324035645,
+        "n": 10,
+        "p10": 4.0795674324035645,
+        "p90": 4.128708124160767,
+        "stdev": 0.019585129456635448
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 10,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 1610,
+      "rows_per_hour": 875.5414433908076,
+      "status_counts": {
+        "ok": 10
+      }
+    },
+    "median": {
+      "drift_first_half_mean": 4.100682878494263,
+      "drift_second_half_mean": 4.000684356689453,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 4.259106636047363,
+        "mean": 4.050683617591858,
+        "median": 4.018535137176514,
+        "min": 3.985743522644043,
+        "n": 10,
+        "p10": 3.985743522644043,
+        "p90": 4.12978196144104,
+        "stdev": 0.08648618198339596
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 10,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 908,
+      "rows_per_hour": 888.738874684123,
+      "status_counts": {
+        "ok": 10
+      }
+    },
+    "none": {
+      "drift_first_half_mean": 4.132122611999511,
+      "drift_second_half_mean": 4.089341735839843,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 4.1806113719940186,
+        "mean": 4.110732173919677,
+        "median": 4.104645609855652,
+        "min": 4.071851968765259,
+        "n": 10,
+        "p10": 4.071851968765259,
+        "p90": 4.143882989883423,
+        "stdev": 0.03708665287380642
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 10,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 109,
+      "rows_per_hour": 875.7563975682992,
+      "status_counts": {
+        "ok": 10
+      }
+    },
+    "short": {
+      "drift_first_half_mean": 4.124783611297607,
+      "drift_second_half_mean": 4.117865753173828,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 4.137526988983154,
+        "mean": 4.121324682235718,
+        "median": 4.127783536911011,
+        "min": 4.0958569049835205,
+        "n": 10,
+        "p10": 4.0958569049835205,
+        "p90": 4.133449554443359,
+        "stdev": 0.014726408026976725
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 10,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 265,
+      "rows_per_hour": 873.5055540557624,
+      "status_counts": {
+        "ok": 10
+      }
+    }
+  },
+  "consumer": {
+    "pin_id": "pr13-consumer-pin",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218"
+  },
+  "crash_resume": {
+    "byte_reconcilable": true,
+    "committed_manifest_untouched": true,
+    "crashed_as_designed": true,
+    "evidence_set_pairs_checked": 10,
+    "executed_after_resume": 19,
+    "resumed": 11,
+    "rows": 30,
+    "status_counts": {
+      "ok": 30
+    }
+  },
+  "label": "services-stopped-registered-auto-path",
+  "load_seconds": 19.064108848571777,
+  "loaded": true,
+  "module_placement": {
+    "0": 31,
+    "cpu": 9
+  },
+  "offloaded_modules": 9,
+  "peak_system_rss_bytes": 12042756096,
+  "placement_override": null,
+  "projection_hours": {
+    "lower_bound_short_mean": 23.234314249992373,
+    "lower_bound_short_p10": 23.07806830406189,
+    "note": "upper bound assumes every context block saturates its budget; lower bound assumes every context block sits at the short band. The true distribution is unknown without rendering \u00a77, which this gate refuses to do.",
+    "upper_bound_saturated_mean": 23.07448419189453,
+    "upper_bound_saturated_p90": 23.302197008132936
+  },
+  "runtime": {
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "python": "3.13.14",
+    "tokenizers": "0.22.2",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.2.0"
+  },
+  "vram_after_bands": {
+    "free_bytes": 341704704,
+    "peak_allocated_bytes": 14327574528,
+    "peak_reserved_bytes": 15351152640,
+    "total_bytes": 16724787200
+  },
+  "vram_after_load": {
+    "free_bytes": 2896035840,
+    "peak_allocated_bytes": 12821462016,
+    "peak_reserved_bytes": 12855541760,
+    "total_bytes": 16724787200
+  },
+  "vram_before_load": {
+    "free_bytes": 15753674752,
+    "peak_allocated_bytes": 0,
+    "peak_reserved_bytes": 0,
+    "total_bytes": 16724787200
+  },
+  "warmup_seconds": [
+    6.6187334060668945,
+    4.248478651046753,
+    4.269114017486572
+  ]
+}

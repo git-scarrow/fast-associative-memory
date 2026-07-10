@@ -1,0 +1,62 @@
+===== free vram =====
+15278 MiB
+===== PHASE crash =====
+Some parameters are on the meta device because they were offloaded to the cpu.
+{
+  "committed_manifest_untouched": true,
+  "crashed_as_designed": true,
+  "label": "xproc-crash",
+  "manifest_sha256": "8521bded82d720436293b77ab03f42551a2af3334a8ce4c8efa301cd6caed1a6",
+  "module_placement": {
+    "0": 31,
+    "cpu": 9
+  },
+  "partial_rows": 11,
+  "phase": "crash"
+}
+===== PHASE finish =====
+Some parameters are on the meta device because they were offloaded to the cpu.
+{
+  "evidence_set_pairs_checked": 10,
+  "executed": 19,
+  "label": "xproc-finish",
+  "manifest_sha256": "8521bded82d720436293b77ab03f42551a2af3334a8ce4c8efa301cd6caed1a6",
+  "module_placement": {
+    "0": 31,
+    "cpu": 9
+  },
+  "phase": "finish",
+  "resumed": 11,
+  "rows": 30,
+  "status_counts": {
+    "ok": 30
+  }
+}
+===== PHASE clean =====
+Some parameters are on the meta device because they were offloaded to the cpu.
+{
+  "evidence_set_pairs_checked": 10,
+  "executed": 30,
+  "label": "xproc-clean",
+  "manifest_sha256": "8521bded82d720436293b77ab03f42551a2af3334a8ce4c8efa301cd6caed1a6",
+  "module_placement": {
+    "0": 31,
+    "cpu": 9
+  },
+  "phase": "clean",
+  "resumed": 0,
+  "rows": 30,
+  "status_counts": {
+    "ok": 30
+  }
+}
+===== COMPARE =====
+{
+  "byte_reconcilable_across_processes": true,
+  "n_differing": 0,
+  "rows_clean_log": 30,
+  "rows_resumed_log": 30,
+  "rows_with_differing_raw_output": []
+}
+===== restoring services =====
+ollama=active sunshine=active

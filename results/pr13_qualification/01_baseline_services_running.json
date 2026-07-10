@@ -1,0 +1,183 @@
+{
+  "bands": {
+    "high": {
+      "drift_first_half_mean": 9.383880198001862,
+      "drift_second_half_mean": 9.656116008758545,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 10.619255781173706,
+        "mean": 9.519998103380203,
+        "median": 10.373006224632263,
+        "min": 7.007684946060181,
+        "n": 8,
+        "p10": 7.007684946060181,
+        "p90": 10.597552299499512,
+        "stdev": 1.4671828733007761
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 8,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 1610,
+      "rows_per_hour": 378.15133584131405,
+      "status_counts": {
+        "ok": 8
+      }
+    },
+    "median": {
+      "drift_first_half_mean": 9.09005481004715,
+      "drift_second_half_mean": 10.398660004138947,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 10.495787858963013,
+        "mean": 9.744357407093048,
+        "median": 10.33683705329895,
+        "min": 8.421824216842651,
+        "n": 8,
+        "p10": 8.421824216842651,
+        "p90": 10.4794340133667,
+        "stdev": 0.9344518074637456
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 8,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 908,
+      "rows_per_hour": 369.444576958919,
+      "status_counts": {
+        "ok": 8
+      }
+    },
+    "none": {
+      "drift_first_half_mean": 5.849217355251312,
+      "drift_second_half_mean": 5.999273717403412,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 6.174927234649658,
+        "mean": 5.924245536327362,
+        "median": 5.884951949119568,
+        "min": 5.819812297821045,
+        "n": 8,
+        "p10": 5.819812297821045,
+        "p90": 6.015479564666748,
+        "stdev": 0.11800087639606507
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 8,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 109,
+      "rows_per_hour": 607.6723150525864,
+      "status_counts": {
+        "ok": 8
+      }
+    },
+    "short": {
+      "drift_first_half_mean": 9.235965609550476,
+      "drift_second_half_mean": 10.335327386856079,
+      "extra_prose": 0,
+      "latency_seconds": {
+        "max": 10.902172565460205,
+        "mean": 9.785646498203278,
+        "median": 10.653221726417542,
+        "min": 6.455411911010742,
+        "n": 8,
+        "p10": 6.455411911010742,
+        "p90": 10.818686962127686,
+        "stdev": 1.567547474620315
+      },
+      "malformed_rate": 0.0,
+      "output_tokens": {
+        "max": 13,
+        "mean": 13.0,
+        "median": 13.0,
+        "min": 13,
+        "n": 8,
+        "p10": 13,
+        "p90": 13,
+        "stdev": 0.0
+      },
+      "prompt_tokens": 265,
+      "rows_per_hour": 367.8857600937239,
+      "status_counts": {
+        "ok": 8
+      }
+    }
+  },
+  "consumer": {
+    "pin_id": "pr13-consumer-pin",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218"
+  },
+  "label": "baseline-services-running",
+  "load_seconds": 23.18976902961731,
+  "loaded": true,
+  "module_placement": {
+    "0": 27,
+    "cpu": 13
+  },
+  "offloaded_modules": 13,
+  "peak_system_rss_bytes": 11487612928,
+  "placement_override": {
+    "max_memory_cpu_gib": 24,
+    "max_memory_gpu_gib": 12.0
+  },
+  "projection_hours": {
+    "lower_bound_short_mean": 51.56132934570312,
+    "lower_bound_short_p10": 35.81105954170227,
+    "note": "upper bound assumes every context block saturates its budget; lower bound assumes every context block sits at the short band. The true distribution is unknown without rendering \u00a77, which this gate refuses to do.",
+    "upper_bound_saturated_mean": 50.73457738101482,
+    "upper_bound_saturated_p90": 55.240984220504764
+  },
+  "runtime": {
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "python": "3.13.14",
+    "tokenizers": "0.22.2",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.2.0"
+  },
+  "vram_after_bands": {
+    "free_bytes": 477626368,
+    "peak_allocated_bytes": 12784988160,
+    "peak_reserved_bytes": 13797163008,
+    "total_bytes": 16724787200
+  },
+  "vram_after_load": {
+    "free_bytes": 3320643584,
+    "peak_allocated_bytes": 11278937088,
+    "peak_reserved_bytes": 11280580608,
+    "total_bytes": 16724787200
+  },
+  "vram_before_load": {
+    "free_bytes": 14601224192,
+    "peak_allocated_bytes": 0,
+    "peak_reserved_bytes": 0,
+    "total_bytes": 16724787200
+  },
+  "warmup_seconds": [
+    10.08580207824707,
+    5.945260524749756,
+    5.978042125701904
+  ]
+}

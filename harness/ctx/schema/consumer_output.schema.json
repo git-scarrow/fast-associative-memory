@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fam.local/pr13/consumer_output.schema.json",
+  "title": "PR-13 consumer output contract - response shape",
+  "description": "Normative per docs/PR13_GOVERNED_CONTEXT_COMPILER.md section 8.4 (r3). Exactly one JSON object per consumer call. The typed hedged field replaces any prose hedge-marker rubric (gate G-B2). Outputs failing this schema are unparseable and score as wrong for the arm that produced them.",
+  "type": "object",
+  "required": ["answer", "hedged"],
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hedged": {
+      "type": "boolean"
+    }
+  }
+}

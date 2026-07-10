@@ -1,0 +1,45 @@
+{
+  "policy_id": "pr13-disposition-policy",
+  "version": "1.0",
+  "precedence": ["withdraw", "withhold", "defer", "dual_present", "caveat", "summarize", "assert"],
+  "rules": [
+    { "rule_id": "R01", "match": { "state": "quarantined" }, "disposition": "withhold", "reason_code": "quarantined" },
+    { "rule_id": "R02", "match": { "state": "audit-only" }, "disposition": "withhold", "reason_code": "audit_only" },
+    { "rule_id": "R03", "match": { "state": "hidden" }, "disposition": "withhold", "reason_code": "hidden_state" },
+    { "rule_id": "R04", "match": { "state": "human-review" }, "disposition": "defer", "reason_code": "human_review_escalation" },
+    { "rule_id": "R05", "match": { "signal": "merge_suspect" }, "disposition": "defer", "reason_code": "merge_abstain_passthrough" },
+    { "rule_id": "R06", "match": { "signal": "witness_alt_candidate_set" }, "disposition": "dual_present", "reason_code": "witness_alt_candidate_set" },
+    { "rule_id": "R07", "match": { "signal": "contra_fork" }, "disposition": "dual_present", "reason_code": "contra_fork" },
+    { "rule_id": "R08", "match": { "signal": "oneshot_tie" }, "disposition": "dual_present", "reason_code": "oneshot_tie" },
+    { "rule_id": "R09", "match": { "signal": "stale_support" }, "disposition": "caveat", "reason_code": "stale_support" },
+    { "rule_id": "R10", "match": { "signal": "superseded_by" }, "disposition": "caveat", "reason_code": "superseded" },
+    { "rule_id": "R11", "match": { "signal": "superseded_by_path" }, "disposition": "caveat", "reason_code": "superseded_path" },
+    { "rule_id": "R12", "match": { "state": "superseded" }, "disposition": "caveat", "reason_code": "superseded_state" },
+    { "rule_id": "R13", "match": { "state": "stale" }, "disposition": "caveat", "reason_code": "stale_state" },
+    { "rule_id": "R14", "match": { "signal": "stale_ttl" }, "disposition": "caveat", "reason_code": "stale_ttl" },
+    { "rule_id": "R15", "match": { "signal": "duplicate_content" }, "disposition": "caveat", "reason_code": "duplicate_content" },
+    { "rule_id": "R16", "match": { "signal": "signal_unavailable" }, "disposition": "caveat", "reason_code": "signal_unavailable" },
+    { "rule_id": "R17", "match": { "signal": "source_identity" }, "disposition": "assert", "reason_code": "clean_source" },
+    { "rule_id": "R18", "match": { "signal": "freshness" }, "disposition": "assert", "reason_code": "fresh_within_ttl" },
+    { "rule_id": "R19", "match": { "state": "agent-readable" }, "disposition": "assert", "reason_code": "clean_state" }
+  ],
+  "caveat_templates": {
+    "stale_support": "possibly stale: merged support",
+    "superseded": "superseded by a later item",
+    "superseded_path": "superseded: same source path re-ingested later",
+    "superseded_state": "superseded by a later version",
+    "stale_state": "possibly stale",
+    "stale_ttl": "possibly stale: past freshness TTL",
+    "duplicate_content": "duplicate of another item",
+    "signal_unavailable": "an evidence check could not be run on this item"
+  },
+  "render_templates": {
+    "ctx-sd-item-v1": "image at {filepath}, ingested {ingest_time}, slot {assigned_slot}",
+    "ctx-fam-item-v1": "memory slot {slot} decodes to class {decode} (rank {rank}, sim {sim})"
+  },
+  "summarizer": {
+    "kind": "extractive-prefix",
+    "k_sentences": 1,
+    "token_cap": 32
+  }
+}

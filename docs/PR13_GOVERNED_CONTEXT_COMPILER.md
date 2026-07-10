@@ -532,3 +532,50 @@ the PR-12 envelope is not reproduced, packet generation is not
 recomputed, and no prior disposition is carried forward into any item.
 This is a narrow clarification of registered text, not a re-issue: no
 gate, bound, arm, kill, or verdict condition changes.
+
+**A-1 (2026-07-10): build-checkpoint amendment — the withdrawal
+trigger.** The build checkpoint merged at `6c7b6a2` under-implemented
+§3's withdrawal rule. This entry amends the checkpoint; it does not
+re-issue this memo. (§12 accordingly carries clarifications,
+amendments, and pre-scoring registrations — all append-only.)
+
+*Exact behavior change.* `compile()` emitted a withdrawal notice for a
+prior-rendered item iff its resolved disposition was `withhold` or
+`defer`. It now does so iff that holds **or** the item's `state` is
+`superseded` or `quarantined`. No other line of the compiler changes.
+
+*Why it is an amendment and not a design change.* §3 registers
+`withdraw` for adverse evidence about an already-served item arriving
+between turns. The frozen policy table maps exactly that evidence to
+`caveat` — `state: superseded` via R12, `signal: superseded_by` and
+`superseded_by_path` via R10/R11 — and `caveat` is lower precedence
+than `withhold`/`defer`, so the merged predicate could not see it. The
+registered multi-turn cells are built on ledger supersession; without
+this amendment no withdrawal notice would ever be compiled in them and
+**G-B3 would be unmeasurable by construction**. Nothing in §3's
+vocabulary, §3's precedence list, the policy artifact, §5's signature,
+or any gate, bound, arm, kill, or verdict condition changes.
+
+*Scope, bounded in both directions.* The `prior_rendered` guard
+short-circuits first, so an item never served at an earlier turn is
+untouched; turn-1 compiles have an empty `prior_rendered` and are
+therefore byte-identical before and after; every single-turn cell (all
+13 FAM cells and the organic cell) is byte-identical before and after.
+Only turn ≥ 2 of a multi-turn session can differ, and only for an item
+that session already served. Prior-rendered `quarantined` items already
+withdrew through the disposition clause (R01 → `withhold`); the state
+clause is redundant for them and is written anyway so the predicate
+reads on state directly rather than through a policy-table coincidence.
+
+*Test coverage.* Three hermetic tests in `tests/test_ctx_compiler.py`
+pin the amended predicate and both boundaries:
+`test_withdrawal_fires_on_superseded_state_at_caveat_disposition` (the
+new behavior — it fails against the `6c7b6a2` compiler, which returns
+`caveat`), `test_state_transition_never_withdraws_an_unserved_item`
+(turn-1 boundary), and `test_prior_rendered_clean_item_is_not_withdrawn`
+(benign-state boundary). The pre-existing
+`test_withdrawal_notice_on_multiturn` covers the unchanged quarantined
+path, and `tests/test_ctx_cells.py` exercises the amendment end-to-end
+over a throwaway synthetic ledger. The change ships as one isolated
+commit ("fix(ctx): withdrawal trigger fires on superseded/quarantined
+state transitions") carrying nothing else.

@@ -207,6 +207,40 @@ def test_withdrawal_notice_on_multiturn(policy):
     assert packet["rows"][0]["reason_code"].startswith("withdrawn:")
 
 
+# --- build-checkpoint amendment A-1: withdrawal trigger ------------------
+# The merged trigger keyed only on disposition ∈ {withhold, defer}. A
+# prior-rendered item whose state moves to `superseded` resolves to
+# `caveat` (rule R12), so adverse evidence arriving between turns left the
+# turn-1 item standing. The three tests below pin the amended predicate and
+# both of its boundaries.
+
+def test_withdrawal_fires_on_superseded_state_at_caveat_disposition(policy):
+    item = make_item("s1", "Turn-one fact.", state="superseded")
+    turn_state = {"turn_index": 3, "prior_rendered": {"test:s1": 1}}
+    block, packet = compile_once([item], policy, turn_state=turn_state)
+    assert packet["rows"][0]["disposition"] == "withdraw"
+    assert packet["rows"][0]["reason_code"] == "withdrawn:superseded_state"
+    assert "WITHDRAWN: the item served at turn 1 (test:s1) is withdrawn" in block
+
+
+def test_state_transition_never_withdraws_an_unserved_item(policy):
+    """Turn-1 rows are untouched by the amendment: prior_rendered is
+    empty, so the whole trigger short-circuits and the item keeps the
+    caveat the rule table gives it."""
+    item = make_item("s2", "Never served.", state="superseded")
+    block, packet = compile_once([item], policy)
+    assert packet["rows"][0]["disposition"] == "caveat"
+    assert "WITHDRAWN" not in block
+
+
+def test_prior_rendered_clean_item_is_not_withdrawn(policy):
+    item = make_item("s3", "Still fine.")
+    turn_state = {"turn_index": 2, "prior_rendered": {"test:s3": 1}}
+    block, packet = compile_once([item], policy, turn_state=turn_state)
+    assert packet["rows"][0]["disposition"] == "assert"
+    assert "WITHDRAWN" not in block
+
+
 def test_abstention_passthrough_renders_before_items(policy):
     items = [
         make_item("m1", "Merge-suspect row.", signals=["merge_suspect"],

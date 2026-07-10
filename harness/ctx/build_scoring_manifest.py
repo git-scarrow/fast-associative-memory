@@ -111,10 +111,17 @@ def build(runtime, out_path=DEFAULT_OUT):
         "code": {
             "commit": _git("rev-parse", "HEAD"),
             "branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
-            # Tracked changes only: untracked scratch cannot alter behavior,
-            # and an untracked *module* would show up in `files` below.
-            "worktree_clean": _git("status", "--porcelain",
-                                   "--untracked-files=no") == "",
+            # Whether the CODE and PINS are committed. Scoped to exclude
+            # the manifests/ directory: this file lives there, and writing
+            # it necessarily dirties the tree, so its own commit status is
+            # not what "worktree_clean" is asserting. Untracked files are
+            # ignored too — an untracked *module* would surface in `files`.
+            "worktree_clean": _git(
+                "status", "--porcelain", "--untracked-files=no",
+                "--", "harness/ctx", "docs", "tests",
+                ":(exclude)harness/ctx/manifests") == "",
+            "worktree_clean_scope": "harness/ctx, docs, tests; "
+                                    "excludes harness/ctx/manifests",
             "note": ("the commit that produced these inputs; this manifest is "
                      "committed on top of it"),
             "ctx_source_sha256": rollup,
@@ -158,6 +165,7 @@ def build(runtime, out_path=DEFAULT_OUT):
 
         "precision": "bfloat16",
         "quantization": "none",
+        "device_placement": pin["runtime"]["device_placement"],
         "decoding": {
             "do_sample": decoding["do_sample"],
             "temperature": decoding["temperature"],

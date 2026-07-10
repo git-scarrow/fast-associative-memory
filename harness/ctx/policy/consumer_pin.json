@@ -41,6 +41,12 @@
       "max_new_tokens": 256,
       "stopping": ["eos", "max_new_tokens"],
       "enable_thinking": false
+    },
+    "device_placement": {
+      "strategy": "explicit_max_memory",
+      "max_memory": {"0": "13.25GiB", "cpu": "24GiB"},
+      "expected_module_placement": {"gpu": 31, "cpu": 9},
+      "rationale": "Build-checkpoint amendment A-3 (memo section 12). The 16.38 GB bf16 weights exceed the scoring host's 15.58 GiB usable VRAM, so some CPU offload is structural under a pin that forbids quantization. device_map='auto' plans placement from FREE VRAM at load time, so a post-crash reload could place differently and perturb bf16 numerics, threatening G-C1 double-run byte-identity. Pinning max_memory makes infer_auto_device_map return the SAME 31-GPU / 9-CPU split on every load regardless of GPU state. 13.25 GiB is mid-basin: 13.2 and 13.3 GiB both yield {31,9}; 13.0 yields {30,10} and 13.5 yields {32,8}. The consumer asserts the realized placement equals expected_module_placement and fails closed otherwise. This is a device-placement pin only: precision, quantization, decoding, mode, and every artifact sha are unchanged. Load requires >13.25 GiB free, so the run precondition (Ollama and Sunshine stopped) stands."
     }
   },
   "notes": "Tokenizer-artifact shas fix budget_cost and the byte-meaning of every registered B (memo section 6) from this checkpoint on. Weights shas are the upstream LFS sha256 values at the pinned revision; the scoring host must verify downloaded files against them before the first evaluation render (memo section 8.1 selection-timing kill). index_sha256 and chat_template_sha256 were added by build-checkpoint amendment A-2 (memo section 12), before any evaluation render: model.safetensors.index.json is required to resolve the five shards and was omitted from the original enumeration, and the chat template carries the non-thinking mechanism named in the family-level pin. Both are byte-determined by the already-pinned revision; the amendment adds no degree of freedom and strictly tightens the seal."

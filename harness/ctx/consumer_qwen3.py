@@ -67,10 +67,33 @@ class Qwen3Consumer:
         self.pin_id = pin["pin_id"]
         self.revision = pin["artifact"]["revision"]
         self._tokenizer = AutoTokenizer.from_pretrained(seal_dir)
+
+        # Device placement is PINNED (amendment A-3): explicit max_memory
+        # makes infer_auto_device_map return the same GPU/CPU split on
+        # every load regardless of free VRAM, so a post-crash reload
+        # cannot silently re-place layers and perturb bf16 numerics
+        # (G-C1). The weights exceed this GPU, so some CPU offload is
+        # structural under the no-quantization pin.
+        placement = pin["runtime"]["device_placement"]
+        max_memory = {(int(k) if k.isdigit() else k): v
+                      for k, v in placement["max_memory"].items()}
         self._model = AutoModelForCausalLM.from_pretrained(
-            seal_dir, dtype=torch.bfloat16, device_map="auto")
+            seal_dir, dtype=torch.bfloat16, device_map="auto",
+            max_memory=max_memory)
         self._model.eval()
         self._torch = torch
+
+        # Fail closed if the realized placement is not what the pin
+        # promises: a different split would produce different numbers.
+        got = {"gpu": 0, "cpu": 0}
+        for where in self._model.hf_device_map.values():
+            got["cpu" if str(where) == "cpu" else "gpu"] += 1
+        if got != placement["expected_module_placement"]:
+            raise RuntimeError(
+                f"device placement {got} != pinned "
+                f"{placement['expected_module_placement']}; refusing to "
+                f"render under an unregistered placement (amendment A-3)")
+        self.device_placement = got
 
         decoding = pin["runtime"]["decoding"]
         if decoding["do_sample"] or decoding["max_new_tokens"] != MAX_NEW_TOKENS:

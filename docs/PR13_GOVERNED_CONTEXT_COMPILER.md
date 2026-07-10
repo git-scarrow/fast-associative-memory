@@ -685,3 +685,38 @@ have reported `replay_ready: true`. `replay_ready` now means every pinned
 artifact is present and byte-exact, and the sealed replay runner refuses
 a real consumer whose scoring manifest does not report it
 (`harness/ctx/replay.py::verify_scoring_manifest`).
+
+**A-3 (2026-07-10): build-checkpoint amendment — pinning device
+placement.** Consumer qualification on the scoring host established that
+the 16.38 GB bf16 weights exceed the GPU's 15.58 GiB usable VRAM, so some
+CPU offload is structural under a pin that fixes bfloat16 and forbids
+quantization. The registered load used `device_map="auto"`, which plans
+placement from *free* VRAM at load time — meaning a process death and
+reload partway through the multi-hour replay could re-place layers
+differently and perturb bf16 numerics, which is exactly what G-C1's
+double-run byte-identity would then flag, blocking the run. This
+amendment pins `runtime.device_placement` in `consumer_pin.json`: an
+explicit `max_memory` of `{0: "13.25GiB", cpu: "24GiB"}`, which makes
+`infer_auto_device_map` return the same 31-GPU / 9-CPU split on every
+load regardless of GPU state. The consumer asserts the realized
+placement equals the pinned split and fails closed otherwise.
+
+*Why this is a hardening, not motion.* It is a **device-placement** pin.
+Precision (bfloat16), quantization (none), decoding (greedy, temperature
+0, `max_new_tokens` 256, non-thinking), the repository, the revision, and
+every artifact sha are unchanged. No gate, constant, arm, kill, or
+verdict condition changes; the qualification measured throughput and
+byte-determinism at this exact 31/9 placement, so pinning it makes the
+run reproduce what was qualified rather than something new. `13.25 GiB`
+is chosen mid-basin: `13.2` and `13.3 GiB` both yield `{31,9}`, `13.0`
+yields `{30,10}` and `13.5` yields `{32,8}`. It is made **before the
+first evaluation render**, so §8.1's selection-timing kill and §10's
+consumer-motion kill are both untripped; after that render it would be
+forbidden. The scoring manifest is regenerated to a new digest that
+re-attests the completed pin.
+
+*Operational consequence, recorded.* Because the load now demands
+`> 13.25 GiB` free, the run precondition established by qualification —
+Ollama and Sunshine stopped, no other GPU consumer for the duration —
+is not merely advisory; with them running the pinned load fails closed
+rather than silently offloading more layers.

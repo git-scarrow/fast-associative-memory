@@ -119,6 +119,20 @@ def test_it_records_runtime_and_library_versions(scoring):
     assert rt["accelerator"]["kind"] in ("cuda", "cpu")
 
 
+def test_it_records_the_pinned_device_placement(scoring):
+    dp = scoring["device_placement"]
+    assert dp["strategy"] == "explicit_max_memory"
+    assert dp["max_memory"] == {"0": "13.25GiB", "cpu": "24GiB"}
+    assert dp["expected_module_placement"] == {"gpu": 31, "cpu": 9}
+
+
+def test_scoring_placement_matches_the_consumer_pin(scoring):
+    with open(os.path.join("harness", "ctx", "policy", "consumer_pin.json"),
+              encoding="utf-8") as fh:
+        pin = json.load(fh)
+    assert scoring["device_placement"] == pin["runtime"]["device_placement"]
+
+
 def test_it_records_bfloat16_greedy_and_the_registered_limits(scoring):
     assert scoring["precision"] == "bfloat16"
     assert scoring["quantization"] == "none"

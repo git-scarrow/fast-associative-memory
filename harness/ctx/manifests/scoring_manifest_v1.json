@@ -3,19 +3,21 @@
   "version": "1.0",
   "registered_by": "docs/PR13_GOVERNED_CONTEXT_COMPILER.md sections 8 and 11; re-attests the artifact-level pin and adds no degree of freedom",
   "code": {
-    "commit": "67c77bcced1d1a7f5ac5e0029af3e52114940dee",
+    "commit": "3a2163819e765f34ab57b95a40bb07356c3540d4",
     "branch": "feat/pr13-scoring-prep",
     "worktree_clean": true,
+    "worktree_clean_scope": "harness/ctx, docs, tests; excludes harness/ctx/manifests",
     "note": "the commit that produced these inputs; this manifest is committed on top of it",
-    "ctx_source_sha256": "dac506d896875ec56258db82e5b0dd2c35b87f123792d043d41cdbf23b14819b",
+    "ctx_source_sha256": "b13615b1aaf7082ddf668220fb8873877e64e86bddd75493ca2d5ca2808c6ecd",
     "files": {
       "harness/ctx/__init__.py": "5be77e3473637e29f0bab8bc474c0eef0ed29778f3362d431f9f3758ed532efe",
       "harness/ctx/build_manifest.py": "fc32228d9867e2f6be4e9f091e1c95a254ee605cc56523c0263a2ccbae4552ef",
-      "harness/ctx/build_scoring_manifest.py": "0c1dec0636370eced95cd2a016a4ccbbfbffa1f15bc9325c99bca03d2bb2253c",
+      "harness/ctx/build_scoring_manifest.py": "fcecb798123f345f03145f7214b97896d9d7ed8cee3f9828d577b2252de22449",
       "harness/ctx/cells.py": "e8c52f5e2c3e2ed7fc830e8303e1a0fd2085d9bbb820ba3d53eaa3da96ac4271",
       "harness/ctx/compile.py": "caf0c65bdb0ade8844e51aeca3b96b8445c4b886f9b5ec223d87bdb166f17dfe",
-      "harness/ctx/consumer_qwen3.py": "b4326b57a4fd0a6b9798ba1c21553b507d4eb6f4cf4d3b91d856da0514f1b66d",
+      "harness/ctx/consumer_qwen3.py": "120fdfb09d1e083b21063737c2f76737527dc3d1f1c1ca6b8b068b92deb32203",
       "harness/ctx/dry_run.py": "7f05d4a8f628069ba3765a7ee9ef410e46640cede363d895b842e7336761c127",
+      "harness/ctx/execute_replay.py": "9a7340acd53733d4d9e178dd62a2c3cccd4dfdad4d0434e7e03df168ae87111c",
       "harness/ctx/fake_consumer.py": "7c0a141c18288f87e90ffd3404d990a50d0ded5b2bec2f287cb4e6c7611007d6",
       "harness/ctx/host_probe.py": "0975bd99fc961784131c91169392defaf389d5aaed5036cc905f99643dd4cc21",
       "harness/ctx/loaders.py": "a7f6bb4adc2053fd576b90c93ec491a37fb5d3011b7677ac2eae4faa157dbcab",
@@ -27,7 +29,7 @@
       "harness/ctx/adapters/fam_v1.py": "29fc9770bfbed6a2afda9dd91826ec4d229830ae99ab192f16bd53468ab705b1",
       "harness/ctx/adapters/shutterdeck_v1.py": "5ee606d6e92f7218d89dc9cfb802e442de818801c41ec00fffa5c07593dd3f9c",
       "harness/ctx/policy/consumer_output_contract_v1.json": "baf76bcd8d1a9aebbe91b23564ef5c4011f1ac117010c5028172b9189e016338",
-      "harness/ctx/policy/consumer_pin.json": "9ae221ce281324c73d58bf8b106b6ded607fed5ebb8f1fe89d4cb4dcae645d34",
+      "harness/ctx/policy/consumer_pin.json": "f2a254ecc19d5c3fb33b07569dca03ad4becbfb03aeb0022c35002e716dfe246",
       "harness/ctx/policy/disposition_policy_v1.json": "06be78ebb313f4cdf08c23eb63b0820c8767d973c1bdc60b0bba6f1b21d8461d",
       "harness/ctx/policy/sample_v1.json": "9aa7aba307dbdb9f88d587bef0a44fbe2a1b971e108e37645fcf9cca16da4032",
       "harness/ctx/prompts/none_arm_v1.txt": "7ade26b82d8a95183639ed069d2f29c524033118159836cc71bc537c60586a8f",
@@ -109,6 +111,18 @@
   },
   "precision": "bfloat16",
   "quantization": "none",
+  "device_placement": {
+    "strategy": "explicit_max_memory",
+    "max_memory": {
+      "0": "13.25GiB",
+      "cpu": "24GiB"
+    },
+    "expected_module_placement": {
+      "gpu": 31,
+      "cpu": 9
+    },
+    "rationale": "Build-checkpoint amendment A-3 (memo section 12). The 16.38 GB bf16 weights exceed the scoring host's 15.58 GiB usable VRAM, so some CPU offload is structural under a pin that forbids quantization. device_map='auto' plans placement from FREE VRAM at load time, so a post-crash reload could place differently and perturb bf16 numerics, threatening G-C1 double-run byte-identity. Pinning max_memory makes infer_auto_device_map return the SAME 31-GPU / 9-CPU split on every load regardless of GPU state. 13.25 GiB is mid-basin: 13.2 and 13.3 GiB both yield {31,9}; 13.0 yields {30,10} and 13.5 yields {32,8}. The consumer asserts the realized placement equals expected_module_placement and fails closed otherwise. This is a device-placement pin only: precision, quantization, decoding, mode, and every artifact sha are unchanged. Load requires >13.25 GiB free, so the run precondition (Ollama and Sunshine stopped) stands."
+  },
   "decoding": {
     "do_sample": false,
     "temperature": 0.0,
@@ -162,5 +176,5 @@
     "module_sha256": "431a2fe97e39fed729373eacf7734dd27b08a4c5b67bbd8db766006f666fdbf0"
   },
   "sealed": true,
-  "manifest_sha256": "4579cb65330b7fadee27054414830fedee51f6e0b5a314212e0b9aea3aa693e5"
+  "manifest_sha256": "da06281a016a96da21a87e5912abb59c4bb44bdb81897a7dea2e48b91c90b894"
 }

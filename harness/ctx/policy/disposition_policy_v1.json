@@ -34,7 +34,8 @@
     "signal_unavailable": "an evidence check could not be run on this item"
   },
   "render_templates": {
-    "ctx-sd-item-v1": "image at {filepath}, ingested {ingest_time}, slot {assigned_slot}"
+    "ctx-sd-item-v1": "image at {filepath}, ingested {ingest_time}, slot {assigned_slot}",
+    "ctx-fam-item-v1": "memory slot {slot} decodes to class {decode} (rank {rank}, sim {sim})"
   },
   "summarizer": {
     "kind": "extractive-prefix",

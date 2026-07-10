@@ -512,3 +512,23 @@ S2-style session replay) as its own pre-registration.
 
 Estimated blast radius: zero engine files, zero `results/` mutations, new
 code confined to `harness/ctx/` and `tests/`.
+
+## 12. Build-phase clarifications (append-only)
+
+**C-1 (2026-07-09, explicitly approved): scope of §7's packet
+prohibition.** §7's "re-derived from run artifacts (not from the old
+packets)" prohibits recycling prior packet *items or dispositions* as
+PR-13 context items. It does not prohibit read-only use of the committed
+W2 packet trees as the evidence surface required by the
+already-registered `witness_alt_candidate_set` signal (§4.1), whose
+frozen policy block is defined over those trees and over nothing else.
+Implementation constraints, registered with the clarification: the
+adapter imports the frozen policy block and its registered input
+constructors from the §4.1 canonical source
+(`harness/action_boundary_score.py`), reading only the minimum committed
+packet fields those constructors require; every emitted signal carries
+provenance to the packet-tree artifact and the frozen policy version;
+the PR-12 envelope is not reproduced, packet generation is not
+recomputed, and no prior disposition is carried forward into any item.
+This is a narrow clarification of registered text, not a re-issue: no
+gate, bound, arm, kill, or verdict condition changes.

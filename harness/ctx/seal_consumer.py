@@ -42,9 +42,20 @@ def _sha_file(path):
 
 def _expected(pin):
     exp = {}
-    for group in ("tokenizer_sha256", "config_sha256", "weights_sha256"):
+    for group in ("tokenizer_sha256", "config_sha256", "weights_sha256",
+                  "index_sha256"):
         exp.update(pin["artifact"][group])
     return exp
+
+
+def chat_template_sha256(seal_dir=None):
+    """The non-thinking mechanism named in the family-level pin lives in
+    the chat template; hash it directly rather than trusting the enclosing
+    file's sha to stand for it."""
+    path = os.path.join(seal_dir or SEAL_DIR, "tokenizer_config.json")
+    with open(path, "r", encoding="utf-8") as fh:
+        template = json.load(fh)["chat_template"]
+    return hashlib.sha256(template.encode("utf-8")).hexdigest()
 
 
 def fetch_tokenizer():
@@ -53,7 +64,8 @@ def fetch_tokenizer():
     rev = pin["artifact"]["revision"]
     os.makedirs(SEAL_DIR, exist_ok=True)
     small = {**pin["artifact"]["tokenizer_sha256"],
-             **pin["artifact"]["config_sha256"]}
+             **pin["artifact"]["config_sha256"],
+             **pin["artifact"]["index_sha256"]}
     for name, want in sorted(small.items()):
         dest = os.path.join(SEAL_DIR, name)
         if os.path.exists(dest) and _sha_file(dest) == want:
@@ -80,9 +92,14 @@ def verify():
             present.append(name)
         else:
             bad.append(name)
+    # replay_ready means EVERY pinned artifact is present and byte-exact.
+    # (An earlier form only looked for missing weight shards, so a missing
+    # model.safetensors.index.json — which a sharded load needs — would
+    # have reported ready. Amendment A-2 pins the index and this checks it.)
     report = {"sealed_ok": present, "missing": missing, "sha_mismatch": bad,
-              "replay_ready": not bad and not any(
-                  n.endswith(".safetensors") for n in missing)}
+              "replay_ready": not bad and not missing}
+    if not missing and not bad:
+        report["chat_template_sha256"] = chat_template_sha256()
     print(json.dumps(report, indent=2))
     if bad:
         raise SystemExit("SEAL FAILURE: sha mismatch — do not render")

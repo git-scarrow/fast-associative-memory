@@ -26,7 +26,11 @@
     "config_sha256": {
       "config.json": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
       "generation_config.json": "2325da0f15bb848e018c5ae071b7943332e9f871d6b60e2ed22ca97d4cb993d2"
-    }
+    },
+    "index_sha256": {
+      "model.safetensors.index.json": "f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc"
+    },
+    "chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
   },
   "runtime": {
     "framework": "transformers (python), greedy decode",
@@ -39,5 +43,5 @@
       "enable_thinking": false
     }
   },
-  "notes": "Tokenizer-artifact shas fix budget_cost and the byte-meaning of every registered B (memo section 6) from this checkpoint on. Weights shas are the upstream LFS sha256 values at the pinned revision; the scoring host must verify downloaded files against them before the first evaluation render (memo section 8.1 selection-timing kill)."
+  "notes": "Tokenizer-artifact shas fix budget_cost and the byte-meaning of every registered B (memo section 6) from this checkpoint on. Weights shas are the upstream LFS sha256 values at the pinned revision; the scoring host must verify downloaded files against them before the first evaluation render (memo section 8.1 selection-timing kill). index_sha256 and chat_template_sha256 were added by build-checkpoint amendment A-2 (memo section 12), before any evaluation render: model.safetensors.index.json is required to resolve the five shards and was omitted from the original enumeration, and the chat template carries the non-thinking mechanism named in the family-level pin. Both are byte-determined by the already-pinned revision; the amendment adds no degree of freedom and strictly tightens the seal."
 }

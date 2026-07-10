@@ -654,3 +654,34 @@ consumer pin was committed at merge `6c7b6a2`, strictly earlier than any
 of this, so the §8.1 selection-timing kill is untripped under either
 reading of "render". The reading is fixed here, in advance, rather than
 adjudicated afterwards.
+
+**A-2 (2026-07-10): build-checkpoint amendment — completing the
+artifact-level pin.** Sealing the consumer on the scoring host revealed
+that `consumer_pin.json` enumerated the five weight shards, the four
+tokenizer artifacts, and the two config artifacts — but **not**
+`model.safetensors.index.json`, which is the file that maps tensors to
+shards. Without it a sharded `from_pretrained` cannot resolve the
+weights at all, so the "sealed" set was one file short of loadable. The
+amendment adds `artifact.index_sha256` and, separately,
+`artifact.chat_template_sha256` — the chat template carries the
+`enable_thinking=False` mechanism the family-level pin names, and hashing
+it directly is stronger than trusting the sha of the JSON file that
+happens to contain it.
+
+*Why this is completion, not motion.* Both values are byte-determined by
+the already-pinned `revision`; neither introduces a degree of freedom,
+and neither can be chosen. The repository, revision, weights, tokenizer,
+precision, decoding, and mode are all unchanged. The amendment strictly
+**tightens** the seal: it moves one loaded file and one behavioral
+mechanism from unchecked into checked. It is made **before the first
+evaluation render**, so §8.1's selection-timing kill and §10's
+consumer-motion kill are both untripped; after that render, an amendment
+of this kind would be forbidden and the run would have to stop.
+
+*A latent defect fixed with it.* `seal_consumer.verify()` computed
+`replay_ready` by looking only for missing `*.safetensors`. A missing
+index file — precisely the file this amendment adds — would therefore
+have reported `replay_ready: true`. `replay_ready` now means every pinned
+artifact is present and byte-exact, and the sealed replay runner refuses
+a real consumer whose scoring manifest does not report it
+(`harness/ctx/replay.py::verify_scoring_manifest`).

@@ -1,0 +1,56 @@
+{
+  "sample_id": "pr13-sample-v1",
+  "version": "1.0",
+  "registered_by": "docs/PR13_GOVERNED_CONTEXT_COMPILER.md section 12, entry R-1 (2026-07-10), registered before any evaluation render. This file is the normative artifact; on divergence it wins over prose.",
+  "salt": "pr13-sample-v1",
+  "cap_per_cell": 256,
+  "cells": {
+    "retained": "all 13 registered FAM cells; none dropped, merged, or reweighted",
+    "unsampled_in_full": [
+      "organic (synthetic re-ingest) queries",
+      "multi-turn withdrawal and control sessions"
+    ]
+  },
+  "unit": {
+    "row": "one source probe row = one stable query identity",
+    "note": "The (query, arm, B) rows of memo section 8.3 are EXPANDED from selected query identities, never sampled: every arm and every B sees exactly the same identities."
+  },
+  "hash_order": {
+    "algorithm": "sha256",
+    "preimage": "utf8(query_id) || utf8(salt)",
+    "digest_encoding": "lowercase hex",
+    "sort": "ascending"
+  },
+  "strata": {
+    "keys": ["harm_category", "disposition_class"],
+    "harm_category": {
+      "values": ["clean-control", "harm"],
+      "source": "the cell's registered section-7 role",
+      "note": "Constant within a cell. No label-blind per-row notion of harm exists; a per-row one would read truth columns and fail G-C2. The harm axis therefore partitions the sample ACROSS cells; within a cell the strata reduce to disposition classes."
+    },
+    "disposition_class": {
+      "values": ["withhold", "defer", "dual_present", "caveat", "assert"],
+      "source": "highest-precedence disposition (section-3 order) among the query's items, as returned by the frozen disposition rule table, evaluated at turn 1 with an empty prior_rendered and BEFORE the section-6 budget loop",
+      "note": "A function of adapter output and the frozen policy alone: independent of B, of turn state, and of every consumer output. `withdraw` and `summarize` are compiler mechanisms and cannot appear."
+    }
+  },
+  "allocation": {
+    "method": "largest_remainder",
+    "quota": "floor(cap * n_stratum / n_cell); remainder = (cap * n_stratum) mod n_cell",
+    "leftover": "assign one additional query to the strata with the largest remainder, skipping any stratum already allocated its full size; ties break by stratum key ascending",
+    "stratum_key_order": ["harm_category ascending", "disposition_class by section-3 precedence rank ascending"],
+    "min_per_nonempty_stratum": 1,
+    "min_repair": "while some nonempty stratum holds zero, move one query from the stratum with the largest allocation (ties by stratum key ascending, donor must retain at least one) to the zero stratum with the largest remainder (ties by stratum key ascending)",
+    "within_stratum": "take the first n_s queries in hash order"
+  },
+  "scope": {
+    "changes": "the statistical power of every gate",
+    "changes_not": "any gate constant, threshold, pass condition, arm, kill, or row of the section-10 verdict decision table",
+    "note": "A gate that fails only for want of power fails. This registration buys no reinterpretation of a null result; verdict row 3 (compiler-moot) remains absence of evidence, not evidence of absence."
+  },
+  "query_identity": {
+    "fam": "fam-v1:<cell_id>:e<epoch>:p<probe>",
+    "organic": "organic:<kind>:<path>",
+    "multiturn": "mt:<kind>:<path>#t<turn>"
+  }
+}

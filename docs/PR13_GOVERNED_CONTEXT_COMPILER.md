@@ -579,3 +579,78 @@ path, and `tests/test_ctx_cells.py` exercises the amendment end-to-end
 over a throwaway synthetic ledger. The change ships as one isolated
 commit ("fix(ctx): withdrawal trigger fires on superseded/quarantined
 state transitions") carrying nothing else.
+
+**R-1 (2026-07-10, registered before any evaluation render):
+deterministic stratified row sample.** §7's 13 FAM cells hold 35,007
+probe rows; at §8.3's six calls per query that is ≈210,000 generations.
+This entry registers a sample that bounds the run. It is fixed now,
+before any consumer output exists, and it changes no gate.
+
+*Terminology, resolved in advance (§10: ambiguity is a defect of the
+registration).* "Row" in this entry means a **source probe row**, which
+is one query identity — the only reading compatible with holding the
+selected identities identical across arms, since §8.3's `(query, arm,
+B)` rows are expanded from query identities, not sampled.
+
+Normative artifact: `harness/ctx/policy/sample_v1.json`; implementation
+`harness/ctx/sample.py`.
+
+1. **Cells.** All 13 registered FAM cells are retained — none dropped,
+   merged, or reweighted. G-U1's "every such cell" still ranges over
+   all 12 harm cells.
+2. **Cap.** At most **256** queries per cell; a cell with ≤256
+   contributes all of them.
+3. **Strata.** Stratum key = (`harm_category`, `disposition_class`).
+   `harm_category` ∈ {`harm`, `clean-control`} is the cell's registered
+   §7 role. It is constant within a cell: no label-blind per-row notion
+   of harm exists, and a per-row one would have to read truth columns
+   and fail G-C2. The harm axis therefore partitions the sample *across*
+   cells, and the within-cell strata reduce to disposition classes.
+   `disposition_class` is the highest-precedence disposition (§3 order)
+   among the query's items as returned by the frozen rule table,
+   evaluated at turn 1 with empty `prior_rendered` and **before** the §6
+   budget loop — a function of adapter output and the frozen policy
+   alone, independent of B, of turn state, and of every consumer output.
+   Its values lie in {`withhold`, `defer`, `dual_present`, `caveat`,
+   `assert`}; `withdraw` and `summarize` are compiler mechanisms and
+   cannot appear.
+4. **Order.** Within a stratum, queries sort by
+   `SHA-256(query_id ‖ salt)` ascending as lowercase hex, where `‖` is
+   byte concatenation of the UTF-8 encodings and `salt` is the committed
+   constant in `sample_v1.json`.
+5. **Allocation.** When a cell exceeds the cap, 256 is allocated across
+   its nonempty strata proportionally to stratum size by the
+   largest-remainder method, every nonempty stratum receiving ≥1 query;
+   remainder ties break by stratum key, ordered by `harm_category`
+   ascending then §3 precedence rank of `disposition_class` ascending;
+   the repair procedure for a quota that rounds to zero is specified
+   exactly in the artifact (`allocation.min_repair`). Each stratum
+   contributes its first `n_s` queries in hash order.
+6. **Arms.** The selected query identities are identical in every arm
+   and at every B. §8.3's six calls per query are expanded from the same
+   manifest rows; no arm sees a query another does not.
+7. **Non-FAM cells.** Every synthetic-re-ingest (organic) query and
+   every multi-turn session is retained in full — no sampling.
+8. **Salt.** `pr13-sample-v1`, committed with this registration, before
+   the sample was computed and before any consumer output existed. The
+   registration commit precedes the manifest commit in branch history,
+   so the rule cannot have been tuned to the realized strata.
+9. **Stable query identity.** FAM `fam-v1:<cell_id>:e<epoch>:p<probe>`;
+   organic `organic:<kind>:<path>`; multi-turn `mt:<kind>:<path>#t<turn>`.
+
+*Scope.* Sampling changes the **power** of every gate and the
+**constant** of none. G-U2's ≤5%, G-B2's ≤2% and ≤10%, and G-B1's 15-pp
+guard are rates and margins, evaluated on the sampled rows exactly as
+registered. G-U1 still demands ≤ on every harm cell and strict `<` on at
+least one. No row of the §10 decision table is modified. A gate that
+fails only for want of power fails; this registration buys no
+reinterpretation of a null result, and row 3 (`compiler-moot`) remains
+absence of evidence, not evidence of absence.
+
+*Selection timing.* Constructing the sample evaluates the disposition
+rule table on §7-derived items. It renders no context block, invokes no
+consumer, and reads no truth column. Independently, the artifact-level
+consumer pin was committed at merge `6c7b6a2`, strictly earlier than any
+of this, so the §8.1 selection-timing kill is untripped under either
+reading of "render". The reading is fixed here, in advance, rather than
+adjudicated afterwards.

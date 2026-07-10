@@ -203,6 +203,66 @@ def _qualification_manifests(sources, consumer):
     return qm, sm, committed
 
 
+def resume_phase(consumer, policy, phase, workdir):
+    """Cross-PROCESS crash/resume. Each phase runs in its own interpreter,
+    so the model is reloaded and `device_map="auto"` re-decides placement.
+    That is the realistic failure of a multi-hour run, and the only form
+    of the test that can expose placement-dependent numerics.
+
+      crash  → run, die after 11 rows, leave a partial log
+      finish → reload, resume the partial log to completion
+      clean  → reload, run the same manifest from empty
+      compare → byte-compare the resumed log against the clean log
+    """
+    sources = _qualification_sources()
+    qm, sm, committed = _qualification_manifests(sources, consumer)
+    os.makedirs(workdir, exist_ok=True)
+    resumed_path = os.path.join(workdir, "resumed.jsonl")
+    clean_path = os.path.join(workdir, "clean.jsonl")
+
+    if phase == "crash":
+        crashed = False
+        try:
+            replay.run(qm, _CrashAfter(consumer, 11), sources, resumed_path,
+                       policy, scoring_manifest=sm)
+        except RuntimeError:
+            crashed = True
+        with open(resumed_path, encoding="utf-8") as fh:
+            n = sum(1 for line in fh if line.strip())
+        return {"phase": phase, "crashed_as_designed": crashed,
+                "partial_rows": n,
+                "manifest_sha256": qm["manifest_sha256"],
+                "committed_manifest_untouched":
+                    qm["manifest_sha256"] != committed}
+
+    if phase == "finish":
+        summary = replay.run(qm, consumer, sources, resumed_path, policy,
+                             scoring_manifest=sm)
+        return {"phase": phase, **summary}
+
+    if phase == "clean":
+        summary = replay.run(qm, consumer, sources, clean_path, policy,
+                             scoring_manifest=sm)
+        return {"phase": phase, **summary}
+
+    raise ValueError(phase)
+
+
+def compare_resume(workdir):
+    with open(os.path.join(workdir, "resumed.jsonl"), encoding="utf-8") as fh:
+        a = fh.read()
+    with open(os.path.join(workdir, "clean.jsonl"), encoding="utf-8") as fh:
+        b = fh.read()
+    rows_a = [json.loads(x) for x in a.splitlines() if x.strip()]
+    rows_b = [json.loads(x) for x in b.splitlines() if x.strip()]
+    differing = [ra["row_id"] for ra, rb in zip(rows_a, rows_b)
+                 if ra.get("raw") != rb.get("raw")]
+    return {"byte_reconcilable_across_processes": a == b,
+            "rows_resumed_log": len(rows_a), "rows_clean_log": len(rows_b),
+            "rows_with_differing_raw_output": differing[:5],
+            "n_differing": len(differing)}
+
+
 def crash_resume_check(consumer, policy):
     sources = _qualification_sources()
     qm, sm, committed = _qualification_manifests(sources, consumer)
@@ -276,7 +336,16 @@ def main():
     ap.add_argument("--auto-load-probe", action="store_true",
                     help="attempt only the registered load path and report "
                          "whether it succeeds; generate nothing")
+    ap.add_argument("--resume-phase",
+                    choices=("crash", "finish", "clean", "compare"),
+                    help="cross-process crash/resume: run one phase and exit")
+    ap.add_argument("--resume-dir", default="/tmp/pr13_resume2proc")
     args = ap.parse_args()
+
+    if args.resume_phase == "compare":
+        print(json.dumps(compare_resume(args.resume_dir), indent=2,
+                         sort_keys=True))
+        return 0
 
     import torch
     from harness.ctx.consumer_qwen3 import AUTHORIZATION_TOKEN, Qwen3Consumer
@@ -318,6 +387,14 @@ def main():
         if args.out:
             with open(args.out, "w", encoding="utf-8") as fh:
                 fh.write(text + "\n")
+        return 0
+
+    if args.resume_phase:
+        result = resume_phase(consumer, policy, args.resume_phase,
+                              args.resume_dir)
+        result["module_placement"] = _placement(consumer._model)
+        result["label"] = args.label
+        print(json.dumps(result, indent=2, sort_keys=True))
         return 0
 
     placement = _placement(consumer._model)

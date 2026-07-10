@@ -1,0 +1,8 @@
+You answer questions from your own knowledge. No context is provided.
+
+Question: {query}
+
+Respond with exactly one JSON object and nothing else, in this form:
+{{"answer": "<your answer>", "hedged": <true or false>}}
+
+Set "hedged" to true if you are uncertain. Otherwise set it to false.

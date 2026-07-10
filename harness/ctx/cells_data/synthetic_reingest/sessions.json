@@ -1,0 +1,134 @@
+[
+ {
+  "kind": "withdrawal",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0080AE20-E240-42CB-B056-D8BC144D04B2.arw, and when was it ingested?",
+  "session_id": "mt:withdrawal:test_drop/0080AE20-E240-42CB-B056-D8BC144D04B2.arw",
+  "target_path": "test_drop/0080AE20-E240-42CB-B056-D8BC144D04B2.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "withdrawal",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/04F80F8B-99F7-4FDB-B67C-76F39788A475.arw, and when was it ingested?",
+  "session_id": "mt:withdrawal:test_drop/04F80F8B-99F7-4FDB-B67C-76F39788A475.arw",
+  "target_path": "test_drop/04F80F8B-99F7-4FDB-B67C-76F39788A475.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "withdrawal",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0987B447-5760-4A96-91BA-00465887A641.arw, and when was it ingested?",
+  "session_id": "mt:withdrawal:test_drop/0987B447-5760-4A96-91BA-00465887A641.arw",
+  "target_path": "test_drop/0987B447-5760-4A96-91BA-00465887A641.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "withdrawal",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0E7884C6-9199-44C3-BF98-82FE23B1B7B7.arw, and when was it ingested?",
+  "session_id": "mt:withdrawal:test_drop/0E7884C6-9199-44C3-BF98-82FE23B1B7B7.arw",
+  "target_path": "test_drop/0E7884C6-9199-44C3-BF98-82FE23B1B7B7.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "withdrawal",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/638934DE-63E8-4D4F-8559-5A86FCB73BDE.arw, and when was it ingested?",
+  "session_id": "mt:withdrawal:test_drop/638934DE-63E8-4D4F-8559-5A86FCB73BDE.arw",
+  "target_path": "test_drop/638934DE-63E8-4D4F-8559-5A86FCB73BDE.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "withdrawal",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/7261D5C6-D98A-4A75-A367-CA597020CA0D.arw, and when was it ingested?",
+  "session_id": "mt:withdrawal:test_drop/7261D5C6-D98A-4A75-A367-CA597020CA0D.arw",
+  "target_path": "test_drop/7261D5C6-D98A-4A75-A367-CA597020CA0D.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "control",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/00A82188-D187-4A1E-B802-74BDFF05D1CE.arw, and when was it ingested?",
+  "session_id": "mt:control:test_drop/00A82188-D187-4A1E-B802-74BDFF05D1CE.arw",
+  "target_path": "test_drop/00A82188-D187-4A1E-B802-74BDFF05D1CE.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "control",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/013D6A56-CF71-415D-994B-5DFB3A6B1358.arw, and when was it ingested?",
+  "session_id": "mt:control:test_drop/013D6A56-CF71-415D-994B-5DFB3A6B1358.arw",
+  "target_path": "test_drop/013D6A56-CF71-415D-994B-5DFB3A6B1358.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "control",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0230CD43-04FD-4BC3-8DCD-BF01C072E27D.arw, and when was it ingested?",
+  "session_id": "mt:control:test_drop/0230CD43-04FD-4BC3-8DCD-BF01C072E27D.arw",
+  "target_path": "test_drop/0230CD43-04FD-4BC3-8DCD-BF01C072E27D.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "control",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/03D8E159-10D1-4496-8E49-94ADE5EE7245.arw, and when was it ingested?",
+  "session_id": "mt:control:test_drop/03D8E159-10D1-4496-8E49-94ADE5EE7245.arw",
+  "target_path": "test_drop/03D8E159-10D1-4496-8E49-94ADE5EE7245.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "control",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/048E19B2-CDA1-4CEB-9DBD-258757BB969A.arw, and when was it ingested?",
+  "session_id": "mt:control:test_drop/048E19B2-CDA1-4CEB-9DBD-258757BB969A.arw",
+  "target_path": "test_drop/048E19B2-CDA1-4CEB-9DBD-258757BB969A.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ },
+ {
+  "kind": "control",
+  "query_text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/04AC5E9D-5AF4-4F94-9596-DF61FD0408B8.arw, and when was it ingested?",
+  "session_id": "mt:control:test_drop/04AC5E9D-5AF4-4F94-9596-DF61FD0408B8.arw",
+  "target_path": "test_drop/04AC5E9D-5AF4-4F94-9596-DF61FD0408B8.arw",
+  "turn_clocks": [
+   "2026-01-03T00:00:00Z",
+   "2026-01-10T14:00:00Z",
+   "2026-01-10T16:00:00Z"
+  ]
+ }
+]

@@ -1,0 +1,102 @@
+[
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/0080AE20-E240-42CB-B056-D8BC144D04B2.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0080AE20-E240-42CB-B056-D8BC144D04B2.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/04F80F8B-99F7-4FDB-B67C-76F39788A475.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/04F80F8B-99F7-4FDB-B67C-76F39788A475.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/0987B447-5760-4A96-91BA-00465887A641.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0987B447-5760-4A96-91BA-00465887A641.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/0E7884C6-9199-44C3-BF98-82FE23B1B7B7.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0E7884C6-9199-44C3-BF98-82FE23B1B7B7.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/638934DE-63E8-4D4F-8559-5A86FCB73BDE.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/638934DE-63E8-4D4F-8559-5A86FCB73BDE.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/7261D5C6-D98A-4A75-A367-CA597020CA0D.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/7261D5C6-D98A-4A75-A367-CA597020CA0D.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/75A30A9D-73F1-4CE9-9C88-C5D7D0723828.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/75A30A9D-73F1-4CE9-9C88-C5D7D0723828.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/7E601363-3BF7-48DF-BBF2-6FDBE8EE423F.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/7E601363-3BF7-48DF-BBF2-6FDBE8EE423F.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/96E90AF0-2C50-41F0-995A-2F2A4B162925.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/96E90AF0-2C50-41F0-995A-2F2A4B162925.arw, and when was it ingested?"
+ },
+ {
+  "kind": "supersession",
+  "query_id": "organic:supersession:test_drop/9EF814A8-8EEA-4A80-A07E-2C5AFD41744E.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/9EF814A8-8EEA-4A80-A07E-2C5AFD41744E.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/00A82188-D187-4A1E-B802-74BDFF05D1CE.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/00A82188-D187-4A1E-B802-74BDFF05D1CE.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/013D6A56-CF71-415D-994B-5DFB3A6B1358.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/013D6A56-CF71-415D-994B-5DFB3A6B1358.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/0230CD43-04FD-4BC3-8DCD-BF01C072E27D.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0230CD43-04FD-4BC3-8DCD-BF01C072E27D.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/03D8E159-10D1-4496-8E49-94ADE5EE7245.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/03D8E159-10D1-4496-8E49-94ADE5EE7245.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/048E19B2-CDA1-4CEB-9DBD-258757BB969A.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/048E19B2-CDA1-4CEB-9DBD-258757BB969A.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/04AC5E9D-5AF4-4F94-9596-DF61FD0408B8.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/04AC5E9D-5AF4-4F94-9596-DF61FD0408B8.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/05331562-303F-40DE-9C80-3FD7538060B4.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/05331562-303F-40DE-9C80-3FD7538060B4.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/07AFF89B-AF71-4558-8EFC-03B081DBE605.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/07AFF89B-AF71-4558-8EFC-03B081DBE605.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/0845450A-C0DB-4A5F-845D-249CE34765A1.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/0845450A-C0DB-4A5F-845D-249CE34765A1.arw, and when was it ingested?"
+ },
+ {
+  "kind": "control",
+  "query_id": "organic:control:test_drop/089C3C97-90D9-4CAC-93E8-3F958F4FD783.arw",
+  "text": "According to the ingest ledger, which ingest event provides the current version of the item at path test_drop/089C3C97-90D9-4CAC-93E8-3F958F4FD783.arw, and when was it ingested?"
+ }
+]

@@ -1,0 +1,13 @@
+You answer questions using only the provided context from a memory system.
+
+Context:
+{context_block}
+
+Question: {query}
+
+Respond with exactly one JSON object and nothing else, in this form:
+{{"answer": "<your answer>", "hedged": <true or false>}}
+
+Set "hedged" to true if you are uncertain, or if the context marks the
+relevant information as unresolved, caveated, condensed, or withdrawn.
+Otherwise set it to false.

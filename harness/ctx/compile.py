@@ -232,9 +232,16 @@ def compile(items, policy, budget, turn_state, count_tokens,
         }
 
     # --- 2. withdrawal notices (memo §3: record only grows) --------------
+    # Trigger: an item rendered at an earlier turn now resolves to
+    # withhold/defer, OR its state has moved to superseded/quarantined —
+    # both are "adverse evidence arriving between turns" (§3). The state
+    # clause is what lets ledger supersession (which resolves at caveat
+    # level in single-turn cells) revoke a previously served item.
     withdrawals = []
     for iid, r in sorted(resolved.items()):
-        if iid in prior_rendered and r["disposition"] in ("withhold", "defer"):
+        if iid in prior_rendered and (
+                r["disposition"] in ("withhold", "defer")
+                or r["item"]["state"] in ("superseded", "quarantined")):
             withdrawals.append({
                 "item_id": iid,
                 "prior_turn": prior_rendered[iid],

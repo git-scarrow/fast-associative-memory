@@ -1,0 +1,11 @@
+{
+  "contract_id": "pr13-consumer-output-contract",
+  "version": "1.0",
+  "response_schema": "harness/ctx/schema/consumer_output.schema.json",
+  "max_new_tokens": 256,
+  "stopping": ["eos", "max_new_tokens"],
+  "temperature": 0.0,
+  "extra_prose": "extract first balanced JSON object; non-whitespace outside it sets extra_prose=true (recorded and reported per arm x B, not a failure by itself)",
+  "parse_failure": "no balanced JSON object, cap-truncated unbalanced object, or schema-validation failure (missing/extra fields, wrong types, empty answer) -> unparseable",
+  "malformed_scoring": "unparseable scores as wrong for the arm that produced it, and feeds a reported malformed-rate per arm x B"
+}

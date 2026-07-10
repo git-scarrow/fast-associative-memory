@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fam.local/pr13/context_item.schema.json",
+  "title": "PR-13 context item",
+  "description": "Normative per docs/PR13_GOVERNED_CONTEXT_COMPILER.md section 2 (r3). On any divergence, this schema wins over memo prose. budget_cost is deliberately NOT an item field: token cost is compiler-computed under the pinned tokenizer and lives in the audit row.",
+  "type": "object",
+  "required": [
+    "item_id",
+    "source_id",
+    "content",
+    "content_kind",
+    "content_sha256",
+    "event_time",
+    "ingest_time",
+    "evidence",
+    "relations",
+    "state",
+    "policy_version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "item_id": {
+      "type": "string",
+      "minLength": 3,
+      "pattern": "^[^:]+:.+$",
+      "description": "globally unique; <source_id>:<native_id>"
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "registered adapter identity (memo section 4)"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "description": "the candidate text; never synthesized by the compiler"
+    },
+    "content_kind": {
+      "enum": ["source-native", "adapter-rendered"],
+      "description": "adapter-rendered content must come from a registered deterministic template whose id is bound into policy_version; free-form generation is structurally impossible"
+    },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "binds content to audit trail"
+    },
+    "event_time": {
+      "type": ["string", "null"],
+      "description": "RFC3339 source-asserted time; null is legal and rendered as unknown, never defaulted"
+    },
+    "ingest_time": {
+      "type": ["string", "null"],
+      "description": "RFC3339 adapter-stamped time; null is legal and rendered as unknown, never defaulted"
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/evidence_record" }
+    },
+    "relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supersedes", "contradicts", "candidate_set_id"],
+      "properties": {
+        "supersedes": { "type": "array", "items": { "type": "string" } },
+        "contradicts": { "type": "array", "items": { "type": "string" } },
+        "candidate_set_id": { "type": ["string", "null"] }
+      }
+    },
+    "state": {
+      "enum": [
+        "agent-readable",
+        "hidden",
+        "stale",
+        "superseded",
+        "quarantined",
+        "audit-only",
+        "human-review"
+      ],
+      "description": "the PR-12 exposure taxonomy, unchanged"
+    },
+    "policy_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "of the state-assignment policy, the disposition policy table, and any rendering templates used"
+    }
+  },
+  "$defs": {
+    "evidence_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter_id", "signal", "value", "evidence_ptr", "tier"],
+      "properties": {
+        "adapter_id": { "type": "string", "minLength": 1 },
+        "signal": { "type": "string", "minLength": 1 },
+        "value": {},
+        "evidence_ptr": { "type": "string", "minLength": 1 },
+        "tier": {
+          "enum": ["core-certified", "harness-heuristic", "source-asserted"],
+          "description": "the only tier the compiler may render as core-certified is PR-10 abstention passthrough (enforced by test, not grep)"
+        }
+      }
+    }
+  }
+}

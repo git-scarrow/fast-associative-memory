@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fam.local/pr13/disposition_policy.schema.json",
+  "title": "PR-13 disposition policy table",
+  "description": "Normative per docs/PR13_GOVERNED_CONTEXT_COMPILER.md section 3 (r3): the committed decision function mapping (state, evidence records) to dispositions. Split evaluation semantics, fail-closed on both dimensions: the item STATE is mapped once through state-only rules (match carries only a state key; an unmapped state fail-closes to defer with an anomaly); each EVIDENCE RECORD is mapped by its first matching signal-bearing rule (match carries a signal key, optionally state/tier constraints; an unmatched record fail-closes to defer with an anomaly). State-only rules never shadow evidence records - a benign state must not silently assert items carrying unknown signals. Conflicting contributions resolve by the fixed precedence. The instance is frozen at the build checkpoint; motion after first scoring is a kill.",
+  "type": "object",
+  "required": [
+    "policy_id",
+    "version",
+    "precedence",
+    "rules",
+    "caveat_templates",
+    "render_templates",
+    "summarizer"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "policy_id": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "precedence": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/disposition" },
+      "description": "highest wins; must equal the memo section-3 order: withdraw, withhold, defer, dual_present, caveat, summarize, assert"
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rule" },
+      "description": "ordered; first match per evidence record wins. Table rules may output only assert, caveat, dual_present, withhold, or defer; summarize is a budget mechanism and withdraw a turn mechanism, both compiler-driven."
+    },
+    "caveat_templates": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 },
+      "description": "one inline qualifier template per caveat reason_code; part of the frozen policy"
+    },
+    "render_templates": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 },
+      "description": "registered deterministic templates for adapter-rendered content, keyed by template id (bound into policy_version)"
+    },
+    "summarizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "k_sentences", "token_cap"],
+      "properties": {
+        "kind": { "const": "extractive-prefix" },
+        "k_sentences": { "type": "integer", "minimum": 1 },
+        "token_cap": { "type": "integer", "minimum": 8 }
+      },
+      "description": "deterministic extractive rule: first k-sentence prefix under the token cap; never a model"
+    }
+  },
+  "$defs": {
+    "disposition": {
+      "enum": ["assert", "caveat", "dual_present", "withhold", "summarize", "defer", "withdraw"]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "match", "disposition", "reason_code"],
+      "properties": {
+        "rule_id": { "type": "string", "minLength": 1 },
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "state": { "type": "string" },
+            "signal": { "type": "string" },
+            "tier": { "type": "string" }
+          }
+        },
+        "disposition": {
+          "enum": ["assert", "caveat", "dual_present", "withhold", "defer"]
+        },
+        "reason_code": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

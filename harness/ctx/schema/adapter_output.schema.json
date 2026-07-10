@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fam.local/pr13/adapter_output.schema.json",
+  "title": "PR-13 adapter output",
+  "description": "Normative per docs/PR13_GOVERNED_CONTEXT_COMPILER.md section 4 (r3). An adapter maps source-native artifacts to context items plus not-retrieved records. Adapters are label-blind (no truth column on any code path), deterministic, and read-only over their sources. not_retrieved is audited distinctly from withhold (invariant I4).",
+  "type": "object",
+  "required": ["adapter_id", "adapter_version", "source_id", "items", "not_retrieved"],
+  "additionalProperties": false,
+  "properties": {
+    "adapter_id": { "type": "string", "minLength": 1 },
+    "adapter_version": { "type": "string", "minLength": 1 },
+    "source_id": { "type": "string", "minLength": 1 },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "context_item.schema.json" }
+    },
+    "not_retrieved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["native_id", "reason"],
+        "properties": {
+          "native_id": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

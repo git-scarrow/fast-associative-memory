@@ -28,14 +28,18 @@ poisoned-label canary test permutes them and asserts byte-identical
 output. The normative enforcement is the canary; this whitelist is the
 advisory, function-granular part.
 
-WITNESS-ALT (memo §4.1 sixth signal): implemented in
-``emit_witness_alt_from_packets`` but NOT wired into ``emit`` —
-``pol_f1b``'s RowObs/CellCtx are defined over committed W2 packet
-trees, while memo §7 says items re-derive from raw run artifacts "not
-from the old packets". Whether packet-read-only signal derivation is
-inside that boundary is a recorded specification question (memo §10
-ambiguity discipline); the function ships, disabled, pending explicit
-adjudication.
+WITNESS-ALT (memo §4.1 sixth signal; clarification C-1, approved):
+``emit_witness_alt_from_packets`` reads the committed W2 packet trees
+READ-ONLY as the frozen policy block's registered evidence surface —
+items still derive exclusively from raw run artifacts. The frozen
+policy function ``pol_f1b`` and its registered input constructors
+``RowObs``/``CellCtx`` are imported from the §4.1 canonical source
+(never re-typed); only the minimum packet fields those constructors
+require are read (memory-packet ``unresolved_tie`` items and the
+audit-packet lines CellCtx consumes); provenance points to the
+packet-tree artifact and frozen policy version; no envelope is
+reproduced, no packet regenerated, no prior disposition carried
+forward into any item.
 
 Deterministic: sorted iteration, string values carried verbatim from
 the CSVs into rendered content (no float re-formatting), no clock, no
@@ -81,9 +85,14 @@ def _stem(runs_dir, cell):
     return os.path.join(runs_dir, f"per_probe_{cell}")
 
 
-def emit(runs_dir, cell, policy):
+def emit(runs_dir, cell, policy, witness_alt=None):
     """Map one cell's raw run artifacts → adapter_output dict
-    (schema: harness/ctx/schema/adapter_output.schema.json)."""
+    (schema: harness/ctx/schema/adapter_output.schema.json).
+
+    witness_alt: optional ``{(epoch, probe): record}`` from
+    ``emit_witness_alt_from_packets`` (clarification C-1) — attached as
+    one evidence signal among six, feeding dual_present like any other
+    candidate-set evidence (memo §4.1)."""
     stem = _stem(runs_dir, cell)
     per_probe = _read_csv(stem + ".csv", VISIBLE_PER_PROBE)
     topk = _read_csv(stem + ".topk.csv.gz", VISIBLE_TOPK, open_fn=gzip.open)
@@ -162,6 +171,23 @@ def emit(runs_dir, cell, policy):
                     "evidence_ptr": f"per_probe.csv:{cell}:e{epoch}:p{probe}:margin",
                     "tier": "harness-heuristic",
                 })
+            wa = (witness_alt or {}).get((epoch, probe))
+            in_walt = (wa is not None and str(r["decode"]) in
+                       {str(c) for c in wa["value"]["presented"]})
+            if in_walt:
+                evidence.append({
+                    "adapter_id": ADAPTER_ID,
+                    "signal": wa["signal"],
+                    "value": wa["value"],
+                    "evidence_ptr": wa["evidence_ptr"],
+                    "tier": wa["tier"],
+                })
+            if in_tie:
+                cand_set = tie_set
+            elif in_walt:
+                cand_set = f"{ADAPTER_ID}:{cell}:e{epoch}:p{probe}:walt"
+            else:
+                cand_set = None
             items.append({
                 "item_id": f"{ADAPTER_ID}:{cell}:e{epoch}:p{probe}:slot{r['slot']}",
                 "source_id": ADAPTER_ID,
@@ -172,7 +198,7 @@ def emit(runs_dir, cell, policy):
                 "ingest_time": None,
                 "evidence": evidence,
                 "relations": {"supersedes": [], "contradicts": [],
-                              "candidate_set_id": tie_set if in_tie else None},
+                              "candidate_set_id": cand_set},
                 "state": state,
                 "policy_version": f"{policy['version']}+{TEMPLATE_ID}",
             })
@@ -186,18 +212,51 @@ def emit(runs_dir, cell, policy):
     }
 
 
-def emit_witness_alt_from_packets(packet_dir, policy):  # pragma: no cover
-    """Memo §4.1 sixth signal — NOT WIRED (see module docstring).
+WITNESS_ALT_POLICY = "pr12-frozen:pol_f1b"
 
-    Would import the frozen policy block read-only from the canonical
-    source (harness/action_boundary_score.py, memo §0/§4.1) and emit
-    witness_alt_candidate_set at tier harness-heuristic over completed
-    W2 packet trees. Disabled pending adjudication of the recorded
-    specification question: whether packet-read-only signal derivation
-    is compatible with memo §7's "re-derived from run artifacts (not
-    from the old packets)".
+
+def emit_witness_alt_from_packets(packet_cell_dir, shape="W2"):
+    """Memo §4.1 sixth signal under clarification C-1 (approved).
+
+    Reads ``memory_packet.jsonl`` / ``audit_packet.jsonl`` in one
+    committed packet cell directory read-only and applies the frozen
+    W2 policy through its own registered input constructors. Returns
+    ``{(epoch, probe): record}``; ``emit`` attaches the records to the
+    items of the matching probe. Tier harness-heuristic — the s1
+    contract itself is neither invoked nor claimed (memo §4.1).
     """
-    raise NotImplementedError(
-        "witness_alt_candidate_set is registered but unwired: awaiting "
-        "explicit adjudication of the packets-vs-run-artifacts referent "
-        "(memo §10 ambiguity discipline).")
+    import json
+    # Canonical import source (memo §0/§4.1): frozen logic, read-only,
+    # never re-implemented. Importing executes no scoring (main-guarded).
+    from harness.action_boundary_score import CellCtx, RowObs, pol_f1b
+
+    mem_path = os.path.join(packet_cell_dir, "memory_packet.jsonl")
+    aud_path = os.path.join(packet_cell_dir, "audit_packet.jsonl")
+    with open(aud_path, "r", encoding="utf-8") as fh:
+        ctx = CellCtx([json.loads(line) for line in fh if line.strip()])
+
+    records = {}
+    with open(mem_path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            if not line.strip():
+                continue
+            rec = json.loads(line)
+            ties = [it for it in rec.get("items", [])
+                    if it.get("type") == "unresolved_tie"]
+            if not ties:
+                continue
+            obs = RowObs(shape, ties[0])
+            act = pol_f1b(obs, ctx)
+            if act is None:
+                continue
+            # query_id format: <cell>:e<epoch>:p<probe>
+            _, e_part, p_part = rec["query_id"].rsplit(":", 2)
+            records[(e_part[1:], p_part[1:])] = {
+                "signal": "witness_alt_candidate_set",
+                "value": {"alt_class": sorted(act)[0],
+                          "presented": obs.presented},
+                "evidence_ptr": (f"{mem_path}#{rec['query_id']}"
+                                 f"+{WITNESS_ALT_POLICY}"),
+                "tier": "harness-heuristic",
+            }
+    return records

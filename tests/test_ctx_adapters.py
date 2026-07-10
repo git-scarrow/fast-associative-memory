@@ -139,9 +139,88 @@ def test_fam_v1_deterministic(tmp_path, policy):
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
 
-def test_fam_v1_witness_alt_is_unwired(policy):
-    with pytest.raises(NotImplementedError):
-        fam_v1.emit_witness_alt_from_packets("anywhere", policy)
+# --------------------------------------------------------------------------
+# witness_alt_candidate_set (clarification C-1): synthetic packet fixture
+# exercising the frozen pol_f1b through its own registered constructors.
+# --------------------------------------------------------------------------
+
+def write_packet_fixture(root):
+    root.mkdir(parents=True, exist_ok=True)
+    mem = [
+        {"query_id": f"{CELL}:e0:p1", "items": [{
+            "type": "unresolved_tie",
+            "candidates": [
+                {"basis": "deployed vote", "decode_class": 3, "slot": 105},
+                {"basis": "witness co-resident (fork_witness)",
+                 "decode_class": 4},
+            ]}]},
+        # alt candidate not witness-based → all_witness False → defer
+        {"query_id": f"{CELL}:e0:p2", "items": [{
+            "type": "unresolved_tie",
+            "candidates": [
+                {"basis": "deployed vote", "decode_class": 2, "slot": 7},
+                {"basis": "co-resident", "decode_class": 5},
+            ]}]},
+        {"query_id": f"{CELL}:e0:p3", "items": [
+            {"type": "memory_item", "content": {"label": 1}}]},
+    ]
+    aud = [
+        {"record_type": "ambiguous_pair_review", "never_resolving": True,
+         "pair": {"incumbent_slot": 105, "owner_slot": 106}},
+        {"hazard_tier": {"tier": "elevated"}},
+    ]
+    with open(root / "memory_packet.jsonl", "w") as fh:
+        fh.write("\n".join(json.dumps(r) for r in mem) + "\n")
+    with open(root / "audit_packet.jsonl", "w") as fh:
+        fh.write("\n".join(json.dumps(r) for r in aud) + "\n")
+    return str(root)
+
+
+def test_witness_alt_frozen_policy_fires_only_on_registered_shape(tmp_path):
+    pdir = write_packet_fixture(tmp_path / "pkt")
+    records = fam_v1.emit_witness_alt_from_packets(pdir, shape="W2")
+    assert set(records) == {("0", "1")}   # p2 fails all_witness, p3 has no tie
+    rec = records[("0", "1")]
+    assert rec["value"] == {"alt_class": 4, "presented": [3, 4]}
+    assert rec["tier"] == "harness-heuristic"
+    assert f"{CELL}:e0:p1" in rec["evidence_ptr"]
+    assert "pol_f1b" in rec["evidence_ptr"]
+    # W1 shape is outside pol_f1b's registered shapes → nothing fires
+    assert fam_v1.emit_witness_alt_from_packets(pdir, shape="W1") == {}
+
+
+def test_witness_alt_wires_into_items_as_sixth_signal(tmp_path, policy):
+    runs = write_fam_fixture(tmp_path / "runs")
+    records = fam_v1.emit_witness_alt_from_packets(
+        write_packet_fixture(tmp_path / "pkt"), shape="W2")
+    out = fam_v1.emit(str(runs), CELL, policy, witness_alt=records)
+    by_id = {i["item_id"]: i for i in out["items"]}
+    # probe 1: slot 5 decodes 3, slot 6 decodes 4 — both in presented [3,4]
+    for iid in (f"fam-v1:{CELL}:e0:p1:slot5", f"fam-v1:{CELL}:e0:p1:slot6"):
+        ev = {e["signal"]: e for e in by_id[iid]["evidence"]}
+        assert "witness_alt_candidate_set" in ev
+        assert ev["witness_alt_candidate_set"]["tier"] == "harness-heuristic"
+        assert by_id[iid]["relations"]["candidate_set_id"] is not None
+    # probe 2 items untouched
+    for iid in (f"fam-v1:{CELL}:e0:p2:slot7", f"fam-v1:{CELL}:e0:p2:slot8"):
+        assert all(e["signal"] != "witness_alt_candidate_set"
+                   for e in by_id[iid]["evidence"])
+    # the core-certified guard still holds with the sixth signal wired
+    for item in out["items"]:
+        for e in item["evidence"]:
+            if e["tier"] == "core-certified":
+                assert e["signal"] == "merge_suspect"
+
+
+def test_witness_alt_deterministic(tmp_path, policy):
+    runs = str(write_fam_fixture(tmp_path / "runs"))
+    pdir = write_packet_fixture(tmp_path / "pkt")
+    r1 = fam_v1.emit_witness_alt_from_packets(pdir)
+    r2 = fam_v1.emit_witness_alt_from_packets(pdir)
+    assert r1 == r2
+    a = fam_v1.emit(runs, CELL, policy, witness_alt=r1)
+    b = fam_v1.emit(runs, CELL, policy, witness_alt=r2)
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
 
 # --------------------------------------------------------------------------

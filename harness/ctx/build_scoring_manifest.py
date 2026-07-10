@@ -43,8 +43,10 @@ DEFAULT_OUT = os.path.join(HERE, "manifests", "scoring_manifest_v1.json")
 QUERY_MANIFEST = os.path.join(HERE, "manifests", "query_manifest_v1.json")
 
 # Everything under harness/ctx that can change a number, hashed file by
-# file. `sealed/` holds gitignored weights (pinned separately) and
-# `manifests/` holds this file's siblings.
+# file. Skipped: `sealed/` (gitignored weights, pinned by consumer_pin),
+# `manifests/` (this file's siblings, one of which pins the other by
+# digest), and `cells_data/` (the synthetic ledger, pinned by sha inside
+# the query manifest). Nothing that runs is unhashed.
 _SKIP_DIRS = {"sealed", "manifests", "__pycache__", "cells_data"}
 
 

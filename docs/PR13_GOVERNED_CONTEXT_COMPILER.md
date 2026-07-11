@@ -1,7 +1,7 @@
 # PR-13 — Governed context compiler (pre-registration, revision 3)
 
 Date: 2026-07-09. Main @ `142fc49`. **Status: r3 — registration text final;
-build checkpoint authorized 2026-07-09.** Revision 3 adds the
+build checkpoint authorized 2026-07-09.** **Re-issue RI-1 (2026-07-11, §12) repairs G-C1 Clause B under the §10 ambiguity rule and authorizes a bounded 1,024-row consumer-determinism replay under the §11 exception; §9 gate text is byte-unchanged.** Revision 3 adds the
 machine-readable consumer output contract (§8.4), narrows the
 arm-equivalence claim to its registered five components (§8.2), and splits
 the family-level consumer pin (fixed here) from the artifact-level pin
@@ -720,3 +720,101 @@ re-attests the completed pin.
 Ollama and Sunshine stopped, no other GPU consumer for the duration —
 is not merely advisory; with them running the pinned load fails closed
 rather than silently offloading more layers.
+
+**RE-ISSUE RI-1 (2026-07-11): repair of G-C1 Clause B (consumer-determinism
+method), issued under §10 and §11.**
+
+*Status of this entry.* This is the recorded re-issue that §10 mandates on
+discovery of a specification ambiguity ("recorded, then this memo is
+re-issued — ambiguity is a defect of the registration, not something to
+adjudicate ad hoc"), and it is the "recorded re-issue of this memo" that
+§11 requires to authorize any execution beyond the single scoring run. It
+is narrowly scoped to G-C1's second clause and changes no other gate,
+constant, arm, kill, verdict row, sample, compiler, pin, or manifest. The
+§9 G-C1 text is left byte-unchanged as the historical registration; this
+entry supplies the executable method its consumer-determinism clause
+lacked.
+
+*The defect, and what is already discharged.* G-C1's first clause
+(compiler byte-identity) is executable and has been discharged: an
+independent recomputation of the frozen compiler over the frozen sources,
+through the identical runner code path, reproduced every compiled block
+and every audit-derived field (block_sha256, block_tokens,
+rendered_item_ids, prompt_sha256, prompt_tokens) byte-identically on all
+20,304 rows — zero mismatches (`results/pr13_scoring_run/GC1_CLAUSE_A_RESULT.json`,
+sha256 `f08f036240f844051e7ff806a92dfb3ce32faa71d9ce8db0c260e532cec9ef75`).
+G-C1's second clause — "consumer calls replayed twice must agree on parsed
+answers … < 1% quarantined" — fixes an acceptance criterion but never
+fixes the execution mechanism or scope of "replayed twice," and every
+reading conflicts with either §8.3 ("one model call" per row) or §11
+("One run; re-runs only under a recorded re-issue"). The completed run
+emitted exactly one consumer call per (query, arm, B) — structurally
+confirmed: 20,304 unique row_ids, one emission each — so no within-run
+second emission exists. **The ambiguity was discovered and recorded
+before any substantive §9 gate outcome (G-U1/G-U2/G-U3, G-B1/G-B2/G-B3)
+was computed.**
+
+*What does NOT change.* The completed 20,304-row log
+(`results/pr13_scoring_run/rows.jsonl`, sha256
+`10de692f4cf0913d026947f018f58d108a050e698a2011689f34f84793797bcc`)
+**remains the sole substantive scoring run** and the sole source of every
+gate outcome. The consumer-determinism replay defined below is a
+determinism probe only: it re-executes selected calls to test
+reproducibility of their parsed answers, and it does not alter,
+supplement, re-score, or add to the original outcomes. No verdict input
+changes.
+
+*Registered method (G-C1 Clause B, as repaired).*
+
+1. **Set size.** Exactly **1,024** rows are selected from the 20,304-row
+   log.
+2. **Pre-outcome identifiers only.** Selection uses only `row_id`
+   (`<query_id>|<arm>|B<budget>`), fixed by the sealed query manifest
+   before any consumer output existed. **No answer, hedged flag, parse
+   status, label, action, or gate outcome may influence inclusion.**
+3. **Rank key.** For each row,
+   `rank = SHA256("PR13-GC1-R1" ‖ frozen_manifest_sha256 ‖ row_id)` as
+   lowercase hex, where `‖` is byte concatenation of the UTF-8 encodings
+   and `frozen_manifest_sha256` is the frozen **scoring-manifest** digest
+   `da06281a016a96da21a87e5912abb59c4bb44bdb81897a7dea2e48b91c90b894`
+   (which itself pins the query manifest `4d6dd9c5…`, the model weights,
+   the code, decoding, and device placement). Lower hex sorts first.
+4. **Strata.** A stratum is a realized `(arm, group, B)` triple, with
+   `group ∈ {the 13 FAM cells, organic, multi-turn}`,
+   `arm ∈ {governed, raw_matched, raw_native, none}`, and `B` at its
+   applicable values (`governed`/`raw_matched`: 800 and 1500;
+   `raw_native`: 1500; `none`: not applicable). This yields **90 strata**
+   (15 groups × 6 applicable arm×B combinations), covering every arm, all
+   13 FAM groups, organic, multi-turn, and every applicable B.
+5. **Allocation.** Each stratum receives `floor(1024/90) = 11` rows; the
+   remaining `1024 − 990 = 34` rows are assigned one each to the first 34
+   strata under a fixed, outcome-independent stratum order — group in
+   query-manifest listing order, then arm in registered ARM_PLAN order,
+   then B ascending (None last). Result: 34 strata of 12 and 56 of 11,
+   summing to exactly 1,024. Every stratum has ≥ 20 rows available, so the
+   allocation is always feasible.
+6. **Within stratum.** Take the `n_s` lowest-ranked rows by the rank key
+   (ascending hex).
+7. **Replay.** Each selected row's original consumer call is replayed
+   **exactly once**, using the frozen model weights (revision
+   `b968826d…`, the five pinned shards), chat template, prompt templates,
+   compiler, tokenizer, decoding parameters (greedy, temperature 0,
+   `max_new_tokens` 256, non-thinking), and device placement — the
+   identical execution configuration recorded in the frozen scoring
+   manifest.
+8. **Comparison.** The replay's parsed §8.4 result is compared to the
+   logged parsed result on **byte identity** — the `status` and, for `ok`
+   rows, the exact `answer` string and `hedged` value (per §8.1
+   non-thinking, the parsed answer is the whole output).
+9. **Disagreements.** Any row whose replayed parsed answer is not
+   byte-identical to its logged parsed answer is a disagreement, **recorded
+   by `row_id`**.
+10. **Threshold.** The existing < 1% quarantine tolerance applies to the
+    1,024-row registered replay set: **at most 10 disagreements**
+    (10/1024 = 0.98% < 1%) pass; **11 or more** (11/1024 = 1.07% ≥ 1%)
+    fail G-C1, which under §10 decision-table row 1 yields `blocked`.
+11. **§11 exception.** This 1,024-row replay is authorized as the explicit
+    exception §11 requires. **It is a consumer-determinism probe, not a
+    second substantive experiment run**: it produces no new scoring rows,
+    changes no gate constant, and contributes no verdict input beyond
+    G-C1's own pass/block.

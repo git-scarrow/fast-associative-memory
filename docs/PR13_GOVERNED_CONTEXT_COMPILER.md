@@ -818,3 +818,54 @@ changes.
     second substantive experiment run**: it produces no new scoring rows,
     changes no gate constant, and contributes no verdict input beyond
     G-C1's own pass/block.
+
+**DISPOSITION D-1 (2026-07-11): PR-13 outcome of record.** The §10-mandated
+recording of a registration defect; issues no verdict from the §10
+vocabulary.
+
+* **Integrity tier — PASS.** G-C1 determinism (Clause A: 0/20,304 compiler
+  byte-identity mismatches; Clause B under RI-1: 0/1,024 consumer-
+  determinism disagreements), G-C2 label-blindness (poisoned-label canary
+  byte-identical on all 13 §7 cells), G-C3 budget integrity (0/16,920
+  context rows over B), and G-C4 invariant suite (committed suite + I4/I6
+  on 70,126 recomputed packets) all PASS. Artifacts (both hosts):
+  GC1_CLAUSE_A_RESULT.json `f08f0362`, GC1_CLAUSE_B_RESULT.json `3f1a63a2`,
+  GC2_CANARY_RESULT.json `25fd845c`, GC4_INVARIANTS_RESULT.json `035876b7`.
+
+* **Confirmatory H1/H2 verdict — NOT ISSUABLE under the original
+  preregistration.** §9's utility/behavioral gates (G-U1, G-U2, G-B1, and
+  the loose parts of G-B3/G-B2) name thresholds but never register the
+  rubric mapping a well-formed consumer answer to a gate outcome against
+  ground truth; no scorer was committed at the build checkpoint (§11). §10
+  rows 2-4 all read those gates, so the decision table yields no verdict —
+  the gates are not evaluable as registered, a registration defect under
+  §10's own ambiguity rule, recorded as **not-issuable (utility/behavioral
+  rubric underspecified)**.
+
+* **The defect cannot be repaired post-run.** A utility/behavioral rubric
+  decides whether governed beats raw-matched; registered after the answers
+  are visible it cannot restore fixed-analysis-before-data. Permanent for
+  this run; not curable by any §12 re-issue.
+
+* **Contamination account (the agent's procedural record, not an
+  independently verified fact).** No substantive outcome inspection or
+  comparative utility/behavioral scoring is recorded. Answer-bearing
+  artifacts (the row log and the Clause B replay log) were handled during
+  execution and the determinism checks. The absence of answer influence on
+  any rubric drafting is the agent's recorded procedural account, not an
+  independently verifiable fact. The uniformly zero malformed-output rate
+  removes one potential penalty channel (§8.4 malformed→wrong contributes
+  nothing for any arm) and must be weighed in the future confirmatory
+  design.
+
+* **Preservation — exploratory only.** The frozen 20,304-row log
+  (`rows.jsonl`, sha256 `10de692f…`) and all gate artifacts remain
+  available ONLY for a separately labeled EXPLORATORY analysis (D-2), which
+  must not be described as preregistered, confirmatory, PASS/FAIL for
+  H1/H2, or evidence satisfying the original §10 contract, and issues no
+  §10 verdict. A confirmatory H1/H2 result requires a NEW, fully
+  pre-registered run (D-3).
+
+* **No merge; frozen artifacts immutable.** PR-13 is not merged; the frozen
+  original log and gate artifacts are not altered. PR-10 merge-abstain and
+  the s1-witness-alt-batch certification are untouched.

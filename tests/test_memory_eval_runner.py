@@ -70,12 +70,12 @@ def make_ledger():
 
 
 def test_runner_executes_five_arms_with_shared_paired_candidates():
-    vector = CountingRetriever(["old", "new"])
+    exemplar = CountingRetriever(["old", "new"])
     fam = CountingRetriever(["new", "old"])
     consumer = FakeConsumer()
     runner = FiveArmRunner(
         ledger=make_ledger(),
-        vector_retriever=vector,
+        exemplar_retriever=exemplar,
         fam_retriever=fam,
         consumer=consumer,
         candidate_k=2,
@@ -90,12 +90,19 @@ def test_runner_executes_five_arms_with_shared_paired_candidates():
 
     rows = runner.run([question], {"q1": [1.0, 0.0]})
 
+    assert ARM_NAMES == (
+        "no_memory",
+        "exemplar_raw",
+        "exemplar_governed",
+        "fam_raw",
+        "fam_governed",
+    )
     assert tuple(row.arm for row in rows) == ARM_NAMES
-    assert vector.calls == fam.calls == 1
+    assert exemplar.calls == fam.calls == 1
     assert len(consumer.prompts) == 5
     by_arm = {row.arm: row for row in rows}
-    assert by_arm["vector_raw"].candidate_ids == ("old", "new")
-    assert by_arm["vector_governed"].candidate_ids == ("old", "new")
+    assert by_arm["exemplar_raw"].candidate_ids == ("old", "new")
+    assert by_arm["exemplar_governed"].candidate_ids == ("old", "new")
     assert by_arm["fam_raw"].candidate_ids == ("new", "old")
     assert by_arm["fam_governed"].candidate_ids == ("new", "old")
     assert by_arm["no_memory"].candidate_ids == ()
@@ -104,9 +111,12 @@ def test_runner_executes_five_arms_with_shared_paired_candidates():
     assert all(row.block_tokens <= CONTEXT_BUDGET_TOKENS for row in rows)
     assert all(row.prompt_tokens >= row.block_tokens for row in rows)
     assert all(row.consumer_ms > 0 for row in rows)
-    assert by_arm["vector_raw"].retrieval_ms == by_arm["vector_governed"].retrieval_ms
+    assert (
+        by_arm["exemplar_raw"].retrieval_ms
+        == by_arm["exemplar_governed"].retrieval_ms
+    )
     assert by_arm["fam_raw"].retrieval_ms == by_arm["fam_governed"].retrieval_ms
-    assert by_arm["vector_governed"].audit_rows
+    assert by_arm["exemplar_governed"].audit_rows
 
 
 def test_runner_records_abstention_and_malformed_output():
@@ -120,7 +130,7 @@ def test_runner_records_abstention_and_malformed_output():
     consumer = FakeConsumer(outputs)
     runner = FiveArmRunner(
         ledger=make_ledger(),
-        vector_retriever=CountingRetriever(["new"]),
+        exemplar_retriever=CountingRetriever(["new"]),
         fam_retriever=CountingRetriever(["new"]),
         consumer=consumer,
         candidate_k=1,
@@ -139,7 +149,7 @@ def test_runner_records_abstention_and_malformed_output():
 def test_runner_rejects_missing_query_embeddings():
     runner = FiveArmRunner(
         ledger=make_ledger(),
-        vector_retriever=CountingRetriever(["new"]),
+        exemplar_retriever=CountingRetriever(["new"]),
         fam_retriever=CountingRetriever(["new"]),
         consumer=FakeConsumer(),
     )

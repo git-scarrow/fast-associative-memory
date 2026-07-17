@@ -6,6 +6,13 @@ from harness.memory_eval.scoring import SCORING_VERSION
 def test_dry_run_seals_executes_and_scores_all_five_arms(tmp_path):
     summary = run_dry_run(tmp_path)
 
+    assert ARM_NAMES == (
+        "no_memory",
+        "exemplar_raw",
+        "exemplar_governed",
+        "fam_raw",
+        "fam_governed",
+    )
     assert summary["evidence_status"] == "plumbing-only; not benchmark evidence"
     assert summary["arms"] == list(ARM_NAMES)
     assert summary["context_budget_tokens"] == CONTEXT_BUDGET_TOKENS
@@ -26,11 +33,11 @@ def test_dry_run_seals_executes_and_scores_all_five_arms(tmp_path):
     # The specific values below are plumbing-only artifacts of the synthetic
     # two-question corpus and the rule consumer; they are not benchmark
     # evidence and carry no claim about governance.
-    assert summary["metrics"]["vector_raw"]["stale_adoption_rate"] == {
+    assert summary["metrics"]["exemplar_raw"]["stale_adoption_rate"] == {
         "value": 1.0,
         "n": 1,
     }
-    assert summary["metrics"]["vector_governed"]["stale_adoption_rate"] == {
+    assert summary["metrics"]["exemplar_governed"]["stale_adoption_rate"] == {
         "value": 0.0,
         "n": 1,
     }
@@ -42,11 +49,11 @@ def test_dry_run_seals_executes_and_scores_all_five_arms(tmp_path):
         "value": 0.0,
         "n": 1,
     }
-    assert summary["metrics"]["vector_raw"]["current_adoption_rate"] == {
+    assert summary["metrics"]["exemplar_raw"]["current_adoption_rate"] == {
         "value": 0.0,
         "n": 1,
     }
-    assert summary["metrics"]["vector_governed"]["current_adoption_rate"] == {
+    assert summary["metrics"]["exemplar_governed"]["current_adoption_rate"] == {
         "value": 1.0,
         "n": 1,
     }
@@ -55,15 +62,15 @@ def test_dry_run_seals_executes_and_scores_all_five_arms(tmp_path):
         "n": 1,
     }
     # No contested scopes in the synthetic corpus: no data, not 0.0.
-    assert summary["metrics"]["vector_governed"]["fork_adoption_rate"] == {
+    assert summary["metrics"]["exemplar_governed"]["fork_adoption_rate"] == {
         "value": None,
         "n": 0,
     }
     assert summary["clean_answer_loss"] == {
-        "vector_governed_vs_raw": {"value": 0.0, "n": 1},
+        "exemplar_governed_vs_raw": {"value": 0.0, "n": 1},
         "fam_governed_vs_raw": {"value": 0.0, "n": 1},
     }
     assert summary["stale_eligible_loss"] == {
-        "vector_governed_vs_raw": {"value": 0.0, "n": 1},
+        "exemplar_governed_vs_raw": {"value": 0.0, "n": 1},
         "fam_governed_vs_raw": {"value": 0.0, "n": 1},
     }

@@ -2,8 +2,8 @@
 
 ARM_NAMES = (
     "no_memory",
-    "vector_raw",
-    "vector_governed",
+    "exemplar_raw",
+    "exemplar_governed",
     "fam_raw",
     "fam_governed",
 )

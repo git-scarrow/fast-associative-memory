@@ -46,7 +46,7 @@ SCORING_VERSION = "memory-eval-scoring-v2"
 ScopeClass = Literal["clean", "stale_eligible", "contested"]
 
 _PAIRED_FAMILIES = (
-    ("vector_raw", "vector_governed"),
+    ("exemplar_raw", "exemplar_governed"),
     ("fam_raw", "fam_governed"),
 )
 
@@ -275,16 +275,16 @@ def score_rows(
         if scope_class_by_query[question.query_id] == "contested"
     ]
     clean_loss = {
-        "vector_governed_vs_raw": _paired_loss(
-            clean_questions, scores_by_key, "vector_raw", "vector_governed"
+        "exemplar_governed_vs_raw": _paired_loss(
+            clean_questions, scores_by_key, "exemplar_raw", "exemplar_governed"
         ),
         "fam_governed_vs_raw": _paired_loss(
             clean_questions, scores_by_key, "fam_raw", "fam_governed"
         ),
     }
     stale_loss = {
-        "vector_governed_vs_raw": _paired_loss(
-            stale_questions, scores_by_key, "vector_raw", "vector_governed"
+        "exemplar_governed_vs_raw": _paired_loss(
+            stale_questions, scores_by_key, "exemplar_raw", "exemplar_governed"
         ),
         "fam_governed_vs_raw": _paired_loss(
             stale_questions, scores_by_key, "fam_raw", "fam_governed"

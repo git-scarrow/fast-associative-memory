@@ -15,7 +15,7 @@ from . import ARM_NAMES, CONTEXT_BUDGET_TOKENS
 from .ledger import MemoryLedger
 from .manifest import seal_manifest, verify_manifest
 from .models import MemoryQuestion, MemoryRecord, fact_scope
-from .retrievers import ExactVectorRetriever, FAMRetriever
+from .retrievers import CAMIndexSettings, ExemplarCAMRetriever, FAMRetriever
 from .runner import FiveArmRunner
 from .scoring import score_rows
 
@@ -69,7 +69,11 @@ def run_dry_run(output_dir: str | Path) -> dict:
     query_embeddings = {
         question.query_id: encoder.encode(question.scope) for question in questions
     }
-    settings = {"candidate_k": 2, "fam_prototype_k": 1, "fam_max_entries": 2}
+    settings = {
+        "candidate_k": 2,
+        "cam_prototype_k": 2,
+        "cam_max_entries": len(records),
+    }
     manifest_path = output_path / "dry_run_manifest.json"
     # evidence_class="plumbing": this seal carries no registration and is never
     # admissible. A scoring-run seal would be refused here — correctly, since
@@ -93,16 +97,25 @@ def run_dry_run(output_dir: str | Path) -> dict:
         evidence_class="plumbing",
     )
 
-    vector = ExactVectorRetriever(records, record_embeddings)
-    fam = FAMRetriever(
-        records,
-        record_embeddings,
-        prototype_k=settings["fam_prototype_k"],
-        max_entries=settings["fam_max_entries"],
+    cam_settings = CAMIndexSettings(
+        max_entries=len(records),
+        prototype_k=settings["cam_prototype_k"],
+        vigilance=0.85,
+        hebb_lr=0.1,
+        key_lr=0.05,
+        ema_beta=0.05,
+        inference_temp=0.05,
+        use_bfloat16=False,
+        adaptive_eviction=False,
+        use_lfu=True,
     )
+    exemplar = ExemplarCAMRetriever(
+        records, record_embeddings, settings=cam_settings
+    )
+    fam = FAMRetriever(records, record_embeddings, settings=cam_settings)
     rows = FiveArmRunner(
         ledger=ledger,
-        vector_retriever=vector,
+        exemplar_retriever=exemplar,
         fam_retriever=fam,
         consumer=RuleConsumer(),
         candidate_k=settings["candidate_k"],

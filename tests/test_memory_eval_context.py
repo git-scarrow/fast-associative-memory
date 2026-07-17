@@ -96,3 +96,19 @@ def test_raw_rendering_preserves_candidate_order_and_never_crosses_budget():
     assert rendered.block == "three four five"
     assert rendered.rendered_item_ids == ("memory-eval:two",)
     assert rendered.token_count == 3
+
+
+def test_render_raw_skips_oversized_candidate_and_continues():
+    items = [
+        {"item_id": "a", "content": "short"},
+        {"item_id": "b", "content": "far too long for this tiny budget now"},
+        {"item_id": "c", "content": "ok"},
+    ]
+
+    rendered = render_raw(
+        items, budget=7, count_tokens=lambda text: len(text.split())
+    )
+
+    assert rendered.block == "short\nok"
+    assert rendered.rendered_item_ids == ("a", "c")
+    assert rendered.token_count == 2

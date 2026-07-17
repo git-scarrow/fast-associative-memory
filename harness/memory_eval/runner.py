@@ -66,7 +66,7 @@ class FiveArmRunner:
         self,
         *,
         ledger: MemoryLedger,
-        vector_retriever: Retriever,
+        exemplar_retriever: Retriever,
         fam_retriever: Retriever,
         consumer: Consumer,
         candidate_k: int = 10,
@@ -76,7 +76,7 @@ class FiveArmRunner:
         if not isinstance(candidate_k, int) or isinstance(candidate_k, bool) or candidate_k < 1:
             raise ValueError("candidate_k must be positive")
         self.ledger = ledger
-        self.vector_retriever = vector_retriever
+        self.exemplar_retriever = exemplar_retriever
         self.fam_retriever = fam_retriever
         self.consumer = consumer
         self.candidate_k = candidate_k
@@ -102,12 +102,12 @@ class FiveArmRunner:
     def _run_question(
         self, question: MemoryQuestion, query_embedding: TensorLike
     ) -> tuple[ExperimentRow, ...]:
-        vector_candidates, vector_ms = self._retrieve(
-            self.vector_retriever, query_embedding
+        exemplar_candidates, exemplar_ms = self._retrieve(
+            self.exemplar_retriever, query_embedding
         )
         fam_candidates, fam_ms = self._retrieve(self.fam_retriever, query_embedding)
         candidates = {
-            "vector": (vector_candidates, vector_ms),
+            "exemplar": (exemplar_candidates, exemplar_ms),
             "fam": (fam_candidates, fam_ms),
         }
 

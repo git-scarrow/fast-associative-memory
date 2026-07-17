@@ -112,7 +112,7 @@ def render_raw(
     for item in items:
         proposed = "\n".join([*lines, str(item["content"])])
         if count_tokens(proposed) > budget:
-            break
+            continue
         lines.append(str(item["content"]))
         rendered_ids.append(str(item["item_id"]))
     block = "\n".join(lines)

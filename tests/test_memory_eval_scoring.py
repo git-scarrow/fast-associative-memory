@@ -133,8 +133,8 @@ def test_scoring_reports_stale_adoption_clean_loss_and_operational_costs():
     ]
     answers = {
         "no_memory": (("abstain", None), ("malformed", None)),
-        "vector_raw": (("answer", "A"), ("answer", "C")),
-        "vector_governed": (("answer", "B"), ("answer", "C")),
+        "exemplar_raw": (("answer", "A"), ("answer", "C")),
+        "exemplar_governed": (("answer", "B"), ("answer", "C")),
         "fam_raw": (("answer", "A"), ("answer", "C")),
         "fam_governed": (("answer", "B"), ("abstain", None)),
     }
@@ -161,23 +161,23 @@ def test_scoring_reports_stale_adoption_clean_loss_and_operational_costs():
     assert report.corpus.ledger_scopes == 2
     assert report.corpus.contested_ledger_scopes == 0
 
-    assert report.by_arm["vector_raw"].accuracy == Rate(value=0.5, n=2)
-    assert report.by_arm["vector_raw"].stale_adoption_rate == Rate(value=1.0, n=1)
-    assert report.by_arm["vector_raw"].current_adoption_rate == Rate(value=0.0, n=1)
-    assert report.by_arm["vector_governed"].stale_adoption_rate == Rate(value=0.0, n=1)
-    assert report.by_arm["vector_governed"].current_adoption_rate == Rate(
+    assert report.by_arm["exemplar_raw"].accuracy == Rate(value=0.5, n=2)
+    assert report.by_arm["exemplar_raw"].stale_adoption_rate == Rate(value=1.0, n=1)
+    assert report.by_arm["exemplar_raw"].current_adoption_rate == Rate(value=0.0, n=1)
+    assert report.by_arm["exemplar_governed"].stale_adoption_rate == Rate(value=0.0, n=1)
+    assert report.by_arm["exemplar_governed"].current_adoption_rate == Rate(
         value=1.0, n=1
     )
     assert report.by_arm["no_memory"].abstention_rate == Rate(value=0.5, n=2)
     assert report.by_arm["no_memory"].malformed_rate == Rate(value=0.5, n=2)
     # No contested scopes in this corpus: fork adoption has no data.
-    assert report.by_arm["vector_raw"].fork_adoption_rate == Rate(value=None, n=0)
-    assert report.by_arm["vector_raw"].mean_prompt_tokens == pytest.approx(20.0)
-    assert report.by_arm["vector_raw"].mean_total_latency_ms == pytest.approx(6.0)
+    assert report.by_arm["exemplar_raw"].fork_adoption_rate == Rate(value=None, n=0)
+    assert report.by_arm["exemplar_raw"].mean_prompt_tokens == pytest.approx(20.0)
+    assert report.by_arm["exemplar_raw"].mean_total_latency_ms == pytest.approx(6.0)
 
-    assert report.clean_answer_loss["vector_governed_vs_raw"] == Rate(value=0.0, n=1)
+    assert report.clean_answer_loss["exemplar_governed_vs_raw"] == Rate(value=0.0, n=1)
     assert report.clean_answer_loss["fam_governed_vs_raw"] == Rate(value=1.0, n=1)
-    assert report.stale_eligible_loss["vector_governed_vs_raw"] == Rate(
+    assert report.stale_eligible_loss["exemplar_governed_vs_raw"] == Rate(
         value=0.0, n=1
     )
     assert report.stale_eligible_loss["fam_governed_vs_raw"] == Rate(value=0.0, n=1)
@@ -215,8 +215,8 @@ def test_all_abstaining_governed_arm_registers_as_loss_on_evolving_corpus():
     ]
     answers = {
         "no_memory": (("abstain", None), ("abstain", None)),
-        "vector_raw": (("answer", "B"), ("answer", "Y")),
-        "vector_governed": (("abstain", None), ("abstain", None)),
+        "exemplar_raw": (("answer", "B"), ("answer", "Y")),
+        "exemplar_governed": (("abstain", None), ("abstain", None)),
         "fam_raw": (("answer", "B"), ("answer", "Y")),
         "fam_governed": (("abstain", None), ("abstain", None)),
     }
@@ -224,26 +224,26 @@ def test_all_abstaining_governed_arm_registers_as_loss_on_evolving_corpus():
     report = score_rows(rows_for(questions, answers), questions, ledger)
 
     # Raw arms answered every current value; governed arms suppressed all.
-    assert report.by_arm["vector_raw"].accuracy == Rate(value=1.0, n=2)
-    assert report.by_arm["vector_governed"].accuracy == Rate(value=0.0, n=2)
+    assert report.by_arm["exemplar_raw"].accuracy == Rate(value=1.0, n=2)
+    assert report.by_arm["exemplar_governed"].accuracy == Rate(value=0.0, n=2)
 
     # The two originally registered criteria still look "won"...
-    assert report.by_arm["vector_governed"].stale_adoption_rate == Rate(
+    assert report.by_arm["exemplar_governed"].stale_adoption_rate == Rate(
         value=0.0, n=2
     )
-    assert report.clean_answer_loss["vector_governed_vs_raw"] == Rate(
+    assert report.clean_answer_loss["exemplar_governed_vs_raw"] == Rate(
         value=None, n=0
     )
 
     # ...but suppression is now priced on the stale-eligible stratum.
-    assert report.by_arm["vector_raw"].current_adoption_rate == Rate(value=1.0, n=2)
-    assert report.by_arm["vector_governed"].current_adoption_rate == Rate(
+    assert report.by_arm["exemplar_raw"].current_adoption_rate == Rate(value=1.0, n=2)
+    assert report.by_arm["exemplar_governed"].current_adoption_rate == Rate(
         value=0.0, n=2
     )
     assert report.by_arm["fam_governed"].current_adoption_rate == Rate(
         value=0.0, n=2
     )
-    assert report.stale_eligible_loss["vector_governed_vs_raw"] == Rate(
+    assert report.stale_eligible_loss["exemplar_governed_vs_raw"] == Rate(
         value=1.0, n=2
     )
     assert report.stale_eligible_loss["fam_governed_vs_raw"] == Rate(value=1.0, n=2)
@@ -261,8 +261,8 @@ def test_zero_clean_scope_corpus_reports_clean_loss_as_no_data():
     questions = [MemoryQuestion("q1", "Current value?", "evolving", "B")]
     answers = {
         "no_memory": (("abstain", None),),
-        "vector_raw": (("answer", "A"),),
-        "vector_governed": (("answer", "B"),),
+        "exemplar_raw": (("answer", "A"),),
+        "exemplar_governed": (("answer", "B"),),
         "fam_raw": (("answer", "A"),),
         "fam_governed": (("answer", "B"),),
     }
@@ -270,7 +270,7 @@ def test_zero_clean_scope_corpus_reports_clean_loss_as_no_data():
     report = score_rows(rows_for(questions, answers), questions, ledger)
 
     assert report.corpus.clean_questions == 0
-    for key in ("vector_governed_vs_raw", "fam_governed_vs_raw"):
+    for key in ("exemplar_governed_vs_raw", "fam_governed_vs_raw"):
         assert report.clean_answer_loss[key] == Rate(value=None, n=0)
         assert report.clean_answer_loss[key].value is None
 
@@ -293,8 +293,8 @@ def test_all_clean_corpus_is_scoreable_and_reports_stale_metrics_as_no_data():
     ]
     answers = {
         "no_memory": (("abstain", None), ("abstain", None)),
-        "vector_raw": (("answer", "A"), ("answer", "B")),
-        "vector_governed": (("answer", "A"), ("answer", "B")),
+        "exemplar_raw": (("answer", "A"), ("answer", "B")),
+        "exemplar_governed": (("answer", "A"), ("answer", "B")),
         "fam_raw": (("answer", "A"), ("answer", "B")),
         "fam_governed": (("answer", "A"), ("answer", "B")),
     }
@@ -306,9 +306,9 @@ def test_all_clean_corpus_is_scoreable_and_reports_stale_metrics_as_no_data():
     for arm in ARM_NAMES:
         assert report.by_arm[arm].stale_adoption_rate == Rate(value=None, n=0)
         assert report.by_arm[arm].current_adoption_rate == Rate(value=None, n=0)
-    for key in ("vector_governed_vs_raw", "fam_governed_vs_raw"):
+    for key in ("exemplar_governed_vs_raw", "fam_governed_vs_raw"):
         assert report.stale_eligible_loss[key] == Rate(value=None, n=0)
-    assert report.clean_answer_loss["vector_governed_vs_raw"] == Rate(value=0.0, n=2)
+    assert report.clean_answer_loss["exemplar_governed_vs_raw"] == Rate(value=0.0, n=2)
 
 
 def test_malformed_rows_leave_stale_denominator_but_abstain_stays():
@@ -326,8 +326,8 @@ def test_malformed_rows_leave_stale_denominator_but_abstain_stays():
     ]
     answers = {
         "no_memory": (("abstain", None), ("abstain", None)),
-        "vector_raw": (("answer", "A"), ("answer", "X")),
-        "vector_governed": (("malformed", None), ("abstain", None)),
+        "exemplar_raw": (("answer", "A"), ("answer", "X")),
+        "exemplar_governed": (("malformed", None), ("abstain", None)),
         "fam_raw": (("answer", "A"), ("answer", "X")),
         "fam_governed": (("abstain", None), ("abstain", None)),
     }
@@ -337,17 +337,17 @@ def test_malformed_rows_leave_stale_denominator_but_abstain_stays():
     # Malformed q1 row leaves the stale-adoption denominator (interface
     # failure, not stale-avoidance); the abstained q2 row stays in it as
     # non-adoption.
-    assert report.by_arm["vector_governed"].stale_adoption_rate == Rate(
+    assert report.by_arm["exemplar_governed"].stale_adoption_rate == Rate(
         value=0.0, n=1
     )
     assert report.by_arm["fam_governed"].stale_adoption_rate == Rate(value=0.0, n=2)
-    assert report.by_arm["vector_raw"].stale_adoption_rate == Rate(value=1.0, n=2)
+    assert report.by_arm["exemplar_raw"].stale_adoption_rate == Rate(value=1.0, n=2)
     # The anti-suppression floor keeps malformed rows in its denominator:
     # a malformed row delivered no current answer.
-    assert report.by_arm["vector_governed"].current_adoption_rate == Rate(
+    assert report.by_arm["exemplar_governed"].current_adoption_rate == Rate(
         value=0.0, n=2
     )
-    assert report.by_arm["vector_governed"].malformed_rate == Rate(value=0.5, n=2)
+    assert report.by_arm["exemplar_governed"].malformed_rate == Rate(value=0.5, n=2)
 
 
 def test_contested_scopes_are_counted_and_kept_out_of_stale_stratum():
@@ -361,8 +361,8 @@ def test_contested_scopes_are_counted_and_kept_out_of_stale_stratum():
     questions = [MemoryQuestion("q1", "Value?", "forked", "A")]
     answers = {
         "no_memory": (("malformed", None),),
-        "vector_raw": (("answer", "B"),),
-        "vector_governed": (("abstain", None),),
+        "exemplar_raw": (("answer", "B"),),
+        "exemplar_governed": (("abstain", None),),
         "fam_raw": (("answer", "Old"),),
         "fam_governed": (("answer", "A"),),
     }
@@ -382,9 +382,9 @@ def test_contested_scopes_are_counted_and_kept_out_of_stale_stratum():
 
     # Fork adoption counts adopting ANY contested value — no adjudication
     # of which fork member is right, and no credit for abstention policy.
-    assert report.by_arm["vector_raw"].fork_adoption_rate == Rate(value=1.0, n=1)
+    assert report.by_arm["exemplar_raw"].fork_adoption_rate == Rate(value=1.0, n=1)
     assert report.by_arm["fam_governed"].fork_adoption_rate == Rate(value=1.0, n=1)
-    assert report.by_arm["vector_governed"].fork_adoption_rate == Rate(
+    assert report.by_arm["exemplar_governed"].fork_adoption_rate == Rate(
         value=0.0, n=1
     )
     assert report.by_arm["fam_raw"].fork_adoption_rate == Rate(value=0.0, n=1)
@@ -424,14 +424,31 @@ def test_paired_arms_with_divergent_candidate_ids_are_rejected():
     questions = [MemoryQuestion("q", "Value?", "clean", "C")]
     rows = [
         row("q", "no_memory", answer="C"),
-        row("q", "vector_raw", answer="C", candidate_ids=("r",)),
-        row("q", "vector_governed", answer="C", candidate_ids=("r", "other")),
+        row("q", "exemplar_raw", answer="C", candidate_ids=("r",)),
+        row("q", "exemplar_governed", answer="C", candidate_ids=("r", "other")),
         row("q", "fam_raw", answer="C", candidate_ids=("r",)),
         row("q", "fam_governed", answer="C", candidate_ids=("r",)),
     ]
 
     with pytest.raises(ValueError, match="candidate_ids diverge"):
         score_rows(rows, questions, ledger)
+
+
+def test_candidate_ids_may_differ_between_exemplar_and_fam_families():
+    ledger = MemoryLedger([record("r", "clean", "C", 1)])
+    questions = [MemoryQuestion("q", "Value?", "clean", "C")]
+    rows = [
+        row("q", "no_memory", answer="C"),
+        row("q", "exemplar_raw", answer="C", candidate_ids=("r",)),
+        row("q", "exemplar_governed", answer="C", candidate_ids=("r",)),
+        row("q", "fam_raw", answer="C", candidate_ids=("other",)),
+        row("q", "fam_governed", answer="C", candidate_ids=("other",)),
+    ]
+
+    report = score_rows(rows, questions, ledger)
+
+    assert report.by_arm["exemplar_raw"].n == 1
+    assert report.by_arm["fam_raw"].n == 1
 
 
 def test_scoring_rejects_incomplete_duplicate_or_empty_inputs():

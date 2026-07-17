@@ -121,3 +121,17 @@ evaluate_baselines.py        # Fair comparison: 1-NN vs soft k-NN vs FAM
 constrained_memory_sweep.py  # Capacity sweep: FAM vs matched k-NN at 1K–100K
 latency_bench.py             # CUDA-event latency profiling + 5K dip diagnosis
 ```
+
+## Agent Memory Evaluation
+
+The repository now includes a fixed-budget, five-arm harness for testing FAM as a provenance-preserving agent-memory index alongside constructive forgetting. It compares no memory, exact-vector retrieval, and FAM retrieval, with raw and governed variants receiving identical paired candidate IDs.
+
+See [Five-Arm Governed Memory Evaluation](docs/FIVE_ARM_MEMORY_EVAL.md) for the experiment design, trust boundary, metrics, normalized FactConsolidation format, and real-run readiness checklist.
+
+Offline plumbing check:
+
+```bash
+python -m harness.memory_eval.dry_run --output-dir /tmp/fam-memory-eval-dry-run
+```
+
+This command uses a deterministic hash encoder and rule consumer; its output is not benchmark evidence.

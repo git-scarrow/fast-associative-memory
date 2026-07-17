@@ -61,6 +61,24 @@ class Decision:
 
 
 DECISIONS: tuple[Decision, ...] = (
+    Decision(
+        "D-M1",
+        "Prototype-reduction margin",
+        "prototype_reduction_margin",
+        "rate",
+    ),
+    Decision(
+        "D-M2",
+        "Mechanism recall-loss bound",
+        "mechanism_recall_loss_bound",
+        "rate",
+    ),
+    Decision(
+        "D-M3",
+        "Minimum mechanism recall denominator",
+        "min_mechanism_recall_n",
+        "count",
+    ),
     Decision("D-1", "Stale-reduction margin", "stale_reduction_margin", "rate"),
     Decision("D-2", "Clean-answer-loss bound", "clean_answer_loss_bound", "rate"),
     Decision("D-3", "Current-adoption floor", "current_adoption_floor", "rate"),
@@ -75,15 +93,14 @@ DECISIONS: tuple[Decision, ...] = (
         "Scorer semantics",
         "scorer",
         "choice",
-        ("exact", "containment", "split", "exact-with-hygiene"),
-        {"exact-with-hygiene": ("slot_hygiene_bound",)},
+        ("exact",),
     ),
     Decision(
         "D-5",
         "Raw-arm truncation semantics",
         "raw_truncation",
         "choice",
-        ("break", "skip", "matched-arm"),
+        ("skip",),
     ),
     Decision(
         "D-6",
@@ -98,7 +115,7 @@ DECISIONS: tuple[Decision, ...] = (
         "Equivalence relation (ledger vs scorer)",
         "equivalence",
         "choice",
-        ("raw-with-invariant", "normalized"),
+        ("raw-with-invariant",),
     ),
     Decision("D-8a", "Minimum stale-eligible denominator", "min_stale_eligible_n", "count"),
     Decision("D-8b", "Minimum clean denominator", "min_clean_n", "count"),
@@ -107,14 +124,21 @@ DECISIONS: tuple[Decision, ...] = (
         "H1 denominator policy",
         "h1_denominator",
         "choice",
-        ("paired-complete", "fixed-full"),
+        ("fixed-full",),
     ),
     Decision(
         "D-10",
         "Primary family",
         "primary_family",
         "choice",
-        ("vector", "fam", "both"),
+        ("fam",),
+    ),
+    Decision(
+        "D-11",
+        "Fixed claim order",
+        "claim_order",
+        "choice",
+        ("fam-mechanism-then-application",),
     ),
 )
 
@@ -269,10 +293,13 @@ GO = "governed-memory-GO"
 NO_GO_NO_EFFECT = "NO-GO — no effect"
 NO_GO_SUPPRESSION = "NO-GO — suppression"
 NO_GO_COLLATERAL = "NO-GO — collateral"
+NO_GO_FAM_MECHANISM = "NO-GO — FAM mechanism"
 
 VERDICTS: frozenset[str] = frozenset(
     {BLOCKED, NOT_EVALUABLE, GO, NO_GO_NO_EFFECT, NO_GO_SUPPRESSION, NO_GO_COLLATERAL}
 )
+
+EXPERIMENT_VERDICTS: frozenset[str] = VERDICTS | {NO_GO_FAM_MECHANISM}
 
 
 def verdict(
@@ -302,6 +329,32 @@ def verdict(
     if not h2:
         return NO_GO_COLLATERAL
     return GO
+
+
+def experiment_verdict(
+    *,
+    integrity_ok: bool,
+    evaluable: bool,
+    mechanism_ok: bool,
+    application_h1: bool,
+    application_h2: bool,
+    application_h3: bool,
+    mechanism_active: bool = True,
+) -> str:
+    """Gate application evidence behind an active, passing FAM mechanism."""
+    if not integrity_ok:
+        return BLOCKED
+    if not evaluable or not mechanism_active:
+        return NOT_EVALUABLE
+    if not mechanism_ok:
+        return NO_GO_FAM_MECHANISM
+    return verdict(
+        integrity_ok=True,
+        evaluable=True,
+        h1=application_h1,
+        h2=application_h2,
+        h3=application_h3,
+    )
 
 
 # --------------------------------------------------------------------------

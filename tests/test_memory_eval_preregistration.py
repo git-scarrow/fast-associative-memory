@@ -1,11 +1,8 @@
 """Protocol tests for the pre-registration memo.
 
-These tests are the EVIDENCE for the memo's open decisions, not an
-adjudication of them. Where a decision is unresolved (D-4, D-9), the tests
-pin what each candidate option actually does on adversarial input so the
-choice is made against measured behaviour rather than assertion. Revision 1
-of the memo recommended a scorer on reasoning that turned out to be wrong;
-the rule now is that no option is recommended unless a test here shows why.
+These tests are the EVIDENCE for the memo's registered decisions, not an
+adjudication of their eventual numeric values. Historical adversarial cases
+remain here to pin why revision 3 closes scorer and denominator semantics.
 """
 
 import inspect
@@ -23,17 +20,20 @@ from harness.memory_eval.preregistration import (
     DECISION_FIELDS,
     DECISIONS,
     DERIVED_FIELDS,
+    EXPERIMENT_VERDICTS,
     GO,
     NOT_EVALUABLE,
     NO_GO_COLLATERAL,
     NO_GO_NO_EFFECT,
     NO_GO_SUPPRESSION,
+    NO_GO_FAM_MECHANISM,
     SHAPE_PROBE_FIELDS,
     ShapeProbe,
     VERDICTS,
     h1_passes,
     h2_passes,
     h3_passes,
+    experiment_verdict,
     max_allowed_losses,
     min_required_margin,
     min_required_successes,
@@ -99,18 +99,22 @@ def _complete_registration(**overrides):
     authority. The memo's sentinels remain the only registration."""
     base = {
         "memo_sha256": "0" * 64,
+        "prototype_reduction_margin": 0.1,
+        "mechanism_recall_loss_bound": 0.1,
+        "min_mechanism_recall_n": 40,
+        "claim_order": "fam-mechanism-then-application",
         "stale_reduction_margin": 0.1,
         "clean_answer_loss_bound": 0.1,
         "current_adoption_floor": 0.5,
         "abstention_bound": None,
         "scorer": "exact",
-        "raw_truncation": "break",
+        "raw_truncation": "skip",
         "contested_disposition": "exploratory",
         "equivalence": "raw-with-invariant",
         "min_stale_eligible_n": 40,
         "min_clean_n": 40,
-        "h1_denominator": "paired-complete",
-        "primary_family": "vector",
+        "h1_denominator": "fixed-full",
+        "primary_family": "fam",
     }
     base.update(overrides)
     return base
@@ -138,8 +142,11 @@ def test_every_decision_has_a_unique_id_field_and_validation_rule():
 
 def test_memo_headings_and_sentinels_are_in_bijection_with_the_registry():
     text = MEMO.read_text(encoding="utf-8")
-    heading_ids = set(re.findall(r"^### (D-[0-9]+[a-z]?) —", text, re.MULTILINE))
-    sentinel_ids = set(re.findall(r"<<UNREGISTERED:(D-[0-9]+[a-z]?)>>", text))
+    decision_pattern = r"D-(?:M[1-3]|[0-9]+[a-z]?)"
+    heading_ids = set(
+        re.findall(rf"^### ({decision_pattern}) —", text, re.MULTILINE)
+    )
+    sentinel_ids = set(re.findall(rf"<<UNREGISTERED:({decision_pattern})>>", text))
     registry_ids = {d.id for d in DECISIONS}
 
     assert heading_ids == registry_ids, "memo D-headings drifted from the registry"
@@ -201,6 +208,23 @@ def test_abstention_bound_has_a_schema_field_and_null_is_an_explicit_choice():
     assert validate_registration(_complete_registration(abstention_bound=None)) == ()
     assert validate_registration(_complete_registration(abstention_bound=0.2)) == ()
     assert validate_registration(_complete_registration(abstention_bound="x"))
+
+
+def test_confirmatory_design_choices_are_closed_to_the_committed_protocol():
+    for field, invalid in (
+        ("scorer", "containment"),
+        ("raw_truncation", "break"),
+        ("equivalence", "normalized"),
+        ("h1_denominator", "paired-complete"),
+        ("primary_family", "both"),
+        ("claim_order", "application-then-mechanism"),
+    ):
+        assert validate_registration(_complete_registration(**{field: invalid}))
+
+
+def test_derived_integer_thresholds_are_not_human_decision_fields():
+    assert "prototype_reduction_min_count" not in DECISION_FIELDS
+    assert "mechanism_recall_loss_max_count" not in DECISION_FIELDS
 
 
 # --------------------------------------------------------------------------
@@ -270,16 +294,16 @@ def test_per_arm_denominators_diverge_under_asymmetric_malformed_output():
     ]
     answers = {
         "no_memory": (("abstain", None), ("abstain", None)),
-        "vector_raw": (("answer", "A"), ("answer", "X")),
+        "exemplar_raw": (("answer", "A"), ("answer", "X")),
         # Governed is malformed on exactly one stale-eligible question.
-        "vector_governed": (("malformed", None), ("answer", "Y")),
+        "exemplar_governed": (("malformed", None), ("answer", "Y")),
         "fam_raw": (("answer", "A"), ("answer", "X")),
         "fam_governed": (("answer", "B"), ("answer", "Y")),
     }
     report = score_rows(rows_for(questions, answers), questions, ledger)
 
-    raw = report.by_arm["vector_raw"].stale_adoption_rate
-    governed = report.by_arm["vector_governed"].stale_adoption_rate
+    raw = report.by_arm["exemplar_raw"].stale_adoption_rate
+    governed = report.by_arm["exemplar_governed"].stale_adoption_rate
     assert raw == Rate(value=1.0, n=2)
     assert governed == Rate(value=0.0, n=1)
     # The two rates are over DIFFERENT denominators: their difference is not a
@@ -309,8 +333,8 @@ def test_h1_denominator_policies_disagree_on_the_same_rows():
     ]
     answers = {
         "no_memory": (("abstain", None), ("abstain", None)),
-        "vector_raw": (("answer", "A"), ("answer", "X")),
-        "vector_governed": (("malformed", None), ("answer", "X")),
+        "exemplar_raw": (("answer", "A"), ("answer", "X")),
+        "exemplar_governed": (("malformed", None), ("answer", "X")),
         "fam_raw": (("answer", "A"), ("answer", "X")),
         "fam_governed": (("answer", "B"), ("answer", "Y")),
     }
@@ -319,7 +343,7 @@ def test_h1_denominator_policies_disagree_on_the_same_rows():
     stale_qs = [
         q.query_id
         for q in questions
-        if rows[(q.query_id, "vector_raw")].scope_class == "stale_eligible"
+        if rows[(q.query_id, "exemplar_raw")].scope_class == "stale_eligible"
     ]
 
     def adoptions(arm, query_ids):
@@ -329,28 +353,32 @@ def test_h1_denominator_policies_disagree_on_the_same_rows():
     paired = [
         q
         for q in stale_qs
-        if not rows[(q, "vector_raw")].malformed
-        and not rows[(q, "vector_governed")].malformed
+        if not rows[(q, "exemplar_raw")].malformed
+        and not rows[(q, "exemplar_governed")].malformed
     ]
     # fixed-full: every stale-eligible question, malformed counted as non-adoption.
     full = stale_qs
 
     assert len(paired) == 1 and len(full) == 2
-    paired_diff = adoptions("vector_raw", paired) - adoptions("vector_governed", paired)
-    full_diff = adoptions("vector_raw", full) - adoptions("vector_governed", full)
+    paired_diff = adoptions("exemplar_raw", paired) - adoptions(
+        "exemplar_governed", paired
+    )
+    full_diff = adoptions("exemplar_raw", full) - adoptions(
+        "exemplar_governed", full
+    )
     assert paired_diff == 0  # governed's surviving row also adopted stale
     assert full_diff == 1  # the malformed row reads as governed avoidance
 
     # Same rows, same arms, different registered policy, opposite H1 outcome.
     assert not h1_passes(
-        raw_adoptions=adoptions("vector_raw", paired),
-        governed_adoptions=adoptions("vector_governed", paired),
+        raw_adoptions=adoptions("exemplar_raw", paired),
+        governed_adoptions=adoptions("exemplar_governed", paired),
         n_paired=len(paired),
         margin=0.5,
     )
     assert h1_passes(
-        raw_adoptions=adoptions("vector_raw", full),
-        governed_adoptions=adoptions("vector_governed", full),
+        raw_adoptions=adoptions("exemplar_raw", full),
+        governed_adoptions=adoptions("exemplar_governed", full),
         n_paired=len(full),
         margin=0.5,
     )
@@ -479,6 +507,46 @@ def test_integrity_and_evaluability_outrank_every_value_gate():
         verdict(integrity_ok=True, evaluable=True, h1=False, h2=True, h3=True)
         == NO_GO_NO_EFFECT
     )
+
+
+def test_application_is_exploratory_when_mechanism_fails():
+    assert experiment_verdict(
+        integrity_ok=True,
+        evaluable=True,
+        mechanism_ok=False,
+        application_h1=True,
+        application_h2=True,
+        application_h3=True,
+    ) == NO_GO_FAM_MECHANISM
+
+
+def test_experiment_verdict_is_total_and_fixed_sequence():
+    seen = set()
+    for values in product([True, False], repeat=7):
+        result = experiment_verdict(
+            integrity_ok=values[0],
+            evaluable=values[1],
+            mechanism_ok=values[2],
+            application_h1=values[3],
+            application_h2=values[4],
+            application_h3=values[5],
+            mechanism_active=values[6],
+        )
+        assert result in EXPERIMENT_VERDICTS
+        seen.add(result)
+    assert seen == EXPERIMENT_VERDICTS
+
+
+def test_live_fam_with_zero_merges_is_not_evaluable_rather_than_go():
+    assert experiment_verdict(
+        integrity_ok=True,
+        evaluable=True,
+        mechanism_ok=True,
+        application_h1=True,
+        application_h2=True,
+        application_h3=True,
+        mechanism_active=False,
+    ) == NOT_EVALUABLE
 
 
 # --------------------------------------------------------------------------

@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+import hashlib
+import json
+from math import isfinite
+from typing import Literal
 
 import torch
 import torch.nn.functional as F
@@ -14,6 +18,58 @@ from .models import MemoryRecord, RetrievedCandidate
 
 
 TensorLike = torch.Tensor | Sequence[float]
+
+
+@dataclass(frozen=True, slots=True)
+class CAMIndexSettings:
+    max_entries: int
+    prototype_k: int
+    vigilance: float
+    hebb_lr: float
+    key_lr: float
+    ema_beta: float
+    inference_temp: float
+    use_bfloat16: bool
+    adaptive_eviction: bool
+    use_lfu: bool
+
+    def __post_init__(self) -> None:
+        for name in ("max_entries", "prototype_k"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+                raise ValueError(f"{name} must be a positive integer")
+        for name in (
+            "vigilance",
+            "hebb_lr",
+            "key_lr",
+            "ema_beta",
+            "inference_temp",
+        ):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"{name} must be a finite number")
+            if not isfinite(value):
+                raise ValueError(f"{name} must be a finite number")
+        if not 0 <= self.vigilance <= 1:
+            raise ValueError("vigilance must be between 0 and 1")
+        if self.inference_temp <= 0:
+            raise ValueError("inference_temp must be positive")
+        for name in ("use_bfloat16", "adaptive_eviction", "use_lfu"):
+            if not isinstance(getattr(self, name), bool):
+                raise ValueError(f"{name} must be a boolean")
+
+
+@dataclass(frozen=True, slots=True)
+class IndexBuildAttestation:
+    mode: Literal["allocate-only", "condense"]
+    written: int
+    merged: int
+    allocated: int
+    dropped: int
+    evicted: int
+    prototype_count: int
+    key_drifted_merges: int
+    index_sha256: str
 
 
 def _as_vector(value: TensorLike, *, label: str) -> torch.Tensor:
@@ -85,70 +141,97 @@ class ExactVectorRetriever:
         )
 
 
-class FAMRetriever:
-    """FAM scope prototypes whose provenance maps back to ledger record IDs."""
+class _CAMRecordRetriever:
+    """Sequential CAM index whose prototypes retain authoritative provenance."""
 
     def __init__(
         self,
         records: Sequence[MemoryRecord],
         embeddings: Mapping[str, TensorLike],
         *,
-        prototype_k: int = 3,
-        max_entries: int | None = None,
+        settings: CAMIndexSettings,
+        mode: Literal["allocate-only", "condense"],
     ) -> None:
+        frozen_records = tuple(records)
+        if settings.max_entries != len(frozen_records):
+            raise ValueError(
+                f"max_entries {settings.max_entries} must equal record count "
+                f"{len(frozen_records)}"
+            )
         self.records, self._embeddings, self.dimension = _prepare_table(
-            records, embeddings
+            frozen_records, embeddings
         )
-        if not isinstance(prototype_k, int) or isinstance(prototype_k, bool) or prototype_k < 1:
-            raise ValueError("prototype_k must be positive")
-
-        grouped: dict[str, list[MemoryRecord]] = defaultdict(list)
-        for record in self.records:
-            grouped[record.scope].append(record)
         self._by_id = {record.record_id: record for record in self.records}
-        self._scope_labels = {
-            scope: label for label, scope in enumerate(sorted(grouped))
-        }
-        capacity = len(grouped) if max_entries is None else max_entries
-        if not isinstance(capacity, int) or isinstance(capacity, bool) or capacity < 1:
-            raise ValueError("max_entries must be positive")
+        self._scope_labels: dict[str, int] = {}
+        for record in self.records:
+            if record.scope not in self._scope_labels:
+                self._scope_labels[record.scope] = len(self._scope_labels)
 
         self.cam = ContinuousCAM(
             key_dim=self.dimension,
-            value_dim=len(grouped),
-            max_entries=capacity,
-            vigilance=-1.0,
-            immutable_keys=True,
-            adaptive_eviction=False,
-            inference_k=min(prototype_k, capacity),
+            value_dim=len(self._scope_labels),
+            max_entries=settings.max_entries,
+            vigilance=settings.vigilance,
+            hebb_lr=settings.hebb_lr,
+            key_lr=settings.key_lr,
+            ema_beta=settings.ema_beta,
+            inference_temp=settings.inference_temp,
+            use_bfloat16=settings.use_bfloat16,
+            adaptive_eviction=settings.adaptive_eviction,
+            use_lfu=settings.use_lfu,
+            immutable_keys=(mode == "allocate-only"),
+            inference_k=min(settings.prototype_k, settings.max_entries),
             track_provenance=True,
         )
-        for scope in sorted(grouped):
-            members = sorted(grouped[scope], key=lambda record: record.record_id)
-            centroid = torch.stack(
-                [F.normalize(self._embeddings[item.record_id], dim=0) for item in members]
-            ).mean(dim=0)
-            if float(torch.linalg.vector_norm(centroid)) == 0.0:
-                centroid = self._embeddings[members[0].record_id]
-            centroid = F.normalize(centroid, dim=0).unsqueeze(0)
-            label = self._scope_labels[scope]
-            target = F.one_hot(
-                torch.tensor([label]), num_classes=len(grouped)
-            ).float()
-            for member in members:
-                self.cam.learn_local(centroid, target, record_ids=[member.record_id])
 
-        # A max_entries below the scope count silently LRU-evicts whole scopes
-        # during construction: their provenance is cleared and their records
-        # become permanently unretrievable in the fam arms only, with no error.
-        # A sealed fam_max_entries that quietly drops scopes attests nothing.
-        if self.prototype_count != len(grouped):
-            raise ValueError(
-                f"fam capacity {capacity} holds {self.prototype_count} of "
-                f"{len(grouped)} scopes; {len(grouped) - self.prototype_count} "
-                "were evicted during construction and their records are "
-                "unretrievable"
+        totals = {
+            name: 0
+            for name in ("written", "merged", "allocated", "dropped", "evicted")
+        }
+        key_drifted_merges = 0
+        for record in self.records:
+            before_keys = (
+                self.cam.keys[self.cam.occupied].detach().clone()
+                if mode == "condense"
+                else None
             )
+            query = self._embeddings[record.record_id].unsqueeze(0)
+            label = self._scope_labels[record.scope]
+            target = F.one_hot(
+                torch.tensor([label]), num_classes=len(self._scope_labels)
+            ).float()
+            self.cam.learn_local(
+                query,
+                target,
+                record_ids=[record.record_id],
+                write_mode=mode,
+            )
+            stats = self.cam.last_write_stats
+            for name in totals:
+                totals[name] += int(stats[name])
+            if mode == "condense":
+                after_keys = self.cam.keys[self.cam.occupied].detach().clone()
+                assert before_keys is not None
+                if stats["merged"] and not torch.equal(before_keys, after_keys):
+                    key_drifted_merges += 1
+
+        if totals["dropped"] or totals["evicted"]:
+            raise ValueError(
+                "CAM index build lost writes: "
+                f"dropped={totals['dropped']}, evicted={totals['evicted']}"
+            )
+        index_sha256 = self._validate_provenance_and_hash()
+        self.attestation = IndexBuildAttestation(
+            mode=mode,
+            written=totals["written"],
+            merged=totals["merged"],
+            allocated=totals["allocated"],
+            dropped=totals["dropped"],
+            evicted=totals["evicted"],
+            prototype_count=self.prototype_count,
+            key_drifted_merges=key_drifted_merges,
+            index_sha256=index_sha256,
+        )
 
     @property
     def prototype_count(self) -> int:
@@ -161,6 +244,51 @@ class FAMRetriever:
                 if self._by_id[str(record_id)].scope == scope:
                     result.add(str(record_id))
         return result
+
+    def _validate_provenance_and_hash(self) -> str:
+        expected_ids = set(self._by_id)
+        observed_ids: set[str] = set()
+        rows: list[dict[str, object]] = []
+        for slot in self.cam.occupied.nonzero(as_tuple=True)[0].tolist():
+            provenance = {str(record_id) for record_id in self.cam.records_for(slot)}
+            if not provenance:
+                raise ValueError(f"occupied CAM slot {slot} has empty provenance")
+            unknown = provenance - expected_ids
+            if unknown:
+                raise ValueError(
+                    f"CAM provenance contains unknown record IDs: {sorted(unknown)}"
+                )
+            duplicate = provenance & observed_ids
+            if duplicate:
+                raise ValueError(
+                    f"CAM provenance duplicates record IDs: {sorted(duplicate)}"
+                )
+            scopes = {self._by_id[record_id].scope for record_id in provenance}
+            if len(scopes) != 1:
+                raise ValueError(f"CAM slot {slot} mixes record scopes")
+            scope = next(iter(scopes))
+            semantic_label = int(self.cam.slot_labels[slot].item())
+            if semantic_label != self._scope_labels[scope]:
+                raise ValueError(f"CAM slot {slot} has a cross-scope semantic label")
+            observed_ids.update(provenance)
+            rows.append(
+                {
+                    "slot": slot,
+                    "key": self.cam.keys[slot].detach().float().cpu().tolist(),
+                    "semantic_label": semantic_label,
+                    "provenance_ids": sorted(provenance),
+                }
+            )
+        if observed_ids != expected_ids:
+            missing = sorted(expected_ids - observed_ids)
+            extra = sorted(observed_ids - expected_ids)
+            raise ValueError(
+                f"CAM provenance does not match inputs: missing={missing}, extra={extra}"
+            )
+        canonical = json.dumps(
+            rows, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+        return hashlib.sha256(canonical).hexdigest()
 
     def query(self, query_embedding: TensorLike, k: int) -> tuple[RetrievedCandidate, ...]:
         query = _validated_query(query_embedding, self.dimension, k)
@@ -183,6 +311,32 @@ class FAMRetriever:
             RetrievedCandidate(record_id, score, rank)
             for rank, (record_id, score) in enumerate(ranked, start=1)
         )
+
+
+class ExemplarCAMRetriever(_CAMRecordRetriever):
+    """Matched CAM control that stores every record as an immutable exemplar."""
+
+    def __init__(
+        self,
+        records: Sequence[MemoryRecord],
+        embeddings: Mapping[str, TensorLike],
+        *,
+        settings: CAMIndexSettings,
+    ) -> None:
+        super().__init__(records, embeddings, settings=settings, mode="allocate-only")
+
+
+class FAMRetriever(_CAMRecordRetriever):
+    """Live FAM condensation whose provenance maps back to ledger record IDs."""
+
+    def __init__(
+        self,
+        records: Sequence[MemoryRecord],
+        embeddings: Mapping[str, TensorLike],
+        *,
+        settings: CAMIndexSettings,
+    ) -> None:
+        super().__init__(records, embeddings, settings=settings, mode="condense")
 
 
 def _validated_query(query_embedding: TensorLike, dimension: int, k: int) -> torch.Tensor:

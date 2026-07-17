@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 from math import ceil, floor
 
 from .ledger import MemoryLedger
@@ -133,14 +135,25 @@ def mechanism_passes(
     """Apply M1/M2 using their exact integer ceil/floor thresholds."""
     if record_n <= 0 or recall_n <= 0:
         raise ValueError("mechanism is not evaluable on an empty denominator")
-    if not 0 <= reduction_margin <= 1:
-        raise ValueError("reduction_margin must lie in [0, 1]")
-    if not 0 <= recall_loss_bound <= 1:
-        raise ValueError("recall_loss_bound must lie in [0, 1]")
+    exact_margin = _registered_rate(reduction_margin, "reduction_margin")
+    exact_bound = _registered_rate(recall_loss_bound, "recall_loss_bound")
     return (
-        reduction_count >= ceil(reduction_margin * record_n)
-        and recall_loss_count <= floor(recall_loss_bound * recall_n)
+        reduction_count >= ceil(exact_margin * record_n)
+        and recall_loss_count <= floor(exact_bound * recall_n)
     )
+
+
+def _registered_rate(value: float, field: str) -> Fraction:
+    """Recover the exact registered decimal represented by a JSON number."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, Decimal)):
+        raise ValueError(f"{field} must be a finite number in [0, 1]")
+    try:
+        decimal = Decimal(str(value))
+    except InvalidOperation as exc:
+        raise ValueError(f"{field} must be a finite number in [0, 1]") from exc
+    if not decimal.is_finite() or not Decimal(0) <= decimal <= Decimal(1):
+        raise ValueError(f"{field} must lie in [0, 1]")
+    return Fraction(decimal)
 
 
 __all__ = [

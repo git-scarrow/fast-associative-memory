@@ -86,6 +86,8 @@ E0 and F0 use the identical deterministic renderer and budget.
 `contested_disposition = <<UNREGISTERED:D-6>>`, either `exploratory` or `gated`.
 Selecting `gated` additionally requires `contested_rule` and `contested_bound`;
 otherwise contested counts and outcomes are reported but read by no value gate.
+The rule is exactly `abstain-correct` or `annotation-correct`; the bound is a
+finite numeric value in `[0, 1]`.
 
 ### D-7 — Equivalence relation (ledger vs scorer)
 
@@ -141,6 +143,8 @@ M1 threshold              = ceil(D-M1 * record_n)
 M2 threshold              = floor(D-M2 * recall_n)
 ```
 
+Threshold multiplication uses exact rational arithmetic recovered from the
+registered decimal text. It never multiplies binary floating-point values.
 The two integer thresholds are derived only while constructing the seal. They
 are recorded for audit but are not human registration choices.
 

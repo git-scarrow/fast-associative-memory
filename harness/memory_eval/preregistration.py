@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from math import ceil, floor
+from math import ceil, floor, isfinite
 from statistics import median
 from typing import Any, Callable, Literal
 
@@ -156,6 +156,10 @@ CONDITIONAL_FIELDS: frozenset[str] = frozenset(
     for field in fields
 )
 
+CONTESTED_RULES: frozenset[str] = frozenset(
+    {"abstain-correct", "annotation-correct"}
+)
+
 
 def validate_registration(registration: Mapping[str, Any]) -> tuple[str, ...]:
     """Return a tuple of human-readable errors; empty means registrable.
@@ -191,6 +195,23 @@ def validate_registration(registration: Mapping[str, Any]) -> tuple[str, ...]:
                         f"{decision.schema_field}={trigger!r}"
                     )
 
+    if registration.get("contested_disposition") == "gated":
+        if "contested_rule" in registration:
+            rule = registration["contested_rule"]
+            if not isinstance(rule, str):
+                errors.append("D-6: 'contested_rule' must be a string")
+            elif rule not in CONTESTED_RULES:
+                errors.append(
+                    "D-6: 'contested_rule'="
+                    f"{rule!r} not one of {sorted(CONTESTED_RULES)}"
+                )
+        if "contested_bound" in registration:
+            errors.extend(
+                _validate_named_rate(
+                    "D-6", "contested_bound", registration["contested_bound"]
+                )
+            )
+
     unknown = seen - DECISION_FIELDS - DERIVED_FIELDS - CONDITIONAL_FIELDS
     for field in sorted(unknown):
         errors.append(f"unknown registration field: {field!r}")
@@ -221,11 +242,16 @@ def _validate_value(decision: Decision, value: Any) -> list[str]:
 
 
 def _validate_rate(decision: Decision, value: Any) -> list[str]:
-    field = decision.schema_field
+    return _validate_named_rate(decision.id, decision.schema_field, value)
+
+
+def _validate_named_rate(decision_id: str, field: str, value: Any) -> list[str]:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return [f"{decision.id}: {field!r} must be a number"]
+        return [f"{decision_id}: {field!r} must be a number"]
+    if not isfinite(float(value)):
+        return [f"{decision_id}: {field!r} must be finite"]
     if not 0.0 <= float(value) <= 1.0:
-        return [f"{decision.id}: {field!r} must lie in [0, 1]"]
+        return [f"{decision_id}: {field!r} must lie in [0, 1]"]
     return []
 
 
@@ -339,7 +365,7 @@ def experiment_verdict(
     application_h1: bool,
     application_h2: bool,
     application_h3: bool,
-    mechanism_active: bool = True,
+    mechanism_active: bool,
 ) -> str:
     """Gate application evidence behind an active, passing FAM mechanism."""
     if not integrity_ok:

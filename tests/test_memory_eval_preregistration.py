@@ -201,6 +201,52 @@ def test_conditional_fields_keep_a_choice_from_being_inert():
     assert validate_registration(_complete_registration()) == ()
 
 
+def test_gated_contested_rule_rejects_unknown_literal():
+    errors = validate_registration(
+        _complete_registration(
+            contested_disposition="gated",
+            contested_rule="majority-vote",
+            contested_bound=0.1,
+        )
+    )
+    assert any("contested_rule" in error and "not one of" in error for error in errors)
+
+
+def test_gated_contested_rule_rejects_wrong_type():
+    errors = validate_registration(
+        _complete_registration(
+            contested_disposition="gated",
+            contested_rule=1,
+            contested_bound=0.1,
+        )
+    )
+    assert any("contested_rule" in error and "string" in error for error in errors)
+
+
+@pytest.mark.parametrize("value", ["0.1", None, True])
+def test_gated_contested_bound_rejects_wrong_type(value):
+    errors = validate_registration(
+        _complete_registration(
+            contested_disposition="gated",
+            contested_rule="abstain-correct",
+            contested_bound=value,
+        )
+    )
+    assert any("contested_bound" in error and "number" in error for error in errors)
+
+
+@pytest.mark.parametrize("value", [-0.1, 1.1, float("inf"), float("-inf"), float("nan")])
+def test_gated_contested_bound_rejects_out_of_range_or_nonfinite(value):
+    errors = validate_registration(
+        _complete_registration(
+            contested_disposition="gated",
+            contested_rule="annotation-correct",
+            contested_bound=value,
+        )
+    )
+    assert any("contested_bound" in error for error in errors)
+
+
 def test_abstention_bound_has_a_schema_field_and_null_is_an_explicit_choice():
     """Revision 1's floor-vs-abstention sub-decision had a sentinel but no
     field, so it could never be registered."""
@@ -514,10 +560,23 @@ def test_application_is_exploratory_when_mechanism_fails():
         integrity_ok=True,
         evaluable=True,
         mechanism_ok=False,
+        mechanism_active=True,
         application_h1=True,
         application_h2=True,
         application_h3=True,
     ) == NO_GO_FAM_MECHANISM
+
+
+def test_experiment_verdict_requires_explicit_mechanism_activity_evidence():
+    with pytest.raises(TypeError, match="mechanism_active"):
+        experiment_verdict(
+            integrity_ok=True,
+            evaluable=True,
+            mechanism_ok=True,
+            application_h1=True,
+            application_h2=True,
+            application_h3=True,
+        )
 
 
 def test_experiment_verdict_is_total_and_fixed_sequence():

@@ -154,6 +154,25 @@ def test_mechanism_gate_uses_exact_integer_thresholds():
         recall_n=10,
         recall_loss_bound=0.1,
     )
+
+
+def test_mechanism_gate_uses_registered_decimal_text_without_float_drift():
+    assert mechanism_passes(
+        reduction_count=7,
+        record_n=50,
+        reduction_margin=0.14,
+        recall_loss_count=0,
+        recall_n=50,
+        recall_loss_bound=0.0,
+    )
+    assert mechanism_passes(
+        reduction_count=0,
+        record_n=50,
+        reduction_margin=0.0,
+        recall_loss_count=29,
+        recall_n=50,
+        recall_loss_bound=0.58,
+    )
     assert not mechanism_passes(
         reduction_count=2,
         record_n=10,

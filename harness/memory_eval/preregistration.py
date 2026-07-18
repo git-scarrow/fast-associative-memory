@@ -248,9 +248,13 @@ def _validate_rate(decision: Decision, value: Any) -> list[str]:
 def _validate_named_rate(decision_id: str, field: str, value: Any) -> list[str]:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return [f"{decision_id}: {field!r} must be a number"]
-    if not isfinite(float(value)):
+    if isinstance(value, int):
+        if not 0 <= value <= 1:
+            return [f"{decision_id}: {field!r} must lie in [0, 1]"]
+        return []
+    if not isfinite(value):
         return [f"{decision_id}: {field!r} must be finite"]
-    if not 0.0 <= float(value) <= 1.0:
+    if not 0.0 <= value <= 1.0:
         return [f"{decision_id}: {field!r} must lie in [0, 1]"]
     return []
 

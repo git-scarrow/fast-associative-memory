@@ -247,6 +247,19 @@ def test_gated_contested_bound_rejects_out_of_range_or_nonfinite(value):
     assert any("contested_bound" in error for error in errors)
 
 
+def test_gated_contested_bound_rejects_huge_integer_without_raising():
+    errors = validate_registration(
+        _complete_registration(
+            contested_disposition="gated",
+            contested_rule="abstain-correct",
+            contested_bound=10**10000,
+        )
+    )
+    assert any(
+        "contested_bound" in error and "[0, 1]" in error for error in errors
+    )
+
+
 def test_abstention_bound_has_a_schema_field_and_null_is_an_explicit_choice():
     """Revision 1's floor-vs-abstention sub-decision had a sentinel but no
     field, so it could never be registered."""

@@ -3,12 +3,14 @@ from dataclasses import fields
 import pytest
 import torch
 
+from associative_core import ContinuousCAM
 from harness.memory_eval.models import MemoryRecord
 from harness.memory_eval.retrievers import (
     CAMIndexSettings,
     ExactVectorRetriever,
     ExemplarCAMRetriever,
     FAMRetriever,
+    _HarnessWriteCAM,
 )
 
 
@@ -140,13 +142,129 @@ def test_below_vigilance_same_scope_allocates_second_fam_prototype():
     assert retriever.prototype_count == 2
 
 
-def test_allocate_only_control_matches_envelope_but_never_merges():
+def test_allocate_only_identical_same_scope_rows_remain_immutable_exemplars():
     records = [record("a", "scope"), record("b", "scope", serial=1)]
-    embeddings = {"a": [1.0, 0.0], "b": [0.9, 0.1]}
+    embeddings = {"a": [1.0, 0.0], "b": [1.0, 0.0]}
     retriever = ExemplarCAMRetriever(records, embeddings, settings=settings(max_entries=2))
     assert retriever.attestation.merged == 0
     assert retriever.attestation.allocated == 2
     assert retriever.prototype_count == 2
+    assert retriever.cam.immutable_keys is True
+    occupied = retriever.cam.occupied.nonzero(as_tuple=True)[0]
+    assert torch.equal(
+        retriever.cam.keys[occupied],
+        torch.tensor([[1.0, 0.0], [1.0, 0.0]]),
+    )
+
+
+def test_harness_adapter_rejects_unknown_write_mode_before_mutation():
+    cam = _HarnessWriteCAM(
+        key_dim=2,
+        value_dim=1,
+        max_entries=1,
+        track_provenance=True,
+    )
+    before_occupied = cam.occupied.clone()
+    before_stats = cam.last_write_stats.copy()
+
+    with pytest.raises(ValueError, match="write_mode"):
+        cam.ingest_one(
+            torch.tensor([[1.0, 0.0]]),
+            torch.tensor([[1.0]]),
+            record_id="a",
+            write_mode="merge-ish",
+        )
+
+    assert torch.equal(cam.occupied, before_occupied)
+    assert cam.last_write_stats == before_stats
+
+
+@pytest.mark.parametrize(
+    "corrupt",
+    [
+        {"written": 2, "merged": 2, "allocated": 0, "dropped": 0},
+        {"written": True, "merged": 0, "allocated": 1, "dropped": 0},
+        {"written": 1, "merged": 0.0, "allocated": 1, "dropped": 0},
+        {"written": 1, "merged": -1, "allocated": 1, "dropped": 1},
+        {
+            "written": 1,
+            "merged": 0,
+            "allocated": 1,
+            "dropped": 0,
+            "evicted": 0,
+        },
+        {"written": 1, "merged": 0, "allocated": 1},
+    ],
+    ids=(
+        "balanced-nonsingleton",
+        "boolean",
+        "float",
+        "negative",
+        "extra-key",
+        "missing-key",
+    ),
+)
+def test_cam_retriever_rejects_malformed_singleton_write_accounting(
+    monkeypatch, corrupt
+):
+    original_ingest = _HarnessWriteCAM.ingest_one
+
+    def corrupt_stats(self, *args, **kwargs):
+        original_ingest(self, *args, **kwargs)
+        self.last_write_stats = corrupt
+
+    monkeypatch.setattr(_HarnessWriteCAM, "ingest_one", corrupt_stats)
+
+    with pytest.raises(ValueError, match="write accounting"):
+        ExemplarCAMRetriever(
+            [record("a", "scope")],
+            {"a": [1.0, 0.0]},
+            settings=settings(max_entries=1),
+        )
+
+
+def test_cam_retriever_rejects_invalid_negative_local_eviction(monkeypatch):
+    original_ingest = _HarnessWriteCAM.ingest_one
+
+    def report_merge_after_allocation(self, *args, **kwargs):
+        original_ingest(self, *args, **kwargs)
+        self.last_write_stats = {
+            "written": 1,
+            "merged": 1,
+            "allocated": 0,
+            "dropped": 0,
+        }
+
+    monkeypatch.setattr(_HarnessWriteCAM, "ingest_one", report_merge_after_allocation)
+
+    with pytest.raises(ValueError, match="local eviction"):
+        ExemplarCAMRetriever(
+            [record("a", "scope")],
+            {"a": [1.0, 0.0]},
+            settings=settings(max_entries=1),
+        )
+
+
+def test_cam_retriever_rejects_nonzero_local_eviction_immediately(monkeypatch):
+    original_ingest = _HarnessWriteCAM.ingest_one
+    calls = 0
+
+    def hide_allocation(self, *args, **kwargs):
+        nonlocal calls
+        calls += 1
+        original_ingest(self, *args, **kwargs)
+        if calls == 1:
+            self.occupied.fill_(False)
+
+    monkeypatch.setattr(_HarnessWriteCAM, "ingest_one", hide_allocation)
+
+    with pytest.raises(ValueError, match="evicted=1"):
+        ExemplarCAMRetriever(
+            [record("a", "scope"), record("b", "scope", serial=1)],
+            {"a": [1.0, 0.0], "b": [0.0, 1.0]},
+            settings=settings(max_entries=2),
+        )
+    assert calls == 1
 
 
 def test_cam_retriever_rejects_capacity_that_could_evict():
@@ -167,6 +285,10 @@ def test_cam_retriever_reranks_authoritative_records_not_blended_values():
 
     exemplar = ExemplarCAMRetriever(records, embeddings, settings=settings(max_entries=2))
     fam = FAMRetriever(records, embeddings, settings=settings(max_entries=2))
+
+    assert type(exemplar.cam) is type(fam.cam) is _HarnessWriteCAM
+    assert exemplar.cam.forward.__func__ is ContinuousCAM.forward
+    assert fam.cam.forward.__func__ is ContinuousCAM.forward
 
     exemplar_found = exemplar.query([0.9, 0.1], k=1)
     fam_found = fam.query([0.9, 0.1], k=1)
@@ -189,6 +311,7 @@ def test_index_hash_is_deterministic_and_commits_to_record_order():
     identical = FAMRetriever(ordered, embeddings, settings=settings(max_entries=2))
     reversed_build = FAMRetriever(reordered, embeddings, settings=settings(max_entries=2))
 
+    assert first.attestation == identical.attestation
     assert first.attestation.index_sha256 == identical.attestation.index_sha256
     assert first.attestation.index_sha256 != reversed_build.attestation.index_sha256
 

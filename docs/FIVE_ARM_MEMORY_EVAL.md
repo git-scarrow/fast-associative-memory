@@ -22,6 +22,8 @@ The fixed claim order is mechanism first, application second. E0 versus F0 tests
 
 The registered v1 treatment identity is exact: vigilance `0.85`, Hebbian learning rate `0.1`, key learning rate `0.05`, EMA beta `0.05`, inference temperature `0.05`, float32 (`use_bfloat16 = false`), adaptive eviction off, and LFU on. Dynamic vigilance, retrieval floor/truncation, NSTP, and sleep are explicitly disabled; ingest order and the two write modes are fixed. `candidate_k` and `cam_prototype_k` remain mandatory D-M4/D-M5 human choices rather than fixed values.
 
+`write_mode` is a harness-local experimental control, not a deployed-engine API. A private `harness.memory_eval` subclass delegates each singleton write to the unchanged `ContinuousCAM.learn_local` while temporarily overriding only write-time nearest-prototype selection. In `condense` mode it considers occupied prototypes with the incoming scope label before applying static vigilance; in `allocate-only` mode it presents no write-time hit and therefore uses the core's ordinary allocation path. Query-time `forward(..., trace=True)` is inherited unchanged. The deployed `associative_core.py` remains byte-frozen, including its four-field `last_write_stats`; the harness derives eviction counts from each singleton write's occupancy delta.
+
 Exact-vector retrieval remains a consumer-free exploratory ceiling. It is useful for diagnosing retrieval headroom, but it changes the representation, query path, and capacity semantics, so it is not a matched mechanism control and is never a sixth consumer arm.
 
 ## Why the agent harness fits the memory model
@@ -30,7 +32,7 @@ The fit depends on a strict ownership boundary:
 
 1. The append-only ledger owns immutable text, values, serials, and source identity.
 2. Lifecycle resolution labels records as current, superseded, or unresolved forks. Constructive forgetting changes what is asserted; it does not erase history.
-3. E0 and F0 share the same CAM capacity, ingestion order, query path, provenance expansion, and exact record-embedding rerank. E0 allocates every write; F0 may condense above-vigilance same-scope writes. On this fixed static-vigilance path, F0 selects the nearest occupied prototype with the matching scope label before applying vigilance, so a closer cross-scope key cannot shield a valid merge.
+3. E0 and F0 share the same harness-local CAM adapter, storage, capacity, ingestion order, query path, provenance expansion, and exact record-embedding rerank. E0 allocates every write; F0 may condense above-vigilance same-scope writes. On this fixed static-vigilance ingest path, the adapter selects the nearest occupied prototype with the matching scope label before applying vigilance, so a closer cross-scope key cannot shield a valid merge.
 4. FAM stores the record IDs that formed each prototype as provenance.
 5. After either CAM retrieves prototypes, original record embeddings rerank the recovered ledger IDs. The consumer only sees ledger payloads.
 

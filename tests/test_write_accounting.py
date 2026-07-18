@@ -10,7 +10,6 @@ allocating, so an occupancy-delta would mislabel allocations as merges.
 """
 import torch
 import torch.nn.functional as F
-import pytest
 
 from associative_core import ContinuousCAM
 from dynamic_vigilance import DynamicVigilance
@@ -90,24 +89,3 @@ def test_allocations_counted_under_saturation():
     assert ws["allocated"] > 0 or ws["dropped"] > 0
     proxy_merged = ws["written"] - occ_delta  # the old, broken proxy
     assert proxy_merged != ws["merged"], "this scenario must expose the proxy bug"
-
-
-def test_write_accounting_reports_slot_reuse_as_eviction():
-    cam = ContinuousCAM(
-        key_dim=2, value_dim=2, max_entries=1,
-        adaptive_eviction=False, use_lfu=False,
-        track_provenance=True,
-    )
-    cam.learn_local(torch.tensor([[1.0, 0.0]]), torch.tensor([[1.0, 0.0]]), record_ids=["old"])
-    cam.learn_local(
-        torch.tensor([[0.0, 1.0]]), torch.tensor([[0.0, 1.0]]),
-        record_ids=["new"], write_mode="allocate-only",
-    )
-    assert cam.last_write_stats["evicted"] == 1
-    assert cam.records_for(0) == {"new"}
-
-
-def test_learn_local_rejects_unknown_write_mode():
-    cam = ContinuousCAM(key_dim=2, value_dim=1)
-    with pytest.raises(ValueError, match="write_mode"):
-        cam.learn_local(torch.tensor([[1.0, 0.0]]), torch.tensor([[1.0]]), write_mode="merge-ish")

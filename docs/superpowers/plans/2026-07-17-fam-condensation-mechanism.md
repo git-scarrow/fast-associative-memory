@@ -658,6 +658,27 @@ git add harness/memory_eval/dry_run.py docs/FIVE_ARM_MEMORY_EVAL.md README.md te
 git commit -m "docs: document FAM-first memory experiment"
 ```
 
+## Compatibility amendment — Task 7
+
+Full-repository verification after Tasks 1-6 established that
+`associative_core.py` is a byte-frozen deployed-engine contract. This amendment
+supersedes Task 1's prescription to add `write_mode` and eviction accounting to
+`ContinuousCAM.learn_local`, and Task 2's prescription to consume that extended
+core API. The earlier RED/GREEN chronology above is retained as the historical
+implementation record; its core changes were subsequently reverted to the
+deployed bytes at commit `60abd33`.
+
+The approved treatment semantics now live entirely in a private
+`harness.memory_eval.retrievers` adapter. It accepts exactly one record and a
+validated `write_mode` in `{"allocate-only", "condense"}`. During static-
+vigilance ingest only, it overrides nearest selection: `condense` searches only
+occupied prototypes with the incoming scope label, and `allocate-only` forces
+the ordinary allocation path. It delegates all mutation to the unchanged core,
+inherits `forward(..., trace=True)` without override, and computes eviction
+attestation locally as `allocated - max(0, occupied_after - occupied_before)`.
+The core's four-field `last_write_stats` contract and all deployed query
+semantics remain unchanged.
+
 ## Phase B boundary
 
 Phase A ends with a sealed, deterministic synthetic experiment and no benchmark claim. A separate implementation plan must cover the official parquet transformer and reconciliation (G-I6), complete encoder/consumer/code artifact rollups, outcome-incapable real-corpus shape probing, human numeric registration, scoring-host preflight, and the single authorized real execution. The authoritative dataset checked during planning has eight Conflict Resolution rows; `factconsolidation_sh_{6k,32k,64k,262k}` each contains one numbered fact context plus 100 questions, answer lists, and `qa_pair_ids`. No Phase A code may guess entity/relation scopes from those natural-language facts.

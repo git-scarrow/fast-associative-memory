@@ -80,23 +80,6 @@ class TestEnabled:
 
 
 class TestAccumulateOnMerge:
-    def test_allocate_only_keeps_identical_same_class_writes_as_exemplars(self):
-        cam = ContinuousCAM(
-            key_dim=2, value_dim=1, max_entries=2,
-            vigilance=0.0, immutable_keys=False,
-            adaptive_eviction=False, use_lfu=True,
-            track_provenance=True,
-        )
-        key = torch.tensor([[1.0, 0.0]])
-        target = torch.tensor([[1.0]])
-        cam.learn_local(key, target, record_ids=["a"], write_mode="allocate-only")
-        cam.learn_local(key, target, record_ids=["b"], write_mode="allocate-only")
-        assert int(cam.occupied.sum()) == 2
-        assert cam.last_write_stats == {
-            "written": 1, "merged": 0, "allocated": 1,
-            "dropped": 0, "evicted": 0,
-        }
-
     def test_same_slot_hit_unions(self):
         """A same-class hit merges the new source id into the slot's set."""
         cam = ContinuousCAM(key_dim=8, value_dim=4, max_entries=16,

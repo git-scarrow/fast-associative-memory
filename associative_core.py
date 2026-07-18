@@ -11,9 +11,7 @@ import time
 
 from collections.abc import Hashable
 from dataclasses import dataclass
-from typing import Literal, Union, Tuple
-
-WriteMode = Literal["condense", "allocate-only"]
+from typing import Union, Tuple
 
 @dataclass
 class RetrievalTrace:
@@ -76,10 +74,8 @@ class ContinuousCAM(nn.Module):
         #   merged    = same-class hits absorbed into existing prototypes (EMA)
         #   allocated = misses that obtained a slot (fresh OR reused-via-eviction)
         #   dropped   = misses that could not be allocated (capacity exhausted)
-        #   evicted   = allocations that reused an occupied slot
         self.last_write_stats = {"written": 0, "merged": 0,
-                                 "allocated": 0, "dropped": 0,
-                                 "evicted": 0}
+                                 "allocated": 0, "dropped": 0}
         self.hebb_lr = hebb_lr
         self.aging_time = aging_time
         self.flood_scale = flood_scale
@@ -653,7 +649,7 @@ class ContinuousCAM(nn.Module):
         return outputs, tr
 
     def learn_local(self, queries: torch.Tensor, targets: torch.Tensor,
-                    record_ids=None, *, write_mode: WriteMode = "condense"):
+                    record_ids=None):
         """Two-pathway learning with class-match check.
 
         1. Hit (sim >= vigilance, same class) → EMA update + key centroid drift
@@ -667,13 +663,7 @@ class ContinuousCAM(nn.Module):
                 a reused (evicted) slot's stale set is cleared first. Requires
                 ``track_provenance=True``; passing ids while provenance is off
                 raises ``ValueError`` so a caller never assumes capture happened.
-            write_mode: ``"condense"`` merges same-class hits into existing
-                prototypes; ``"allocate-only"`` forces every row to allocate a
-                distinct exemplar slot where capacity permits.
         """
-        if write_mode not in {"condense", "allocate-only"}:
-            raise ValueError(f"unsupported write_mode: {write_mode!r}")
-
         now = time.time()
         if record_ids is not None:
             if not self.track_provenance:
@@ -759,37 +749,7 @@ class ContinuousCAM(nn.Module):
             else:
                 within_class_sims = None
         else:
-            if self.occupied.any():
-                # Static vigilance is label-conditional: condensation seeks the
-                # nearest occupied prototype with the incoming semantic label,
-                # then applies the fixed threshold.  A geometrically closer
-                # cross-label prototype must not shield a valid same-label
-                # merge.  The dynamic-vigilance branch above intentionally
-                # retains its global-nearest competition and telemetry.
-                valid_idx = self.occupied.nonzero(as_tuple=True)[0]
-                keys_occ = self._keys_norm[valid_idx]
-                proto_labels = self.effective_slot_labels(valid_idx)
-                true_labels = self._labels_from_targets(targets)
-                q_norm = F.normalize(self._cast(queries), dim=-1)
-                sims_static = q_norm @ keys_occ.T
-                same_label = (
-                    proto_labels.unsqueeze(0) == true_labels.unsqueeze(1)
-                )
-                masked_sims = sims_static.masked_fill(~same_label, -float("inf"))
-                best_sims, best_locs = masked_sims.max(dim=1)
-                has_match = same_label.any(dim=1)
-                best_slots = torch.where(
-                    has_match,
-                    valid_idx[best_locs],
-                    torch.full_like(best_locs, -1),
-                )
-                best_sims = torch.where(
-                    has_match,
-                    best_sims.float(),
-                    torch.full_like(best_sims.float(), -1.0),
-                )
-            else:
-                best_slots, best_sims = self._get_nearest_batch(queries)
+            best_slots, best_sims = self._get_nearest_batch(queries)
             vigilance_thresholds = torch.full_like(best_sims, self.vigilance)
 
             # No sims_full was computed on this path; compute a dedicated
@@ -818,9 +778,6 @@ class ContinuousCAM(nn.Module):
                 hit_indices = hits.nonzero(as_tuple=True)[0]
                 hits[hit_indices[~same_class]] = False
 
-        if write_mode == "allocate-only":
-            hits = torch.zeros_like(hits)
-
         # Feed the unbiased within-class Δ estimate (leave-one-out same-class
         # cosine by TRUE label, computed above) to the live Δ floor policy
         # (issue #74). Not vigilance-gated, not self-matched — see _within_class_loo().
@@ -829,7 +786,6 @@ class ContinuousCAM(nn.Module):
 
         misses = ~hits
         n_allocated = 0  # set inside the misses block; literal slots obtained
-        n_evicted = 0
 
         # --- EMA update for same-class hits ---
         if hits.any():
@@ -896,11 +852,9 @@ class ContinuousCAM(nn.Module):
             miss_targets = targets[misses]
             n_miss = miss_queries.size(0)
 
-            free_before = int((~self.occupied).sum().item())
             new_slots = self._alloc_slots_batch(n_miss)
             n_alloc = len(new_slots)
             n_allocated = n_alloc  # may be < n_miss if capacity is exhausted
-            n_evicted = max(0, n_alloc - min(n_miss, free_before))
             self.keys[new_slots] = miss_queries[:n_alloc]
             self.values[new_slots] = miss_targets[:n_alloc]
             # Stamp semantic identity at write time (compat writer). Reused
@@ -961,7 +915,6 @@ class ContinuousCAM(nn.Module):
             "merged": n_merged,
             "allocated": int(n_allocated),
             "dropped": n_written - n_merged - int(n_allocated),
-            "evicted": int(n_evicted),
         }
 
     def sleep(self, anti_lr=0.3, max_epochs=10, collision_threshold=0.5,

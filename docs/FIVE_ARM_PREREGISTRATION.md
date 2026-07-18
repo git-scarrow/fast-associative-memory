@@ -37,6 +37,15 @@ explicitly disabled dynamic vigilance, retrieval policies, NSTP, and sleep,
 plus the fixed ingest/write modes. Only the two retrieval widths remain human
 choices (D-M4/D-M5).
 
+The fixed `write_mode` values are interpreted by a private
+`harness.memory_eval` singleton-ingest adapter, not by the deployed CAM API.
+For `condense`, the adapter restricts write-time nearest-prototype selection to
+the incoming scope label before applying static vigilance. For `allocate-only`,
+it forces the unchanged core down its ordinary allocation path. Both modes
+inherit the exact same deployed query path. `associative_core.py` remains
+byte-frozen, its `last_write_stats` contract remains four-field, and eviction
+attestation is derived locally from per-record occupancy deltas.
+
 ## 2. Decisions requiring registration
 
 Numeric registrations have no code defaults. The displayed values are keyed

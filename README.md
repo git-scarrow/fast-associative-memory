@@ -126,6 +126,8 @@ latency_bench.py             # CUDA-event latency profiling + 5K dip diagnosis
 
 The repository now includes a fixed-budget, five-arm harness with a FAM-first claim hierarchy. The primary mechanism comparison holds the CAM envelope fixed between an allocate-only exemplar control (E0) and live FAM condensation (F0), measuring prototype reduction and authoritative-current recall. Only after that mechanism passes does the secondary application comparison test constructive forgetting on identical FAM candidates (F0 versus F1). Exact-vector retrieval is a consumer-free exploratory ceiling, not a consumer arm.
 
+The two experimental write modes are implemented by a private `harness.memory_eval` adapter around the deployed CAM: `allocate-only` forces the ordinary allocation path, while `condense` selects the nearest occupied prototype with the incoming scope label before applying static vigilance. The shared query path remains the unchanged deployed `ContinuousCAM.forward`; `associative_core.py` is byte-frozen and exposes no experiment-specific `write_mode` API.
+
 See [Five-Arm FAM-First Memory Evaluation](docs/FIVE_ARM_MEMORY_EVAL.md) for the experiment design, trust boundary, metrics, normalized FactConsolidation format, and real-run readiness checklist.
 
 Offline plumbing check:

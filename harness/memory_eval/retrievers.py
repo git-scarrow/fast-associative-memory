@@ -18,6 +18,105 @@ from .models import MemoryRecord, RetrievedCandidate
 
 
 TensorLike = torch.Tensor | Sequence[float]
+WriteMode = Literal["allocate-only", "condense"]
+_SINGLETON_WRITE_STAT_KEYS = frozenset(
+    {"written", "merged", "allocated", "dropped"}
+)
+
+
+def _validate_singleton_write_stats(stats: object) -> dict[str, int]:
+    if not isinstance(stats, Mapping) or set(stats) != _SINGLETON_WRITE_STAT_KEYS:
+        raise ValueError(
+            "CAM singleton write accounting must have exactly the deployed "
+            "four-field key set"
+        )
+    if any(
+        not isinstance(stats[name], int) or isinstance(stats[name], bool)
+        for name in _SINGLETON_WRITE_STAT_KEYS
+    ):
+        raise ValueError("CAM singleton write accounting values must be integers")
+
+    validated = {name: stats[name] for name in _SINGLETON_WRITE_STAT_KEYS}
+    if validated["written"] != 1:
+        raise ValueError("CAM singleton write accounting must report written=1")
+    outcomes = tuple(validated[name] for name in ("merged", "allocated", "dropped"))
+    if any(value not in {0, 1} for value in outcomes) or sum(outcomes) != 1:
+        raise ValueError(
+            "CAM singleton write accounting must report exactly one binary outcome"
+        )
+    return validated
+
+
+class _HarnessWriteCAM(ContinuousCAM):
+    """Harness-only write adapter around the byte-frozen deployed CAM.
+
+    The override is active only while :meth:`ingest_one` delegates a singleton
+    static-vigilance write to ``ContinuousCAM.learn_local``.  Retrieval and all
+    other core behavior remain inherited unchanged.
+    """
+
+    _active_write_mode: WriteMode | None = None
+    _active_scope_label: int | None = None
+
+    def ingest_one(
+        self,
+        query: torch.Tensor,
+        target: torch.Tensor,
+        *,
+        record_id: object,
+        write_mode: WriteMode,
+    ) -> None:
+        if write_mode not in {"allocate-only", "condense"}:
+            raise ValueError(f"unsupported write_mode: {write_mode!r}")
+        if query.ndim != 2 or target.ndim != 2:
+            raise ValueError("ingest_one requires batched query and target tensors")
+        if query.size(0) != 1 or target.size(0) != 1:
+            raise ValueError("ingest_one requires exactly one record")
+        if self.dynamic_vigilance is not None:
+            raise ValueError("harness write modes require static vigilance")
+        if self._active_write_mode is not None:
+            raise RuntimeError("nested harness CAM ingest is not supported")
+
+        scope_label = int(self._labels_from_targets(target)[0].item())
+        self._active_write_mode = write_mode
+        self._active_scope_label = scope_label
+        try:
+            super().learn_local(query, target, record_ids=[record_id])
+        finally:
+            self._active_write_mode = None
+            self._active_scope_label = None
+
+    def _get_nearest_batch(
+        self, queries: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        mode = self._active_write_mode
+        if mode is None:
+            return super()._get_nearest_batch(queries)
+
+        if queries.size(0) != 1:
+            raise RuntimeError("harness write selection requires one query")
+        if mode == "allocate-only" or not self.occupied.any():
+            return (
+                torch.full((1,), -1, dtype=torch.long, device=queries.device),
+                torch.full((1,), -1.0, device=queries.device),
+            )
+
+        assert self._active_scope_label is not None
+        occupied = self.occupied.nonzero(as_tuple=True)[0]
+        same_scope = (
+            self.effective_slot_labels(occupied) == self._active_scope_label
+        )
+        candidates = occupied[same_scope]
+        if candidates.numel() == 0:
+            return (
+                torch.full((1,), -1, dtype=torch.long, device=queries.device),
+                torch.full((1,), -1.0, device=queries.device),
+            )
+
+        normalized_query = F.normalize(self._cast(queries), dim=-1)
+        similarities = normalized_query @ self._keys_norm[candidates].T
+        best_sims, best_locs = similarities.max(dim=1)
+        return candidates[best_locs], best_sims.float()
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,7 +266,7 @@ class _CAMRecordRetriever:
             if record.scope not in self._scope_labels:
                 self._scope_labels[record.scope] = len(self._scope_labels)
 
-        self.cam = ContinuousCAM(
+        self.cam = _HarnessWriteCAM(
             key_dim=self.dimension,
             value_dim=len(self._scope_labels),
             max_entries=settings.max_entries,
@@ -190,6 +289,7 @@ class _CAMRecordRetriever:
         }
         key_drifted_merges = 0
         for record in self.records:
+            occupied_before = int(self.cam.occupied.sum().item())
             before_keys = (
                 self.cam.keys[self.cam.occupied].detach().clone()
                 if mode == "condense"
@@ -200,15 +300,30 @@ class _CAMRecordRetriever:
             target = F.one_hot(
                 torch.tensor([label]), num_classes=len(self._scope_labels)
             ).float()
-            self.cam.learn_local(
+            self.cam.ingest_one(
                 query,
                 target,
-                record_ids=[record.record_id],
+                record_id=record.record_id,
                 write_mode=mode,
             )
-            stats = self.cam.last_write_stats
-            for name in totals:
-                totals[name] += int(stats[name])
+            stats = _validate_singleton_write_stats(self.cam.last_write_stats)
+            occupied_after = int(self.cam.occupied.sum().item())
+            local_evicted = stats["allocated"] - max(
+                0, occupied_after - occupied_before
+            )
+            if local_evicted not in {0, 1}:
+                raise ValueError(
+                    "CAM singleton local eviction accounting is invalid: "
+                    f"evicted={local_evicted}"
+                )
+            if local_evicted:
+                raise ValueError(
+                    "CAM index build lost writes: "
+                    f"dropped={stats['dropped']}, evicted={local_evicted}"
+                )
+            for name in ("written", "merged", "allocated", "dropped"):
+                totals[name] += stats[name]
+            totals["evicted"] += local_evicted
             if mode == "condense":
                 after_keys = self.cam.keys[self.cam.occupied].detach().clone()
                 assert before_keys is not None

@@ -87,7 +87,7 @@ E0 and F0 share:
 
 - the sealed record and query embeddings;
 - one-hot scope labels and their deterministic label map;
-- manifest record order and one write per `learn_local` call;
+- manifest record order and one write per harness-adapter ingest call;
 - `max_entries = sealed normalized record_count`, making capacity non-binding;
 - float32 keys and values with `use_bfloat16 = false`;
 - `adaptive_eviction = false` and `use_lfu = true` (both inert while capacity
@@ -107,10 +107,12 @@ must preserve the official source order, emit stable record IDs, and record its
 source-to-normalized reconciliation. The manifest fingerprints the ordered
 record list, so reordering invalidates the seal.
 
-Records are written individually. Batch ingestion is prohibited because
-`ContinuousCAM.learn_local` classifies every member of a batch against the
-pre-call state; a cold-start batch could allocate multiple records that a true
-online sequence would merge.
+Records are written individually through a private harness-local adapter.
+Batch ingestion is prohibited because `ContinuousCAM.learn_local` classifies
+every member of a batch against the pre-call state; a cold-start batch could
+allocate multiple records that a true online sequence would merge. The adapter
+delegates singleton writes to the byte-frozen deployed core and does not alter
+its query path.
 
 ### 4.2 F0: live FAM condensation
 
@@ -127,9 +129,12 @@ mechanism is:
 - sleep/replay disabled;
 - capacity non-binding, so any drop or eviction is invalid.
 
-On a same-scope nearest-prototype hit at or above vigilance, F0 applies the
-core's adaptive EMA key update and unions the record ID into that prototype's
-provenance. A miss or class collision allocates a new prototype.
+During F0 ingest, the harness adapter selects the nearest occupied prototype
+whose semantic label matches the incoming scope, then applies vigilance. On a
+hit at or above vigilance, the unchanged core applies its adaptive EMA key
+update and unions the record ID into that prototype's provenance. A miss
+allocates a new prototype. This same-scope selection is experimental harness
+behavior, not a change to `associative_core.py`.
 
 `hebb_lr` is sealed even though identical one-hot values make it effectively
 inert in this adapter and prototype values are never authoritative facts.
@@ -144,9 +149,11 @@ an explicit `write_mode = "allocate-only"`:
 - same-scope absorption and EMA key drift are disabled;
 - every prototype retains exactly one record ID as provenance.
 
-The implementation must use an explicit write mode rather than an out-of-range
+The harness adapter must use an explicit write mode rather than an out-of-range
 vigilance value, so the control cannot silently become condensation if core
-validation changes.
+validation changes. The deployed `associative_core.py` remains byte-frozen;
+its four-field write accounting is unchanged, and the adapter computes local
+evictions from singleton occupancy deltas.
 
 ### 4.4 Raw rendering
 

@@ -141,4 +141,3 @@
 - [x] Run the dry-run command and inspect its JSON summary.
 - [x] Run the broader test suite; record the known clean-worktree fixture failure separately if it remains the only failure.
 - [x] Inspect `git diff --check`, `git status --short`, and the complete diff to verify that no sealed PR13 file or user artifact changed.
-

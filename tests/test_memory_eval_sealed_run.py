@@ -1,54 +1,64 @@
-"""Gate G-I2: the seal binds the treatment, and binds it on the execution path.
+"""Manifest v3 seals and rebuilds the realized matched CAM treatment."""
 
-Each test below proves a specific gate CAN FAIL. A seal whose checks cannot
-fire attests nothing, which was the defect in the previous revision: the seal
-was real but advisory, and its only non-test caller was the dry run.
-"""
-
+from dataclasses import asdict
+from hashlib import sha256
 import json
+from pathlib import Path
 
 import pytest
-import torch
 
-from harness.memory_eval.dry_run import HashScopeEncoder, RuleConsumer
-from harness.memory_eval.manifest import (
-    load_manifest,
-    policy_sha256,
-    scoring_module_sha256,
-    seal_manifest,
-    verify_manifest,
-)
+from harness.memory_eval.dry_run import RuleConsumer
+from harness.memory_eval.manifest import load_manifest, seal_manifest
 from harness.memory_eval.models import MemoryQuestion, MemoryRecord, fact_scope
 from harness.memory_eval.preregistration import sentinel
-from harness.memory_eval.retrievers import FAMRetriever
-from harness.memory_eval.sealed_run import (
-    Check,
-    PreflightFailed,
-    build_sealed_run,
-    preflight,
-)
+from harness.memory_eval.retrievers import ExemplarCAMRetriever, FAMRetriever
+from harness.memory_eval.sealed_run import PreflightFailed, build_sealed_run, preflight
 
 
 POLICY = {"rules": [{"id": "R01", "action": "assert"}], "version": "test-policy-v1"}
-SETTINGS = {"candidate_k": 2, "fam_prototype_k": 1, "fam_max_entries": 2}
+SETTINGS = {
+    "candidate_k": 2,
+    "cam_max_entries": 3,
+    "cam_prototype_k": 1,
+    "cam_vigilance": 0.85,
+    "cam_hebb_lr": 0.1,
+    "cam_key_lr": 0.05,
+    "cam_ema_beta": 0.05,
+    "cam_inference_temp": 0.05,
+    "cam_use_bfloat16": False,
+    "cam_adaptive_eviction": False,
+    "cam_use_lfu": True,
+    "cam_dynamic_vigilance": None,
+    "cam_retrieval_floor": None,
+    "cam_retrieval_truncation": None,
+    "cam_nstp": None,
+    "cam_sleep": False,
+    "cam_ingest_order": "manifest-record-order",
+    "exemplar_write_mode": "allocate-only",
+    "fam_write_mode": "condense",
+}
 
 
-def registration(**overrides):
-    """Placeholder VALUES exercising the validator. Not proposed thresholds."""
+def registration(memo_path: Path, **overrides):
+    """Complete mechanism/application registration with real memo bytes."""
     base = {
-        "memo_sha256": "0" * 64,
+        "prototype_reduction_margin": 0.1,
+        "mechanism_recall_loss_bound": 0.1,
+        "min_mechanism_recall_n": 3,
         "stale_reduction_margin": 0.1,
         "clean_answer_loss_bound": 0.1,
         "current_adoption_floor": 0.5,
         "abstention_bound": None,
         "scorer": "exact",
-        "raw_truncation": "break",
+        "raw_truncation": "skip",
         "contested_disposition": "exploratory",
         "equivalence": "raw-with-invariant",
         "min_stale_eligible_n": 40,
         "min_clean_n": 40,
-        "h1_denominator": "paired-complete",
-        "primary_family": "vector",
+        "h1_denominator": "fixed-full",
+        "primary_family": "fam",
+        "claim_order": "fam-mechanism-then-application",
+        "memo_sha256": sha256(memo_path.read_bytes()).hexdigest(),
     }
     base.update(overrides)
     return base
@@ -58,37 +68,79 @@ def corpus():
     evolving = fact_scope("Ada", "employer")
     clean = fact_scope("Grace", "city")
     records = (
-        MemoryRecord("01-old", evolving, "OldCo", "FACT[Ada|employer]=OldCo", 1, "2026-01-01T00:00:00Z"),
-        MemoryRecord("02-new", evolving, "NewCo", "FACT[Ada|employer]=NewCo", 2, "2026-02-01T00:00:00Z"),
-        MemoryRecord("03-clean", clean, "Detroit", "FACT[Grace|city]=Detroit", 1, "2026-01-01T00:00:00Z"),
+        MemoryRecord(
+            "01-old",
+            evolving,
+            "OldCo",
+            "FACT[Ada|employer]=OldCo",
+            1,
+            "2026-01-01T00:00:00Z",
+        ),
+        MemoryRecord(
+            "02-new",
+            evolving,
+            "NewCo",
+            "FACT[Ada|employer]=NewCo",
+            2,
+            "2026-02-01T00:00:00Z",
+        ),
+        MemoryRecord(
+            "03-clean",
+            clean,
+            "Detroit",
+            "FACT[Grace|city]=Detroit",
+            1,
+            "2026-01-01T00:00:00Z",
+        ),
     )
     questions = (
-        MemoryQuestion("q-evolving", "What is FACT[Ada|employer]?", evolving, "NewCo"),
+        MemoryQuestion(
+            "q-evolving", "What is FACT[Ada|employer]?", evolving, "NewCo"
+        ),
         MemoryQuestion("q-clean", "What is FACT[Grace|city]?", clean, "Detroit"),
     )
-    encoder = HashScopeEncoder()
-    return (
-        records,
-        questions,
-        {r.record_id: encoder.encode(r.scope) for r in records},
-        {q.query_id: encoder.encode(q.scope) for q in questions},
-    )
+    # Same-scope records exceed vigilance but are not identical: F0 realizes
+    # both a merge and key drift. E0 still allocates three immutable exemplars.
+    record_embeddings = {
+        "01-old": [1.0, 0.0],
+        "02-new": [0.9, 0.1],
+        "03-clean": [0.0, 1.0],
+    }
+    query_embeddings = {
+        "q-evolving": [0.9, 0.1],
+        "q-clean": [0.0, 1.0],
+    }
+    return records, questions, record_embeddings, query_embeddings
 
 
-def seal(path, **overrides):
+def seal(path: Path, *, settings=SETTINGS, registration_overrides=None, **overrides):
     records, questions, rec_emb, qry_emb = corpus()
+    memo_path = path.with_suffix(".registration.md")
+    memo_path.write_bytes(b"# Fixed test preregistration\n")
     kwargs = {
         "evidence_class": "scoring-run",
         "policy": POLICY,
         "consumer_pin": RuleConsumer.pin_id,
-        "registration": registration(),
+        "registration": registration(memo_path, **(registration_overrides or {})),
+        "registration_memo_path": memo_path,
     }
     kwargs.update(overrides)
-    return seal_manifest(path, records, questions, rec_emb, qry_emb, SETTINGS, **kwargs)
+    manifest = seal_manifest(
+        path,
+        records,
+        questions,
+        rec_emb,
+        qry_emb,
+        settings,
+        **kwargs,
+    )
+    return manifest, memo_path
 
 
-def run_preflight(path, *, policy=POLICY, consumer=None, settings=SETTINGS):
-    records, questions, rec_emb, qry_emb = corpus()
+def run_preflight(path, *, policy=POLICY, consumer=None, settings=SETTINGS, records=None):
+    corpus_records, questions, rec_emb, qry_emb = corpus()
+    if records is None:
+        records = corpus_records
     return preflight(
         path,
         records=records,
@@ -102,169 +154,238 @@ def run_preflight(path, *, policy=POLICY, consumer=None, settings=SETTINGS):
 
 
 def failures(checks):
-    return {c.name for c in checks if not c.passed}
+    return {check.name for check in checks if not check.passed}
 
 
-# --------------------------------------------------------------------------
-# G-I1 — seal refuses an incomplete registration
-# --------------------------------------------------------------------------
+def reseal(path: Path, mutate):
+    from harness.memory_eval.manifest import _fingerprint
+
+    manifest = load_manifest(path)
+    mutate(manifest)
+    body = dict(manifest)
+    del body["manifest_sha256"]
+    manifest["manifest_sha256"] = _fingerprint(body)
+    path.write_text(json.dumps(manifest), encoding="utf-8")
 
 
-def test_scoring_run_seal_refuses_an_unregistered_threshold(tmp_path):
+def test_scoring_seal_contains_complete_realized_e0_and_f0_attestations(tmp_path):
+    manifest, _ = seal(tmp_path / "m.json")
+    attestations = manifest["protocol"]["index_attestations"]
+
+    assert set(attestations) == {"exemplar", "fam"}
+    assert attestations["exemplar"]["mode"] == "allocate-only"
+    assert attestations["exemplar"]["prototype_count"] == 3
+    assert attestations["fam"]["mode"] == "condense"
+    assert attestations["fam"]["merged"] > 0
+    assert attestations["fam"]["key_drifted_merges"] > 0
+    assert len(attestations["exemplar"]["index_sha256"]) == 64
+    assert len(attestations["fam"]["index_sha256"]) == 64
+
+
+def test_scoring_seal_refuses_an_incomplete_mechanism_registration(tmp_path):
     with pytest.raises(RuntimeError, match="still unregistered"):
         seal(
             tmp_path / "m.json",
-            registration=registration(stale_reduction_margin=sentinel("D-1")),
+            registration_overrides={"prototype_reduction_margin": sentinel("D-M1")},
         )
 
 
-def test_scoring_run_seal_reports_every_reason_at_once(tmp_path):
+def test_scoring_seal_requires_a_real_registered_memo_path(tmp_path):
     records, questions, rec_emb, qry_emb = corpus()
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(RuntimeError, match="registration memo path"):
         seal_manifest(
             tmp_path / "m.json",
             records,
             questions,
             rec_emb,
             qry_emb,
-            {"candidate_k": 2, "fam_prototype_k": 1},  # no fam_max_entries
+            SETTINGS,
             evidence_class="scoring-run",
-            policy=None,
-            consumer_pin=None,
-            registration=None,
+            policy=POLICY,
+            consumer_pin=RuleConsumer.pin_id,
+            registration={"memo_sha256": "0" * 64},
         )
-    message = str(exc.value)
-    assert "disposition policy" in message
-    assert "consumer_pin" in message
-    assert "fam_max_entries" in message
-    assert "registration block" in message
 
 
-def test_plumbing_seal_cannot_carry_a_registration(tmp_path):
-    with pytest.raises(ValueError, match="plumbing seal cannot carry a registration"):
-        seal(tmp_path / "m.json", evidence_class="plumbing", registration=registration())
+def test_scoring_seal_rejects_a_memo_sha_not_matching_the_registered_bytes(tmp_path):
+    with pytest.raises(RuntimeError, match="memo_sha256.*does not match"):
+        seal(
+            tmp_path / "m.json",
+            registration_overrides={"memo_sha256": "0" * 64},
+        )
 
 
-def test_evidence_class_is_mandatory_and_validated(tmp_path):
+def test_plumbing_seal_has_no_registration_or_confirmatory_attestations(tmp_path):
     records, questions, rec_emb, qry_emb = corpus()
-    with pytest.raises(TypeError):
-        seal_manifest(tmp_path / "m.json", records, questions, rec_emb, qry_emb, SETTINGS)
-    with pytest.raises(ValueError, match="evidence_class must be one of"):
-        seal(tmp_path / "m2.json", evidence_class="real-i-promise")
-
-
-# --------------------------------------------------------------------------
-# G-I2 — the seal binds the treatment
-# --------------------------------------------------------------------------
-
-
-def test_a_clean_scoring_run_seal_passes_every_preflight_check(tmp_path):
     path = tmp_path / "m.json"
-    seal(path)
-    checks = run_preflight(path)
-    assert failures(checks) == set()
-    assert {c.gate for c in checks} == {"G-I1", "G-I2"}
-
-
-def test_preflight_catches_a_policy_edited_after_seal(tmp_path):
-    """The blocker: the disposition policy IS the governed treatment, and it
-    was loaded from disk at run time with nothing binding it to the seal."""
-    path = tmp_path / "m.json"
-    seal(path)
-    edited = {"rules": [{"id": "R01", "action": "defer"}], "version": "test-policy-v1"}
-    assert policy_sha256(edited) != policy_sha256(POLICY)
-    checks = run_preflight(path, policy=edited)
-    assert "policy binding" in failures(checks)
-
-
-def test_preflight_catches_a_swapped_consumer(tmp_path):
-    path = tmp_path / "m.json"
-    seal(path)
-
-    class OtherConsumer(RuleConsumer):
-        pin_id = "some-other-consumer-v9"
-
-    checks = run_preflight(path, consumer=OtherConsumer())
-    assert "consumer pin" in failures(checks)
-
-
-def test_preflight_catches_a_scorer_edited_after_seal(tmp_path):
-    """scoring_version is a label; this binds the source. A post-seal edit to
-    score_rows previously shipped under the sealed label."""
-    path = tmp_path / "m.json"
-    manifest = seal(path)
-    assert manifest["protocol"]["scoring_module_sha256"] == scoring_module_sha256()
-
-    tampered = load_manifest(path)
-    tampered["protocol"]["scoring_module_sha256"] = "0" * 64
-    body = dict(tampered)
-    del body["manifest_sha256"]
-    # Re-seal the digest so ONLY the scorer identity is wrong: proves the
-    # scorer check fires on its own, not merely via the manifest digest.
-    from harness.memory_eval.manifest import _fingerprint
-
-    tampered["manifest_sha256"] = _fingerprint(body)
-    path.write_text(json.dumps(tampered), encoding="utf-8")
-
-    checks = run_preflight(path)
-    assert "scorer identity" in failures(checks) or "manifest integrity" in failures(checks)
-
-
-def test_preflight_catches_settings_that_drift_from_the_seal(tmp_path):
-    """A typo'd candidate_k previously executed off-seal while every artifact
-    still cited the manifest sha."""
-    path = tmp_path / "m.json"
-    seal(path)
-    checks = run_preflight(path, settings={**SETTINGS, "candidate_k": 7})
-    assert "settings match the seal" in failures(checks)
-
-
-def test_preflight_reports_every_failure_at_once_not_just_the_first(tmp_path):
-    """A run blocked for four reasons must disclose four. An early return on
-    the first failure is how a second defect survives a fix for the first."""
-    path = tmp_path / "m.json"
-    seal(path)
-
-    class OtherConsumer(RuleConsumer):
-        pin_id = "some-other-consumer-v9"
-
-    checks = run_preflight(
+    manifest = seal_manifest(
         path,
-        policy={"rules": [], "version": "drifted"},
-        consumer=OtherConsumer(),
-        settings={**SETTINGS, "candidate_k": 7},
+        records,
+        questions,
+        rec_emb,
+        qry_emb,
+        SETTINGS,
+        evidence_class="plumbing",
     )
-    assert {"policy binding", "consumer pin", "settings match the seal"} <= failures(checks)
+
+    assert manifest["protocol"]["registration"] is None
+    assert "registration_memo_path" not in manifest["protocol"]
+    assert "index_attestations" not in manifest["protocol"]
+    assert {"evidence class", "registration complete", "exemplar index", "FAM index"} <= failures(
+        run_preflight(path)
+    )
 
 
-def test_build_sealed_run_refuses_and_never_reaches_the_consumer(tmp_path):
+def test_clean_scoring_seal_passes_every_preflight_check(tmp_path):
     path = tmp_path / "m.json"
     seal(path)
+
+    checks = run_preflight(path)
+
+    assert failures(checks) == set()
+    names = {check.name for check in checks}
+    assert {
+        "treatment settings",
+        "exemplar index",
+        "FAM index",
+        "mechanism activity",
+        "provenance and capacity integrity",
+        "registration memo",
+    } <= names
+
+
+def test_preflight_rejects_a_changed_fam_numeric_setting(tmp_path):
+    path = tmp_path / "m.json"
+    seal(path)
+
+    checks = run_preflight(path, settings={**SETTINGS, "cam_key_lr": 0.01})
+
+    assert "treatment settings" in failures(checks)
+
+
+def test_preflight_rejects_a_reordered_input_build(tmp_path):
+    path = tmp_path / "m.json"
+    seal(path)
+    records, _, _, _ = corpus()
+
+    checks = run_preflight(path, records=tuple(reversed(records)))
+
+    assert {"input integrity", "exemplar index", "FAM index"} <= failures(checks)
+
+
+def test_preflight_rejects_a_tampered_e0_attestation(tmp_path):
+    path = tmp_path / "m.json"
+    seal(path)
+    reseal(
+        path,
+        lambda manifest: manifest["protocol"]["index_attestations"]["exemplar"].__setitem__(
+            "allocated", 2
+        ),
+    )
+
+    assert "exemplar index" in failures(run_preflight(path))
+
+
+def test_preflight_rejects_a_tampered_f0_index_hash(tmp_path):
+    path = tmp_path / "m.json"
+    seal(path)
+    reseal(
+        path,
+        lambda manifest: manifest["protocol"]["index_attestations"]["fam"].__setitem__(
+            "index_sha256", "0" * 64
+        ),
+    )
+
+    assert "FAM index" in failures(run_preflight(path))
+
+
+def test_preflight_rejects_changed_memo_bytes_after_seal(tmp_path):
+    path = tmp_path / "m.json"
+    _, memo_path = seal(path)
+    memo_path.write_bytes(b"changed after sealing\n")
+
+    assert "registration memo" in failures(run_preflight(path))
+
+
+def test_preflight_rejects_a_resealed_changed_memo_sha(tmp_path):
+    path = tmp_path / "m.json"
+    seal(path)
+    reseal(
+        path,
+        lambda manifest: manifest["protocol"]["registration"].__setitem__(
+            "memo_sha256", "0" * 64
+        ),
+    )
+
+    assert "registration memo" in failures(run_preflight(path))
+
+
+def test_preflight_rejects_a_resealed_incomplete_settings_schema(tmp_path):
+    path = tmp_path / "m.json"
+    seal(path)
+    reseal(
+        path,
+        lambda manifest: manifest["protocol"]["retriever_settings"].pop(
+            "cam_prototype_k"
+        ),
+    )
+
+    assert "treatment settings" in failures(run_preflight(path))
+
+
+@pytest.mark.parametrize(
+    "failure_case",
+    ["live-setting", "reordered-input", "exemplar-attestation", "memo-bytes"],
+)
+def test_every_preflight_failure_blocks_before_consumer_generation(
+    tmp_path, failure_case
+):
+    path = tmp_path / "m.json"
+    _, memo_path = seal(path)
     records, questions, rec_emb, qry_emb = corpus()
+    settings = SETTINGS
+    if failure_case == "live-setting":
+        settings = {**SETTINGS, "cam_vigilance": 0.9}
+    elif failure_case == "reordered-input":
+        records = tuple(reversed(records))
+    elif failure_case == "exemplar-attestation":
+        reseal(
+            path,
+            lambda manifest: manifest["protocol"]["index_attestations"][
+                "exemplar"
+            ].__setitem__("written", 2),
+        )
+    else:
+        memo_path.write_bytes(b"changed after seal\n")
 
     class ExplodingConsumer(RuleConsumer):
+        generated = False
+
         def generate(self, prompt, max_new_tokens=256):
+            self.generated = True
             raise AssertionError("consumer was called despite a blocked preflight")
 
-    with pytest.raises(PreflightFailed) as exc:
-        build_sealed_run(
+    consumer = ExplodingConsumer()
+    with pytest.raises(PreflightFailed):
+        runner = build_sealed_run(
             path,
             records=records,
             questions=questions,
             record_embeddings=rec_emb,
             query_embeddings=qry_emb,
-            retriever_settings=SETTINGS,
-            policy={"rules": [], "version": "drifted"},
-            consumer=ExplodingConsumer(),
+            retriever_settings=settings,
+            policy=POLICY,
+            consumer=consumer,
         )
-    assert any(not c.passed for c in exc.value.checks)
-    assert "BLOCKED" in str(exc.value)
+        runner.run(questions, qry_emb)
+    assert consumer.generated is False
 
 
-def test_build_sealed_run_constructs_from_the_sealed_protocol(tmp_path):
+def test_build_sealed_run_uses_only_sealed_settings_and_rebuilt_indexes(tmp_path):
     path = tmp_path / "m.json"
-    seal(path)
+    manifest, _ = seal(path)
     records, questions, rec_emb, qry_emb = corpus()
+
     runner = build_sealed_run(
         path,
         records=records,
@@ -275,37 +396,12 @@ def test_build_sealed_run_constructs_from_the_sealed_protocol(tmp_path):
         policy=POLICY,
         consumer=RuleConsumer(),
     )
-    sealed = load_manifest(path)["protocol"]["retriever_settings"]
-    assert runner.candidate_k == sealed["candidate_k"]
-    assert runner.policy == POLICY
 
-
-# --------------------------------------------------------------------------
-# fam capacity: a sealed number that silently evicts attests nothing
-# --------------------------------------------------------------------------
-
-
-def test_fam_capacity_below_scope_count_now_raises_instead_of_evicting(tmp_path):
-    records, _, rec_emb, _ = corpus()  # two scopes
-    with pytest.raises(ValueError, match="were evicted during construction"):
-        FAMRetriever(records, rec_emb, prototype_k=1, max_entries=1)
-
-
-def test_fam_capacity_at_scope_count_is_accepted(tmp_path):
-    records, _, rec_emb, _ = corpus()
-    retriever = FAMRetriever(records, rec_emb, prototype_k=1, max_entries=2)
-    assert retriever.prototype_count == 2
-
-
-# --------------------------------------------------------------------------
-# embeddings must not be mutable behind the seal
-# --------------------------------------------------------------------------
-
-
-def test_verified_embeddings_cannot_be_mutated_through_a_shared_view():
-    records, _, rec_emb, _ = corpus()
-    caller_tensor = rec_emb["01-old"]
-    retriever = FAMRetriever(records, rec_emb, prototype_k=1, max_entries=2)
-    before = retriever._embeddings["01-old"].clone()
-    caller_tensor.mul_(-5.0)  # in-place, after construction
-    assert torch.equal(retriever._embeddings["01-old"], before)
+    attestations = manifest["protocol"]["index_attestations"]
+    assert runner.candidate_k == SETTINGS["candidate_k"]
+    assert isinstance(runner.exemplar_retriever, ExemplarCAMRetriever)
+    assert isinstance(runner.fam_retriever, FAMRetriever)
+    assert asdict(runner.exemplar_retriever.attestation) == attestations["exemplar"]
+    assert asdict(runner.fam_retriever.attestation) == attestations["fam"]
+    assert runner.exemplar_retriever.cam.inference_k == SETTINGS["cam_prototype_k"]
+    assert runner.fam_retriever.cam.inference_k == SETTINGS["cam_prototype_k"]

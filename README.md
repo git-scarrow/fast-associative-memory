@@ -124,9 +124,9 @@ latency_bench.py             # CUDA-event latency profiling + 5K dip diagnosis
 
 ## Agent Memory Evaluation
 
-The repository now includes a fixed-budget, five-arm harness for testing FAM as a provenance-preserving agent-memory index alongside constructive forgetting. It compares no memory, exact-vector retrieval, and FAM retrieval, with raw and governed variants receiving identical paired candidate IDs.
+The repository now includes a fixed-budget, five-arm harness with a FAM-first claim hierarchy. The primary mechanism comparison holds the CAM envelope fixed between an allocate-only exemplar control (E0) and live FAM condensation (F0), measuring prototype reduction and authoritative-current recall. Only after that mechanism passes does the secondary application comparison test constructive forgetting on identical FAM candidates (F0 versus F1). Exact-vector retrieval is a consumer-free exploratory ceiling, not a consumer arm.
 
-See [Five-Arm Governed Memory Evaluation](docs/FIVE_ARM_MEMORY_EVAL.md) for the experiment design, trust boundary, metrics, normalized FactConsolidation format, and real-run readiness checklist.
+See [Five-Arm FAM-First Memory Evaluation](docs/FIVE_ARM_MEMORY_EVAL.md) for the experiment design, trust boundary, metrics, normalized FactConsolidation format, and real-run readiness checklist.
 
 Offline plumbing check:
 
@@ -134,4 +134,6 @@ Offline plumbing check:
 python -m harness.memory_eval.dry_run --output-dir /tmp/fam-memory-eval-dry-run
 ```
 
-This command uses a deterministic hash encoder and rule consumer; its output is not benchmark evidence.
+This command seals and rebuilds a deterministic manifest-v3 synthetic fixture with explicit vectors and a rule consumer. Its returned numerical assertions are fixture-only, never enter a scoring-run registration, and are labeled `synthetic/plumbing`, `admissible: false`, and not benchmark evidence.
+
+Phase B remains blocked on the official `fact_sh` transformer, G-I6 source reconciliation, pinned semantic encoder and consumer artifacts, human numeric registration, and preflight plus execution on the real scoring host.

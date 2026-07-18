@@ -17,6 +17,7 @@ from .manifest import (
     policy_sha256,
     scoring_module_sha256,
     validate_retriever_settings,
+    verify_manifest,
 )
 from .models import MemoryQuestion, MemoryRecord
 from .preregistration import validate_registration
@@ -44,6 +45,74 @@ class PreflightFailed(RuntimeError):
             for check in self.failures
         )
         super().__init__(f"pre-execution verification BLOCKED:\n  - {lines}")
+
+
+def build_plumbing_run(
+    manifest_path: str | Path,
+    *,
+    records: Sequence[MemoryRecord],
+    questions: Sequence[MemoryQuestion],
+    record_embeddings: Mapping[str, TensorLike],
+    query_embeddings: Mapping[str, TensorLike],
+    retriever_settings: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    consumer: Any,
+) -> FiveArmRunner:
+    """Rebuild a verified manifest-v3 plumbing run without evidence claims.
+
+    Plumbing seals bind inputs and treatment but intentionally contain no
+    registration or sealed index attestations. The returned runner is only an
+    execution fixture; this entry point cannot produce a confirmatory verdict.
+    """
+    manifest = load_manifest(manifest_path)
+    protocol_value = manifest.get("protocol")
+    if not isinstance(protocol_value, Mapping):
+        raise RuntimeError("plumbing manifest has no protocol block")
+    protocol = protocol_value
+    if manifest.get("manifest_version") != MANIFEST_VERSION:
+        raise RuntimeError(
+            "plumbing run requires "
+            f"{MANIFEST_VERSION!r}, got {manifest.get('manifest_version')!r}"
+        )
+    if protocol.get("evidence_class") != "plumbing":
+        raise RuntimeError("build_plumbing_run requires a plumbing evidence class")
+
+    forbidden: list[str] = []
+    if protocol.get("registration") is not None:
+        forbidden.append("registration")
+    for name in ("registration_memo_path", "index_attestations"):
+        if name in protocol:
+            forbidden.append(name)
+    if forbidden:
+        raise RuntimeError(
+            "plumbing manifest must not carry confirmatory blocks: "
+            + ", ".join(forbidden)
+        )
+
+    live_pin = getattr(consumer, "pin_id", None)
+    if not isinstance(live_pin, str) or not live_pin:
+        raise RuntimeError("plumbing consumer must expose a non-empty pin_id")
+    verified = verify_manifest(
+        manifest_path,
+        records,
+        questions,
+        record_embeddings,
+        query_embeddings,
+        retriever_settings,
+        evidence_class="plumbing",
+        policy=policy,
+        consumer_pin=live_pin,
+    )
+    sealed_settings = verified["protocol"]["retriever_settings"]
+    exemplar, fam = build_cam_indexes(records, record_embeddings, sealed_settings)
+    return FiveArmRunner(
+        ledger=MemoryLedger(records),
+        exemplar_retriever=exemplar,
+        fam_retriever=fam,
+        consumer=consumer,
+        candidate_k=sealed_settings["candidate_k"],
+        policy=dict(policy),
+    )
 
 
 def preflight(

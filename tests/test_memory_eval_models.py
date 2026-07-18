@@ -15,8 +15,8 @@ from harness.memory_eval.models import (
 def test_protocol_is_fixed_to_five_arms_and_one_budget():
     assert ARM_NAMES == (
         "no_memory",
-        "vector_raw",
-        "vector_governed",
+        "exemplar_raw",
+        "exemplar_governed",
         "fam_raw",
         "fam_governed",
     )

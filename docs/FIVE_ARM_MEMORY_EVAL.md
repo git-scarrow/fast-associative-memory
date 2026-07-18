@@ -1,22 +1,24 @@
-# Five-Arm Governed Memory Evaluation
+# Five-Arm FAM-First Memory Evaluation
 
 ## Status
 
-The local experiment harness is implemented. It can seal inputs, execute all five arms under one 1,500-token context budget, enforce paired candidate reuse, and score both memory benefit and governance harm.
+Phase A is implemented: the local harness can seal manifest-v3 plumbing inputs, rebuild matched E0/F0 CAM indexes, execute all five arms under one 1,500-token context budget, enforce paired candidate reuse, and score the mechanism before the application.
 
-The included dry run is a plumbing proof, not scientific evidence. A real benchmark run remains on hold until the official dataset transformation, real embedding pin, consumer seal, and scoring manifest are reviewed and frozen.
+The included dry run is a deterministic `synthetic/plumbing` proof with `admissible: false`. It is not benchmark evidence. Its numerical gates are visibly named fixture assertions returned in the artifact; they are neither production defaults nor a scoring-run registration. The plumbing manifest contains no registration or confirmatory index attestations. The artifact separately reports attestations from the verified rebuild.
 
 ## The five fixed arms
 
 | Arm | Retrieval | Context treatment | What it identifies |
 |---|---|---|---|
-| `no_memory` | None | None | Consumer-only lower bound |
-| `vector_raw` | Exact cosine over every record | Verbatim, budget-truncated | Ordinary RAG baseline |
-| `vector_governed` | Same candidate IDs as `vector_raw` | Lifecycle-aware compiler | Value of constructive forgetting with retrieval held fixed |
-| `fam_raw` | FAM scope prototypes, then provenance-to-record reranking | Verbatim, budget-truncated | Effect of FAM condensation without governance |
-| `fam_governed` | Same candidate IDs as `fam_raw` | Lifecycle-aware compiler | Full proposed memory design |
+| `no_memory` | None | None | Exploratory consumer-only floor |
+| `exemplar_raw` (E0) | Matched allocate-only CAM | Verbatim, budget-truncated | Primary noncondensing mechanism control |
+| `exemplar_governed` (E1) | Same candidate IDs as E0 | Lifecycle-aware compiler | Exploratory governance diagnostic |
+| `fam_raw` (F0) | Live FAM condensation plus provenance-to-record reranking | Same raw renderer as E0 | Primary mechanism treatment and application control |
+| `fam_governed` (F1) | Same candidate IDs as F0 | Lifecycle-aware compiler | Secondary constructive-forgetting treatment |
 
-The primary causal comparisons are `vector_governed - vector_raw` and `fam_governed - fam_raw`. The runner queries each retriever once per question and reuses that exact ordered candidate-ID list for its raw and governed arms.
+The fixed claim order is mechanism first, application second. E0 versus F0 tests whether FAM reduces occupied prototypes while retaining authoritative-current recall at `candidate_k`. Only if that mechanism is active and passes may F0 versus F1 support the constructive-forgetting application claim. A favorable F1 result cannot rescue an inert or failed FAM mechanism. The runner queries each retriever once per question and reuses the exact ordered candidate-ID tuple for its raw and governed arms.
+
+Exact-vector retrieval remains a consumer-free exploratory ceiling. It is useful for diagnosing retrieval headroom, but it changes the representation, query path, and capacity semantics, so it is not a matched mechanism control and is never a sixth consumer arm.
 
 ## Why the agent harness fits the memory model
 
@@ -24,9 +26,9 @@ The fit depends on a strict ownership boundary:
 
 1. The append-only ledger owns immutable text, values, serials, and source identity.
 2. Lifecycle resolution labels records as current, superseded, or unresolved forks. Constructive forgetting changes what is asserted; it does not erase history.
-3. Exact vector search indexes every record.
-4. FAM condenses scope keys and stores the record IDs that formed each prototype as provenance.
-5. After FAM retrieval, original record embeddings rerank the recovered ledger IDs. The consumer only sees ledger payloads.
+3. E0 and F0 share the same CAM capacity, ingestion order, query path, provenance expansion, and exact record-embedding rerank. E0 allocates every write; F0 may condense above-vigilance same-scope writes.
+4. FAM stores the record IDs that formed each prototype as provenance.
+5. After either CAM retrieves prototypes, original record embeddings rerank the recovered ledger IDs. The consumer only sees ledger payloads.
 
 This preserves FAM's useful online condensation while avoiding a category error: an EMA-blended FAM value is not an authoritative evolving fact. If an agentic framework requires its memory object to own and rewrite answer payloads, it does not yet fit this model. It must first separate authoritative records from disposable retrieval indexes and expose provenance IDs at retrieval time.
 
@@ -57,13 +59,13 @@ Every reported rate carries its denominator: rates serialize as `{"value": ..., 
 - Abstention and malformed-output rates: safety and interface costs.
 - Prompt tokens and total latency: operational costs by arm.
 
-The value claim requires all three of the following, evaluated per family (`vector_governed` vs `vector_raw`, `fam_governed` vs `fam_raw`):
+The secondary application claim requires all three of the following on F0 versus F1, after the E0/F0 mechanism gate passes:
 
 1. A reduction in stale-adoption rate — margin UNREGISTERED; pre-registration required.
 2. A bounded clean-answer loss — bound UNREGISTERED; pre-registration required.
 3. A current-adoption floor on the stale-eligible stratum — floor UNREGISTERED; pre-registration required.
 
-Criterion 3 exists so the claim can come out against governance: an arm that wins criteria 1 and 2 by suppressing every evolving answer fails criterion 3. Overall accuracy alone can hide any of these failures. None of the three thresholds is registered yet; they are the human's pre-registration decision, and until numeric values are registered, any run is exploratory-only. A rate whose `n` is 0 satisfies no criterion — it is missing data, and that criterion is not evaluable on that corpus.
+Criterion 3 exists so the claim can come out against governance: an arm that wins criteria 1 and 2 by suppressing every evolving answer fails criterion 3. Overall accuracy alone can hide any of these failures. None of the mechanism or application thresholds is registered yet; they are human pre-registration decisions. Until the prototype-reduction margin, mechanism recall-loss bound and denominator, and all three application gates are registered, any outcome is exploratory-only. A rate whose `n` is 0 satisfies no criterion—it is missing data, and that criterion is not evaluable on that corpus.
 
 ## Normalized FactConsolidation input
 
@@ -85,12 +87,12 @@ Required record fields are `type`, `record_id`, `entity`, `relation`, `value`, `
 
 ## Seal, run, and score workflow
 
-1. Pin an official MemoryAgentBench dataset revision and transform `fact_sh` into the normalized JSONL format. Validate every extracted serial and answer against the source row.
-2. Pin the record/query embedding model and revision. Materialize embeddings before sealing.
-3. Freeze candidate count, FAM prototype count, FAM capacity, consumer pin, arm order, 1,500-token budget, and scoring version.
-4. Seal records, questions, embeddings, and protocol with `seal_manifest`.
-5. Reload with `verify_manifest` immediately before execution.
-6. Execute with `FiveArmRunner`, retain every row and audit packet, then score with `score_rows`.
+1. Pin the official `fact_sh` source revision, transform it into normalized JSONL, and pass the G-I6 source-to-normalized reconciliation gate.
+2. Pin the semantic record/query encoder and consumer artifacts, including revisions, hashes, preprocessing, decoding, and code rollups. Materialize embeddings before sealing.
+3. Run only the outcome-incapable real-corpus shape probe, then complete the human numeric registration without inspecting outcomes.
+4. Seal the complete manifest-v3 scoring treatment, including the registration memo and realized E0/F0 attestations.
+5. On the scoring host, rebuild through `build_sealed_run`; preflight must validate inputs, treatment, artifacts, registration, and exact rebuilt attestations before generation.
+6. Execute the single authorized real run, retain every row and audit packet, score E0/F0 mechanism counts first, and evaluate F0/F1 only after a mechanism GO.
 
 Run the offline plumbing proof with:
 
@@ -98,14 +100,16 @@ Run the offline plumbing proof with:
 python -m harness.memory_eval.dry_run --output-dir /tmp/fam-memory-eval-dry-run
 ```
 
-The output is explicitly labeled `plumbing-only; not benchmark evidence`.
+The output is explicitly labeled `synthetic/plumbing`, `admissible: false`, and `benchmark_evidence: false`. A synthetic GO appears only inside that non-confirmatory outcome block.
 
-## Remaining work before a real run
+## Phase B blockers
 
-- Implement and review the official `Conflict_Resolution/fact_sh` to normalized-JSONL transformer. The upstream benchmark was updated in 2025–2026, so pin a commit or dataset revision rather than relying on a floating `main`.
-- Choose and pin a semantic embedding model. The dry run's hash encoder carries no semantics.
-- Bind the real consumer artifact/revision and decoding settings into `retriever_settings` before sealing; the existing Qwen3 consumer can satisfy the runner interface once its weights are sealed on the scoring host.
-- Pre-register the query set, primary metrics, the numeric stale-adoption margin, clean-answer-loss bound, and current-adoption floor, the contested-question scoring policy, and failure rules.
-- Run a small sealed pilot for data-shape and resource checks, discard it, then seal and execute the scoring run once.
+Phase A ends at the sealed deterministic synthetic proof. It establishes plumbing behavior, not benchmark performance. Phase B requires a separate plan and authorization for all of the following:
 
-The official benchmark repository documents FactConsolidation as its conflict-resolution task and currently scores it with `substring_exact_match`: [MemoryAgentBench repository](https://github.com/HUST-AI-HYZ/MemoryAgentBench) and [dataset release](https://huggingface.co/datasets/ai-hyz/MemoryAgentBench).
+- implement and review the official `Conflict_Resolution/fact_sh` parquet transformer without guessing entity/relation scopes from natural-language facts;
+- implement G-I6 reconciliation from every pinned source row through normalized records, questions, answer lists, and `qa_pair_ids`;
+- pin complete semantic encoder, consumer, tokenizer, prompt/parser, decoding, code, and runtime artifacts rather than reusing the synthetic vectors or rule consumer;
+- run an outcome-incapable real-corpus shape probe and complete human numeric registration for M1/M2 and A1/A2/A3;
+- perform scoring-host preflight and the single authorized real execution.
+
+Planning inspection found eight Conflict Resolution rows: `factconsolidation_sh_{6k,32k,64k,262k}` each contains one numbered fact context plus 100 questions, answer lists, and `qa_pair_ids`. Those observations guide the Phase B transformer and reconciliation work; they do not authorize Phase A code to infer fact scopes.

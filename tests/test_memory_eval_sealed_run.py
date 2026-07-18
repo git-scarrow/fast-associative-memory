@@ -12,7 +12,12 @@ from harness.memory_eval.manifest import load_manifest, seal_manifest
 from harness.memory_eval.models import MemoryQuestion, MemoryRecord, fact_scope
 from harness.memory_eval.preregistration import sentinel
 from harness.memory_eval.retrievers import ExemplarCAMRetriever, FAMRetriever
-from harness.memory_eval.sealed_run import PreflightFailed, build_sealed_run, preflight
+from harness.memory_eval.sealed_run import (
+    PreflightFailed,
+    build_plumbing_run,
+    build_sealed_run,
+    preflight,
+)
 
 
 POLICY = {"rules": [{"id": "R01", "action": "assert"}], "version": "test-policy-v1"}
@@ -234,6 +239,110 @@ def test_plumbing_seal_has_no_registration_or_confirmatory_attestations(tmp_path
     assert {"evidence class", "registration complete", "exemplar index", "FAM index"} <= failures(
         run_preflight(path)
     )
+
+
+def seal_plumbing(path: Path):
+    records, questions, rec_emb, qry_emb = corpus()
+    return seal_manifest(
+        path,
+        records,
+        questions,
+        rec_emb,
+        qry_emb,
+        SETTINGS,
+        evidence_class="plumbing",
+        policy=POLICY,
+        consumer_pin=RuleConsumer.pin_id,
+    )
+
+
+def build_plumbing(path: Path, *, settings=SETTINGS, consumer=None):
+    records, questions, rec_emb, qry_emb = corpus()
+    return build_plumbing_run(
+        path,
+        records=records,
+        questions=questions,
+        record_embeddings=rec_emb,
+        query_embeddings=qry_emb,
+        retriever_settings=settings,
+        policy=POLICY,
+        consumer=consumer or RuleConsumer(),
+    )
+
+
+def test_build_plumbing_run_rebuilds_only_from_verified_sealed_settings(tmp_path):
+    path = tmp_path / "plumbing.json"
+    manifest = seal_plumbing(path)
+
+    runner = build_plumbing(path)
+
+    assert manifest["protocol"]["evidence_class"] == "plumbing"
+    assert "index_attestations" not in manifest["protocol"]
+    assert runner.candidate_k == SETTINGS["candidate_k"]
+    assert isinstance(runner.exemplar_retriever, ExemplarCAMRetriever)
+    assert isinstance(runner.fam_retriever, FAMRetriever)
+    assert runner.exemplar_retriever.attestation.prototype_count == 3
+    assert runner.fam_retriever.attestation.merged == 1
+    assert runner.fam_retriever.attestation.key_drifted_merges == 1
+
+
+@pytest.mark.parametrize(
+    ("block", "value"),
+    [
+        ("registration", {"not": "allowed"}),
+        ("registration_memo_path", "/tmp/not-allowed.md"),
+        ("index_attestations", {"exemplar": {}, "fam": {}}),
+    ],
+)
+def test_build_plumbing_run_rejects_forbidden_confirmatory_blocks(
+    tmp_path, block, value
+):
+    path = tmp_path / "plumbing.json"
+    seal_plumbing(path)
+    reseal(
+        path,
+        lambda manifest: manifest["protocol"].__setitem__(block, value),
+    )
+
+    with pytest.raises(RuntimeError, match=rf"plumbing.*{block}"):
+        build_plumbing(path)
+
+
+def test_build_plumbing_run_rejects_a_scoring_run(tmp_path):
+    path = tmp_path / "scoring.json"
+    seal(path)
+
+    with pytest.raises(RuntimeError, match="requires a plumbing evidence class"):
+        build_plumbing(path)
+
+
+@pytest.mark.parametrize("drift", ["settings", "consumer-pin"])
+def test_build_plumbing_run_rejects_live_drift_before_generation(tmp_path, drift):
+    path = tmp_path / "plumbing.json"
+    seal_plumbing(path)
+
+    class ExplodingConsumer(RuleConsumer):
+        generated = False
+        pin_id = (
+            "changed-rule-consumer-v1"
+            if drift == "consumer-pin"
+            else RuleConsumer.pin_id
+        )
+
+        def generate(self, prompt, max_new_tokens=256):
+            self.generated = True
+            raise AssertionError("consumer was called before plumbing verification")
+
+    consumer = ExplodingConsumer()
+    settings = (
+        {**SETTINGS, "cam_key_lr": 0.01} if drift == "settings" else SETTINGS
+    )
+
+    with pytest.raises(RuntimeError, match="manifest fingerprint mismatch"):
+        runner = build_plumbing(path, settings=settings, consumer=consumer)
+        records, questions, rec_emb, qry_emb = corpus()
+        runner.run(questions, qry_emb)
+    assert consumer.generated is False
 
 
 def test_clean_scoring_seal_passes_every_preflight_check(tmp_path):

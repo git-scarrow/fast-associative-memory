@@ -111,6 +111,27 @@ def test_v3_plumbing_seal_is_deterministic_and_omits_confirmatory_evidence(tmp_p
     assert verify_manifest(first_path, *values, evidence_class="plumbing") == first
 
 
+def test_phase_a_refuses_scoring_seals_before_writing_a_manifest(tmp_path):
+    values = inputs()
+    path = tmp_path / "scoring.json"
+
+    with pytest.raises(
+        RuntimeError,
+        match="Phase B provenance/reconciliation envelope is not implemented",
+    ):
+        seal_manifest(
+            path,
+            *values,
+            evidence_class="scoring-run",
+            policy={"version": "synthetic"},
+            consumer_pin="synthetic-consumer",
+            registration={"synthetic": True},
+            registration_memo_path=tmp_path / "synthetic.md",
+        )
+
+    assert not path.exists()
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -252,6 +273,93 @@ def test_seal_rejects_invalid_numeric_settings(tmp_path, field, value):
         )
 
 
+@pytest.mark.parametrize(
+    ("field", "value", "expected"),
+    [
+        ("cam_vigilance", 0.9, 0.85),
+        ("cam_hebb_lr", 0.2, 0.1),
+        ("cam_key_lr", 0.1, 0.05),
+        ("cam_ema_beta", 0.1, 0.05),
+        ("cam_inference_temp", 0.1, 0.05),
+        ("cam_use_bfloat16", True, False),
+        ("cam_adaptive_eviction", True, False),
+        ("cam_use_lfu", False, True),
+    ],
+)
+def test_seal_rejects_wrong_but_valid_v1_treatment_values(
+    tmp_path, field, value, expected
+):
+    records, questions, rec_emb, qry_emb, settings = inputs()
+    settings[field] = value
+
+    with pytest.raises(ValueError, match=rf"{field}.*{expected!r}"):
+        seal_manifest(
+            tmp_path / "m.json",
+            records,
+            questions,
+            rec_emb,
+            qry_emb,
+            settings,
+            evidence_class="plumbing",
+        )
+
+
+def test_seal_rejects_raw_distinct_normalized_equal_same_serial_values(tmp_path):
+    records, questions, rec_emb, qry_emb, settings = inputs()
+    colliding = MemoryRecord(
+        "04-normalized-collision",
+        records[2].scope,
+        "  DETROIT  ",
+        "FACT[Grace|city]=  DETROIT  ",
+        records[2].serial,
+        "2026-01-02T00:00:00Z",
+    )
+    records = (*records, colliding)
+    rec_emb = {**rec_emb, colliding.record_id: [0.0, 0.9]}
+    settings = {**settings, "cam_max_entries": len(records)}
+
+    with pytest.raises(
+        ValueError,
+        match="raw-with-invariant.*03-clean.*04-normalized-collision",
+    ):
+        seal_manifest(
+            tmp_path / "m.json",
+            records,
+            questions,
+            rec_emb,
+            qry_emb,
+            settings,
+            evidence_class="plumbing",
+        )
+
+
+def test_seal_preserves_genuinely_distinct_same_serial_contested_values(tmp_path):
+    records, questions, rec_emb, qry_emb, settings = inputs()
+    contested = MemoryRecord(
+        "04-contested",
+        records[2].scope,
+        "Chicago",
+        "FACT[Grace|city]=Chicago",
+        records[2].serial,
+        "2026-01-02T00:00:00Z",
+    )
+    records = (*records, contested)
+    rec_emb = {**rec_emb, contested.record_id: [0.1, 0.9]}
+    settings = {**settings, "cam_max_entries": len(records)}
+
+    manifest = seal_manifest(
+        tmp_path / "m.json",
+        records,
+        questions,
+        rec_emb,
+        qry_emb,
+        settings,
+        evidence_class="plumbing",
+    )
+
+    assert manifest["record_count"] == 4
+
+
 def test_seal_requires_cam_capacity_to_equal_the_three_record_fixture(tmp_path):
     records, questions, rec_emb, qry_emb, settings = inputs()
     settings["cam_max_entries"] = 2
@@ -315,7 +423,7 @@ def test_verify_rejects_changed_inputs_or_treatment(tmp_path, changed):
     else:
         settings = {**settings, "cam_vigilance": 0.9}
 
-    with pytest.raises(RuntimeError, match="manifest fingerprint mismatch"):
+    with pytest.raises((RuntimeError, ValueError), match="manifest fingerprint mismatch|cam_"):
         verify_manifest(
             path,
             records,

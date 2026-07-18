@@ -97,6 +97,31 @@ def test_authoritative_recall_uses_latest_matching_record_and_excludes_contested
     assert report.recall_loss_count == 1
 
 
+def test_raw_distinct_normalized_equal_fork_cannot_enter_mechanism_denominator():
+    ledger = MemoryLedger(
+        [
+            record("fork-a", "scope", "Detroit", 1),
+            record("fork-b", "scope", "  DETROIT  ", 1),
+        ]
+    )
+    questions = [MemoryQuestion("q", "City?", "scope", "Detroit")]
+
+    with pytest.raises(
+        ValueError,
+        match="raw-with-invariant.*fork-a.*fork-b",
+    ):
+        score_mechanism(
+            rows=[
+                row("q", "exemplar_raw", ("fork-a",)),
+                row("q", "fam_raw", ("fork-b",)),
+            ],
+            questions=questions,
+            ledger=ledger,
+            exemplar_attestation=attestation("allocate-only", prototype_count=2),
+            fam_attestation=attestation("condense", prototype_count=2),
+        )
+
+
 def test_mechanism_report_pairs_exemplar_and_fam_on_one_denominator():
     ledger = MemoryLedger(
         [

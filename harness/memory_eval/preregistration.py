@@ -5,14 +5,14 @@ that memo mechanically checkable: every decision it defers to the human has a
 registry entry here, a schema field, and a validation rule, and the tests
 assert those three sets are in bijection with the memo's own headings.
 
-Scope boundary — this module is protocol only. Nothing here is wired into
-``seal_manifest``; the seal extension and pre-execution verification (gate
-G-I2) are separate, later work. Registering a value here authorizes nothing.
+Scope boundary — this module validates protocol and provides the receipt-bound
+authoritative verdict. Audit preflight consumes the schema, but Phase A public
+scoring seals and scoring runners are disabled. Registering a value here still
+authorizes nothing.
 
-Gate arithmetic is INTEGER. Rates are ratios of counts, so a gate expressed
-as a float comparison inherits the denominator's granularity and reads as
-false precision. Every gate below converts its registered rate into an exact
-row count first (``max_allowed_losses`` / ``min_required_successes``) and
+Gate arithmetic is INTEGER. Every application threshold recovers the exact
+registered decimal through ``Decimal(str(value))`` and ``Fraction``, converts
+it to a row count (``max_allowed_losses`` / ``min_required_successes``), and
 compares integers.
 """
 
@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 from math import ceil, floor, isfinite
 from statistics import median
 from typing import Any, Callable, Literal
@@ -53,7 +55,7 @@ class Decision:
     id: str
     title: str
     schema_field: str
-    kind: Literal["rate", "count", "choice", "rate-or-null"]
+    kind: Literal["rate", "count", "choice", "null"]
     choices: tuple[str, ...] = ()
     requires: Mapping[str, tuple[str, ...]] | None = None
     """Conditional fields this decision's value makes mandatory:
@@ -79,14 +81,16 @@ DECISIONS: tuple[Decision, ...] = (
         "min_mechanism_recall_n",
         "count",
     ),
+    Decision("D-M4", "Candidate retrieval width", "candidate_k", "count"),
+    Decision("D-M5", "CAM prototype retrieval width", "cam_prototype_k", "count"),
     Decision("D-1", "Stale-reduction margin", "stale_reduction_margin", "rate"),
     Decision("D-2", "Clean-answer-loss bound", "clean_answer_loss_bound", "rate"),
     Decision("D-3", "Current-adoption floor", "current_adoption_floor", "rate"),
     Decision(
         "D-3b",
-        "Additional abstention bound (null = none registered)",
+        "Additional abstention bound (Phase A requires null)",
         "abstention_bound",
-        "rate-or-null",
+        "null",
     ),
     Decision(
         "D-4",
@@ -107,8 +111,7 @@ DECISIONS: tuple[Decision, ...] = (
         "Contested-question disposition",
         "contested_disposition",
         "choice",
-        ("exploratory", "gated"),
-        {"gated": ("contested_rule", "contested_bound")},
+        ("exploratory",),
     ),
     Decision(
         "D-7",
@@ -156,11 +159,6 @@ CONDITIONAL_FIELDS: frozenset[str] = frozenset(
     for field in fields
 )
 
-CONTESTED_RULES: frozenset[str] = frozenset(
-    {"abstain-correct", "annotation-correct"}
-)
-
-
 def validate_registration(registration: Mapping[str, Any]) -> tuple[str, ...]:
     """Return a tuple of human-readable errors; empty means registrable.
 
@@ -195,23 +193,6 @@ def validate_registration(registration: Mapping[str, Any]) -> tuple[str, ...]:
                         f"{decision.schema_field}={trigger!r}"
                     )
 
-    if registration.get("contested_disposition") == "gated":
-        if "contested_rule" in registration:
-            rule = registration["contested_rule"]
-            if not isinstance(rule, str):
-                errors.append("D-6: 'contested_rule' must be a string")
-            elif rule not in CONTESTED_RULES:
-                errors.append(
-                    "D-6: 'contested_rule'="
-                    f"{rule!r} not one of {sorted(CONTESTED_RULES)}"
-                )
-        if "contested_bound" in registration:
-            errors.extend(
-                _validate_named_rate(
-                    "D-6", "contested_bound", registration["contested_bound"]
-                )
-            )
-
     unknown = seen - DECISION_FIELDS - DERIVED_FIELDS - CONDITIONAL_FIELDS
     for field in sorted(unknown):
         errors.append(f"unknown registration field: {field!r}")
@@ -228,10 +209,10 @@ def _validate_value(decision: Decision, value: Any) -> list[str]:
                 f"{list(decision.choices)}"
             ]
         return []
-    if decision.kind == "rate-or-null":
-        if value is None:
-            return []
-        return _validate_rate(decision, value)
+    if decision.kind == "null":
+        if value is not None:
+            return [f"{decision.id}: {field!r} must be null in Phase A"]
+        return []
     if decision.kind == "rate":
         return _validate_rate(decision, value)
     if decision.kind == "count":
@@ -268,21 +249,34 @@ def max_allowed_losses(bound: float, n: int) -> int:
     """Largest loss count satisfying ``count / n <= bound``."""
     if n < 0:
         raise ValueError("n must be non-negative")
-    return floor(bound * n + 1e-9)
+    return floor(_registered_rate(bound, "bound") * n)
 
 
 def min_required_successes(floor_rate: float, n: int) -> int:
     """Smallest success count satisfying ``count / n >= floor_rate``."""
     if n < 0:
         raise ValueError("n must be non-negative")
-    return ceil(floor_rate * n - 1e-9)
+    return ceil(_registered_rate(floor_rate, "floor_rate") * n)
 
 
 def min_required_margin(margin: float, n: int) -> int:
     """Smallest adoption-count difference satisfying ``diff / n >= margin``."""
     if n < 0:
         raise ValueError("n must be non-negative")
-    return ceil(margin * n - 1e-9)
+    return ceil(_registered_rate(margin, "margin") * n)
+
+
+def _registered_rate(value: float, field: str) -> Fraction:
+    """Recover the exact registered decimal represented by a JSON number."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, Decimal)):
+        raise ValueError(f"{field} must be a finite number in [0, 1]")
+    try:
+        decimal = Decimal(str(value))
+    except InvalidOperation as exc:
+        raise ValueError(f"{field} must be a finite number in [0, 1]") from exc
+    if not decimal.is_finite() or not Decimal(0) <= decimal <= Decimal(1):
+        raise ValueError(f"{field} must lie in [0, 1]")
+    return Fraction(decimal)
 
 
 def h1_passes(
@@ -332,6 +326,30 @@ VERDICTS: frozenset[str] = frozenset(
 EXPERIMENT_VERDICTS: frozenset[str] = VERDICTS | {NO_GO_FAM_MECHANISM}
 
 
+@dataclass(frozen=True, slots=True)
+class PreflightReceipt:
+    """Immutable provenance required by the authoritative verdict API."""
+
+    manifest_sha256: str
+    evidence_class: Literal["plumbing", "scoring-run"]
+    passed: bool
+    confirmatory: bool
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.manifest_sha256, str)
+            or len(self.manifest_sha256) != 64
+            or any(char not in "0123456789abcdef" for char in self.manifest_sha256)
+        ):
+            raise ValueError("manifest_sha256 must be a lowercase SHA-256 digest")
+        if self.evidence_class not in {"plumbing", "scoring-run"}:
+            raise ValueError("unsupported evidence class")
+        if not isinstance(self.passed, bool) or not isinstance(self.confirmatory, bool):
+            raise ValueError("receipt flags must be booleans")
+        if self.confirmatory and self.evidence_class != "scoring-run":
+            raise ValueError("only a scoring-run receipt can be confirmatory")
+
+
 def verdict(
     *, integrity_ok: bool, evaluable: bool, h1: bool, h2: bool, h3: bool
 ) -> str:
@@ -363,7 +381,7 @@ def verdict(
 
 def experiment_verdict(
     *,
-    integrity_ok: bool,
+    receipt: PreflightReceipt,
     evaluable: bool,
     mechanism_ok: bool,
     application_h1: bool,
@@ -371,8 +389,13 @@ def experiment_verdict(
     application_h3: bool,
     mechanism_active: bool,
 ) -> str:
-    """Gate application evidence behind an active, passing FAM mechanism."""
-    if not integrity_ok:
+    """Authoritative verdict, bound to confirmatory preflight provenance."""
+    if not (
+        isinstance(receipt, PreflightReceipt)
+        and receipt.passed
+        and receipt.confirmatory
+        and receipt.evidence_class == "scoring-run"
+    ):
         return BLOCKED
     if not evaluable or not mechanism_active:
         return NOT_EVALUABLE

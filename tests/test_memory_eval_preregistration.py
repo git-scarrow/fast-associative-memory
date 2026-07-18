@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from harness.memory_eval import preregistration as preregistration_module
 from harness.memory_eval.ledger import MemoryLedger
 from harness.memory_eval.models import MemoryQuestion
 from harness.memory_eval.preregistration import (
@@ -49,6 +50,17 @@ from harness.memory_eval.scoring import Rate, normalize_answer, score_rows
 
 
 MEMO = Path(__file__).resolve().parents[1] / "docs" / "FIVE_ARM_PREREGISTRATION.md"
+
+
+def _receipt(**overrides):
+    values = {
+        "manifest_sha256": "a" * 64,
+        "evidence_class": "scoring-run",
+        "passed": True,
+        "confirmatory": True,
+    }
+    values.update(overrides)
+    return preregistration_module.PreflightReceipt(**values)
 
 
 def record(record_id, scope, value, serial):
@@ -102,6 +114,8 @@ def _complete_registration(**overrides):
         "prototype_reduction_margin": 0.1,
         "mechanism_recall_loss_bound": 0.1,
         "min_mechanism_recall_n": 40,
+        "candidate_k": 2,
+        "cam_prototype_k": 1,
         "claim_order": "fam-mechanism-then-application",
         "stale_reduction_margin": 0.1,
         "clean_answer_loss_bound": 0.1,
@@ -142,7 +156,7 @@ def test_every_decision_has_a_unique_id_field_and_validation_rule():
 
 def test_memo_headings_and_sentinels_are_in_bijection_with_the_registry():
     text = MEMO.read_text(encoding="utf-8")
-    decision_pattern = r"D-(?:M[1-3]|[0-9]+[a-z]?)"
+    decision_pattern = r"D-(?:M[1-5]|[0-9]+[a-z]?)"
     heading_ids = set(
         re.findall(rf"^### ({decision_pattern}) —", text, re.MULTILINE)
     )
@@ -182,82 +196,20 @@ def test_validator_rejects_sentinels_bad_choices_and_unknown_fields():
     assert any("positive integer" in e for e in validate_registration(bad_count))
 
 
-def test_conditional_fields_keep_a_choice_from_being_inert():
-    """Finding 4: D-6 chose a policy no gate consumed. 'gated' must now drag
-    its rule and bound in with it, so the choice has somewhere to land."""
-    gated = _complete_registration(contested_disposition="gated")
-    errors = validate_registration(gated)
-    assert any("contested_rule" in e for e in errors)
-    assert any("contested_bound" in e for e in errors)
-
-    complete = _complete_registration(
-        contested_disposition="gated",
-        contested_rule="abstain-correct",
-        contested_bound=0.1,
+def test_phase_a_rejects_operationally_inert_contested_gate_choices():
+    assert validate_registration(
+        _complete_registration(contested_disposition="gated")
     )
-    assert validate_registration(complete) == ()
-
-    # 'exploratory' is a real registered choice, not a silent default.
-    assert validate_registration(_complete_registration()) == ()
-
-
-def test_gated_contested_rule_rejects_unknown_literal():
-    errors = validate_registration(
-        _complete_registration(
-            contested_disposition="gated",
-            contested_rule="majority-vote",
-            contested_bound=0.1,
-        )
-    )
-    assert any("contested_rule" in error and "not one of" in error for error in errors)
-
-
-def test_gated_contested_rule_rejects_wrong_type():
-    errors = validate_registration(
-        _complete_registration(
-            contested_disposition="gated",
-            contested_rule=1,
-            contested_bound=0.1,
-        )
-    )
-    assert any("contested_rule" in error and "string" in error for error in errors)
-
-
-@pytest.mark.parametrize("value", ["0.1", None, True])
-def test_gated_contested_bound_rejects_wrong_type(value):
     errors = validate_registration(
         _complete_registration(
             contested_disposition="gated",
             contested_rule="abstain-correct",
-            contested_bound=value,
+            contested_bound=0.1,
         )
     )
-    assert any("contested_bound" in error and "number" in error for error in errors)
-
-
-@pytest.mark.parametrize("value", [-0.1, 1.1, float("inf"), float("-inf"), float("nan")])
-def test_gated_contested_bound_rejects_out_of_range_or_nonfinite(value):
-    errors = validate_registration(
-        _complete_registration(
-            contested_disposition="gated",
-            contested_rule="annotation-correct",
-            contested_bound=value,
-        )
-    )
-    assert any("contested_bound" in error for error in errors)
-
-
-def test_gated_contested_bound_rejects_huge_integer_without_raising():
-    errors = validate_registration(
-        _complete_registration(
-            contested_disposition="gated",
-            contested_rule="abstain-correct",
-            contested_bound=10**10000,
-        )
-    )
-    assert any(
-        "contested_bound" in error and "[0, 1]" in error for error in errors
-    )
+    assert any("contested_disposition" in error for error in errors)
+    assert any("unknown registration field: 'contested_rule'" in error for error in errors)
+    assert any("unknown registration field: 'contested_bound'" in error for error in errors)
 
 
 def test_abstention_bound_has_a_schema_field_and_null_is_an_explicit_choice():
@@ -265,8 +217,16 @@ def test_abstention_bound_has_a_schema_field_and_null_is_an_explicit_choice():
     field, so it could never be registered."""
     assert "abstention_bound" in DECISION_FIELDS
     assert validate_registration(_complete_registration(abstention_bound=None)) == ()
-    assert validate_registration(_complete_registration(abstention_bound=0.2)) == ()
+    assert validate_registration(_complete_registration(abstention_bound=0.2))
     assert validate_registration(_complete_registration(abstention_bound="x"))
+
+
+def test_retrieval_widths_are_mandatory_human_registration_decisions():
+    by_id = {decision.id: decision for decision in DECISIONS}
+    assert by_id["D-M4"].schema_field == "candidate_k"
+    assert by_id["D-M5"].schema_field == "cam_prototype_k"
+    assert validate_registration(_complete_registration(candidate_k=0))
+    assert validate_registration(_complete_registration(cam_prototype_k=False))
 
 
 def test_confirmatory_design_choices_are_closed_to_the_committed_protocol():
@@ -300,6 +260,17 @@ def test_gate_thresholds_convert_to_exact_row_counts():
     # Exact at representative binary fractions; no float drift.
     assert max_allowed_losses(0.1, 10) == 1
     assert min_required_successes(0.1, 10) == 1
+
+
+def test_gate_thresholds_use_registered_decimal_text_without_epsilon_slack():
+    assert max_allowed_losses(0.099999999999, 10) == 0
+    assert min_required_successes(0.100000000001, 10) == 2
+    assert min_required_margin(0.100000000001, 10) == 2
+
+
+def test_any_positive_floor_or_margin_requires_at_least_one_count():
+    assert min_required_successes(1e-12, 1) == 1
+    assert min_required_margin(1e-12, 1) == 1
 
 
 def test_threshold_below_one_over_n_is_a_strict_gate_not_an_unfalsifiable_one():
@@ -570,7 +541,7 @@ def test_integrity_and_evaluability_outrank_every_value_gate():
 
 def test_application_is_exploratory_when_mechanism_fails():
     assert experiment_verdict(
-        integrity_ok=True,
+        receipt=_receipt(),
         evaluable=True,
         mechanism_ok=False,
         mechanism_active=True,
@@ -583,7 +554,7 @@ def test_application_is_exploratory_when_mechanism_fails():
 def test_experiment_verdict_requires_explicit_mechanism_activity_evidence():
     with pytest.raises(TypeError, match="mechanism_active"):
         experiment_verdict(
-            integrity_ok=True,
+            receipt=_receipt(),
             evaluable=True,
             mechanism_ok=True,
             application_h1=True,
@@ -594,24 +565,39 @@ def test_experiment_verdict_requires_explicit_mechanism_activity_evidence():
 
 def test_experiment_verdict_is_total_and_fixed_sequence():
     seen = set()
-    for values in product([True, False], repeat=7):
+    for values in product([True, False], repeat=6):
         result = experiment_verdict(
-            integrity_ok=values[0],
-            evaluable=values[1],
-            mechanism_ok=values[2],
-            application_h1=values[3],
-            application_h2=values[4],
-            application_h3=values[5],
-            mechanism_active=values[6],
+            receipt=_receipt(),
+            evaluable=values[0],
+            mechanism_ok=values[1],
+            application_h1=values[2],
+            application_h2=values[3],
+            application_h3=values[4],
+            mechanism_active=values[5],
         )
         assert result in EXPERIMENT_VERDICTS
         seen.add(result)
+    seen.add(
+        experiment_verdict(
+            receipt=_receipt(
+                manifest_sha256="b" * 64,
+                evidence_class="plumbing",
+                confirmatory=False,
+            ),
+            evaluable=True,
+            mechanism_ok=True,
+            application_h1=True,
+            application_h2=True,
+            application_h3=True,
+            mechanism_active=True,
+        )
+    )
     assert seen == EXPERIMENT_VERDICTS
 
 
 def test_live_fam_with_zero_merges_is_not_evaluable_rather_than_go():
     assert experiment_verdict(
-        integrity_ok=True,
+        receipt=_receipt(),
         evaluable=True,
         mechanism_ok=True,
         application_h1=True,
@@ -619,6 +605,24 @@ def test_live_fam_with_zero_merges_is_not_evaluable_rather_than_go():
         application_h3=True,
         mechanism_active=False,
     ) == NOT_EVALUABLE
+
+
+def test_authoritative_verdict_blocks_a_passing_plumbing_receipt():
+    receipt = _receipt(
+        manifest_sha256="b" * 64,
+        evidence_class="plumbing",
+        confirmatory=False,
+    )
+
+    assert experiment_verdict(
+        receipt=receipt,
+        evaluable=True,
+        mechanism_ok=True,
+        application_h1=True,
+        application_h2=True,
+        application_h3=True,
+        mechanism_active=True,
+    ) == BLOCKED
 
 
 # --------------------------------------------------------------------------

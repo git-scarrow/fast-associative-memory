@@ -37,7 +37,7 @@ import unicodedata
 
 from . import ARM_NAMES
 from .ledger import MemoryLedger
-from .models import MemoryQuestion
+from .models import MemoryQuestion, MemoryRecord
 from .runner import ExperimentRow
 
 
@@ -115,6 +115,31 @@ def normalize_answer(value: str) -> str:
     return " ".join(normalized.split()).casefold()
 
 
+def validate_raw_with_invariant(records: Sequence[MemoryRecord]) -> None:
+    """Reject raw-distinct values that collapse under scoring normalization.
+
+    Lifecycle forks are defined by raw ledger equality, while answer scoring
+    uses :func:`normalize_answer`.  A same-scope, same-serial pair that differs
+    only before normalization would therefore be contested in the ledger but
+    uncontested in the scorers.  Such a corpus is ambiguous rather than
+    evidence and must fail before any denominator is formed.
+    """
+    first_by_identity: dict[tuple[str, int, str], MemoryRecord] = {}
+    for record in records:
+        identity = (record.scope, record.serial, normalize_answer(record.value))
+        previous = first_by_identity.get(identity)
+        if previous is None:
+            first_by_identity[identity] = record
+            continue
+        if previous.value != record.value:
+            first_id, second_id = sorted((previous.record_id, record.record_id))
+            raise ValueError(
+                "raw-with-invariant violation: same-scope, same-serial records "
+                f"{first_id!r} and {second_id!r} have distinct raw values that "
+                "normalize equal under the scorer"
+            )
+
+
 def is_clean_scope(ledger: MemoryLedger, scope: str) -> bool:
     records = ledger.records_for_scope(scope)
     return bool(records) and len({normalize_answer(record.value) for record in records}) == 1
@@ -151,6 +176,7 @@ def score_rows(
     *,
     expected_scoring_version: str | None = None,
 ) -> ScoreReport:
+    validate_raw_with_invariant(ledger.records)
     if (
         expected_scoring_version is not None
         and expected_scoring_version != SCORING_VERSION

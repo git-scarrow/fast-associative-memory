@@ -1,4 +1,4 @@
-"""Preflight and construct the only admissible sealed scoring runner."""
+"""Phase-A audit preflight and explicitly non-confirmatory plumbing runs."""
 
 from __future__ import annotations
 
@@ -6,22 +6,26 @@ from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from .ledger import MemoryLedger
 from .manifest import (
     MANIFEST_VERSION,
+    PHASE_B_SCORING_REFUSAL,
     build_cam_indexes,
-    input_fingerprints,
     load_manifest,
     policy_sha256,
     scoring_module_sha256,
-    validate_retriever_settings,
     verify_manifest,
 )
 from .models import MemoryQuestion, MemoryRecord
-from .preregistration import validate_registration
-from .retrievers import ExemplarCAMRetriever, FAMRetriever, TensorLike
+from .preregistration import PreflightReceipt, validate_registration
+from .retrievers import (
+    ExemplarCAMRetriever,
+    FAMRetriever,
+    IndexBuildAttestation,
+    TensorLike,
+)
 from .runner import FiveArmRunner
 from .scoring import SCORING_VERSION
 
@@ -32,6 +36,24 @@ class Check:
     name: str
     passed: bool
     detail: str
+
+
+@dataclass(frozen=True, slots=True)
+class RebuiltIndexAttestations:
+    exemplar: IndexBuildAttestation
+    fam: IndexBuildAttestation
+
+
+@dataclass(frozen=True, slots=True)
+class PlumbingRunBundle:
+    """Verified but permanently non-confirmatory execution plumbing."""
+
+    manifest_sha256: str
+    evidence_class: Literal["plumbing"]
+    admissible: Literal[False]
+    receipt: PreflightReceipt
+    rebuilt_attestations: RebuiltIndexAttestations
+    runner: FiveArmRunner
 
 
 class PreflightFailed(RuntimeError):
@@ -57,12 +79,13 @@ def build_plumbing_run(
     retriever_settings: Mapping[str, Any],
     policy: Mapping[str, Any],
     consumer: Any,
-) -> FiveArmRunner:
-    """Rebuild a verified manifest-v3 plumbing run without evidence claims.
+) -> PlumbingRunBundle:
+    """Rebuild a verified manifest-v3 plumbing bundle without evidence claims.
 
     Plumbing seals bind inputs and treatment but intentionally contain no
-    registration or sealed index attestations. The returned runner is only an
-    execution fixture; this entry point cannot produce a confirmatory verdict.
+    registration or sealed index attestations. The bundled runner is only an
+    execution fixture; its immutable receipt cannot authorize a confirmatory
+    verdict.
     """
     manifest = load_manifest(manifest_path)
     protocol_value = manifest.get("protocol")
@@ -105,13 +128,31 @@ def build_plumbing_run(
     )
     sealed_settings = verified["protocol"]["retriever_settings"]
     exemplar, fam = build_cam_indexes(records, record_embeddings, sealed_settings)
-    return FiveArmRunner(
+    runner = FiveArmRunner(
         ledger=MemoryLedger(records),
         exemplar_retriever=exemplar,
         fam_retriever=fam,
         consumer=consumer,
         candidate_k=sealed_settings["candidate_k"],
         policy=dict(policy),
+    )
+    digest = verified["manifest_sha256"]
+    receipt = PreflightReceipt(
+        manifest_sha256=digest,
+        evidence_class="plumbing",
+        passed=True,
+        confirmatory=False,
+    )
+    return PlumbingRunBundle(
+        manifest_sha256=digest,
+        evidence_class="plumbing",
+        admissible=False,
+        receipt=receipt,
+        rebuilt_attestations=RebuiltIndexAttestations(
+            exemplar=exemplar.attestation,
+            fam=fam.attestation,
+        ),
+        runner=runner,
     )
 
 
@@ -126,88 +167,77 @@ def preflight(
     policy: Mapping[str, Any],
     consumer: Any,
 ) -> tuple[Check, ...]:
-    """Rebuild the sealed treatment and report every confirmatory gate.
-
-    A plumbing seal is readable, but deliberately fails the evidence-class,
-    registration, memo, and index-attestation gates. It can never yield a
-    confirmatory mechanism or application verdict through this entry point.
-    """
+    """Audit a manifest while keeping Phase-A confirmatory execution closed."""
     checks: list[Check] = []
     try:
-        manifest = load_manifest(manifest_path)
-    except Exception as exc:  # noqa: BLE001 - the report preserves the cause
-        return (
-            Check("G-I2", "manifest integrity", False, _exception_detail(exc)),
-        )
+        loaded = load_manifest(manifest_path)
+    except Exception as exc:  # noqa: BLE001 - preserve exact audit cause
+        return (Check("G-I2", "manifest integrity", False, _exception_detail(exc)),)
 
-    protocol_value = manifest.get("protocol")
-    protocol = protocol_value if isinstance(protocol_value, Mapping) else {}
-
-    checks.append(
-        Check(
-            "G-I2",
-            "manifest version",
-            manifest.get("manifest_version") == MANIFEST_VERSION,
-            f"sealed {manifest.get('manifest_version')!r}, expected {MANIFEST_VERSION!r}",
-        )
+    raw_protocol_value = loaded.get("protocol")
+    raw_protocol = (
+        raw_protocol_value if isinstance(raw_protocol_value, Mapping) else {}
     )
+    declared_evidence = raw_protocol.get("evidence_class")
+    declared_registration_value = raw_protocol.get("registration")
+    declared_registration = (
+        declared_registration_value
+        if isinstance(declared_registration_value, Mapping)
+        else None
+    )
+    declared_memo = raw_protocol.get("registration_memo_path")
+    live_pin = getattr(consumer, "pin_id", None)
 
-    sealed_inputs = {
-        key: value
-        for key, value in manifest.get("fingerprints", {}).items()
-        if key != "protocol"
-    }
     try:
-        live_inputs = input_fingerprints(
-            records, questions, record_embeddings, query_embeddings
+        verified = verify_manifest(
+            manifest_path,
+            records,
+            questions,
+            record_embeddings,
+            query_embeddings,
+            retriever_settings,
+            evidence_class=(
+                declared_evidence if isinstance(declared_evidence, str) else ""
+            ),
+            policy=policy,
+            consumer_pin=live_pin,
+            registration=declared_registration,
+            registration_memo_path=(
+                declared_memo if isinstance(declared_memo, str) else None
+            ),
         )
-        drifted = sorted(
-            key for key, value in live_inputs.items() if sealed_inputs.get(key) != value
+    except Exception as exc:  # noqa: BLE001
+        checks.append(
+            Check("G-I2", "full manifest binding", False, _exception_detail(exc))
         )
         checks.append(
             Check(
-                "G-I2",
-                "input integrity",
-                not drifted,
-                "records, questions and embeddings match the seal"
-                if not drifted
-                else f"drifted: {', '.join(drifted)}",
+                "G-I6",
+                "Phase B provenance/reconciliation envelope",
+                False,
+                PHASE_B_SCORING_REFUSAL,
             )
         )
-    except Exception as exc:  # noqa: BLE001
-        checks.append(Check("G-I2", "input integrity", False, _exception_detail(exc)))
+        return tuple(checks)
 
-    sealed_settings_value = protocol.get("retriever_settings")
-    sealed_settings = (
-        sealed_settings_value if isinstance(sealed_settings_value, Mapping) else {}
-    )
-    settings_errors: list[str] = []
-    try:
-        validate_retriever_settings(
-            sealed_settings, record_count=manifest.get("record_count")
-        )
-    except Exception as exc:  # noqa: BLE001
-        settings_errors.append(f"sealed schema: {_exception_detail(exc)}")
-    try:
-        validate_retriever_settings(retriever_settings, record_count=len(records))
-    except Exception as exc:  # noqa: BLE001
-        settings_errors.append(f"live schema: {_exception_detail(exc)}")
-    if dict(sealed_settings) != dict(retriever_settings):
-        settings_errors.append(
-            f"sealed {dict(sealed_settings)!r} vs live {dict(retriever_settings)!r}"
-        )
     checks.append(
         Check(
             "G-I2",
-            "treatment settings",
-            not settings_errors,
-            "complete closed schema matches the seal"
-            if not settings_errors
-            else "; ".join(settings_errors),
+            "full manifest binding",
+            True,
+            "all envelope fields, counts, protocol identity, and fingerprints match",
         )
     )
+    # No raw protocol field is used beyond this point.  Execution/audit values
+    # come exclusively from the full verify result above.
+    protocol = verified["protocol"]
+    sealed_settings = protocol["retriever_settings"]
+    evidence_class = protocol["evidence_class"]
+    registration_value = protocol.get("registration")
+    registration = (
+        registration_value if isinstance(registration_value, Mapping) else None
+    )
 
-    evidence_class = protocol.get("evidence_class")
     checks.append(
         Check(
             "G-I2",
@@ -216,25 +246,26 @@ def preflight(
             f"sealed as {evidence_class!r}; only 'scoring-run' is confirmatory",
         )
     )
-
-    registration_value = protocol.get("registration")
-    registration = (
-        registration_value if isinstance(registration_value, Mapping) else None
+    registration_errors = list(
+        ("no registration block sealed",)
+        if registration is None
+        else validate_registration(registration)
     )
-    if registration is None:
-        checks.append(
-            Check("G-I1", "registration complete", False, "no registration block sealed")
+    if registration is not None:
+        for field in ("candidate_k", "cam_prototype_k"):
+            if registration.get(field) != sealed_settings.get(field):
+                registration_errors.append(
+                    f"{field} registration {registration.get(field)!r} does not "
+                    f"match verified treatment {sealed_settings.get(field)!r}"
+                )
+    checks.append(
+        Check(
+            "G-I1",
+            "registration complete",
+            not registration_errors,
+            "clean" if not registration_errors else "; ".join(registration_errors),
         )
-    else:
-        registration_errors = validate_registration(registration)
-        checks.append(
-            Check(
-                "G-I1",
-                "registration complete",
-                not registration_errors,
-                "clean" if not registration_errors else "; ".join(registration_errors),
-            )
-        )
+    )
 
     memo_path = protocol.get("registration_memo_path")
     memo_error: str | None = None
@@ -268,19 +299,16 @@ def preflight(
     )
 
     sealed_policy = protocol.get("policy_sha256")
-    try:
-        live_policy = policy_sha256(policy)
-        policy_matches = sealed_policy == live_policy
-        policy_detail = (
-            f"sealed {_short(sealed_policy)} vs live {_short(live_policy)}"
+    live_policy = policy_sha256(policy)
+    checks.append(
+        Check(
+            "G-I2",
+            "policy binding",
+            sealed_policy == live_policy,
+            f"sealed {_short(sealed_policy)} vs live {_short(live_policy)}",
         )
-    except Exception as exc:  # noqa: BLE001
-        policy_matches = False
-        policy_detail = _exception_detail(exc)
-    checks.append(Check("G-I2", "policy binding", policy_matches, policy_detail))
-
+    )
     sealed_pin = protocol.get("consumer_pin")
-    live_pin = getattr(consumer, "pin_id", None)
     checks.append(
         Check(
             "G-I2",
@@ -289,7 +317,6 @@ def preflight(
             f"sealed {sealed_pin!r} vs live {live_pin!r}",
         )
     )
-
     sealed_scorer = protocol.get("scoring_module_sha256")
     live_scorer = scoring_module_sha256()
     checks.append(
@@ -306,46 +333,30 @@ def preflight(
     fam: FAMRetriever | None = None
     rebuild_error: str | None = None
     try:
-        exemplar, fam = build_cam_indexes(
-            records, record_embeddings, sealed_settings
-        )
+        exemplar, fam = build_cam_indexes(records, record_embeddings, sealed_settings)
     except Exception as exc:  # noqa: BLE001
         rebuild_error = _exception_detail(exc)
-
     attestations_value = protocol.get("index_attestations")
     attestations = (
         attestations_value if isinstance(attestations_value, Mapping) else {}
     )
     checks.append(
-        _attestation_check(
-            "exemplar index",
-            attestations.get("exemplar"),
-            exemplar,
-            rebuild_error,
-        )
+        _attestation_check("exemplar index", attestations.get("exemplar"), exemplar, rebuild_error)
     )
     checks.append(
-        _attestation_check(
-            "FAM index",
-            attestations.get("fam"),
-            fam,
-            rebuild_error,
-        )
+        _attestation_check("FAM index", attestations.get("fam"), fam, rebuild_error)
     )
 
     if fam is None:
         active = False
         activity_detail = rebuild_error or "FAM index was not rebuilt"
     else:
-        attestation = fam.attestation
-        active = attestation.merged > 0 and attestation.key_drifted_merges > 0
+        active = fam.attestation.merged > 0 and fam.attestation.key_drifted_merges > 0
         activity_detail = (
-            f"merged={attestation.merged}, "
-            f"key_drifted_merges={attestation.key_drifted_merges}"
+            f"merged={fam.attestation.merged}, "
+            f"key_drifted_merges={fam.attestation.key_drifted_merges}"
         )
-    checks.append(
-        Check("G-M0", "mechanism activity", active, activity_detail)
-    )
+    checks.append(Check("G-M0", "mechanism activity", active, activity_detail))
 
     integrity = False
     integrity_detail = rebuild_error or "indexes were not rebuilt"
@@ -366,11 +377,14 @@ def preflight(
             f"drops/evictions={e0.dropped}/{e0.evicted}/{f0.dropped}/{f0.evicted}"
         )
     checks.append(
+        Check("G-I2", "provenance and capacity integrity", integrity, integrity_detail)
+    )
+    checks.append(
         Check(
-            "G-I2",
-            "provenance and capacity integrity",
-            integrity,
-            integrity_detail,
+            "G-I6",
+            "Phase B provenance/reconciliation envelope",
+            False,
+            PHASE_B_SCORING_REFUSAL,
         )
     )
     return tuple(checks)
@@ -387,31 +401,8 @@ def build_sealed_run(
     policy: Mapping[str, Any],
     consumer: Any,
 ) -> FiveArmRunner:
-    """Build both live CAM arms exclusively from a passing sealed protocol."""
-    checks = preflight(
-        manifest_path,
-        records=records,
-        questions=questions,
-        record_embeddings=record_embeddings,
-        query_embeddings=query_embeddings,
-        retriever_settings=retriever_settings,
-        policy=policy,
-        consumer=consumer,
-    )
-    if any(not check.passed for check in checks):
-        raise PreflightFailed(checks)
-
-    protocol = load_manifest(manifest_path)["protocol"]
-    sealed_settings = protocol["retriever_settings"]
-    exemplar, fam = build_cam_indexes(records, record_embeddings, sealed_settings)
-    return FiveArmRunner(
-        ledger=MemoryLedger(records),
-        exemplar_retriever=exemplar,
-        fam_retriever=fam,
-        consumer=consumer,
-        candidate_k=sealed_settings["candidate_k"],
-        policy=dict(policy),
-    )
+    """Phase-A hard stop: no manifest can produce an admissible runner."""
+    raise RuntimeError(PHASE_B_SCORING_REFUSAL)
 
 
 def _attestation_check(

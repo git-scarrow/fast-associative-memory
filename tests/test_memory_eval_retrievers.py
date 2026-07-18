@@ -85,6 +85,51 @@ def test_live_fam_streams_actual_embeddings_and_merges_with_key_drift():
     assert retriever.attestation.key_drifted_merges == 1
     assert retriever.prototype_count == 1
     assert retriever.provenance_for_scope("scope") == {"old", "new"}
+    slot = retriever.cam.occupied.nonzero(as_tuple=True)[0].item()
+    # Allocation seeds hit_counts=1; this merge increments it to 2 before EMA.
+    adaptive_key_alpha = 0.05 / (1.0 + 0.05 * 2)
+    expected_key = torch.tensor([1.0, 0.0]) + adaptive_key_alpha * (
+        torch.tensor([0.9, 0.1]) - torch.tensor([1.0, 0.0])
+    )
+    assert torch.allclose(retriever.cam.keys[slot], expected_key)
+
+
+def test_closer_cross_scope_prototype_cannot_shield_a_valid_same_scope_merge():
+    records = [
+        record("a-seed", "scope-a", serial=1),
+        record("b-seed", "scope-b", serial=1),
+        record("a-update", "scope-a", serial=2),
+    ]
+    embeddings = {
+        "a-seed": [1.0, 0.0],
+        "b-seed": [0.95, 0.3122499],
+        # Identical to the cross-scope slot, but still cosine 0.95 to scope-a.
+        "a-update": [0.95, 0.3122499],
+    }
+
+    retriever = FAMRetriever(records, embeddings, settings=settings(max_entries=3))
+
+    assert retriever.attestation.merged == 1
+    assert retriever.prototype_count == 2
+    assert retriever.provenance_for_scope("scope-a") == {"a-seed", "a-update"}
+    assert retriever.provenance_for_scope("scope-b") == {"b-seed"}
+
+
+def test_identical_different_scope_collision_allocates_separate_prototypes():
+    records = [record("a", "scope-a"), record("b", "scope-b")]
+    retriever = FAMRetriever(
+        records,
+        {"a": [1.0, 0.0], "b": [1.0, 0.0]},
+        settings=settings(max_entries=2),
+    )
+
+    assert retriever.attestation.merged == 0
+    assert retriever.prototype_count == 2
+    occupied = retriever.cam.occupied.nonzero(as_tuple=True)[0].tolist()
+    assert {frozenset(retriever.cam.records_for(slot)) for slot in occupied} == {
+        frozenset({"a"}),
+        frozenset({"b"}),
+    }
 
 
 def test_below_vigilance_same_scope_allocates_second_fam_prototype():

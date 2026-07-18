@@ -77,6 +77,25 @@ def test_answer_normalization_is_exact_after_unicode_case_and_space_cleanup():
     assert normalize_answer("Inc.") != normalize_answer("Inc")
 
 
+def test_raw_distinct_normalized_equal_fork_cannot_enter_scoring_denominators():
+    ledger = MemoryLedger(
+        [
+            record("fork-a", "scope", "Detroit", 1),
+            record("fork-b", "scope", "  DETROIT  ", 1),
+        ]
+    )
+    questions = [MemoryQuestion("q", "City?", "scope", "Detroit")]
+    answers = {
+        arm: (("answer", "Detroit"),) for arm in ARM_NAMES
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="raw-with-invariant.*fork-a.*fork-b",
+    ):
+        score_rows(rows_for(questions, answers), questions, ledger)
+
+
 def test_clean_scope_requires_one_distinct_value_and_no_fork():
     ledger = MemoryLedger(
         [

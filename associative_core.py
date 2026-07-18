@@ -759,7 +759,37 @@ class ContinuousCAM(nn.Module):
             else:
                 within_class_sims = None
         else:
-            best_slots, best_sims = self._get_nearest_batch(queries)
+            if self.occupied.any():
+                # Static vigilance is label-conditional: condensation seeks the
+                # nearest occupied prototype with the incoming semantic label,
+                # then applies the fixed threshold.  A geometrically closer
+                # cross-label prototype must not shield a valid same-label
+                # merge.  The dynamic-vigilance branch above intentionally
+                # retains its global-nearest competition and telemetry.
+                valid_idx = self.occupied.nonzero(as_tuple=True)[0]
+                keys_occ = self._keys_norm[valid_idx]
+                proto_labels = self.effective_slot_labels(valid_idx)
+                true_labels = self._labels_from_targets(targets)
+                q_norm = F.normalize(self._cast(queries), dim=-1)
+                sims_static = q_norm @ keys_occ.T
+                same_label = (
+                    proto_labels.unsqueeze(0) == true_labels.unsqueeze(1)
+                )
+                masked_sims = sims_static.masked_fill(~same_label, -float("inf"))
+                best_sims, best_locs = masked_sims.max(dim=1)
+                has_match = same_label.any(dim=1)
+                best_slots = torch.where(
+                    has_match,
+                    valid_idx[best_locs],
+                    torch.full_like(best_locs, -1),
+                )
+                best_sims = torch.where(
+                    has_match,
+                    best_sims.float(),
+                    torch.full_like(best_sims.float(), -1.0),
+                )
+            else:
+                best_slots, best_sims = self._get_nearest_batch(queries)
             vigilance_thresholds = torch.full_like(best_sims, self.vigilance)
 
             # No sims_full was computed on this path; compute a dedicated

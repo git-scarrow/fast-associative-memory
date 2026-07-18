@@ -16,7 +16,6 @@ from . import ARM_NAMES, CONTEXT_BUDGET_TOKENS
 from . import scoring as _scoring_module
 from .context import POLICY_VERSION
 from .models import MemoryQuestion, MemoryRecord
-from .preregistration import validate_registration
 from .retrievers import (
     CAMIndexSettings,
     ExemplarCAMRetriever,
@@ -29,6 +28,7 @@ __all__ = [
     "MANIFEST_VERSION",
     "SCORING_VERSION",
     "EVIDENCE_CLASSES",
+    "PHASE_B_SCORING_REFUSAL",
     "canonical_json",
     "policy_sha256",
     "scoring_module_sha256",
@@ -41,10 +41,15 @@ __all__ = [
 
 MANIFEST_VERSION = "memory-eval-manifest-v3"
 
-#: A seal must say what it is. ``plumbing`` cannot carry a registration and is
-#: never admissible as evidence; ``scoring-run`` must carry a complete one
-#: (gate G-I1) and binds the treatment (gate G-I2).
+#: A manifest must say what it is. ``plumbing`` is the only class Phase A may
+#: seal. ``scoring-run`` remains recognized so audit verification can diagnose
+#: externally constructed envelopes, but public creation/execution is closed.
 EVIDENCE_CLASSES = ("plumbing", "scoring-run")
+
+PHASE_B_SCORING_REFUSAL = (
+    "Phase B provenance/reconciliation envelope is not implemented; "
+    "Phase A cannot seal or execute a scoring-run"
+)
 
 RETRIEVER_SETTING_KEYS = frozenset(
     {
@@ -147,10 +152,22 @@ def validate_retriever_settings(
     ):
         if settings[name] is not None:
             raise ValueError(f"{name} must be explicitly null")
-    if settings["cam_adaptive_eviction"] is not False:
-        raise ValueError("cam_adaptive_eviction must be explicitly false")
     if settings["cam_sleep"] is not False:
         raise ValueError("cam_sleep must be explicitly false")
+
+    fixed_treatment = {
+        "cam_vigilance": 0.85,
+        "cam_hebb_lr": 0.1,
+        "cam_key_lr": 0.05,
+        "cam_ema_beta": 0.05,
+        "cam_inference_temp": 0.05,
+        "cam_use_bfloat16": False,
+        "cam_adaptive_eviction": False,
+        "cam_use_lfu": True,
+    }
+    for name, expected in fixed_treatment.items():
+        if settings[name] != expected:
+            raise ValueError(f"{name} must be exactly {expected!r}")
 
     fixed = {
         "cam_ingest_order": "manifest-record-order",
@@ -252,17 +269,23 @@ def seal_manifest(
     registration: Mapping[str, Any] | None = None,
     registration_memo_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Seal inputs and, for a scoring run, the treatment that acts on them.
+    """Seal a Phase-A plumbing manifest; reject scoring-run creation.
 
-    ``evidence_class`` is mandatory and self-labelling: a ``plumbing`` seal
-    refuses to carry a registration, and a ``scoring-run`` seal refuses to
-    exist without a complete one. There is no default, because the dangerous
-    mistake is sealing a real run as though it were a rehearsal.
+    ``evidence_class`` stays mandatory so no caller can silently downgrade a
+    real run to rehearsal status. Phase B must implement provenance and source
+    reconciliation before this public API may create confirmatory evidence.
     """
     if evidence_class not in EVIDENCE_CLASSES:
         raise ValueError(
             f"evidence_class must be one of {list(EVIDENCE_CLASSES)}, got {evidence_class!r}"
         )
+
+    if evidence_class == "scoring-run":
+        # Phase A deliberately lacks the source-to-normalized provenance and
+        # reconciliation envelope required for confirmatory evidence.  Pins,
+        # policy bytes, a registration, and index attestations are necessary
+        # but cannot substitute for that missing boundary.
+        raise RuntimeError(PHASE_B_SCORING_REFUSAL)
 
     validate_retriever_settings(retriever_settings, record_count=len(records))
 
@@ -272,13 +295,8 @@ def seal_manifest(
             raise ValueError("a plumbing seal cannot carry a registration")
         if registration_memo_path is not None:
             raise ValueError("a plumbing seal cannot carry a registration memo path")
-    else:
-        sealed_memo_path = _refuse_unless_registrable(
-            policy,
-            consumer_pin,
-            registration,
-            registration_memo_path,
-        )
+    else:  # pragma: no cover - scoring-run is refused above in Phase A
+        raise AssertionError("unreachable Phase A scoring seal")
 
     manifest = _manifest_body(
         records,
@@ -295,53 +313,6 @@ def seal_manifest(
     manifest["manifest_sha256"] = _fingerprint(manifest)
     Path(path).write_text(canonical_json(manifest) + "\n", encoding="utf-8")
     return manifest
-
-
-def _refuse_unless_registrable(
-    policy: Mapping[str, Any] | None,
-    consumer_pin: str | None,
-    registration: Mapping[str, Any] | None,
-    registration_memo_path: str | Path | None,
-) -> str | None:
-    """Gate G-I1 + G-I2 at seal time. Reports every reason at once."""
-    problems: list[str] = []
-    if policy is None:
-        problems.append("scoring-run seal requires the disposition policy (G-I2)")
-    if not consumer_pin:
-        problems.append("scoring-run seal requires a consumer_pin (G-I2)")
-    if registration is None:
-        problems.append("scoring-run seal requires a registration block (G-I1)")
-    else:
-        problems.extend(
-            f"registration: {error}" for error in validate_registration(registration)
-        )
-    memo_path: Path | None = None
-    if registration_memo_path is None:
-        problems.append("scoring-run seal requires a registration memo path (G-I1)")
-    else:
-        memo_path = Path(registration_memo_path).resolve()
-        try:
-            memo_digest = sha256(memo_path.read_bytes()).hexdigest()
-        except OSError as exc:
-            problems.append(
-                f"registration memo path {str(memo_path)!r} is unreadable: {exc}"
-            )
-        else:
-            registered_digest = (
-                registration.get("memo_sha256") if registration is not None else None
-            )
-            if registered_digest != memo_digest:
-                problems.append(
-                    "registration memo_sha256 does not match the bytes at the "
-                    f"registered memo path: registered={registered_digest!r}, "
-                    f"actual={memo_digest!r}"
-                )
-    if problems:
-        raise RuntimeError(
-            "refusing to seal a scoring run:\n  - " + "\n  - ".join(problems)
-        )
-    assert memo_path is not None
-    return str(memo_path)
 
 
 def load_manifest(path: str | Path) -> dict[str, Any]:
@@ -427,6 +398,7 @@ def _manifest_body(
     registration: Mapping[str, Any] | None,
     registration_memo_path: str | None,
 ) -> dict[str, Any]:
+    _scoring_module.validate_raw_with_invariant(records)
     validate_retriever_settings(retriever_settings, record_count=len(records))
     records_value = [asdict(record) for record in records]
     questions_value = [asdict(question) for question in questions]

@@ -1,8 +1,10 @@
 # Five-arm FAM evaluation — preregistration (revision 3, DRAFT)
 
-**Status:** not registered. Every keyed marker below must be replaced and the
-memo bytes sealed before confirmatory outcome inspection. Corpus-shape probes
-may disclose denominators, but never retrieval differences, prototype
+**Status:** Phase A draft; confirmatory execution is disabled. Every keyed
+marker below remains a human Phase B decision. Even a completed memo, policy,
+consumer pin, and digest-consistent manifest are insufficient today because the
+Phase B provenance/reconciliation envelope is not implemented. Corpus-shape
+probes may disclose denominators, but never retrieval differences, prototype
 reduction, or application outcomes.
 
 ## 1. Design hierarchy and claims
@@ -21,12 +23,19 @@ The confirmatory hierarchy is fixed. First, E0 versus F0 must demonstrate an
 active, fidelity-preserving FAM mechanism. Only after that conjunction passes
 may F0 versus F1 support the constructive-forgetting application claim. E1,
 cross-family answer comparisons, latency, token use, and all contested-question
-outcomes are exploratory unless the conditional contested gate is registered.
+outcomes are exploratory. Phase A accepts no confirmatory contested gate.
 
 The primary scorer is exact normalized structured-answer equality. H1 uses the
 fixed-full stale-eligible denominator. Ledger lifecycle identity remains raw
-string equality, protected by a sealed invariant rejecting normalized-equal but
-raw-unequal values tied at maximum serial.
+string equality, protected by an invariant rejecting any raw-unequal values
+that normalize equal at the same scope and serial.
+
+The closed v1 treatment fixes vigilance `0.85`, Hebbian LR `0.1`, key LR
+`0.05`, EMA beta `0.05`, inference temperature `0.05`, float32
+(`use_bfloat16 = false`), adaptive eviction off, and LFU on. It also requires
+explicitly disabled dynamic vigilance, retrieval policies, NSTP, and sleep,
+plus the fixed ingest/write modes. Only the two retrieval widths remain human
+choices (D-M4/D-M5).
 
 ## 2. Decisions requiring registration
 
@@ -50,6 +59,17 @@ M2 compares paired E0-minus-F0 authoritative recall loss with
 `min_mechanism_recall_n = <<UNREGISTERED:D-M3>>`, a positive integer.
 Contested maximum-serial scopes never enter this denominator.
 
+### D-M4 — Candidate retrieval width
+
+`candidate_k = <<UNREGISTERED:D-M4>>`, a positive integer selected by the human
+registrant. Phase A synthetic fixture values are not a proposed real-run width.
+
+### D-M5 — CAM prototype retrieval width
+
+`cam_prototype_k = <<UNREGISTERED:D-M5>>`, a positive integer selected by the
+human registrant. Phase A synthetic fixture values are not a proposed real-run
+width.
+
 ### D-1 — Stale-reduction margin
 
 `stale_reduction_margin = <<UNREGISTERED:D-1>>`, a number in `[0, 1]`.
@@ -67,8 +87,9 @@ A3 requires current-answer successes on stale-eligible questions.
 
 ### D-3b — Additional abstention bound
 
-`abstention_bound = <<UNREGISTERED:D-3b>>`, either null or a number in `[0, 1]`.
-Null explicitly registers no additional abstention gate.
+`abstention_bound = <<UNREGISTERED:D-3b>>`. Phase A accepts only null, explicitly
+recording that no additional abstention gate is operational. A numeric bound is
+a Phase B evaluator feature, not a Phase A registration choice.
 
 ### D-4 — Scorer semantics
 
@@ -83,11 +104,10 @@ E0 and F0 use the identical deterministic renderer and budget.
 
 ### D-6 — Contested-question disposition
 
-`contested_disposition = <<UNREGISTERED:D-6>>`, either `exploratory` or `gated`.
-Selecting `gated` additionally requires `contested_rule` and `contested_bound`;
-otherwise contested counts and outcomes are reported but read by no value gate.
-The rule is exactly `abstain-correct` or `annotation-correct`; the bound is a
-finite numeric value in `[0, 1]`.
+`contested_disposition = <<UNREGISTERED:D-6>>`. Phase A accepts only
+`exploratory`; contested counts and outcomes are reported but read by no value
+gate. `gated`, `contested_rule`, and `contested_bound` remain Phase B evaluator
+work and are rejected by the Phase A closed schema.
 
 ### D-7 — Equivalence relation (ledger vs scorer)
 
@@ -145,17 +165,23 @@ M2 threshold              = floor(D-M2 * recall_n)
 
 Threshold multiplication uses exact rational arithmetic recovered from the
 registered decimal text. It never multiplies binary floating-point values.
-The two integer thresholds are derived only while constructing the seal. They
-are recorded for audit but are not human registration choices.
+The two integer thresholds are not human registration choices. Because Phase A
+cannot construct a scoring seal, deriving and recording confirmatory integer
+thresholds is explicitly a Phase B sealing obligation.
 
 ## 4. Integrity, activity, and evaluability gates
 
-All integrity checks run before generation. Any failure yields `blocked` and no
-value claim. They include closed manifest schema and memo hash, immutable corpus
-and embeddings, identical treatment settings except write mode, successful
-rebuild of E0/F0, exact realized index attestations, no dropped/evicted writes,
-complete one-to-one provenance over ledger record IDs, capacity equality, raw
-renderer identity, and F0/F1 candidate-tuple identity.
+Phase A preflight calls full manifest verification before using any protocol
+field. Digest-consistent changes to arms, budget, protocol identities, counts,
+or unknown envelope fields fail its named full-manifest-binding check. Any
+failure yields `blocked` and no value claim. Additional checks include closed
+registration schema and memo hash, immutable corpus and embeddings, the exact
+v1 treatment settings, successful rebuild of E0/F0, exact realized index
+attestations, no dropped/evicted writes, complete one-to-one provenance over
+ledger record IDs, capacity equality, raw renderer identity, and F0/F1
+candidate-tuple identity. D-M4/D-M5 must equal the verified treatment widths.
+The missing Phase B provenance/reconciliation
+envelope always remains a failed confirmatory check in Phase A.
 
 FAM mechanism activity requires both `fam_attestation.merged > 0` and
 `fam_attestation.key_drifted_merges > 0`. Prototype occupancy alone cannot
@@ -165,7 +191,10 @@ yields `not-evaluable`, never GO.
 
 ## 5. Fixed-sequence gates and verdict
 
-After integrity and evaluability:
+The following fixed sequence is the Phase B verdict design. In Phase A the
+authoritative API first requires a frozen receipt for a passing, confirmatory
+`scoring-run` preflight; plumbing receipts always return `blocked` regardless of
+synthetic gate values. After Phase B integrity and evaluability:
 
 1. M1 requires `prototype_reduction_count >= ceil(D-M1 * record_n)`.
 2. M2 requires `recall_loss_count <= floor(D-M2 * recall_n)`.
@@ -192,22 +221,23 @@ derived `memo_sha256`:
 
 ```text
 prototype_reduction_margin, mechanism_recall_loss_bound,
-min_mechanism_recall_n, stale_reduction_margin,
+min_mechanism_recall_n, candidate_k, cam_prototype_k, stale_reduction_margin,
 clean_answer_loss_bound, current_adoption_floor, abstention_bound,
 scorer, raw_truncation, contested_disposition, equivalence,
 min_stale_eligible_n, min_clean_n, h1_denominator, primary_family,
 claim_order, memo_sha256
 ```
 
-When `contested_disposition` is `gated`, `contested_rule` and
-`contested_bound` are additionally mandatory. Unknown, missing, wrongly typed,
-out-of-range, or still-sentinel fields are rejected. No numeric bound or
-minimum has a default.
+Phase A accepts `abstention_bound = null` and
+`contested_disposition = "exploratory"` only. `contested_rule` and
+`contested_bound` are unknown fields. Unknown, missing, wrongly typed,
+out-of-range, or still-sentinel fields are rejected. No numeric bound, minimum,
+or retrieval width has a default.
 
 ## 7. Exploratory nonclaims
 
 No confirmatory inference is made from E1, no-memory accuracy, contested
-questions unless conditionally gated, cross-family generated-answer deltas,
+questions, cross-family generated-answer deltas,
 latency, token cost, prototype identities, per-scope examples, effect sizes
 viewed before registration, or any application result when the mechanism is
 blocked, inactive, under-denominated, or fails M1/M2. Synthetic and dry-run
@@ -215,12 +245,13 @@ fixtures prove plumbing only and are never benchmark evidence.
 
 ## 8. Registration and execution sequence
 
-1. Freeze code, corpus transformer, renderer, scorer, and treatment schema.
-2. Run the outcome-blind shape probe only.
-3. Replace every keyed sentinel and seal the revision-3 memo SHA.
-4. Build and attest E0/F0 exclusively from sealed inputs.
-5. Run all integrity and treatment-fidelity checks before generation.
-6. Execute the fixed five arms once per query with paired candidate reuse.
-7. Score mechanism counts, determine activity/evaluability, then apply M1/M2.
-8. Only after mechanism GO, score the F0/F1 application gates.
-9. Publish all counts, denominators, thresholds, failures, and exploratory labels.
+Phase A may freeze and verify plumbing inputs, run the outcome-blind shape
+probe, rebuild E0/F0, and execute the explicitly synthetic dry-run fixture. Its
+typed bundle and receipt remain `plumbing`, `admissible = false`, and
+non-confirmatory; the authoritative verdict is `blocked`.
+
+Phase B must first implement and review source provenance/reconciliation. Only
+then may it replace every keyed sentinel (including D-M4/D-M5), seal the memo
+and confirmatory integer thresholds, construct a scoring manifest, run a
+passing confirmatory preflight before generation, execute the fixed arms once,
+score mechanism first, and evaluate F0/F1 only after mechanism GO.

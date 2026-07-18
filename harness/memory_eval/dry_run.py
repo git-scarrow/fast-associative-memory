@@ -101,7 +101,7 @@ def run_dry_run(output_dir: str | Path) -> dict:
         policy=policy,
         consumer_pin=consumer.pin_id,
     )
-    runner = build_plumbing_run(
+    plumbing = build_plumbing_run(
         manifest_path,
         records=records,
         questions=questions,
@@ -111,6 +111,7 @@ def run_dry_run(output_dir: str | Path) -> dict:
         policy=policy,
         consumer=consumer,
     )
+    runner = plumbing.runner
     exemplar = runner.exemplar_retriever
     fam = runner.fam_retriever
     rows = runner.run(questions, query_embeddings)
@@ -125,6 +126,8 @@ def run_dry_run(output_dir: str | Path) -> dict:
     # visibly at this call site, are surfaced below, and are never sealed as a
     # scoring-run registration or proposed as production defaults.
     synthetic_fixture_assertions = {
+        "candidate_k": settings["candidate_k"],
+        "cam_prototype_k": settings["cam_prototype_k"],
         "prototype_reduction_margin": 0.3,
         "mechanism_recall_loss_bound": 0.0,
         "min_mechanism_recall_n": 2,
@@ -222,8 +225,8 @@ def run_dry_run(output_dir: str | Path) -> dict:
             )
         )
     )
-    synthetic_verdict = experiment_verdict(
-        integrity_ok=integrity_ok,
+    authoritative_verdict = experiment_verdict(
+        receipt=plumbing.receipt,
         evaluable=mechanism_evaluable and application_evaluable,
         mechanism_ok=mechanism_ok,
         application_h1=application_h1,
@@ -240,6 +243,7 @@ def run_dry_run(output_dir: str | Path) -> dict:
         "question_count": len(questions),
         "row_count": len(rows),
         "manifest_sha256": manifest["manifest_sha256"],
+        "receipt": asdict(plumbing.receipt),
         "manifest": {
             "version": manifest["manifest_version"],
             "evidence_class": manifest["protocol"]["evidence_class"],
@@ -257,18 +261,22 @@ def run_dry_run(output_dir: str | Path) -> dict:
             "evidence_status": "synthetic/plumbing",
             "admissible": False,
             "benchmark_evidence": False,
-            "mechanism": {
-                "passed": mechanism_ok,
-                "active": mechanism_active,
-                **asdict(mechanism),
+            "synthetic_gate_diagnostics": {
+                "authoritative": False,
+                "integrity_ok": integrity_ok,
+                "mechanism": {
+                    "passed": mechanism_ok,
+                    "active": mechanism_active,
+                    **asdict(mechanism),
+                },
+                "application": {
+                    "h1_stale_reduction": application_h1,
+                    "h2_clean_answer_loss": application_h2,
+                    "h3_current_adoption": application_h3,
+                    "passed": application_h1 and application_h2 and application_h3,
+                },
             },
-            "application": {
-                "h1_stale_reduction": application_h1,
-                "h2_clean_answer_loss": application_h2,
-                "h3_current_adoption": application_h3,
-                "passed": application_h1 and application_h2 and application_h3,
-            },
-            "synthetic_verdict": synthetic_verdict,
+            "authoritative_verdict": authoritative_verdict,
         },
         "scoring_version": report.scoring_version,
         "corpus": asdict(report.corpus),

@@ -9,7 +9,6 @@ from time import perf_counter
 from typing import Any, Protocol
 
 from harness.ctx.compile import compile as compile_context
-from harness.ctx.compile import load_policy
 from harness.ctx.output_contract import MAX_NEW_TOKENS, parse_consumer_output
 
 from . import ARM_NAMES, CONTEXT_BUDGET_TOKENS
@@ -69,9 +68,9 @@ class FiveArmRunner:
         exemplar_retriever: Retriever,
         fam_retriever: Retriever,
         consumer: Consumer,
-        candidate_k: int = 10,
+        candidate_k: int,
+        policy: Mapping[str, Any],
         clock: Callable[[], float] = perf_counter,
-        policy: Mapping[str, Any] | None = None,
     ) -> None:
         if not isinstance(candidate_k, int) or isinstance(candidate_k, bool) or candidate_k < 1:
             raise ValueError("candidate_k must be positive")
@@ -81,7 +80,7 @@ class FiveArmRunner:
         self.consumer = consumer
         self.candidate_k = candidate_k
         self.clock = clock
-        self.policy = dict(policy) if policy is not None else load_policy()
+        self.policy = dict(policy)
 
     def run(
         self,

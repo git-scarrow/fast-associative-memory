@@ -14,7 +14,7 @@ from .models import MemoryQuestion
 from .preregistration import experiment_verdict
 from .retrievers import IndexBuildAttestation
 from .runner import ExperimentRow
-from .scoring import normalize_answer
+from .scoring import normalize_answer, validate_raw_with_invariant
 
 
 _MECHANISM_ARMS = ("exemplar_raw", "fam_raw")
@@ -45,6 +45,7 @@ def score_mechanism(
     Candidate IDs are interpreted only as references into ``ledger``. CAM
     values and generated answers are deliberately outside this scorer.
     """
+    validate_raw_with_invariant(ledger.records)
     question_by_id: dict[str, MemoryQuestion] = {}
     for question in questions:
         if question.query_id in question_by_id:

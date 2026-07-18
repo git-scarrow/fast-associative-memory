@@ -1,6 +1,8 @@
 import json
+import inspect
 
 from harness.memory_eval import ARM_NAMES, CONTEXT_BUDGET_TOKENS
+from harness.ctx.compile import load_policy
 from harness.memory_eval.ledger import MemoryLedger
 from harness.memory_eval.models import MemoryQuestion, MemoryRecord, RetrievedCandidate
 from harness.memory_eval.runner import FiveArmRunner
@@ -80,6 +82,7 @@ def test_runner_executes_five_arms_with_shared_paired_candidates():
         consumer=consumer,
         candidate_k=2,
         clock=TickClock(),
+        policy=load_policy(),
     )
     question = MemoryQuestion(
         query_id="q1",
@@ -135,6 +138,7 @@ def test_runner_records_abstention_and_malformed_output():
         consumer=consumer,
         candidate_k=1,
         clock=TickClock(),
+        policy=load_policy(),
     )
     question = MemoryQuestion("q1", "Who employs Ada?", "Ada\x1femployer", "B")
 
@@ -152,6 +156,8 @@ def test_runner_rejects_missing_query_embeddings():
         exemplar_retriever=CountingRetriever(["new"]),
         fam_retriever=CountingRetriever(["new"]),
         consumer=FakeConsumer(),
+        candidate_k=1,
+        policy=load_policy(),
     )
     question = MemoryQuestion("q1", "Who employs Ada?", "Ada\x1femployer", "B")
 
@@ -161,3 +167,9 @@ def test_runner_rejects_missing_query_embeddings():
         assert "missing query embedding" in str(exc)
     else:
         raise AssertionError("missing query embedding was accepted")
+
+
+def test_runner_requires_explicit_candidate_width_and_policy():
+    parameters = inspect.signature(FiveArmRunner).parameters
+    assert parameters["candidate_k"].default is inspect.Parameter.empty
+    assert parameters["policy"].default is inspect.Parameter.empty

@@ -134,6 +134,6 @@ Offline plumbing check:
 python -m harness.memory_eval.dry_run --output-dir /tmp/fam-memory-eval-dry-run
 ```
 
-This command seals and rebuilds a deterministic manifest-v3 synthetic fixture with explicit vectors and a rule consumer. Its returned numerical assertions are fixture-only, never enter a scoring-run registration, and are labeled `synthetic/plumbing`, `admissible: false`, and not benchmark evidence.
+This command seals and rebuilds a deterministic manifest-v3 synthetic fixture with explicit vectors and a rule consumer. Its returned numerical assertions and retrieval widths are fixture-only, never enter a scoring-run registration, and are labeled `synthetic/plumbing`, `admissible: false`, and not benchmark evidence. Synthetic gate checks are explicitly non-authoritative; the immutable plumbing receipt produces an authoritative verdict of `blocked`.
 
-Phase B remains blocked on the official `fact_sh` transformer, G-I6 source reconciliation, pinned semantic encoder and consumer artifacts, human numeric registration, and preflight plus execution on the real scoring host.
+Phase A cannot seal a `scoring-run` or return an admissible runner: both public scoring paths fail before generation because the provenance/reconciliation envelope is not implemented. Audit preflight still performs full-manifest binding. Phase B remains blocked on the official `fact_sh` transformer, G-I6 source reconciliation, pinned semantic encoder and consumer artifacts, human registration (including `candidate_k` and `cam_prototype_k`), confirmatory threshold sealing, and preflight plus execution on the real scoring host.

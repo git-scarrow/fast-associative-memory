@@ -308,6 +308,36 @@ def test_build_plumbing_run_rejects_forbidden_confirmatory_blocks(
         build_plumbing(path)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("registration", {"not": "allowed"}),
+        ("registration_memo_path", "/tmp/not-allowed.md"),
+        ("index_attestations", {"exemplar": {}, "fam": {}}),
+    ],
+)
+def test_build_plumbing_run_refuses_digest_consistent_extra_top_level_fields(
+    tmp_path, field, value
+):
+    path = tmp_path / "plumbing.json"
+    seal_plumbing(path)
+    reseal(path, lambda manifest: manifest.__setitem__(field, value))
+
+    class ExplodingConsumer(RuleConsumer):
+        generated = False
+
+        def generate(self, prompt, max_new_tokens=256):
+            self.generated = True
+            raise AssertionError("consumer ran before manifest-body verification")
+
+    consumer = ExplodingConsumer()
+    with pytest.raises(RuntimeError, match=rf"manifest body mismatch.*{field}"):
+        runner = build_plumbing(path, consumer=consumer)
+        records, questions, rec_emb, qry_emb = corpus()
+        runner.run(questions, qry_emb)
+    assert consumer.generated is False
+
+
 def test_build_plumbing_run_rejects_a_scoring_run(tmp_path):
     path = tmp_path / "scoring.json"
     seal(path)

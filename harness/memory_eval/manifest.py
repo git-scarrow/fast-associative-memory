@@ -393,6 +393,24 @@ def verify_manifest(
         raise RuntimeError("manifest fingerprint mismatch")
     if manifest.get("protocol") != expected["protocol"]:
         raise RuntimeError("manifest fingerprint mismatch: protocol")
+    actual_body = dict(manifest)
+    del actual_body["manifest_sha256"]
+    if actual_body != expected:
+        extra = sorted(set(actual_body) - set(expected))
+        missing = sorted(set(expected) - set(actual_body))
+        differing = sorted(
+            key
+            for key in set(actual_body) & set(expected)
+            if actual_body[key] != expected[key]
+        )
+        details: list[str] = []
+        if extra:
+            details.append(f"unexpected top-level fields: {', '.join(extra)}")
+        if missing:
+            details.append(f"missing top-level fields: {', '.join(missing)}")
+        if differing:
+            details.append(f"differing top-level fields: {', '.join(differing)}")
+        raise RuntimeError("manifest body mismatch: " + "; ".join(details))
     return manifest
 
 

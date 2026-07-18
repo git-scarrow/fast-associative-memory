@@ -1,9 +1,11 @@
 import json
+from hashlib import sha256
 
 import pytest
 
 from harness.memory_eval.manifest import (
     MANIFEST_VERSION,
+    canonical_json,
     load_manifest,
     seal_manifest,
     verify_manifest,
@@ -81,6 +83,17 @@ def inputs():
     return records, questions, record_embeddings, query_embeddings, dict(SETTINGS)
 
 
+def reseal_top_level(path, field, value):
+    manifest = load_manifest(path)
+    manifest[field] = value
+    body = dict(manifest)
+    del body["manifest_sha256"]
+    manifest["manifest_sha256"] = sha256(
+        canonical_json(body).encode("utf-8")
+    ).hexdigest()
+    path.write_text(canonical_json(manifest) + "\n", encoding="utf-8")
+
+
 def test_v3_plumbing_seal_is_deterministic_and_omits_confirmatory_evidence(tmp_path):
     values = inputs()
     first_path = tmp_path / "first.json"
@@ -96,6 +109,26 @@ def test_v3_plumbing_seal_is_deterministic_and_omits_confirmatory_evidence(tmp_p
     assert first["protocol"]["registration"] is None
     assert load_manifest(first_path) == first
     assert verify_manifest(first_path, *values, evidence_class="plumbing") == first
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("registration", {"not": "allowed"}),
+        ("registration_memo_path", "/tmp/not-allowed.md"),
+        ("index_attestations", {"exemplar": {}, "fam": {}}),
+    ],
+)
+def test_verify_refuses_digest_consistent_extra_top_level_fields(
+    tmp_path, field, value
+):
+    values = inputs()
+    path = tmp_path / "manifest.json"
+    seal_manifest(path, *values, evidence_class="plumbing")
+    reseal_top_level(path, field, value)
+
+    with pytest.raises(RuntimeError, match=rf"manifest body mismatch.*{field}"):
+        verify_manifest(path, *values, evidence_class="plumbing")
 
 
 def test_seal_rejects_a_missing_retriever_setting(tmp_path):

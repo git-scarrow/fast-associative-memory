@@ -5,9 +5,10 @@ that memo mechanically checkable: every decision it defers to the human has a
 registry entry here, a schema field, and a validation rule, and the tests
 assert those three sets are in bijection with the memo's own headings.
 
-Scope boundary — this module validates protocol and provides the receipt-bound
-authoritative verdict. Audit preflight consumes the schema, but Phase A public
-scoring seals and scoring runners are disabled. Registering a value here still
+Scope boundary — this module validates protocol and provides pure diagnostic
+gate helpers. Audit preflight consumes the schema, but Phase A public scoring
+seals and scoring runners are disabled, and the authoritative verdict is
+unconditionally ``blocked``. Registering values or constructing a receipt here
 authorizes nothing.
 
 Gate arithmetic is INTEGER. Every application threshold recovers the exact
@@ -328,7 +329,12 @@ EXPERIMENT_VERDICTS: frozenset[str] = VERDICTS | {NO_GO_FAM_MECHANISM}
 
 @dataclass(frozen=True, slots=True)
 class PreflightReceipt:
-    """Immutable provenance required by the authoritative verdict API."""
+    """Immutable provenance record, never Phase-A execution authority.
+
+    This value is publicly constructible so its fields cannot authenticate a
+    confirmatory run.  Phase B must provide the trusted provenance envelope
+    before any receipt can authorize an authoritative verdict.
+    """
 
     manifest_sha256: str
     evidence_class: Literal["plumbing", "scoring-run"]
@@ -389,25 +395,16 @@ def experiment_verdict(
     application_h3: bool,
     mechanism_active: bool,
 ) -> str:
-    """Authoritative verdict, bound to confirmatory preflight provenance."""
-    if not (
-        isinstance(receipt, PreflightReceipt)
-        and receipt.passed
-        and receipt.confirmatory
-        and receipt.evidence_class == "scoring-run"
-    ):
-        return BLOCKED
-    if not evaluable or not mechanism_active:
-        return NOT_EVALUABLE
-    if not mechanism_ok:
-        return NO_GO_FAM_MECHANISM
-    return verdict(
-        integrity_ok=True,
-        evaluable=True,
-        h1=application_h1,
-        h2=application_h2,
-        h3=application_h3,
-    )
+    """Return the only authoritative verdict available during Phase A.
+
+    Every argument is retained to make the future Phase B authorization
+    boundary explicit, but none is trusted in Phase A.  In particular,
+    :class:`PreflightReceipt` is caller-constructible and its flags cannot
+    establish provenance.  Pure mechanism and application helpers remain
+    available for synthetic or prospective diagnostics; this authoritative
+    entry point always fails closed until Phase B supplies a trusted issuer.
+    """
+    return BLOCKED
 
 
 # --------------------------------------------------------------------------

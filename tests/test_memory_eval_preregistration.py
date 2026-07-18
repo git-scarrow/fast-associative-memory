@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-from harness.memory_eval import preregistration as preregistration_module
 from harness.memory_eval.ledger import MemoryLedger
 from harness.memory_eval.models import MemoryQuestion
 from harness.memory_eval.preregistration import (
@@ -21,13 +20,12 @@ from harness.memory_eval.preregistration import (
     DECISION_FIELDS,
     DECISIONS,
     DERIVED_FIELDS,
-    EXPERIMENT_VERDICTS,
     GO,
     NOT_EVALUABLE,
     NO_GO_COLLATERAL,
     NO_GO_NO_EFFECT,
     NO_GO_SUPPRESSION,
-    NO_GO_FAM_MECHANISM,
+    PreflightReceipt,
     SHAPE_PROBE_FIELDS,
     ShapeProbe,
     VERDICTS,
@@ -50,17 +48,6 @@ from harness.memory_eval.scoring import Rate, normalize_answer, score_rows
 
 
 MEMO = Path(__file__).resolve().parents[1] / "docs" / "FIVE_ARM_PREREGISTRATION.md"
-
-
-def _receipt(**overrides):
-    values = {
-        "manifest_sha256": "a" * 64,
-        "evidence_class": "scoring-run",
-        "passed": True,
-        "confirmatory": True,
-    }
-    values.update(overrides)
-    return preregistration_module.PreflightReceipt(**values)
 
 
 def record(record_id, scope, value, serial):
@@ -539,22 +526,16 @@ def test_integrity_and_evaluability_outrank_every_value_gate():
     )
 
 
-def test_application_is_exploratory_when_mechanism_fails():
-    assert experiment_verdict(
-        receipt=_receipt(),
-        evaluable=True,
-        mechanism_ok=False,
-        mechanism_active=True,
-        application_h1=True,
-        application_h2=True,
-        application_h3=True,
-    ) == NO_GO_FAM_MECHANISM
-
-
 def test_experiment_verdict_requires_explicit_mechanism_activity_evidence():
+    forged_receipt = PreflightReceipt(
+        manifest_sha256="a" * 64,
+        evidence_class="scoring-run",
+        passed=True,
+        confirmatory=True,
+    )
     with pytest.raises(TypeError, match="mechanism_active"):
         experiment_verdict(
-            receipt=_receipt(),
+            receipt=forged_receipt,
             evaluable=True,
             mechanism_ok=True,
             application_h1=True,
@@ -563,54 +544,31 @@ def test_experiment_verdict_requires_explicit_mechanism_activity_evidence():
         )
 
 
-def test_experiment_verdict_is_total_and_fixed_sequence():
-    seen = set()
+def test_phase_a_blocks_every_gate_outcome_even_with_a_forged_confirmatory_receipt():
+    forged_receipt = PreflightReceipt(
+        manifest_sha256="a" * 64,
+        evidence_class="scoring-run",
+        passed=True,
+        confirmatory=True,
+    )
+
     for values in product([True, False], repeat=6):
-        result = experiment_verdict(
-            receipt=_receipt(),
+        assert experiment_verdict(
+            receipt=forged_receipt,
             evaluable=values[0],
             mechanism_ok=values[1],
             application_h1=values[2],
             application_h2=values[3],
             application_h3=values[4],
             mechanism_active=values[5],
-        )
-        assert result in EXPERIMENT_VERDICTS
-        seen.add(result)
-    seen.add(
-        experiment_verdict(
-            receipt=_receipt(
-                manifest_sha256="b" * 64,
-                evidence_class="plumbing",
-                confirmatory=False,
-            ),
-            evaluable=True,
-            mechanism_ok=True,
-            application_h1=True,
-            application_h2=True,
-            application_h3=True,
-            mechanism_active=True,
-        )
-    )
-    assert seen == EXPERIMENT_VERDICTS
-
-
-def test_live_fam_with_zero_merges_is_not_evaluable_rather_than_go():
-    assert experiment_verdict(
-        receipt=_receipt(),
-        evaluable=True,
-        mechanism_ok=True,
-        application_h1=True,
-        application_h2=True,
-        application_h3=True,
-        mechanism_active=False,
-    ) == NOT_EVALUABLE
+        ) == BLOCKED
 
 
 def test_authoritative_verdict_blocks_a_passing_plumbing_receipt():
-    receipt = _receipt(
+    receipt = PreflightReceipt(
         manifest_sha256="b" * 64,
         evidence_class="plumbing",
+        passed=True,
         confirmatory=False,
     )
 

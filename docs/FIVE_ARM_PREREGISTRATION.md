@@ -191,10 +191,12 @@ yields `not-evaluable`, never GO.
 
 ## 5. Fixed-sequence gates and verdict
 
-The following fixed sequence is the Phase B verdict design. In Phase A the
-authoritative API first requires a frozen receipt for a passing, confirmatory
-`scoring-run` preflight; plumbing receipts always return `blocked` regardless of
-synthetic gate values. After Phase B integrity and evaluability:
+The following fixed sequence is the Phase B verdict design and remains
+available only through pure diagnostic helpers. In Phase A the authoritative
+API unconditionally returns `blocked`: `PreflightReceipt` is publicly
+constructible, so even caller-asserted `passed = true`, `confirmatory = true`,
+and `evidence_class = "scoring-run"` fields grant no authority. After Phase B
+implements a trusted issuer, integrity, and evaluability:
 
 1. M1 requires `prototype_reduction_count >= ceil(D-M1 * record_n)`.
 2. M2 requires `recall_loss_count <= floor(D-M2 * recall_n)`.
@@ -249,6 +251,7 @@ Phase A may freeze and verify plumbing inputs, run the outcome-blind shape
 probe, rebuild E0/F0, and execute the explicitly synthetic dry-run fixture. Its
 typed bundle and receipt remain `plumbing`, `admissible = false`, and
 non-confirmatory; the authoritative verdict is `blocked`.
+Caller-constructed receipt fields cannot change that result.
 
 Phase B must first implement and review source provenance/reconciliation. Only
 then may it replace every keyed sentinel (including D-M4/D-M5), seal the memo

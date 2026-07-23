@@ -290,16 +290,61 @@ def test_cam_retriever_reranks_authoritative_records_not_blended_values():
     assert exemplar.cam.forward.__func__ is ContinuousCAM.forward
     assert fam.cam.forward.__func__ is ContinuousCAM.forward
 
-    exemplar_found = exemplar.query([0.9, 0.1], k=1)
-    fam_found = fam.query([0.9, 0.1], k=1)
+    fam_found = fam.query([0.9, 0.1], k=2)
 
-    assert exemplar_found == fam_found
-    assert fam_found[0].record_id == "near"
+    # The served identifiers are AUTHORITATIVE ledger record IDs, never blended
+    # CAM values. "near" and "far" condense into one drifted prototype; the FAM
+    # read path recovers its provenance (both authoritative records) rather than
+    # emitting the prototype's blended vector. It deliberately does NOT re-score
+    # them by original-embedding proximity to the query — that flat rerank is
+    # what previously collapsed fam onto the exact-vector arm — so within the
+    # merged prototype the co-equal members appear in deterministic record_id
+    # order, and the served score is the prototype's vote weight.
+    served_ids = {c.record_id for c in fam_found}
+    assert served_ids <= {r.record_id for r in records}
+    assert served_ids == {"far", "near"}  # both provenance records recovered
+    assert fam_found[0].record_id == "far"  # deterministic record_id order
     assert fam_found[0].score > 0.9
     assert all(
         {field.name for field in fields(item)} == {"record_id", "score", "rank"}
         for item in fam_found
     )
+
+
+def test_fam_read_path_is_load_bearing_not_the_exact_vector_fallback():
+    """Regression for the review's core blocker: fam must NOT collapse onto the
+    exact-vector arm. When same-scope records condense (keys drift), the fam
+    read path (vote over prototype keys) must diverge from exact cosine over the
+    original embeddings. Pre-fix this diverged on 0/N queries."""
+    # Three scopes with prototype_k=2 so the vote SELECTS a subset of prototypes
+    # by their (drifted) keys — that selection is where condensation becomes
+    # observable in retrieval. Same-scope cos ~0.97 > vigilance so keys drift.
+    scopes = {
+        "scope-a": [("a-old", [1.0, 0.0, 0.0, 0.0]), ("a-new", [0.97, 0.243, 0.0, 0.0])],
+        "scope-b": [("b-old", [0.0, 1.0, 0.0, 0.0]), ("b-new", [0.0, 0.97, 0.243, 0.0])],
+        "scope-c": [("c-old", [0.0, 0.0, 1.0, 0.0]), ("c-new", [0.243, 0.0, 0.97, 0.0])],
+    }
+    recs, emb = [], {}
+    for scope, items in scopes.items():
+        for rid, vec in items:
+            recs.append(record(rid, scope, serial=0 if "old" in rid else 1))
+            emb[rid] = vec
+    fam = FAMRetriever(recs, emb, settings=settings(max_entries=6, prototype_k=2))
+    exact = ExactVectorRetriever(recs, emb)
+
+    # Condensation actually fired (same-scope cos > vigilance): keys drifted.
+    assert fam.attestation.merged > 0
+    assert fam.attestation.key_drifted_merges > 0
+    assert fam.attestation.prototype_count < fam.attestation.written
+
+    divergent = 0
+    for scope, items in scopes.items():
+        query = items[1][1]  # near the "new" record
+        fam_ids = tuple(c.record_id for c in fam.query(query, k=3))
+        exact_ids = tuple(c.record_id for c in exact.query(query, k=3))
+        if fam_ids != exact_ids:
+            divergent += 1
+    assert divergent > 0, "fam collapsed onto the exact-vector fallback"
 
 
 def test_index_hash_is_deterministic_and_commits_to_record_order():

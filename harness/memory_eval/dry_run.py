@@ -157,7 +157,7 @@ def run_dry_run(output_dir: str | Path) -> dict:
         reduction_margin=synthetic_fixture_assertions[
             "prototype_reduction_margin"
         ],
-        recall_loss_count=mechanism.recall_loss_count,
+        recall_loss_count=mechanism.paired_recall_loss_count,
         recall_n=mechanism.recall_n,
         recall_loss_bound=synthetic_fixture_assertions[
             "mechanism_recall_loss_bound"

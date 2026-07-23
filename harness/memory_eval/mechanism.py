@@ -26,6 +26,7 @@ class MechanismReport:
     exemplar_recall_count: int
     fam_recall_count: int
     recall_loss_count: int
+    paired_recall_loss_count: int
     record_n: int
     exemplar_prototype_count: int
     fam_prototype_count: int
@@ -76,6 +77,7 @@ def score_mechanism(
 
     exemplar_recall = 0
     fam_recall = 0
+    paired_recall_loss = 0
     recall_n = 0
     for question in questions:
         records = ledger.records_for_scope(question.scope)
@@ -102,8 +104,15 @@ def score_mechanism(
             rows_by_key[(question.query_id, "exemplar_raw")].candidate_ids
         )
         fam_ids = set(rows_by_key[(question.query_id, "fam_raw")].candidate_ids)
-        exemplar_recall += bool(exemplar_ids & authoritative_ids)
-        fam_recall += bool(fam_ids & authoritative_ids)
+        exemplar_hit = bool(exemplar_ids & authoritative_ids)
+        fam_hit = bool(fam_ids & authoritative_ids)
+        exemplar_recall += exemplar_hit
+        fam_recall += fam_hit
+        # Paired loss: questions where the un-condensed control recovered the
+        # authoritative record but condensation did not. This is the honest M2
+        # construct — net (exemplar_recall - fam_recall) lets an offsetting fam
+        # gain elsewhere hide a real per-question recall loss (review FR-1).
+        paired_recall_loss += exemplar_hit and not fam_hit
 
     if exemplar_attestation.mode != "allocate-only":
         raise ValueError("exemplar attestation must be allocate-only")
@@ -117,6 +126,7 @@ def score_mechanism(
         exemplar_recall_count=exemplar_recall,
         fam_recall_count=fam_recall,
         recall_loss_count=exemplar_recall - fam_recall,
+        paired_recall_loss_count=paired_recall_loss,
         record_n=record_n,
         exemplar_prototype_count=exemplar_prototypes,
         fam_prototype_count=fam_prototypes,

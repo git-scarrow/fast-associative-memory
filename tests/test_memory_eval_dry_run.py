@@ -66,6 +66,7 @@ def test_dry_run_seals_executes_and_scores_all_five_arms(tmp_path):
         "exemplar_recall_count": 2,
         "fam_recall_count": 2,
         "recall_loss_count": 0,
+        "paired_recall_loss_count": 0,
         "record_n": 3,
         "exemplar_prototype_count": 3,
         "fam_prototype_count": 2,

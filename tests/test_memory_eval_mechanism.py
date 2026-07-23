@@ -95,6 +95,47 @@ def test_authoritative_recall_uses_latest_matching_record_and_excludes_contested
     assert report.exemplar_recall_count == 1
     assert report.fam_recall_count == 0
     assert report.recall_loss_count == 1
+    assert report.paired_recall_loss_count == 1
+
+
+def test_paired_recall_loss_catches_a_loss_that_net_counting_hides():
+    """Review FR-1: M2 must gate on PAIRED loss. Net (exemplar_recall -
+    fam_recall) lets a fam recall gain on one question offset a real recall loss
+    on another, masking condensation damage the control did not suffer."""
+    ledger = MemoryLedger(
+        [
+            record("old1", "evolving-1", "Old1", 1),
+            record("current1", "evolving-1", "Current1", 2),
+            record("old2", "evolving-2", "Old2", 1),
+            record("current2", "evolving-2", "Current2", 2),
+        ]
+    )
+    questions = [
+        MemoryQuestion("q1", "One?", "evolving-1", "Current1"),
+        MemoryQuestion("q2", "Two?", "evolving-2", "Current2"),
+    ]
+    rows = [
+        # q1: control recovers the current record, condensed fam misses it.
+        row("q1", "exemplar_raw", ("current1",)),
+        row("q1", "fam_raw", ("old1",)),
+        # q2: fam recovers it, control happens to miss — the offsetting "gain".
+        row("q2", "exemplar_raw", ("old2",)),
+        row("q2", "fam_raw", ("current2",)),
+    ]
+
+    report = score_mechanism(
+        rows=rows,
+        questions=questions,
+        ledger=ledger,
+        exemplar_attestation=attestation("allocate-only", prototype_count=4),
+        fam_attestation=attestation(
+            "condense", prototype_count=2, merged=2, key_drifted_merges=2
+        ),
+    )
+
+    assert report.recall_n == 2
+    assert report.recall_loss_count == 0  # net hides the q1 loss
+    assert report.paired_recall_loss_count == 1  # paired catches it — M2 gates here
 
 
 def test_raw_distinct_normalized_equal_fork_cannot_enter_mechanism_denominator():

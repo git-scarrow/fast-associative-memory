@@ -41,10 +41,22 @@ The fixed `write_mode` values are interpreted by a private
 `harness.memory_eval` singleton-ingest adapter, not by the deployed CAM API.
 For `condense`, the adapter restricts write-time nearest-prototype selection to
 the incoming scope label before applying static vigilance. For `allocate-only`,
-it forces the unchanged core down its ordinary allocation path. Both modes
-inherit the exact same deployed query path. `associative_core.py` remains
-byte-frozen, its `last_write_stats` contract remains four-field, and eviction
-attestation is derived locally from per-record occupancy deltas.
+it forces the unchanged core down its ordinary allocation path. `associative_core.py`
+remains byte-frozen, its `last_write_stats` contract remains four-field, and
+eviction attestation is derived locally from per-record occupancy deltas.
+
+Both modes share the validated FAM read path — `forward()` selects the top-K
+prototypes by query-to-prototype-**key** similarity and softmax-votes over them
+(the path FAM-G-40 validated on text: FAISS top-K → softmax vote). Retrieved
+prototypes expand to the authoritative ledger record IDs they were formed from,
+ranked by the prototype's vote weight. The read path deliberately does **not**
+re-score candidates against the original per-record embedding table: an earlier
+implementation did, which made the condensed representation cosmetic and
+collapsed `fam_raw` onto the exploratory exact-vector arm (M2 recall loss was
+then structurally 0). Because ranking now flows from the prototype keys, a
+drifted (condensed) key changes what `fam` retrieves, `fam` and the immutable-key
+exemplar control diverge exactly when condensation drifts a key, and M2 recall
+loss is falsifiable.
 
 ## 2. Decisions requiring registration
 
@@ -56,6 +68,17 @@ schema drift cannot silently change the claim.
 
 `prototype_reduction_margin = <<UNREGISTERED:D-M1>>`, a number in `[0, 1]`.
 M1 compares the exact prototype reduction with `ceil(margin * record_n)`.
+
+**Prior (FAM-G-40, PASSED 2026-02-27).** On text embeddings, condensation is
+minimal: CR ≈ 0.99 at v = 0.85 (near-zero reduction), and only ≈ 0.895 at
+v = 0.70 — yet FAM still beat kNN-20 by +2.23pp. On text, FAM's advantage comes
+from the softmax-vote read path, not from aggressive prototype reduction. Two
+consequences bind this registration: (a) D-M1 must be a text-appropriate (small)
+margin, or M1 is set up to fail on a modality that does not condense; (b) the
+mechanism claim's weight belongs on M2 (does the condensed read path still
+recover the authoritative record?) and provenance preservation — not on large
+reduction. Registering an aggressive D-M1 against FactConsolidation text would
+contradict the lab's own measured text prior.
 
 ### D-M2 — Mechanism recall-loss bound
 
@@ -166,10 +189,11 @@ one shared denominator.
 Canonical counts are:
 
 ```text
-recall_loss_count          = exemplar_recall_count - fam_recall_count
+recall_loss_count (net; reported diagnostic only) = exemplar_recall_count - fam_recall_count
+paired_recall_loss_count (the M2-gated quantity)  = #{q : exemplar recalls authoritative, fam does not}
 prototype_reduction_count = exemplar_prototype_count - fam_prototype_count
 M1 threshold              = ceil(D-M1 * record_n)
-M2 threshold              = floor(D-M2 * recall_n)
+M2 threshold              = floor(D-M2 * recall_n)   # compared to paired_recall_loss_count
 ```
 
 Threshold multiplication uses exact rational arithmetic recovered from the

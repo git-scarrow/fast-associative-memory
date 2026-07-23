@@ -408,20 +408,42 @@ class _CAMRecordRetriever:
     def query(self, query_embedding: TensorLike, k: int) -> tuple[RetrievedCandidate, ...]:
         query = _validated_query(query_embedding, self.dimension, k)
         _, trace = self.cam.forward(query.unsqueeze(0), trace=True)
-        candidate_ids = set().union(*self.cam.records_for_slots(trace.final_slots))
-        normalized_query = F.normalize(query, dim=0)
-        scored = [
-            (
-                str(record_id),
-                float(F.cosine_similarity(
-                    normalized_query,
-                    self._embeddings[str(record_id)],
-                    dim=0,
-                )),
-            )
-            for record_id in candidate_ids
-        ]
-        ranked = sorted(scored, key=lambda pair: (-pair[1], pair[0]))[:k]
+        # FAM read path (validated on text by FAM-G-40: FAISS top-K -> softmax
+        # vote). Rank by the prototype vote, NOT by re-scoring candidates against
+        # the original uncondensed embedding table. `final_weights` is the
+        # softmax over query-to-prototype-KEY similarity, so a drifted prototype
+        # key changes what is retrieved and in what order — the condensed
+        # representation is load-bearing, and the exemplar control (immutable
+        # per-record keys) diverges from fam exactly when condensation drifts a
+        # key. Provenance expansion recovers the authoritative ledger records the
+        # prototype was formed from; the served score is the prototype's vote
+        # weight.
+        final_slots = trace.final_slots.reshape(-1).tolist()
+        final_weights = trace.final_weights.reshape(-1).tolist()
+        # PRIMARY (and only) ranking signal: the prototype vote weight, from
+        # query-to-prototype-KEY similarity. This is what makes condensation
+        # load-bearing — the previous read path replaced it with a flat cosine
+        # rerank over the original uncondensed table, which collapsed fam onto
+        # the exact-vector arm. We deliberately do NOT re-score records by their
+        # original embeddings anywhere in the served order: that mild rerank is
+        # exactly what re-collapses fam onto exact. Within a merged prototype the
+        # members are co-equal (they formed the prototype); they are emitted in
+        # deterministic record_id order, leaving recency/lifecycle ordering to
+        # the governed compiler so the raw arm stays a naive baseline. The served
+        # score is the prototype's vote weight (the condensed signal).
+        slots_by_vote = sorted(
+            zip(final_slots, final_weights),
+            key=lambda sw: (-sw[1], sw[0]),
+        )
+        ranked: list[tuple[str, float]] = []
+        seen: set[str] = set()
+        for slot, weight in slots_by_vote:
+            for record_id in sorted(str(r) for r in self.cam.records_for(int(slot))):
+                if record_id in seen:
+                    continue
+                seen.add(record_id)
+                ranked.append((record_id, float(weight)))
+        ranked = ranked[:k]
         return tuple(
             RetrievedCandidate(record_id, score, rank)
             for rank, (record_id, score) in enumerate(ranked, start=1)

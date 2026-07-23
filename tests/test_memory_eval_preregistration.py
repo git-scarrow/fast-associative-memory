@@ -23,6 +23,7 @@ from harness.memory_eval.preregistration import (
     GO,
     NOT_EVALUABLE,
     NO_GO_COLLATERAL,
+    NO_GO_FAM_MECHANISM,
     NO_GO_NO_EFFECT,
     NO_GO_SUPPRESSION,
     PreflightReceipt,
@@ -32,7 +33,9 @@ from harness.memory_eval.preregistration import (
     h1_passes,
     h2_passes,
     h3_passes,
+    EXPERIMENT_VERDICTS,
     experiment_verdict,
+    experiment_verdict_pure,
     max_allowed_losses,
     min_required_margin,
     min_required_successes,
@@ -523,6 +526,94 @@ def test_integrity_and_evaluability_outrank_every_value_gate():
     assert (
         verdict(integrity_ok=True, evaluable=True, h1=False, h2=True, h3=True)
         == NO_GO_NO_EFFECT
+    )
+
+
+def _pure(**overrides):
+    """All-pass baseline for experiment_verdict_pure; override one axis per test."""
+    base = dict(
+        integrity_ok=True,
+        mechanism_active=True,
+        mechanism_evaluable=True,
+        application_evaluable=True,
+        m1=True,
+        m2=True,
+        h1=True,
+        h2=True,
+        h3=True,
+    )
+    base.update(overrides)
+    return experiment_verdict_pure(**base)
+
+
+def test_experiment_verdict_pure_is_total_and_every_verdict_is_reachable():
+    """The §5 table as code: total over all 512 gate combinations, exactly one
+    verdict each, and EVERY verdict reachable — including NO-GO — FAM mechanism,
+    which the review found was dead code with no producer."""
+    seen = set()
+    for combo in product([True, False], repeat=9):
+        (integrity_ok, mechanism_active, mechanism_evaluable,
+         application_evaluable, m1, m2, h1, h2, h3) = combo
+        result = experiment_verdict_pure(
+            integrity_ok=integrity_ok,
+            mechanism_active=mechanism_active,
+            mechanism_evaluable=mechanism_evaluable,
+            application_evaluable=application_evaluable,
+            m1=m1, m2=m2, h1=h1, h2=h2, h3=h3,
+        )
+        assert result in EXPERIMENT_VERDICTS
+        seen.add(result)
+    assert seen == EXPERIMENT_VERDICTS  # NO_GO_FAM_MECHANISM is no longer dead
+
+
+def test_under_denominated_mechanism_routes_to_not_evaluable_never_failure():
+    """The dry-run misrouting the review flagged: recall_n below D-M3 is
+    MISSING DATA (§5 row 2), not a mechanism failure (§5 row 3). Regardless of
+    what M1/M2 would have said, an unevaluable mechanism must never emit
+    NO-GO — FAM mechanism."""
+    for m1, m2 in product([True, False], repeat=2):
+        assert _pure(mechanism_evaluable=False, m1=m1, m2=m2) == NOT_EVALUABLE
+    assert _pure(mechanism_active=False) == NOT_EVALUABLE
+    assert _pure(application_evaluable=False) == NOT_EVALUABLE
+
+
+def test_failed_mechanism_cannot_be_rescued_by_favorable_application_outcomes():
+    """§5: 'a failed mechanism cannot be rescued by favorable application
+    outcomes.' All three application gates pass, yet M1 or M2 failing must
+    route to NO-GO — FAM mechanism, and application outputs stay exploratory."""
+    assert _pure(m1=False) == NO_GO_FAM_MECHANISM
+    assert _pure(m2=False) == NO_GO_FAM_MECHANISM
+    assert _pure(m1=False, m2=False) == NO_GO_FAM_MECHANISM
+    # And the application tiers only engage once the mechanism holds.
+    assert _pure(h1=False) == NO_GO_NO_EFFECT
+    assert _pure(h3=False) == NO_GO_SUPPRESSION
+    assert _pure(h2=False, h3=False) == NO_GO_SUPPRESSION  # H3 outranks H2
+    assert _pure(h2=False) == NO_GO_COLLATERAL
+    assert _pure() == GO
+
+
+def test_pure_table_grants_no_authority_the_wrapper_still_blocks():
+    """experiment_verdict_pure would say GO on all-pass inputs, but the Phase A
+    authoritative entry point must still fail closed to BLOCKED — the pure
+    table is registered routing, not authorization."""
+    assert _pure() == GO
+    receipt = PreflightReceipt(
+        manifest_sha256="0" * 64,
+        evidence_class="scoring-run",
+        passed=True,
+        confirmatory=True,
+    )
+    assert (
+        experiment_verdict(
+            receipt=receipt,
+            evaluable=True,
+            mechanism_ok=True,
+            application_h1=True,
+            application_h2=True,
+            application_h3=True,
+            mechanism_active=True,
+        )
+        == BLOCKED
     )
 
 

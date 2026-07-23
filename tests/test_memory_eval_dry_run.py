@@ -60,6 +60,7 @@ def test_dry_run_seals_executes_and_scores_all_five_arms(tmp_path):
     diagnostics = outcome["synthetic_gate_diagnostics"]
     assert diagnostics["authoritative"] is False
     assert diagnostics["mechanism"] == {
+        "evaluable": True,
         "passed": True,
         "active": True,
         "recall_n": 2,

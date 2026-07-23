@@ -224,9 +224,13 @@ yields `not-evaluable`, never GO.
 
 ## 5. Fixed-sequence gates and verdict
 
-The following fixed sequence is the Phase B verdict design and remains
-available only through pure diagnostic helpers. In Phase A the authoritative
-API unconditionally returns `blocked`: `PreflightReceipt` is publicly
+The following fixed sequence is the Phase B verdict design. It exists as
+executable code — `preregistration.experiment_verdict_pure`, a receipt-free
+pure function implementing this table row-for-row, exhaustively tested for
+totality and reachability (every verdict below, including `NO-GO — FAM
+mechanism`, is reachable; an under-denominated mechanism routes to
+`not-evaluable`, never to a mechanism failure). It grants no authority. In
+Phase A the authoritative API unconditionally returns `blocked`: `PreflightReceipt` is publicly
 constructible, so even caller-asserted `passed = true`, `confirmatory = true`,
 and `evidence_class = "scoring-run"` fields grant no authority. After Phase B
 implements a trusted issuer, integrity, and evaluability:

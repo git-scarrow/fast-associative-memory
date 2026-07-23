@@ -151,18 +151,26 @@ def run_dry_run(output_dir: str | Path) -> dict:
         mechanism.recall_n
         >= synthetic_fixture_assertions["min_mechanism_recall_n"]
     )
-    mechanism_ok = mechanism_evaluable and mechanism_passes(
-        reduction_count=mechanism.prototype_reduction_count,
-        record_n=mechanism.record_n,
-        reduction_margin=synthetic_fixture_assertions[
-            "prototype_reduction_margin"
-        ],
-        recall_loss_count=mechanism.paired_recall_loss_count,
-        recall_n=mechanism.recall_n,
-        recall_loss_bound=synthetic_fixture_assertions[
-            "mechanism_recall_loss_bound"
-        ],
+    # §5 rows 2 and 3 are separate tiers: "passed" is None (gate never ran)
+    # when the denominator is under D-M3 — not False, which would misroute
+    # missing data as NO-GO — FAM mechanism.
+    mechanism_passed = (
+        mechanism_passes(
+            reduction_count=mechanism.prototype_reduction_count,
+            record_n=mechanism.record_n,
+            reduction_margin=synthetic_fixture_assertions[
+                "prototype_reduction_margin"
+            ],
+            recall_loss_count=mechanism.paired_recall_loss_count,
+            recall_n=mechanism.recall_n,
+            recall_loss_bound=synthetic_fixture_assertions[
+                "mechanism_recall_loss_bound"
+            ],
+        )
+        if mechanism_evaluable
+        else None
     )
+    mechanism_ok = mechanism_passed is True
 
     scores = {(row.query_id, row.arm): row for row in report.rows}
     stale_queries = tuple(
@@ -265,7 +273,8 @@ def run_dry_run(output_dir: str | Path) -> dict:
                 "authoritative": False,
                 "integrity_ok": integrity_ok,
                 "mechanism": {
-                    "passed": mechanism_ok,
+                    "evaluable": mechanism_evaluable,
+                    "passed": mechanism_passed,
                     "active": mechanism_active,
                     **asdict(mechanism),
                 },

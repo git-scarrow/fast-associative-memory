@@ -385,6 +385,60 @@ def verdict(
     return GO
 
 
+def experiment_verdict_pure(
+    *,
+    integrity_ok: bool,
+    mechanism_active: bool,
+    mechanism_evaluable: bool,
+    application_evaluable: bool,
+    m1: bool,
+    m2: bool,
+    h1: bool,
+    h2: bool,
+    h3: bool,
+) -> str:
+    """The §5 fixed-sequence table as an executable, receipt-free function.
+
+    Pure diagnostic routing — it GRANTS NO AUTHORITY. The authoritative Phase A
+    entry point (:func:`experiment_verdict`) fails closed to ``blocked``
+    regardless of what this table would say; Phase B's trusted issuer decides
+    when this routing may be read as a verdict. It exists as code (with a
+    totality/reachability test) so the precedence is decided BEFORE the one
+    sealed run, not re-derived from prose afterwards — the rubric hole that
+    cost PR-13 its confirmatory tier.
+
+    Row order is the memo's §5 table, verbatim:
+
+      1. any integrity failure                       -> blocked
+      2. inactive FAM, or any required denominator
+         (mechanism recall or application strata)
+         absent/too small                            -> not-evaluable
+         (an under-denominated mechanism is MISSING
+         DATA, never a mechanism failure — the
+         misrouting this function exists to prevent)
+      3. M1 or M2 fails                              -> NO-GO — FAM mechanism
+         (a failed mechanism cannot be rescued by
+         favorable application outcomes)
+      4. A1 (H1) fails                               -> NO-GO — no effect
+      5. A1 passes, A3 (H3) fails                    -> NO-GO — suppression
+      6. A1 and A3 pass, A2 (H2) fails               -> NO-GO — collateral
+      7. all pass                                    -> governed-memory-GO
+    """
+    if not integrity_ok:
+        return BLOCKED
+    if not (mechanism_active and mechanism_evaluable and application_evaluable):
+        return NOT_EVALUABLE
+    if not (m1 and m2):
+        return NO_GO_FAM_MECHANISM
+    if not h1:
+        return NO_GO_NO_EFFECT
+    if not h3:
+        return NO_GO_SUPPRESSION
+    if not h2:
+        return NO_GO_COLLATERAL
+    return GO
+
+
 def experiment_verdict(
     *,
     receipt: PreflightReceipt,

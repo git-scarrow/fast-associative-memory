@@ -20,6 +20,12 @@ from harness.memory_eval.sealed_run import (
 )
 
 
+from harness.ctx.compile import load_policy
+from harness.memory_eval.fingerprints import query_embedding_sha256
+from harness.memory_eval.runner import FiveArmRunner
+from harness.memory_eval.ledger import MemoryLedger
+from harness.memory_eval.manifest import build_cam_indexes
+
 POLICY = {"rules": [{"id": "R01", "action": "assert"}], "version": "test-policy-v1"}
 SETTINGS = {
     "candidate_k": 2,
@@ -400,3 +406,111 @@ def test_raw_normalized_collision_fails_plumbing_verification_before_generation(
             consumer=consumer,
         )
     assert consumer.generated is False
+
+
+# --------------------------------------------------------------------------
+# Blocker 3 — sealed query-side inputs are ENFORCED at run(), with per-row
+# embedding provenance. The review executed a foreign embedding table and a
+# never-sealed question under a passing sealed digest; these pin the refusal.
+# --------------------------------------------------------------------------
+
+
+def test_bundle_runner_refuses_foreign_query_embeddings(tmp_path):
+    """The review's probe, now a permanent regression: swapped query
+    embeddings (the darwin-seal/gentoo-run drift) must refuse, not execute
+    under the passing sealed digest."""
+    path = tmp_path / "m.json"
+    seal_plumbing(path)
+    records, questions, record_embeddings, query_embeddings = corpus()
+    bundle = build_plumbing_run(
+        path,
+        records=records,
+        questions=questions,
+        record_embeddings=record_embeddings,
+        query_embeddings=query_embeddings,
+        retriever_settings=SETTINGS,
+        policy=POLICY,
+        consumer=RuleConsumer(),
+    )
+    foreign = dict(query_embeddings)
+    foreign["q-evolving"] = [0.1, 0.9]  # regenerated/stale embedding file
+    with pytest.raises(RuntimeError, match="query_embeddings drifted"):
+        bundle.runner.run(questions, foreign)
+
+
+def test_bundle_runner_refuses_a_never_sealed_question(tmp_path):
+    path = tmp_path / "m.json"
+    seal_plumbing(path)
+    records, questions, record_embeddings, query_embeddings = corpus()
+    bundle = build_plumbing_run(
+        path,
+        records=records,
+        questions=questions,
+        record_embeddings=record_embeddings,
+        query_embeddings=query_embeddings,
+        retriever_settings=SETTINGS,
+        policy=POLICY,
+        consumer=RuleConsumer(),
+    )
+    extra = questions + (
+        MemoryQuestion(
+            "q-extra", "What is FACT[Ada|employer]?", questions[0].scope, "NewCo"
+        ),
+    )
+    extra_embeddings = {**query_embeddings, "q-extra": [0.9, 0.1]}
+    with pytest.raises(RuntimeError, match="questions drifted"):
+        bundle.runner.run(extra, extra_embeddings)
+
+
+def test_bundle_runner_accepts_the_sealed_inputs_and_stamps_row_provenance(tmp_path):
+    """The sealed inputs still run, and every row records the canonical digest
+    of the embedding actually used — auditable against the sealed table after
+    the one real run."""
+    path = tmp_path / "m.json"
+    real_policy = load_policy()
+    records, questions, record_embeddings, query_embeddings = corpus()
+    seal_manifest(
+        path,
+        records,
+        questions,
+        record_embeddings,
+        query_embeddings,
+        SETTINGS,
+        evidence_class="plumbing",
+        policy=real_policy,
+        consumer_pin=RuleConsumer.pin_id,
+    )
+    bundle = build_plumbing_run(
+        path,
+        records=records,
+        questions=questions,
+        record_embeddings=record_embeddings,
+        query_embeddings=query_embeddings,
+        retriever_settings=SETTINGS,
+        policy=real_policy,
+        consumer=RuleConsumer(),
+    )
+    rows = bundle.runner.run(questions, query_embeddings)
+    assert rows
+    for row in rows:
+        expected = query_embedding_sha256(query_embeddings[row.query_id])
+        assert row.query_embedding_sha256 == expected
+
+
+def test_unbound_runner_still_runs_for_unit_fixtures(tmp_path):
+    """A directly constructed runner (no sealed binding) keeps working — the
+    binding is a property of seal-derived runners, not a global gate."""
+    records, questions, record_embeddings, query_embeddings = corpus()
+    exemplar, fam = build_cam_indexes(records, record_embeddings, SETTINGS)
+    runner = FiveArmRunner(
+        ledger=MemoryLedger(records),
+        exemplar_retriever=exemplar,
+        fam_retriever=fam,
+        consumer=RuleConsumer(),
+        candidate_k=SETTINGS["candidate_k"],
+        policy=load_policy(),
+    )
+    foreign = dict(query_embeddings)
+    foreign["q-evolving"] = [0.1, 0.9]
+    rows = runner.run(questions, foreign)  # no binding -> no refusal
+    assert rows

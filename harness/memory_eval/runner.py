@@ -13,6 +13,7 @@ from harness.ctx.output_contract import MAX_NEW_TOKENS, parse_consumer_output
 
 from . import ARM_NAMES, CONTEXT_BUDGET_TOKENS
 from .context import context_items_for_candidates, render_raw
+from .fingerprints import query_embedding_sha256, query_side_fingerprints
 from .ledger import MemoryLedger
 from .models import (
     AnswerObservation,
@@ -55,6 +56,7 @@ class ExperimentRow:
     consumer_pin_id: str | None
     block_sha256: str
     prompt_sha256: str
+    query_embedding_sha256: str
     raw_output: str
     audit_rows: tuple[Mapping[str, Any], ...]
     audit_anomalies: tuple[Mapping[str, Any], ...]
@@ -71,6 +73,7 @@ class FiveArmRunner:
         candidate_k: int,
         policy: Mapping[str, Any],
         clock: Callable[[], float] = perf_counter,
+        sealed_query_fingerprints: Mapping[str, str] | None = None,
     ) -> None:
         if not isinstance(candidate_k, int) or isinstance(candidate_k, bool) or candidate_k < 1:
             raise ValueError("candidate_k must be positive")
@@ -81,12 +84,43 @@ class FiveArmRunner:
         self.candidate_k = candidate_k
         self.clock = clock
         self.policy = dict(policy)
+        if sealed_query_fingerprints is not None:
+            expected = {"questions", "query_embeddings"}
+            if set(sealed_query_fingerprints) != expected:
+                raise ValueError(
+                    "sealed_query_fingerprints must carry exactly "
+                    f"{sorted(expected)}"
+                )
+        self.sealed_query_fingerprints = (
+            dict(sealed_query_fingerprints)
+            if sealed_query_fingerprints is not None
+            else None
+        )
 
     def run(
         self,
         questions: Sequence[MemoryQuestion],
         query_embeddings: Mapping[str, TensorLike],
     ) -> tuple[ExperimentRow, ...]:
+        # A seal-bound runner refuses query-side inputs the manifest did not
+        # seal. verify_manifest binds construction inputs, but run() takes
+        # these as free parameters — the review executed a foreign embedding
+        # table and a never-sealed question under a passing sealed digest
+        # (the darwin-seal/gentoo-run drift). Recompute the seal's own
+        # fingerprints from the ACTUAL arguments and refuse on mismatch.
+        if self.sealed_query_fingerprints is not None:
+            live = query_side_fingerprints(questions, query_embeddings)
+            drifted = sorted(
+                name
+                for name, digest in live.items()
+                if digest != self.sealed_query_fingerprints[name]
+            )
+            if drifted:
+                raise RuntimeError(
+                    "run() inputs do not match the sealed manifest: "
+                    + ", ".join(drifted)
+                    + " drifted since seal time"
+                )
         rows: list[ExperimentRow] = []
         seen: set[str] = set()
         for question in questions:
@@ -101,6 +135,9 @@ class FiveArmRunner:
     def _run_question(
         self, question: MemoryQuestion, query_embedding: TensorLike
     ) -> tuple[ExperimentRow, ...]:
+        # Per-row provenance: the canonical digest of the embedding ACTUALLY
+        # used, comparable to the sealed query-embedding table after the run.
+        embedding_sha = query_embedding_sha256(query_embedding)
         exemplar_candidates, exemplar_ms = self._retrieve(
             self.exemplar_retriever, query_embedding
         )
@@ -184,6 +221,7 @@ class FiveArmRunner:
                     consumer_pin_id=getattr(self.consumer, "pin_id", None),
                     block_sha256=_sha(block),
                     prompt_sha256=_sha(prompt),
+                    query_embedding_sha256=embedding_sha,
                     raw_output=raw_output,
                     audit_rows=audit_rows,
                     audit_anomalies=anomalies,

@@ -135,6 +135,13 @@ def build_plumbing_run(
         consumer=consumer,
         candidate_k=sealed_settings["candidate_k"],
         policy=dict(policy),
+        # Bind run() to the VERIFIED query-side fingerprints: a bundle runner
+        # refuses foreign questions/embeddings even under this passing digest
+        # (the review executed both; see runner.run()).
+        sealed_query_fingerprints={
+            "questions": verified["fingerprints"]["questions"],
+            "query_embeddings": verified["fingerprints"]["query_embeddings"],
+        },
     )
     digest = verified["manifest_sha256"]
     receipt = PreflightReceipt(

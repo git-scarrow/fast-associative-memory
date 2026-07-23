@@ -87,6 +87,7 @@ def rows_for(questions, answers_by_arm):
                     consumer_pin_id="test",
                     block_sha256="0" * 64,
                     prompt_sha256="1" * 64,
+        query_embedding_sha256="",  # synthetic row: no embedding was used
                     raw_output="",
                     audit_rows=(),
                     audit_anomalies=(),

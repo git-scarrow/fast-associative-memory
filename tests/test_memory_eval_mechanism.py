@@ -38,6 +38,7 @@ def row(query_id: str, arm: str, candidate_ids: tuple[str, ...]) -> ExperimentRo
         consumer_pin_id="test",
         block_sha256="0" * 64,
         prompt_sha256="1" * 64,
+        query_embedding_sha256="",  # synthetic row: no embedding was used
         raw_output="",
         audit_rows=(),
         audit_anomalies=(),

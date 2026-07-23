@@ -14,6 +14,13 @@ import torch
 
 from . import ARM_NAMES, CONTEXT_BUDGET_TOKENS
 from . import scoring as _scoring_module
+from .fingerprints import (
+    canonical_json,
+    embedding_value as _embedding_value,
+    fingerprint as _fingerprint,
+    query_embedding_sha256,
+    query_side_fingerprints,
+)
 from .context import POLICY_VERSION
 from .models import MemoryQuestion, MemoryRecord
 from .retrievers import (
@@ -31,6 +38,8 @@ __all__ = [
     "PHASE_B_SCORING_REFUSAL",
     "canonical_json",
     "policy_sha256",
+    "query_side_fingerprints",
+    "query_embedding_sha256",
     "scoring_module_sha256",
     "validate_retriever_settings",
     "build_cam_indexes",
@@ -245,16 +254,6 @@ def scoring_module_sha256() -> str:
     return sha256(Path(_scoring_module.__file__).read_bytes()).hexdigest()
 
 
-def canonical_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
-
-
 def seal_manifest(
     path: str | Path,
     records: Sequence[MemoryRecord],
@@ -444,15 +443,3 @@ def _manifest_body(
     }
 
 
-def _embedding_value(embeddings: Mapping[str, TensorLike]) -> dict[str, list[float]]:
-    result: dict[str, list[float]] = {}
-    for item_id in sorted(embeddings):
-        vector = torch.as_tensor(embeddings[item_id], dtype=torch.float32).detach().cpu()
-        if vector.ndim != 1 or not bool(torch.isfinite(vector).all()):
-            raise ValueError(f"invalid embedding for {item_id}")
-        result[str(item_id)] = [float(value) for value in vector.tolist()]
-    return result
-
-
-def _fingerprint(value: Any) -> str:
-    return sha256(canonical_json(value).encode("utf-8")).hexdigest()
